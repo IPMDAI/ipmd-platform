@@ -31,8 +31,8 @@ export const metadata: Metadata = {
     images: ["/logo-ipmd.png"],
   },
   icons: {
-    icon: "/logo-ipmd.png",
-    apple: "/logo-ipmd.png",
+    icon: "/favicon-ipmd.png",
+    apple: "/favicon-ipmd.png",
   },
 };
 
