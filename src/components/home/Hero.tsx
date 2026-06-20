@@ -1,13 +1,65 @@
+"use client";
+
+import Image from "next/image";
+import { useEffect, useState } from "react";
 import { Container } from "@/components/ui/Container";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 
-/** Hero principal de la page d'accueil. */
+/** Visuels IA du carrousel de fond. */
+const slides = [
+  {
+    src: "https://images.unsplash.com/photo-1639322537228-f710d846310a?w=1920&q=80&auto=format&fit=crop",
+    alt: "Cerveau d'intelligence artificielle",
+  },
+  {
+    src: "https://images.unsplash.com/photo-1677442136019-21780ecad995?w=1920&q=80&auto=format&fit=crop",
+    alt: "Intelligence artificielle générative",
+  },
+  {
+    src: "https://images.unsplash.com/photo-1620712943543-bcc4688e7485?w=1920&q=80&auto=format&fit=crop",
+    alt: "Réseau neuronal numérique",
+  },
+];
+
+/** Hero de la page d'accueil avec carrousel d'images IA en fond. */
 export function Hero() {
+  const [index, setIndex] = useState(0);
+
+  // Rotation automatique des visuels.
+  useEffect(() => {
+    const id = setInterval(
+      () => setIndex((i) => (i + 1) % slides.length),
+      5500
+    );
+    return () => clearInterval(id);
+  }, []);
+
   return (
     <section className="relative overflow-hidden bg-ipmd-black text-white">
+      {/* Carrousel d'images IA en fond */}
+      <div className="absolute inset-0" aria-hidden>
+        {slides.map((slide, i) => (
+          <Image
+            key={slide.src}
+            src={slide.src}
+            alt=""
+            fill
+            priority={i === 0}
+            sizes="100vw"
+            className={`object-cover transition-opacity ease-in-out ${
+              i === index ? "opacity-100" : "opacity-0"
+            }`}
+            style={{ transitionDuration: "1500ms" }}
+          />
+        ))}
+        {/* Voile sombre dégradé pour garder le texte lisible */}
+        <div className="absolute inset-0 bg-gradient-to-b from-ipmd-black/85 via-ipmd-black/70 to-ipmd-black/95" />
+        <div className="absolute inset-0 bg-ipmd-black/25" />
+      </div>
+
       {/* Décor : grille + halos rouges */}
-      <div className="absolute inset-0 bg-grid" aria-hidden />
+      <div className="absolute inset-0 bg-grid opacity-50" aria-hidden />
       <div
         className="absolute -left-32 -top-32 h-96 w-96 rounded-full bg-ipmd-red/30 blur-3xl"
         aria-hidden
@@ -30,7 +82,7 @@ export function Hero() {
           </h1>
 
           <p
-            className="mx-auto mt-6 max-w-xl animate-fade-up text-lg text-white/70 sm:text-xl"
+            className="mx-auto mt-6 max-w-xl animate-fade-up text-lg text-white/80 sm:text-xl"
             style={{ animationDelay: "100ms" }}
           >
             École supérieure digitale, moderne et orientée intelligence
@@ -56,7 +108,7 @@ export function Hero() {
               href="/admission"
               size="lg"
               variant="outline"
-              className="border-white/30 text-white hover:bg-white hover:text-ipmd-black"
+              className="border-white/40 text-white hover:bg-white hover:text-ipmd-black"
             >
               Demander une inscription
             </Button>
@@ -64,7 +116,7 @@ export function Hero() {
 
           {/* Mini-statistiques */}
           <div
-            className="mx-auto mt-16 grid max-w-2xl animate-fade-up grid-cols-3 gap-6 border-t border-white/10 pt-8"
+            className="mx-auto mt-16 grid max-w-2xl animate-fade-up grid-cols-3 gap-6 border-t border-white/15 pt-8"
             style={{ animationDelay: "250ms" }}
           >
             {[
@@ -76,7 +128,7 @@ export function Hero() {
                 <p className="text-3xl font-extrabold text-ipmd-red-light">
                   {stat.value}
                 </p>
-                <p className="mt-1 text-xs text-white/60 sm:text-sm">
+                <p className="mt-1 text-xs text-white/70 sm:text-sm">
                   {stat.label}
                 </p>
               </div>
@@ -84,6 +136,23 @@ export function Hero() {
           </div>
         </div>
       </Container>
+
+      {/* Indicateurs du carrousel */}
+      <div className="absolute bottom-6 left-1/2 z-10 flex -translate-x-1/2 gap-2.5">
+        {slides.map((slide, i) => (
+          <button
+            key={slide.src}
+            type="button"
+            aria-label={`Voir le visuel ${i + 1}`}
+            onClick={() => setIndex(i)}
+            className={`h-2 rounded-full transition-all duration-300 ${
+              i === index
+                ? "w-8 bg-ipmd-red"
+                : "w-2 bg-white/40 hover:bg-white/70"
+            }`}
+          />
+        ))}
+      </div>
     </section>
   );
 }
