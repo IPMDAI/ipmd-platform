@@ -1,0 +1,108 @@
+"use server";
+
+import { createClient } from "@/lib/supabase/server";
+import { isSupabaseConfigured } from "@/lib/supabase/config";
+import type { FormResult, UniverseId } from "@/types";
+
+/**
+ * Server Actions des formulaires publics.
+ *
+ * Tant que Supabase n'est pas configuré, ces actions valident les données et
+ * renvoient un succès « démo » sans rien persister. Une fois les tables créées
+ * (voir README), elles écrivent dans `inscription_requests` / `contact_messages`.
+ */
+
+function getString(formData: FormData, key: string): string {
+  const value = formData.get(key);
+  return typeof value === "string" ? value.trim() : "";
+}
+
+function isValidEmail(email: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
+export async function submitInscription(
+  _prev: FormResult | null,
+  formData: FormData
+): Promise<FormResult> {
+  const payload = {
+    full_name: getString(formData, "fullName"),
+    email: getString(formData, "email"),
+    phone: getString(formData, "phone"),
+    universe: getString(formData, "universe") as UniverseId,
+    program_interest: getString(formData, "programInterest"),
+    entry_level: getString(formData, "entryLevel") || null,
+    message: getString(formData, "message") || null,
+  };
+
+  if (!payload.full_name || !payload.email || !payload.phone) {
+    return { ok: false, message: "Merci de renseigner nom, email et téléphone." };
+  }
+  if (!isValidEmail(payload.email)) {
+    return { ok: false, message: "L'adresse email semble invalide." };
+  }
+
+  if (!isSupabaseConfigured) {
+    return {
+      ok: true,
+      message:
+        "Demande enregistrée (mode démo). Configurez Supabase pour l'envoi réel.",
+    };
+  }
+
+  const supabase = await createClient();
+  if (!supabase) {
+    return { ok: false, message: "Service indisponible. Réessayez plus tard." };
+  }
+
+  const { error } = await supabase.from("inscription_requests").insert(payload);
+  if (error) {
+    return {
+      ok: false,
+      message: "Une erreur est survenue. Merci de réessayer.",
+    };
+  }
+
+  return {
+    ok: true,
+    message: "Votre demande a bien été envoyée. Nous vous recontactons vite !",
+  };
+}
+
+export async function submitContact(
+  _prev: FormResult | null,
+  formData: FormData
+): Promise<FormResult> {
+  const payload = {
+    full_name: getString(formData, "fullName"),
+    email: getString(formData, "email"),
+    subject: getString(formData, "subject"),
+    message: getString(formData, "message"),
+  };
+
+  if (!payload.full_name || !payload.email || !payload.message) {
+    return { ok: false, message: "Merci de renseigner nom, email et message." };
+  }
+  if (!isValidEmail(payload.email)) {
+    return { ok: false, message: "L'adresse email semble invalide." };
+  }
+
+  if (!isSupabaseConfigured) {
+    return {
+      ok: true,
+      message: "Message envoyé (mode démo). Configurez Supabase pour l'envoi réel.",
+    };
+  }
+
+  const supabase = await createClient();
+  if (!supabase) {
+    return { ok: false, message: "Service indisponible. Réessayez plus tard." };
+  }
+
+  const { error } = await supabase.from("contact_messages").insert(payload);
+  if (error) {
+    return { ok: false, message: "Une erreur est survenue. Merci de réessayer." };
+  }
+
+  return { ok: true, message: "Merci ! Votre message a bien été envoyé." };
+}
