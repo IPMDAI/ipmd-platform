@@ -53,7 +53,7 @@ export const futureSubdomains = [
 
 /** Coordonnées officielles de l'institut. */
 export const contactInfo = {
-  email: "infos@ipmd.pro",
+  email: "info@ipmd.pro",
   phones: ["+225 07 75 75 88 88", "+225 05 66 05 14 14"],
   address: "Riviera Palmeraie — Cocody Angré, à 100 m du rond-point ADO",
   city: "Abidjan, Côte d'Ivoire",
