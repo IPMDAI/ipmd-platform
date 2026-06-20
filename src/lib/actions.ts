@@ -2,6 +2,11 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
+import {
+  buildRows,
+  emailLayout,
+  sendNotification,
+} from "@/lib/email";
 import type { FormResult, UniverseId } from "@/types";
 
 /**
@@ -63,6 +68,24 @@ export async function submitInscription(
     };
   }
 
+  // Notification email (best-effort, ne bloque pas la réponse).
+  await sendNotification(
+    `Nouvelle inscription — ${payload.full_name}`,
+    emailLayout(
+      "Nouvelle demande d'inscription",
+      buildRows([
+        ["Nom", payload.full_name],
+        ["Email", payload.email],
+        ["Téléphone", payload.phone],
+        ["Univers", payload.universe],
+        ["Formation", payload.program_interest],
+        ["Niveau", payload.entry_level],
+        ["Message", payload.message],
+      ])
+    ),
+    payload.email
+  );
+
   return {
     ok: true,
     message: "Votre demande a bien été envoyée. Nous vous recontactons vite !",
@@ -103,6 +126,21 @@ export async function submitContact(
   if (error) {
     return { ok: false, message: "Une erreur est survenue. Merci de réessayer." };
   }
+
+  // Notification email (best-effort, ne bloque pas la réponse).
+  await sendNotification(
+    `Nouveau message — ${payload.full_name}`,
+    emailLayout(
+      "Nouveau message de contact",
+      buildRows([
+        ["Nom", payload.full_name],
+        ["Email", payload.email],
+        ["Sujet", payload.subject],
+        ["Message", payload.message],
+      ])
+    ),
+    payload.email
+  );
 
   return { ok: true, message: "Merci ! Votre message a bien été envoyé." };
 }
