@@ -33,12 +33,7 @@ export function CtaBanner({
             </h2>
             <p className="mt-4 text-lg text-white/85">{description}</p>
             <div className="mt-9 flex flex-col items-center justify-center gap-4 sm:flex-row">
-              <Button
-                href={primary.href}
-                size="lg"
-                variant="secondary"
-                className="bg-white text-ipmd-red hover:bg-ipmd-light hover:text-ipmd-red-dark"
-              >
+              <Button href={primary.href} size="lg" variant="white">
                 {primary.label}
               </Button>
               <Button
