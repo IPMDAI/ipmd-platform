@@ -28,6 +28,11 @@ export const metadata: Metadata = {
     siteName: "IPMD",
     locale: "fr_FR",
     type: "website",
+    images: ["/logo-ipmd.png"],
+  },
+  icons: {
+    icon: "/logo-ipmd.png",
+    apple: "/logo-ipmd.png",
   },
 };
 

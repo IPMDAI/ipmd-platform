@@ -4,8 +4,13 @@ import { Reveal } from "@/components/ui/Reveal";
 import { UniverseCard } from "@/components/cards/UniverseCard";
 import { universes } from "@/data/universes";
 
-/** Section « Nos 6 univers ». */
+/** Section « Nos 6 univers » : diplômes en haut, certificats en bas. */
 export function UniversesSection() {
+  const ordered = [
+    ...universes.filter((u) => u.kind === "diplome"),
+    ...universes.filter((u) => u.kind === "certificat"),
+  ];
+
   return (
     <Section id="univers" variant="light">
       <SectionHeading
@@ -15,7 +20,7 @@ export function UniversesSection() {
       />
 
       <div className="mt-14 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        {universes.map((universe, i) => (
+        {ordered.map((universe, i) => (
           <Reveal key={universe.id} delay={i * 60}>
             <UniverseCard universe={universe} />
           </Reveal>
