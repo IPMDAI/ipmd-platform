@@ -33,7 +33,7 @@ export function UniverseCard({ universe }: { universe: Universe }) {
 
       {/* Contenu */}
       <div className="flex flex-1 flex-col p-7">
-        <p className="mb-3 inline-flex w-fit items-center gap-2 rounded-full bg-ipmd-black px-4 py-1.5 text-sm font-bold uppercase tracking-wide text-white">
+        <p className="mb-3 inline-flex w-fit items-center gap-2 rounded-full bg-ipmd-red px-4 py-1.5 text-sm font-bold uppercase tracking-wide text-white">
           <span aria-hidden className="text-base">
             👥
           </span>
