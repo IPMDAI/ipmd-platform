@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { UniverseShowcase } from "@/components/sections/UniverseShowcase";
 
 export const metadata: Metadata = {
-  title: "IPMD Gouvernance — Diplômes exécutifs",
+  title: "IPMD Executive — Diplômes exécutifs",
   description:
     "Master Exécutif, MBA Exécutif et DBA pour dirigeants, managers et décideurs. Gouvernance digitale & IA.",
 };

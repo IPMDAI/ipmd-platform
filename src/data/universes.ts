@@ -11,7 +11,7 @@ export const universes: Universe[] = [
     name: "IPMD Campus",
     tagline: "Diplômes — formation initiale",
     description:
-      "Pour les bacheliers, étudiants et jeunes en formation initiale. Licence, Bachelor et Master dans les métiers du digital, avec 80 % de pratique.",
+      "Formations initiales diplômantes pour les bacheliers, étudiants et jeunes en formation. Parcours en Licence, Bachelor et Master dans les métiers du digital, de l'informatique, de l'IA, du management et de l'innovation.",
     kind: "diplome",
     audience: "Bacheliers, étudiants, jeunes en formation initiale",
     target: "Bacheliers & Étudiants",
@@ -24,10 +24,10 @@ export const universes: Universe[] = [
   },
   {
     id: "ultrajobs",
-    name: "UltraJobs",
+    name: "IPMD Jobs",
     tagline: "Bootcamps jeunes — certificats job",
     description:
-      "Des bootcamps courts, pratiques et orientés emploi qui forment rapidement les jeunes aux compétences digitales recherchées par les entreprises.",
+      "Bootcamps courts, pratiques et orientés emploi pour former rapidement les jeunes aux compétences digitales recherchées par les entreprises.",
     kind: "certificat",
     audience: "Jeunes, étudiants, chercheurs d'emploi",
     target: "Jeunes & Chercheurs d'emploi",
@@ -43,7 +43,7 @@ export const universes: Universe[] = [
     name: "IPMD Professionnel",
     tagline: "Diplômes — pour les actifs",
     description:
-      "Licence, Bachelor, Master et MBA conçus pour les professionnels, salariés, cadres et entrepreneurs qui veulent monter en compétence sans quitter leur poste.",
+      "Formations diplômantes pour les personnes en activité qui veulent monter en compétence sans quitter leur poste. Adaptées aux salariés, cadres, entrepreneurs et professionnels en reconversion.",
     kind: "diplome",
     audience: "Professionnels, salariés, cadres, entrepreneurs",
     target: "Salariés & Professionnels",
@@ -56,10 +56,10 @@ export const universes: Universe[] = [
   },
   {
     id: "ultraboost",
-    name: "UltraBoost",
+    name: "IPMD Boost",
     tagline: "Bootcamps professionnels — certificats pro",
     description:
-      "Des bootcamps courts et intensifs qui accélèrent la montée en compétence des professionnels dans le digital, l'IA, le business et la performance.",
+      "Bootcamps intensifs pour accélérer la montée en compétence des professionnels dans le digital, l'IA, le business, la productivité et la performance.",
     kind: "certificat",
     audience: "Professionnels, salariés, entrepreneurs, freelances, cadres",
     target: "Professionnels & Cadres",
@@ -72,14 +72,14 @@ export const universes: Universe[] = [
   },
   {
     id: "gouvernance",
-    name: "IPMD Gouvernance",
+    name: "IPMD Executive",
     tagline: "Diplômes exécutifs",
     description:
-      "Master Exécutif, MBA Exécutif et DBA pour les dirigeants, managers et décideurs qui pilotent la transformation digitale et la gouvernance par l'IA.",
+      "Formations exécutives pour les dirigeants, managers, entrepreneurs et décideurs qui pilotent la transformation digitale, l'IA, la stratégie et la gouvernance numérique.",
     kind: "diplome",
     audience: "Dirigeants, managers, entrepreneurs, décideurs",
     target: "Dirigeants & Managers",
-    credentials: ["Master Exécutif", "MBA Exécutif", "DBA"],
+    credentials: ["Executive Master", "Executive MBA", "DBA"],
     subdomain: "executive.ipmd.pro",
     href: "/gouvernance",
     icon: "🏛️",
@@ -88,10 +88,10 @@ export const universes: Universe[] = [
   },
   {
     id: "ultraexecutive",
-    name: "UltraExecutive",
-    tagline: "Bootcamps dirigeants — certificats gouvernance",
+    name: "IPMD Premium Executive",
+    tagline: "Bootcamps premium — dirigeants",
     description:
-      "Des bootcamps premium qui accompagnent les dirigeants dans la transformation digitale, l'intelligence artificielle, la stratégie et la gouvernance.",
+      "Bootcamps premium pour les dirigeants, entrepreneurs et décideurs souhaitant renforcer leurs compétences en transformation digitale, IA, stratégie, leadership et gouvernance.",
     kind: "certificat",
     audience: "Dirigeants, managers, entrepreneurs, hauts responsables",
     target: "Dirigeants & Décideurs",

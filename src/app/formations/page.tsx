@@ -10,7 +10,7 @@ import { universes } from "@/data/universes";
 export const metadata: Metadata = {
   title: "Formations",
   description:
-    "Toutes les formations IPMD : diplômes (Campus, Professionnel, Gouvernance) et bootcamps certifiants (UltraJobs, UltraBoost, UltraExecutive).",
+    "Toutes les formations IPMD : diplômes (Campus, Professionnel, Executive) et bootcamps certifiants (IPMD Jobs, IPMD Boost, IPMD Premium Executive).",
 };
 
 export default function FormationsPage() {
