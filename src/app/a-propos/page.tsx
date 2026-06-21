@@ -4,6 +4,7 @@ import { Section } from "@/components/ui/Section";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { Reveal } from "@/components/ui/Reveal";
 import { CtaBanner } from "@/components/sections/CtaBanner";
+import { AboutSection } from "@/components/home/AboutSection";
 
 export const metadata: Metadata = {
   title: "À propos",
@@ -38,34 +39,8 @@ export default function AboutPage() {
         description="IPMD — Institut Polytechnique des Métiers du Digital — est une école supérieure moderne, pratique et orientée intelligence artificielle."
       />
 
-      {/* Mission */}
-      <Section variant="white">
-        <div className="grid gap-12 lg:grid-cols-2 lg:items-center">
-          <SectionHeading
-            align="left"
-            eyebrow="Notre mission"
-            title="Former aux métiers du digital, par la pratique"
-            description="Nous préparons étudiants, professionnels et dirigeants aux compétences réellement recherchées sur le marché. À IPMD, c'est 80 % de pratique : projets, cas concrets et mises en situation, augmentés par l'intelligence artificielle."
-          />
-          <div className="grid gap-5 sm:grid-cols-3">
-            {[
-              { value: "6", label: "univers" },
-              { value: "35+", label: "bootcamps" },
-              { value: "80%", label: "de pratique" },
-            ].map((stat) => (
-              <div
-                key={stat.label}
-                className="rounded-2xl bg-ipmd-light p-6 text-center"
-              >
-                <p className="text-3xl font-extrabold text-ipmd-red">
-                  {stat.value}
-                </p>
-                <p className="mt-1 text-sm text-black/60">{stat.label}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </Section>
+      {/* Présentation détaillée de l'institut */}
+      <AboutSection showHeading={false} />
 
       {/* Valeurs */}
       <Section variant="light">

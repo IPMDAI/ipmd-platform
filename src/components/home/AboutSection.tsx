@@ -2,21 +2,38 @@ import Image from "next/image";
 import { Section } from "@/components/ui/Section";
 import { Button } from "@/components/ui/Button";
 
+interface AboutSectionProps {
+  /** Affiche le sur-titre « À propos » et le grand titre. */
+  showHeading?: boolean;
+  variant?: "light" | "white";
+}
+
 /** Section « À propos de l'IPMD » : texte présenté à côté d'une image. */
-export function AboutSection() {
+export function AboutSection({
+  showHeading = true,
+  variant = "white",
+}: AboutSectionProps = {}) {
   return (
-    <Section variant="white">
+    <Section variant={variant}>
       <div className="grid items-start gap-10 lg:grid-cols-[1.45fr_1fr] lg:gap-16">
         {/* Texte */}
         <div>
-          <p className="mb-3 text-sm font-bold uppercase tracking-widest text-ipmd-red">
-            À propos
-          </p>
-          <h2 className="text-3xl font-extrabold leading-tight tracking-tight text-ipmd-black sm:text-4xl">
-            L&apos;Institut Polytechnique des Métiers du Digital
-          </h2>
+          {showHeading && (
+            <>
+              <p className="mb-3 text-sm font-bold uppercase tracking-widest text-ipmd-red">
+                À propos
+              </p>
+              <h2 className="text-3xl font-extrabold leading-tight tracking-tight text-ipmd-black sm:text-4xl">
+                L&apos;Institut Polytechnique des Métiers du Digital
+              </h2>
+            </>
+          )}
 
-          <div className="mt-6 space-y-4 text-[15px] leading-relaxed text-black/70">
+          <div
+            className={`${
+              showHeading ? "mt-6" : ""
+            } space-y-4 text-[15px] leading-relaxed text-black/70`}
+          >
             <p>
               L&apos;Institut Polytechnique des Métiers du Digital, en abrégé{" "}
               <strong className="font-semibold text-ipmd-black">IPMD</strong>,
