@@ -24,7 +24,7 @@ export const universes: Universe[] = [
   },
   {
     id: "ultrajobs",
-    name: "IPMD Jobs",
+    name: "UltraJobs",
     tagline: "Bootcamps jeunes — certificats job",
     description:
       "Bootcamps courts, pratiques et orientés emploi pour former rapidement les jeunes aux compétences digitales recherchées par les entreprises.",
@@ -40,7 +40,7 @@ export const universes: Universe[] = [
   },
   {
     id: "professionnel",
-    name: "IPMD Professionnel",
+    name: "IPMD Pro",
     tagline: "Diplômes — pour les actifs",
     description:
       "Formations diplômantes pour les personnes en activité qui veulent monter en compétence sans quitter leur poste. Adaptées aux salariés, cadres, entrepreneurs et professionnels en reconversion.",
@@ -56,7 +56,7 @@ export const universes: Universe[] = [
   },
   {
     id: "ultraboost",
-    name: "IPMD Boost",
+    name: "UltraBoost",
     tagline: "Bootcamps professionnels — certificats pro",
     description:
       "Bootcamps intensifs pour accélérer la montée en compétence des professionnels dans le digital, l'IA, le business, la productivité et la performance.",
@@ -88,7 +88,7 @@ export const universes: Universe[] = [
   },
   {
     id: "ultraexecutive",
-    name: "IPMD Premium Executive",
+    name: "UltraExecutive",
     tagline: "Bootcamps premium — dirigeants",
     description:
       "Bootcamps premium pour les dirigeants, entrepreneurs et décideurs souhaitant renforcer leurs compétences en transformation digitale, IA, stratégie, leadership et gouvernance.",

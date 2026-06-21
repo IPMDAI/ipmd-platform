@@ -8,11 +8,11 @@ export const mainNav: NavItem[] = [
     href: "/formations",
     children: [
       { label: "IPMD Campus", href: "/campus" },
-      { label: "IPMD Jobs", href: "/ultrajobs" },
-      { label: "IPMD Professionnel", href: "/professionnel" },
-      { label: "IPMD Boost", href: "/ultraboost" },
+      { label: "UltraJobs", href: "/ultrajobs" },
+      { label: "IPMD Pro", href: "/professionnel" },
+      { label: "UltraBoost", href: "/ultraboost" },
       { label: "IPMD Executive", href: "/gouvernance" },
-      { label: "IPMD Premium Executive", href: "/ultraexecutive" },
+      { label: "UltraExecutive", href: "/ultraexecutive" },
     ],
   },
   { label: "Admission", href: "/admission" },
@@ -24,11 +24,11 @@ export const mainNav: NavItem[] = [
 export const footerNav = {
   formations: [
     { label: "IPMD Campus", href: "/campus" },
-    { label: "IPMD Jobs", href: "/ultrajobs" },
-    { label: "IPMD Professionnel", href: "/professionnel" },
-    { label: "IPMD Boost", href: "/ultraboost" },
+    { label: "UltraJobs", href: "/ultrajobs" },
+    { label: "IPMD Pro", href: "/professionnel" },
+    { label: "UltraBoost", href: "/ultraboost" },
     { label: "IPMD Executive", href: "/gouvernance" },
-    { label: "IPMD Premium Executive", href: "/ultraexecutive" },
+    { label: "UltraExecutive", href: "/ultraexecutive" },
   ] satisfies NavItem[],
   institut: [
     { label: "À propos", href: "/a-propos" },
@@ -41,11 +41,11 @@ export const footerNav = {
 /** Sous-domaines prévus dans l'architecture future. */
 export const futureSubdomains = [
   { label: "Campus", href: "https://campus.ipmd.pro" },
-  { label: "IPMD Jobs", href: "https://ultrajobs.ipmd.pro" },
+  { label: "UltraJobs", href: "https://ultrajobs.ipmd.pro" },
   { label: "Pro", href: "https://pro.ipmd.pro" },
-  { label: "IPMD Boost", href: "https://ultraboost.ipmd.pro" },
+  { label: "UltraBoost", href: "https://ultraboost.ipmd.pro" },
   { label: "Executive", href: "https://executive.ipmd.pro" },
-  { label: "IPMD Premium Executive", href: "https://ultraexecutive.ipmd.pro" },
+  { label: "UltraExecutive", href: "https://ultraexecutive.ipmd.pro" },
   { label: "Application", href: "https://app.ipmd.pro" },
   { label: "Admin", href: "https://admin.ipmd.pro" },
   { label: "API", href: "https://api.ipmd.pro" },

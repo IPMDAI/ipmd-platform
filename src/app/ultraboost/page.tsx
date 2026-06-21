@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { UniverseShowcase } from "@/components/sections/UniverseShowcase";
 
 export const metadata: Metadata = {
-  title: "IPMD Boost — Bootcamps professionnels",
+  title: "UltraBoost — Bootcamps professionnels",
   description:
     "15 bootcamps courts et intensifs pour accélérer la montée en compétence des professionnels dans le digital et l'IA.",
 };
