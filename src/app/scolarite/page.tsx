@@ -36,11 +36,14 @@ export default function ScolaritePage() {
           Montants en FCFA. La scolarité peut être réglée en 10 versements.
         </p>
 
-        <div className="mt-8 overflow-x-auto rounded-2xl ring-1 ring-black/10">
+        {/* Tableau horizontal (ordinateur) */}
+        <div className="mt-8 hidden overflow-x-auto rounded-2xl ring-1 ring-black/10 lg:block">
           <table className="w-full min-w-[900px] border-collapse text-sm">
             <thead>
               <tr className="bg-ipmd-red text-white">
-                <th className="px-3 py-3 text-left font-bold">Diplôme</th>
+                <th className="px-3 py-3 text-left font-bold">
+                  Niveau d&apos;étude
+                </th>
                 {feeColumns.map((col) => (
                   <th key={col.label} className="px-3 py-3 text-center font-bold">
                     <div>{col.label}</div>
@@ -76,6 +79,42 @@ export default function ScolaritePage() {
               ))}
             </tbody>
           </table>
+        </div>
+
+        {/* Cartes verticales (téléphone) */}
+        <div className="mt-8 space-y-4 lg:hidden">
+          {feeRows.map((row) => (
+            <div
+              key={row.level}
+              className="overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-black/5"
+            >
+              <div className="flex items-center justify-between bg-ipmd-red px-4 py-3 text-white">
+                <span className="font-bold">{row.level}</span>
+                <span className="text-right">
+                  <span className="block text-[11px] uppercase tracking-wide text-white/70">
+                    Total (100 %)
+                  </span>
+                  <span className="font-extrabold">{row.values[0]} F</span>
+                </span>
+              </div>
+              <dl className="grid grid-cols-2 gap-x-4 gap-y-2.5 p-4 text-sm">
+                {feeColumns.slice(1).map((col, idx) => (
+                  <div
+                    key={col.label}
+                    className="flex items-baseline justify-between gap-2 border-b border-black/5 pb-1.5"
+                  >
+                    <dt className="text-black/50">
+                      {col.label}{" "}
+                      <span className="text-[11px]">({col.pct})</span>
+                    </dt>
+                    <dd className="font-semibold text-ipmd-black">
+                      {row.values[idx + 1]}
+                    </dd>
+                  </div>
+                ))}
+              </dl>
+            </div>
+          ))}
         </div>
 
         {/* Notes inscription / paiement */}
