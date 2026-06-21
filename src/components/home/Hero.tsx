@@ -8,7 +8,7 @@ const HERO_VIDEO_ID = "azB3Irjscyg";
 /** Bande d'identité IPMD (titre, slogan, CTA, statistiques) sur fond vidéo. */
 export function Hero() {
   return (
-    <section className="relative overflow-hidden bg-ipmd-black text-white">
+    <section className="relative flex min-h-[90vh] items-center overflow-hidden bg-ipmd-black text-white">
       {/* Vidéo de fond (derrière les écritures) */}
       <div
         className="pointer-events-none absolute inset-0 overflow-hidden"
@@ -43,7 +43,7 @@ export function Hero() {
         aria-hidden
       />
 
-      <Container className="relative py-20 sm:py-28">
+      <Container className="relative w-full py-24 sm:py-32">
         <div className="mx-auto max-w-3xl text-center">
           <div className="animate-fade-in">
             <Badge tone="red">80 % de pratique</Badge>

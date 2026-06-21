@@ -1,4 +1,3 @@
-import { AnnouncementCarousel } from "@/components/home/AnnouncementCarousel";
 import { Hero } from "@/components/home/Hero";
 import { UniversesSection } from "@/components/home/UniversesSection";
 import { PopularPrograms } from "@/components/home/PopularPrograms";
@@ -10,7 +9,6 @@ import { ContactTeaser } from "@/components/home/ContactTeaser";
 export default function HomePage() {
   return (
     <>
-      <AnnouncementCarousel />
       <Hero />
       <UniversesSection />
       <PopularPrograms />
