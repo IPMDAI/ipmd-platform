@@ -25,7 +25,7 @@ export function UniverseCard({ universe }: { universe: Universe }) {
           {universe.icon}
         </span>
         <span className="absolute right-4 top-4">
-          <Badge tone={universe.kind === "diplome" ? "dark" : "red"}>
+          <Badge tone="red">
             {universe.kind === "diplome" ? "Diplômes" : "Certificats"}
           </Badge>
         </span>
@@ -33,8 +33,10 @@ export function UniverseCard({ universe }: { universe: Universe }) {
 
       {/* Contenu */}
       <div className="flex flex-1 flex-col p-7">
-        <p className="mb-3 inline-flex w-fit items-center gap-1.5 rounded-full bg-ipmd-light px-3 py-1 text-[11px] font-bold uppercase tracking-wide text-ipmd-black/70">
-          <span aria-hidden>👥</span>
+        <p className="mb-3 inline-flex w-fit items-center gap-2 rounded-full bg-ipmd-black px-4 py-1.5 text-sm font-bold uppercase tracking-wide text-white">
+          <span aria-hidden className="text-base">
+            👥
+          </span>
           {universe.target}
         </p>
         <h3 className="text-xl font-extrabold tracking-tight text-ipmd-black">
