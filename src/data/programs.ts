@@ -11,7 +11,7 @@ export const programs: Program[] = [
     universe: "campus",
     title: "Marketing digital",
     description:
-      "Stratégie d'acquisition, réseaux sociaux, SEO/SEA, data et growth marketing.",
+      "Devenez expert du marketing à l'ère de l'IA : campagnes, data et growth augmentés par l'intelligence artificielle. Une compétence très recherchée par les entreprises, 80 % de pratique et une employabilité immédiate.",
     degrees: ["Licence", "Bachelor", "Master"],
     entryLevels: ["Bac", "Bac+1", "Bac+2", "Bac+3", "Bac+4"],
     field: "Marketing",
@@ -22,7 +22,7 @@ export const programs: Program[] = [
     universe: "campus",
     title: "Communication digitale",
     description:
-      "Brand content, community management, relations publiques et storytelling.",
+      "Communication, contenu et influence boostés par l'IA : créez plus vite, mieux et à grande échelle. Des compétences indispensables aux marques, 80 % de pratique et de vrais débouchés.",
     degrees: ["Licence", "Bachelor", "Master"],
     entryLevels: ["Bac", "Bac+1", "Bac+2", "Bac+3", "Bac+4"],
     field: "Communication",
@@ -33,7 +33,7 @@ export const programs: Program[] = [
     universe: "campus",
     title: "Graphisme & Design",
     description:
-      "Identité visuelle, UI/UX, motion design et création graphique professionnelle.",
+      "Créez visuels et interfaces qui marquent, propulsés par l'IA générative. Design, UX/UI et motion : un métier créatif très demandé, 80 % de pratique et un portfolio prêt pour l'emploi.",
     degrees: ["Licence", "Bachelor", "Master"],
     entryLevels: ["Bac", "Bac+1", "Bac+2", "Bac+3", "Bac+4"],
     field: "Design",
@@ -44,7 +44,7 @@ export const programs: Program[] = [
     universe: "campus",
     title: "E-commerce & commerce international",
     description:
-      "Marketplaces, logistique, paiement en ligne et stratégies de vente à l'international.",
+      "Lancez et développez le commerce en ligne à l'international, optimisé par l'IA (recommandation, personnalisation, automatisation). Un secteur en plein essor, 80 % de pratique et de belles opportunités.",
     degrees: ["Licence", "Bachelor", "Master"],
     entryLevels: ["Bac", "Bac+1", "Bac+2", "Bac+3", "Bac+4"],
     field: "Commerce",
@@ -55,7 +55,7 @@ export const programs: Program[] = [
     universe: "campus",
     title: "Développement d'applications",
     description:
-      "Web, mobile et API : du front-end au back-end avec les frameworks modernes.",
+      "Codez les applications web et mobile de demain, assisté par l'IA. Des compétences techniques parmi les plus recherchées du marché, 80 % de pratique et un accès direct à l'emploi tech.",
     degrees: ["Licence", "Bachelor", "Master"],
     entryLevels: ["Bac", "Bac+1", "Bac+2", "Bac+3", "Bac+4"],
     field: "Développement",
@@ -66,7 +66,7 @@ export const programs: Program[] = [
     universe: "campus",
     title: "Informatique & intelligence artificielle",
     description:
-      "Data science, machine learning, IA générative et systèmes intelligents.",
+      "Maîtrisez la révolution de l'IA : data, machine learning et IA générative. Le domaine le plus porteur du moment, 80 % de pratique et des métiers d'avenir hautement valorisés.",
     degrees: ["Licence", "Bachelor", "Master"],
     entryLevels: ["Bac", "Bac+1", "Bac+2", "Bac+3", "Bac+4"],
     field: "IA",
@@ -77,7 +77,7 @@ export const programs: Program[] = [
     universe: "campus",
     title: "Management de projet digital",
     description:
-      "Gestion agile, pilotage produit, leadership d'équipe et transformation digitale.",
+      "Pilotez la transformation digitale et l'IA des organisations : agilité, leadership et data pour des projets à fort impact. Des compétences clés, 80 % de pratique et des postes à responsabilité.",
     degrees: ["Licence", "Bachelor", "Master"],
     entryLevels: ["Bac", "Bac+1", "Bac+2", "Bac+3", "Bac+4"],
     field: "Management",
@@ -88,7 +88,7 @@ export const programs: Program[] = [
     universe: "campus",
     title: "Comptabilité & finance digitale",
     description:
-      "Comptabilité, contrôle de gestion, fintech et outils financiers numériques.",
+      "Réinventez la finance avec la FinTech et l'IA : automatisation, data et finance prédictive. Des compétences rares et stratégiques, 80 % de pratique et une employabilité solide.",
     degrees: ["Licence", "Bachelor", "Master"],
     entryLevels: ["Bac", "Bac+1", "Bac+2", "Bac+3", "Bac+4"],
     field: "Finance",
@@ -101,7 +101,7 @@ export const programs: Program[] = [
     universe: "professionnel",
     title: "Marketing digital",
     description:
-      "Pilotez l'acquisition et la croissance avec des méthodes data-driven appliquées.",
+      "Montez en compétence sur le marketing piloté par l'IA : data, growth et performance. Boostez votre carrière sans quitter votre poste, avec 80 % de pratique et des résultats concrets.",
     degrees: ["Licence", "Bachelor", "Master", "MBA"],
     entryLevels: ["Bac+2", "Bac+3", "Bac+4", "Bac+5"],
     field: "Marketing",
@@ -112,7 +112,7 @@ export const programs: Program[] = [
     universe: "professionnel",
     title: "Communication digitale",
     description:
-      "Construisez et déployez des stratégies de communication à fort impact.",
+      "Faites évoluer votre expertise en communication digitale augmentée par l'IA : stratégie, contenu et influence. Une montée en compétence rapide, 80 % de pratique, tout en restant en activité.",
     degrees: ["Licence", "Bachelor", "Master", "MBA"],
     entryLevels: ["Bac+2", "Bac+3", "Bac+4", "Bac+5"],
     field: "Communication",
@@ -123,7 +123,7 @@ export const programs: Program[] = [
     universe: "professionnel",
     title: "Graphisme & Design",
     description:
-      "Maîtrisez le design produit, l'UX et la direction artistique en entreprise.",
+      "Renforcez vos compétences en design produit, UX/UI et IA générative. Devenez un profil créatif incontournable en entreprise, avec 80 % de pratique et une vraie valeur ajoutée.",
     degrees: ["Licence", "Bachelor", "Master", "MBA"],
     entryLevels: ["Bac+2", "Bac+3", "Bac+4", "Bac+5"],
     field: "Design",
@@ -134,7 +134,7 @@ export const programs: Program[] = [
     universe: "professionnel",
     title: "E-commerce & commerce international",
     description:
-      "Développez des opérations e-commerce performantes à l'échelle internationale.",
+      "Développez des opérations e-commerce performantes à l'international, optimisées par l'IA. Une expertise stratégique et opérationnelle, 80 % de pratique, en restant en poste.",
     degrees: ["Licence", "Bachelor", "Master", "MBA"],
     entryLevels: ["Bac+2", "Bac+3", "Bac+4", "Bac+5"],
     field: "Commerce",
@@ -145,7 +145,7 @@ export const programs: Program[] = [
     universe: "professionnel",
     title: "Développement d'applications",
     description:
-      "Concevez et livrez des applications robustes, du prototype à la production.",
+      "Devenez développeur confirmé à l'ère de l'IA : full-stack, cloud et automatisation. Des compétences très demandées pour accélérer votre carrière tech, avec 80 % de pratique.",
     degrees: ["Licence", "Bachelor", "Master", "MBA"],
     entryLevels: ["Bac+2", "Bac+3", "Bac+4", "Bac+5"],
     field: "Développement",
@@ -156,7 +156,7 @@ export const programs: Program[] = [
     universe: "professionnel",
     title: "Intelligence artificielle",
     description:
-      "Intégrez l'IA et l'IA générative dans vos produits, process et décisions.",
+      "Intégrez l'IA et l'IA générative dans vos produits, process et décisions. La compétence la plus stratégique du moment pour faire la différence, avec 80 % de pratique.",
     degrees: ["Licence", "Bachelor", "Master", "MBA"],
     entryLevels: ["Bac+2", "Bac+3", "Bac+4", "Bac+5"],
     field: "IA",
@@ -167,7 +167,7 @@ export const programs: Program[] = [
     universe: "professionnel",
     title: "Management de projet digital",
     description:
-      "Pilotez la transformation digitale et dirigez des équipes pluridisciplinaires.",
+      "Pilotez la transformation digitale et l'IA, dirigez des équipes et des projets à fort impact. Accédez à des postes à responsabilité, avec 80 % de pratique, en activité.",
     degrees: ["Licence", "Bachelor", "Master", "MBA"],
     entryLevels: ["Bac+2", "Bac+3", "Bac+4", "Bac+5"],
     field: "Management",
@@ -178,7 +178,7 @@ export const programs: Program[] = [
     universe: "professionnel",
     title: "Finance digitale",
     description:
-      "Fintech, data financière et stratégies de financement à l'ère du numérique.",
+      "Modernisez votre expertise financière avec la FinTech et l'IA : data, reporting et finance prédictive. Une compétence rare et valorisée, 80 % de pratique, en poste.",
     degrees: ["Licence", "Bachelor", "Master", "MBA"],
     entryLevels: ["Bac+2", "Bac+3", "Bac+4", "Bac+5"],
     field: "Finance",
@@ -191,7 +191,7 @@ export const programs: Program[] = [
     universe: "gouvernance",
     title: "Management de projet digital",
     description:
-      "Gouvernance digitale & IA, disruption et leadership des organisations.",
+      "Dirigez la gouvernance digitale et l'IA de votre organisation : stratégie, disruption et leadership. Un programme exécutif à fort impact pour les décideurs qui pilotent la transformation.",
     degrees: ["Master Exécutif", "MBA Exécutif", "DBA"],
     entryLevels: ["Bac+3", "Bac+4", "Bac+5"],
     field: "Gouvernance",
@@ -202,7 +202,7 @@ export const programs: Program[] = [
     universe: "gouvernance",
     title: "Marketing digital & stratégie IA",
     description:
-      "Définissez la stratégie marketing augmentée par l'IA au niveau exécutif.",
+      "Pilotez la stratégie marketing augmentée par l'IA au plus haut niveau : data, performance et innovation. Un programme exécutif orienté décision et impact business.",
     degrees: ["Master Exécutif", "MBA Exécutif", "DBA"],
     entryLevels: ["Bac+3", "Bac+4", "Bac+5"],
     field: "Marketing",
@@ -213,7 +213,7 @@ export const programs: Program[] = [
     universe: "gouvernance",
     title: "Finance digitale & stratégie IA",
     description:
-      "Pilotez la performance financière et l'allocation du capital à l'ère de l'IA.",
+      "Dirigez la finance digitale et la stratégie IA : allocation du capital, data et finance prédictive. Un programme exécutif à forte valeur stratégique pour les décideurs.",
     degrees: ["Master Exécutif", "MBA Exécutif", "DBA"],
     entryLevels: ["Bac+3", "Bac+4", "Bac+5"],
     field: "Finance",
