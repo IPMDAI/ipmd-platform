@@ -41,7 +41,7 @@ export function Logo({
         <span className={`flex flex-col leading-none ${text}`}>
           <span className="text-lg font-extrabold tracking-tight">IPMD</span>
           <span className="text-[10px] font-medium uppercase tracking-[0.15em] opacity-60">
-            Métiers du Digital
+            Métiers du Digital &amp; IA
           </span>
         </span>
       )}
