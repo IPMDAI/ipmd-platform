@@ -31,7 +31,7 @@ export function ProgramCard({ program }: { program: Program }) {
       {/* Contenu */}
       <div className="flex flex-1 flex-col p-6">
         <h3 className="text-lg font-bold text-ipmd-black">{program.title}</h3>
-        <p className="mt-2 flex-1 text-sm leading-relaxed text-black/60">
+        <p className="mt-2 flex-1 whitespace-pre-line text-sm leading-relaxed text-black/60">
           {program.description}
         </p>
 

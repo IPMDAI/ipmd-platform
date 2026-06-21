@@ -11,7 +11,7 @@ export const programs: Program[] = [
     universe: "campus",
     title: "Marketing digital",
     description:
-      "Devenez expert du marketing à l'ère de l'IA : campagnes, data et growth augmentés par l'intelligence artificielle. Une compétence très recherchée par les entreprises, 80 % de pratique et une employabilité immédiate.",
+      "Le Marketing digital permet de promouvoir une entreprise, une marque, un produit ou un service à travers les canaux numériques.\n\nTrès demandé sur le marché, il couvre les réseaux sociaux, le e-commerce, la publicité en ligne, le référencement, la création de contenu, l'analyse des données, l'intelligence artificielle et les technologies financières digitales.\n\nÀ l'IPMD, la formation en Marketing digital, quel que soit le niveau, est orientée à 80 % vers la pratique afin de former des étudiants capables de concevoir, gérer et optimiser des campagnes digitales performantes à l'ère de l'intelligence artificielle.",
     degrees: ["Licence", "Bachelor", "Master"],
     entryLevels: ["Bac", "Bac+1", "Bac+2", "Bac+3", "Bac+4"],
     field: "Marketing",
