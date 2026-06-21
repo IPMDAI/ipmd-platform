@@ -1,5 +1,6 @@
 import { AnnouncementCarousel } from "@/components/home/AnnouncementCarousel";
 import { Hero } from "@/components/home/Hero";
+import { AboutSection } from "@/components/home/AboutSection";
 import { UniversesSection } from "@/components/home/UniversesSection";
 import { PopularPrograms } from "@/components/home/PopularPrograms";
 import { AiSection } from "@/components/home/AiSection";
@@ -12,6 +13,7 @@ export default function HomePage() {
     <>
       <AnnouncementCarousel />
       <Hero />
+      <AboutSection />
       <UniversesSection />
       <PopularPrograms />
       <AiSection />
