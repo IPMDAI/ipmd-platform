@@ -101,7 +101,7 @@ export const programs: Program[] = [
     universe: "professionnel",
     title: "Marketing digital",
     description:
-      "Montez en compétence sur le marketing piloté par l'IA : data, growth et performance. Boostez votre carrière sans quitter votre poste, avec 80 % de pratique et des résultats concrets.",
+      "Le Marketing digital permet de promouvoir une entreprise, une marque, un produit ou un service à travers les canaux numériques.\n\nTrès demandé sur le marché, il couvre les réseaux sociaux, le e-commerce, la publicité en ligne, le référencement, la création de contenu, l'analyse des données, l'intelligence artificielle et les technologies financières digitales.\n\nÀ l'IPMD, la formation est orientée à 80 % vers la pratique, afin de former des professionnels capables de concevoir, gérer et optimiser des campagnes digitales performantes à l'ère de l'IA, tout en restant en activité.",
     degrees: ["Licence", "Bachelor", "Master", "MBA"],
     entryLevels: ["Bac+2", "Bac+3", "Bac+4", "Bac+5"],
     field: "Marketing",
@@ -112,7 +112,7 @@ export const programs: Program[] = [
     universe: "professionnel",
     title: "Communication digitale",
     description:
-      "Faites évoluer votre expertise en communication digitale augmentée par l'IA : stratégie, contenu et influence. Une montée en compétence rapide, 80 % de pratique, tout en restant en activité.",
+      "La Communication digitale permet de gérer l'image, la visibilité et la relation d'une entreprise, d'une marque ou d'une organisation sur les canaux numériques.\n\nTrès recherchée sur le marché, elle couvre la création de contenu, les réseaux sociaux, l'influence, la gestion de communauté, la communication de marque, la stratégie éditoriale et l'utilisation de l'intelligence artificielle pour produire plus vite et mieux.\n\nÀ l'IPMD, la formation est orientée à 80 % vers la pratique, afin de former des professionnels capables de concevoir, diffuser et piloter des actions de communication digitale efficaces.",
     degrees: ["Licence", "Bachelor", "Master", "MBA"],
     entryLevels: ["Bac+2", "Bac+3", "Bac+4", "Bac+5"],
     field: "Communication",
@@ -123,7 +123,7 @@ export const programs: Program[] = [
     universe: "professionnel",
     title: "Graphisme & Design",
     description:
-      "Renforcez vos compétences en design produit, UX/UI et IA générative. Devenez un profil créatif incontournable en entreprise, avec 80 % de pratique et une vraie valeur ajoutée.",
+      "Le Graphisme & Design permet de créer des visuels, des identités de marque, des supports de communication et des interfaces digitales attractives.\n\nTrès demandé dans les entreprises, agences, médias et projets digitaux, ce domaine couvre le design graphique, la création visuelle, l'UX/UI design, le branding, le motion design et l'utilisation de l'intelligence artificielle générative.\n\nÀ l'IPMD, la formation est orientée à 80 % vers la pratique, afin de former des professionnels capables de concevoir des visuels professionnels, des interfaces modernes et des supports créatifs adaptés aux besoins du marché.",
     degrees: ["Licence", "Bachelor", "Master", "MBA"],
     entryLevels: ["Bac+2", "Bac+3", "Bac+4", "Bac+5"],
     field: "Design",
@@ -134,7 +134,7 @@ export const programs: Program[] = [
     universe: "professionnel",
     title: "E-commerce & commerce international",
     description:
-      "Développez des opérations e-commerce performantes à l'international, optimisées par l'IA. Une expertise stratégique et opérationnelle, 80 % de pratique, en restant en poste.",
+      "Le E-commerce & Commerce international permet de vendre des produits et services en ligne, de gérer une boutique digitale et de développer des activités commerciales sur les marchés locaux et internationaux.\n\nTrès demandé avec la croissance du numérique, ce domaine couvre le commerce en ligne, les marketplaces, la logistique, le paiement digital, le marketing e-commerce, la relation client, l'import-export et les outils d'intelligence artificielle pour améliorer les ventes.\n\nÀ l'IPMD, la formation est orientée à 80 % vers la pratique, afin de former des professionnels capables de créer, gérer et développer des activités commerciales digitales performantes.",
     degrees: ["Licence", "Bachelor", "Master", "MBA"],
     entryLevels: ["Bac+2", "Bac+3", "Bac+4", "Bac+5"],
     field: "Commerce",
@@ -145,7 +145,7 @@ export const programs: Program[] = [
     universe: "professionnel",
     title: "Développement d'applications",
     description:
-      "Devenez développeur confirmé à l'ère de l'IA : full-stack, cloud et automatisation. Des compétences très demandées pour accélérer votre carrière tech, avec 80 % de pratique.",
+      "Le Développement d'applications permet de concevoir des sites web, des applications mobiles, des plateformes digitales et des solutions numériques adaptées aux besoins des entreprises.\n\nTrès demandé dans le monde professionnel, ce domaine couvre la programmation, le développement web et mobile, les bases de données, l'UX/UI, les API, la sécurité, les outils collaboratifs et l'intelligence artificielle appliquée au développement.\n\nÀ l'IPMD, la formation est orientée à 80 % vers la pratique, afin de former des professionnels capables de créer, tester et déployer des applications utiles et performantes.",
     degrees: ["Licence", "Bachelor", "Master", "MBA"],
     entryLevels: ["Bac+2", "Bac+3", "Bac+4", "Bac+5"],
     field: "Développement",
@@ -156,7 +156,7 @@ export const programs: Program[] = [
     universe: "professionnel",
     title: "Intelligence artificielle",
     description:
-      "Intégrez l'IA et l'IA générative dans vos produits, process et décisions. La compétence la plus stratégique du moment pour faire la différence, avec 80 % de pratique.",
+      "L'Informatique & Intelligence Artificielle prépare aux métiers du numérique, de la programmation, de la data, de l'automatisation et des technologies intelligentes.\n\nTrès demandée sur le marché, cette formation couvre les bases de l'informatique, le développement logiciel, les bases de données, les systèmes numériques, la cybersécurité, l'analyse de données, le machine learning, l'IA générative et l'automatisation des processus.\n\nÀ l'IPMD, la formation est orientée à 80 % vers la pratique, afin de former des professionnels capables de concevoir, utiliser et développer des solutions numériques et intelligentes adaptées aux besoins des entreprises.",
     degrees: ["Licence", "Bachelor", "Master", "MBA"],
     entryLevels: ["Bac+2", "Bac+3", "Bac+4", "Bac+5"],
     field: "IA",
@@ -167,7 +167,7 @@ export const programs: Program[] = [
     universe: "professionnel",
     title: "Management de projet digital",
     description:
-      "Pilotez la transformation digitale et l'IA, dirigez des équipes et des projets à fort impact. Accédez à des postes à responsabilité, avec 80 % de pratique, en activité.",
+      "Le Management de projet digital permet de planifier, organiser, piloter et suivre des projets numériques au sein des entreprises et organisations.\n\nTrès utile dans tous les secteurs, il couvre la gestion de projet, les méthodes agiles, la coordination d'équipes, les outils collaboratifs, la transformation digitale, le suivi des performances et l'intégration de l'intelligence artificielle dans la gestion des projets.\n\nÀ l'IPMD, la formation est orientée à 80 % vers la pratique, afin de former des professionnels capables de conduire des projets digitaux de l'idée jusqu'à la réalisation.",
     degrees: ["Licence", "Bachelor", "Master", "MBA"],
     entryLevels: ["Bac+2", "Bac+3", "Bac+4", "Bac+5"],
     field: "Management",
@@ -178,7 +178,7 @@ export const programs: Program[] = [
     universe: "professionnel",
     title: "Finance digitale",
     description:
-      "Modernisez votre expertise financière avec la FinTech et l'IA : data, reporting et finance prédictive. Une compétence rare et valorisée, 80 % de pratique, en poste.",
+      "La Comptabilité et Finance digitale forme aux nouvelles pratiques de gestion financière, de comptabilité numérique et d'analyse des données financières.\n\nTrès demandée par les entreprises, cabinets, banques, fintechs et organisations, elle couvre la comptabilité, la finance, les outils digitaux de gestion, les tableaux de bord, la digitalisation financière, les paiements numériques, la FinTech et l'intelligence artificielle appliquée à la finance.\n\nÀ l'IPMD, la formation est orientée à 80 % vers la pratique, afin de former des professionnels capables de gérer, analyser et optimiser les opérations financières dans un environnement digitalisé.",
     degrees: ["Licence", "Bachelor", "Master", "MBA"],
     entryLevels: ["Bac+2", "Bac+3", "Bac+4", "Bac+5"],
     field: "Finance",
@@ -191,7 +191,7 @@ export const programs: Program[] = [
     universe: "gouvernance",
     title: "Management de projet digital",
     description:
-      "Dirigez la gouvernance digitale et l'IA de votre organisation : stratégie, disruption et leadership. Un programme exécutif à fort impact pour les décideurs qui pilotent la transformation.",
+      "Le Management de projet digital permet de planifier, organiser, piloter et suivre des projets numériques au sein des entreprises et organisations.\n\nTrès utile dans tous les secteurs, il couvre la gestion de projet, les méthodes agiles, la coordination d'équipes, les outils collaboratifs, la transformation digitale, le suivi des performances et l'intégration de l'intelligence artificielle dans la gestion des projets.\n\nÀ l'IPMD, la formation exécutive est orientée à 80 % vers la pratique, afin de former des dirigeants et décideurs capables de conduire des projets digitaux et la gouvernance numérique de leur organisation.",
     degrees: ["Master Exécutif", "MBA Exécutif", "DBA"],
     entryLevels: ["Bac+3", "Bac+4", "Bac+5"],
     field: "Gouvernance",
@@ -202,7 +202,7 @@ export const programs: Program[] = [
     universe: "gouvernance",
     title: "Marketing digital & stratégie IA",
     description:
-      "Pilotez la stratégie marketing augmentée par l'IA au plus haut niveau : data, performance et innovation. Un programme exécutif orienté décision et impact business.",
+      "Le Marketing digital permet de promouvoir une entreprise, une marque, un produit ou un service à travers les canaux numériques.\n\nTrès demandé sur le marché, il couvre les réseaux sociaux, le e-commerce, la publicité en ligne, le référencement, la création de contenu, l'analyse des données, l'intelligence artificielle et les technologies financières digitales.\n\nÀ l'IPMD, la formation exécutive est orientée à 80 % vers la pratique, afin de former des dirigeants et décideurs capables de piloter une stratégie marketing digitale performante à l'ère de l'IA.",
     degrees: ["Master Exécutif", "MBA Exécutif", "DBA"],
     entryLevels: ["Bac+3", "Bac+4", "Bac+5"],
     field: "Marketing",
@@ -213,7 +213,7 @@ export const programs: Program[] = [
     universe: "gouvernance",
     title: "Finance digitale & stratégie IA",
     description:
-      "Dirigez la finance digitale et la stratégie IA : allocation du capital, data et finance prédictive. Un programme exécutif à forte valeur stratégique pour les décideurs.",
+      "La Comptabilité et Finance digitale forme aux nouvelles pratiques de gestion financière, de comptabilité numérique et d'analyse des données financières.\n\nTrès demandée par les entreprises, cabinets, banques, fintechs et organisations, elle couvre la comptabilité, la finance, les outils digitaux de gestion, les tableaux de bord, la digitalisation financière, les paiements numériques, la FinTech et l'intelligence artificielle appliquée à la finance.\n\nÀ l'IPMD, la formation exécutive est orientée à 80 % vers la pratique, afin de former des dirigeants et décideurs capables de gérer, analyser et optimiser la performance financière à l'ère de l'IA.",
     degrees: ["Master Exécutif", "MBA Exécutif", "DBA"],
     entryLevels: ["Bac+3", "Bac+4", "Bac+5"],
     field: "Finance",
