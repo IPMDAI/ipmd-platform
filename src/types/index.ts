@@ -42,6 +42,8 @@ export interface Universe {
   href: string;
   /** Emoji / pictogramme léger (remplaçable par une icône). */
   icon: string;
+  /** Image d'illustration de la carte (URL ou chemin /public). */
+  image: string;
 }
 
 // ──────────────────────────────────────────────────────────────

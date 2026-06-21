@@ -18,6 +18,8 @@ export const universes: Universe[] = [
     subdomain: "campus.ipmd.pro",
     href: "/campus",
     icon: "🎓",
+    image:
+      "https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=800&q=80&auto=format&fit=crop",
   },
   {
     id: "ultrajobs",
@@ -31,6 +33,8 @@ export const universes: Universe[] = [
     subdomain: "ultrajobs.ipmd.pro",
     href: "/ultrajobs",
     icon: "🚀",
+    image:
+      "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=800&q=80&auto=format&fit=crop",
   },
   {
     id: "professionnel",
@@ -44,6 +48,8 @@ export const universes: Universe[] = [
     subdomain: "pro.ipmd.pro",
     href: "/professionnel",
     icon: "💼",
+    image:
+      "https://images.unsplash.com/photo-1521791136064-7986c2920216?w=800&q=80&auto=format&fit=crop",
   },
   {
     id: "ultraboost",
@@ -57,6 +63,8 @@ export const universes: Universe[] = [
     subdomain: "ultraboost.ipmd.pro",
     href: "/ultraboost",
     icon: "⚡",
+    image:
+      "https://images.unsplash.com/photo-1552581234-26160f608093?w=800&q=80&auto=format&fit=crop",
   },
   {
     id: "gouvernance",
@@ -70,6 +78,8 @@ export const universes: Universe[] = [
     subdomain: "executive.ipmd.pro",
     href: "/gouvernance",
     icon: "🏛️",
+    image:
+      "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=800&q=80&auto=format&fit=crop",
   },
   {
     id: "ultraexecutive",
@@ -83,6 +93,8 @@ export const universes: Universe[] = [
     subdomain: "ultraexecutive.ipmd.pro",
     href: "/ultraexecutive",
     icon: "👑",
+    image:
+      "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800&q=80&auto=format&fit=crop",
   },
 ];
 
