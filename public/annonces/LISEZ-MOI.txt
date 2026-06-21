@@ -1,0 +1,17 @@
+Déposez ici vos visuels d'annonce (JPO, nouvelles formations, événements…).
+
+Comment publier un visuel :
+1. Glissez votre image dans ce dossier, ex. "jpo-2026.jpg".
+2. Ouvrez le fichier  src/data/announcements.ts  et ajoutez une entrée :
+
+   {
+     id: "jpo-2026",
+     src: "/annonces/jpo-2026.jpg",
+     alt: "Journée Portes Ouvertes 2026",
+     href: "/admission",      // lien optionnel au clic
+     fit: "contain",          // "contain" pour une affiche (texte visible) / "cover" pour une photo
+   },
+
+3. Enregistrez : le visuel apparaît automatiquement dans le carrousel d'accueil.
+
+Format conseillé : paysage 16:9 (ex. 1920 x 1080 px), JPG ou PNG, < 1 Mo si possible.
