@@ -1,9 +1,13 @@
 import Image from "next/image";
 import type { Program } from "@/types";
 import { getProgramImage } from "@/data/programs";
+import { getProgramDetail } from "@/data/programDetails";
+import { ProgramLevels } from "@/components/cards/ProgramLevels";
 
 /** Carte d'un programme diplômant. */
 export function ProgramCard({ program }: { program: Program }) {
+  const detail = getProgramDetail(program.id);
+
   return (
     <article className="group flex flex-col overflow-hidden rounded-2xl border border-black/5 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
       {/* Image d'illustration */}
@@ -49,6 +53,10 @@ export function ProgramCard({ program }: { program: Program }) {
             Entrée : {program.entryLevels.join(" · ")}
           </p>
         </div>
+
+        {detail && (
+          <ProgramLevels programTitle={program.title} detail={detail} />
+        )}
       </div>
     </article>
   );
