@@ -57,10 +57,15 @@ export function ProgramLevels({ programTitle, detail }: ProgramLevelsProps) {
         <div className="space-y-6">
           {activeLevel?.semesters.map((semester) => (
             <div key={semester.name}>
-              <p className="mb-2.5 inline-block rounded-full bg-ipmd-black px-3 py-1 text-xs font-bold uppercase tracking-wide text-white">
+              <p className="inline-block rounded-full bg-ipmd-black px-3 py-1 text-xs font-bold uppercase tracking-wide text-white">
                 {semester.name}
               </p>
-              <ul className="space-y-2">
+              {semester.title && (
+                <p className="mt-2 text-sm font-bold text-ipmd-black">
+                  {semester.title}
+                </p>
+              )}
+              <ul className="mt-2.5 space-y-2">
                 {semester.courses.map((course) => (
                   <li
                     key={course}
