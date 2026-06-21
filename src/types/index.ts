@@ -32,8 +32,10 @@ export interface Universe {
   /** Description longue (1 à 3 phrases). */
   description: string;
   kind: UniverseKind;
-  /** Public visé. */
+  /** Public visé (description longue). */
   audience: string;
+  /** Public visé en version courte (label en haut de la carte). */
+  target: string;
   /** Diplômes ou certificats délivrés. */
   credentials: string[];
   /** Sous-domaine futur, si applicable. */
