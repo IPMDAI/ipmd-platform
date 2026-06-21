@@ -1,40 +1,54 @@
+import Image from "next/image";
 import type { Program } from "@/types";
+import { getProgramImage } from "@/data/programs";
 
 /** Carte d'un programme diplômant. */
 export function ProgramCard({ program }: { program: Program }) {
   return (
-    <article className="group flex flex-col rounded-2xl border border-black/5 bg-white p-6 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
-      <div className="flex items-start justify-between gap-3">
-        <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-ipmd-light text-xl">
+    <article className="group flex flex-col overflow-hidden rounded-2xl border border-black/5 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
+      {/* Image d'illustration */}
+      <div className="relative aspect-[16/9] overflow-hidden">
+        <Image
+          src={getProgramImage(program.field)}
+          alt={program.title}
+          fill
+          sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
+          className="object-cover transition-transform duration-500 group-hover:scale-105"
+        />
+        <span className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/5 to-black/15" />
+        <span className="absolute left-3 top-3 flex h-10 w-10 items-center justify-center rounded-xl bg-white/90 text-lg shadow-sm backdrop-blur">
           {program.icon}
         </span>
-        <span className="rounded-full bg-ipmd-black px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-white">
+        <span className="absolute right-3 top-3 rounded-full bg-ipmd-red px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-white">
           {program.field}
         </span>
       </div>
 
-      <h3 className="mt-4 text-lg font-bold text-ipmd-black">{program.title}</h3>
-      <p className="mt-2 flex-1 text-sm leading-relaxed text-black/60">
-        {program.description}
-      </p>
+      {/* Contenu */}
+      <div className="flex flex-1 flex-col p-6">
+        <h3 className="text-lg font-bold text-ipmd-black">{program.title}</h3>
+        <p className="mt-2 flex-1 text-sm leading-relaxed text-black/60">
+          {program.description}
+        </p>
 
-      <div className="mt-4 border-t border-black/5 pt-4">
-        <p className="text-[11px] font-bold uppercase tracking-wide text-black/40">
-          Diplômes
-        </p>
-        <div className="mt-1.5 flex flex-wrap gap-1.5">
-          {program.degrees.map((d) => (
-            <span
-              key={d}
-              className="rounded-md bg-ipmd-red/10 px-2 py-0.5 text-xs font-semibold text-ipmd-red"
-            >
-              {d}
-            </span>
-          ))}
+        <div className="mt-4 border-t border-black/5 pt-4">
+          <p className="text-[11px] font-bold uppercase tracking-wide text-black/40">
+            Diplômes
+          </p>
+          <div className="mt-1.5 flex flex-wrap gap-1.5">
+            {program.degrees.map((d) => (
+              <span
+                key={d}
+                className="rounded-md bg-ipmd-red/10 px-2 py-0.5 text-xs font-semibold text-ipmd-red"
+              >
+                {d}
+              </span>
+            ))}
+          </div>
+          <p className="mt-3 text-xs text-black/50">
+            Entrée : {program.entryLevels.join(" · ")}
+          </p>
         </div>
-        <p className="mt-3 text-xs text-black/50">
-          Entrée : {program.entryLevels.join(" · ")}
-        </p>
       </div>
     </article>
   );
