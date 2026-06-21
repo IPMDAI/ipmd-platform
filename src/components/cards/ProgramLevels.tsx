@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Modal } from "@/components/ui/Modal";
+import { Button } from "@/components/ui/Button";
 import type { ProgramDetail } from "@/data/programDetails";
 
 interface ProgramLevelsProps {
@@ -12,6 +13,7 @@ interface ProgramLevelsProps {
 type Selection =
   | { type: "level"; index: number }
   | { type: "outcomes" }
+  | { type: "admission" }
   | null;
 
 /** Boutons « Programme Bac+1 → Bac+5 » + « Débouchés », chacun ouvrant une pop-up. */
@@ -46,6 +48,15 @@ export function ProgramLevels({ programTitle, detail }: ProgramLevelsProps) {
           Débouchés
         </button>
       </div>
+
+      {/* Bouton de candidature */}
+      <button
+        type="button"
+        onClick={() => setSelection({ type: "admission" })}
+        className="mt-3 inline-flex items-center gap-2 rounded-full bg-ipmd-black px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-ipmd-red"
+      >
+        <span aria-hidden>📝</span> Demande de candidature
+      </button>
 
       {/* Pop-up : programme d'un niveau */}
       <Modal
@@ -111,6 +122,79 @@ export function ProgramLevels({ programTitle, detail }: ProgramLevelsProps) {
               {job}
             </span>
           ))}
+        </div>
+      </Modal>
+
+      {/* Pop-up : candidature / admission */}
+      <Modal
+        open={selection?.type === "admission"}
+        onClose={close}
+        title={`${programTitle} — Candidature`}
+        subtitle="Conditions d'admission"
+      >
+        {detail.admission ? (
+          <div className="space-y-5">
+            <div>
+              <p className="text-sm font-bold text-ipmd-black">
+                📂 Pièces à fournir
+              </p>
+              <ul className="mt-2 space-y-1.5">
+                {detail.admission.documents.map((doc) => (
+                  <li
+                    key={doc}
+                    className="flex items-start gap-2.5 text-sm text-black/75"
+                  >
+                    <span className="mt-0.5 text-ipmd-red" aria-hidden>
+                      ✓
+                    </span>
+                    {doc}
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            <div>
+              <p className="text-sm font-bold text-ipmd-black">
+                💻 Matériel nécessaire
+              </p>
+              <ul className="mt-2 space-y-1.5">
+                {detail.admission.equipment.map((item) => (
+                  <li
+                    key={item}
+                    className="flex items-start gap-2.5 text-sm text-black/75"
+                  >
+                    <span className="mt-0.5 text-ipmd-red" aria-hidden>
+                      ✓
+                    </span>
+                    {item}
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            <div className="rounded-2xl bg-ipmd-light p-4">
+              <p className="text-sm font-bold text-ipmd-black">
+                💳 Frais de scolarité
+              </p>
+              <ul className="mt-2 space-y-1.5">
+                {detail.admission.fees.map((fee) => (
+                  <li key={fee} className="text-sm text-black/75">
+                    • {fee}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        ) : (
+          <p className="text-sm text-black/70">
+            Contactez-nous pour connaître les conditions d&apos;admission.
+          </p>
+        )}
+
+        <div className="mt-6">
+          <Button href="/admission" size="lg" className="w-full">
+            Déposer ma candidature
+          </Button>
         </div>
       </Modal>
     </div>

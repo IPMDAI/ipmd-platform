@@ -32,10 +32,21 @@ export interface ProgramLevel {
   semesters: Semester[];
 }
 
+export interface AdmissionInfo {
+  /** Pièces à fournir pour candidater. */
+  documents: string[];
+  /** Matériel nécessaire (caractéristiques). */
+  equipment: string[];
+  /** Frais de scolarité (lignes affichées). */
+  fees: string[];
+}
+
 export interface ProgramDetail {
   levels: ProgramLevel[];
   /** Débouchés (métiers, postes). */
   outcomes: string[];
+  /** Informations de candidature / admission (optionnel). */
+  admission?: AdmissionInfo;
 }
 
 export const programDetails: Record<string, ProgramDetail> = {
@@ -243,6 +254,24 @@ export const programDetails: Record<string, ProgramDetail> = {
       "Directeur(rice) marketing digital",
       "Entrepreneur(e) / freelance",
     ],
+    admission: {
+      documents: [
+        "Relevé de notes du BAC",
+        "Relevé de notes de Terminale",
+        "Carte d'identité, carte consulaire, titre de séjour ou passeport",
+        "Photo d'identité (format officiel)",
+      ],
+      equipment: [
+        "PC portable : 16 Go RAM, processeur Core i5 ou équivalent, SSD 500 Go – 1 To",
+        "Disque dur externe : capacité recommandée 1 To ou plus",
+      ],
+      fees: [
+        "Licence 1 : 1 850 000 FCFA",
+        "Possibilité de payer la scolarité en 10 mois",
+        "Paiement unique : 15 % de réduction",
+        "Frais d'inscription : 300 000 FCFA (non inclus dans la scolarité)",
+      ],
+    },
   },
 };
 
