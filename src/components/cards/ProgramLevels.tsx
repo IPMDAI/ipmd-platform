@@ -54,19 +54,28 @@ export function ProgramLevels({ programTitle, detail }: ProgramLevelsProps) {
         title={`${programTitle} — Programme ${activeLevel?.level ?? ""}`}
         subtitle={activeLevel?.title}
       >
-        <ul className="space-y-2.5">
-          {activeLevel?.courses.map((course) => (
-            <li
-              key={course}
-              className="flex items-start gap-2.5 text-sm text-black/75"
-            >
-              <span className="mt-0.5 text-ipmd-red" aria-hidden>
-                ✓
-              </span>
-              {course}
-            </li>
+        <div className="space-y-6">
+          {activeLevel?.semesters.map((semester) => (
+            <div key={semester.name}>
+              <p className="mb-2.5 inline-block rounded-full bg-ipmd-black px-3 py-1 text-xs font-bold uppercase tracking-wide text-white">
+                {semester.name}
+              </p>
+              <ul className="space-y-2">
+                {semester.courses.map((course) => (
+                  <li
+                    key={course}
+                    className="flex items-start gap-2.5 text-sm text-black/75"
+                  >
+                    <span className="mt-0.5 text-ipmd-red" aria-hidden>
+                      ✓
+                    </span>
+                    {course}
+                  </li>
+                ))}
+              </ul>
+            </div>
           ))}
-        </ul>
+        </div>
       </Modal>
 
       {/* Pop-up : débouchés */}
