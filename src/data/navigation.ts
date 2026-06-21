@@ -15,6 +15,7 @@ export const mainNav: NavItem[] = [
       { label: "UltraExecutive", href: "/ultraexecutive" },
     ],
   },
+  { label: "Scolarité", href: "/scolarite" },
   { label: "Admission", href: "/admission" },
   { label: "À propos", href: "/a-propos" },
   { label: "Contact", href: "/contact" },
@@ -32,6 +33,7 @@ export const footerNav = {
   ] satisfies NavItem[],
   institut: [
     { label: "À propos", href: "/a-propos" },
+    { label: "Scolarité & financement", href: "/scolarite" },
     { label: "Admission / Inscription", href: "/admission" },
     { label: "Toutes les formations", href: "/formations" },
     { label: "Contact", href: "/contact" },
