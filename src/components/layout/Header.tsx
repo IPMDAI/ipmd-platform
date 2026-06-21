@@ -86,7 +86,13 @@ export function Header() {
           )}
         </nav>
 
-        <div className="hidden lg:block">
+        <div className="hidden items-center gap-4 lg:flex">
+          <Link
+            href="/connexion"
+            className="text-sm font-semibold text-ipmd-black/80 transition-colors hover:text-ipmd-red"
+          >
+            Connexion
+          </Link>
           <Button href="/admission" size="md">
             Demander une inscription
           </Button>
@@ -147,7 +153,13 @@ export function Header() {
                 )}
               </div>
             ))}
-            <div className="pt-3">
+            <div className="space-y-2 pt-3">
+              <Link
+                href="/connexion"
+                className="block rounded-lg px-3 py-2.5 text-base font-semibold text-ipmd-black"
+              >
+                Connexion
+              </Link>
               <Button href="/admission" className="w-full">
                 Demander une inscription
               </Button>
