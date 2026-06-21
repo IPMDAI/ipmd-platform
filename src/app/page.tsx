@@ -1,6 +1,5 @@
 import { AnnouncementCarousel } from "@/components/home/AnnouncementCarousel";
 import { Hero } from "@/components/home/Hero";
-import { VideoSection } from "@/components/home/VideoSection";
 import { UniversesSection } from "@/components/home/UniversesSection";
 import { PopularPrograms } from "@/components/home/PopularPrograms";
 import { AiSection } from "@/components/home/AiSection";
@@ -13,7 +12,6 @@ export default function HomePage() {
     <>
       <AnnouncementCarousel />
       <Hero />
-      <VideoSection videoId="azB3Irjscyg" />
       <UniversesSection />
       <PopularPrograms />
       <AiSection />

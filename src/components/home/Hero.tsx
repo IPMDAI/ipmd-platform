@@ -2,14 +2,40 @@ import { Container } from "@/components/ui/Container";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 
-/** Bande d'identité IPMD (titre, slogan, CTA, statistiques). */
+/** Vidéo YouTube jouée en fond du hero (muette, en boucle). */
+const HERO_VIDEO_ID = "azB3Irjscyg";
+
+/** Bande d'identité IPMD (titre, slogan, CTA, statistiques) sur fond vidéo. */
 export function Hero() {
   return (
     <section className="relative overflow-hidden bg-ipmd-black text-white">
-      {/* Décor : grille + halos rouges */}
-      <div className="absolute inset-0 bg-grid" aria-hidden />
+      {/* Vidéo de fond (derrière les écritures) */}
       <div
-        className="absolute -left-32 -top-20 h-96 w-96 rounded-full bg-ipmd-red/30 blur-3xl"
+        className="pointer-events-none absolute inset-0 overflow-hidden"
+        aria-hidden
+      >
+        <iframe
+          title="Vidéo de présentation IPMD"
+          src={`https://www.youtube-nocookie.com/embed/${HERO_VIDEO_ID}?autoplay=1&mute=1&loop=1&playlist=${HERO_VIDEO_ID}&controls=0&showinfo=0&modestbranding=1&rel=0&playsinline=1&disablekb=1`}
+          allow="autoplay; encrypted-media"
+          className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
+          style={{
+            width: "100vw",
+            height: "56.25vw",
+            minHeight: "100%",
+            minWidth: "177.78vh",
+          }}
+        />
+      </div>
+
+      {/* Voile sombre + décor pour garder le texte lisible */}
+      <div
+        className="absolute inset-0 bg-gradient-to-b from-ipmd-black/80 via-ipmd-black/70 to-ipmd-black/85"
+        aria-hidden
+      />
+      <div className="absolute inset-0 bg-grid opacity-40" aria-hidden />
+      <div
+        className="absolute -left-32 -top-20 h-96 w-96 rounded-full bg-ipmd-red/25 blur-3xl"
         aria-hidden
       />
       <div
@@ -30,7 +56,7 @@ export function Hero() {
           </h1>
 
           <p
-            className="mx-auto mt-6 max-w-xl animate-fade-up text-lg text-white/70 sm:text-xl"
+            className="mx-auto mt-6 max-w-xl animate-fade-up text-lg text-white/75 sm:text-xl"
             style={{ animationDelay: "100ms" }}
           >
             École supérieure digitale, moderne et orientée intelligence
@@ -56,7 +82,7 @@ export function Hero() {
               href="/admission"
               size="lg"
               variant="outline"
-              className="border-white/30 text-white hover:bg-white hover:text-ipmd-black"
+              className="border-white/40 text-white hover:bg-white hover:text-ipmd-black"
             >
               Demander une inscription
             </Button>
@@ -64,7 +90,7 @@ export function Hero() {
 
           {/* Mini-statistiques */}
           <div
-            className="mx-auto mt-16 grid max-w-2xl animate-fade-up grid-cols-3 gap-6 border-t border-white/10 pt-8"
+            className="mx-auto mt-16 grid max-w-2xl animate-fade-up grid-cols-3 gap-6 border-t border-white/15 pt-8"
             style={{ animationDelay: "250ms" }}
           >
             {[
@@ -76,7 +102,7 @@ export function Hero() {
                 <p className="text-3xl font-extrabold text-ipmd-red-light">
                   {stat.value}
                 </p>
-                <p className="mt-1 text-xs text-white/60 sm:text-sm">
+                <p className="mt-1 text-xs text-white/70 sm:text-sm">
                   {stat.label}
                 </p>
               </div>
