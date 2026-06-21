@@ -1,15 +1,13 @@
 /**
  * Détail des programmes par niveau (Bac+1 → Bac+5), organisés en 2 semestres
- * (système LMD), + débouchés.
+ * (système LMD), + thème, objectif et débouchés.
  *
  * 👉 POUR REMPLIR / MODIFIER UN PROGRAMME :
  *   - La clé est l'`id` de la formation (voir src/data/programs.ts), ex. "campus-marketing".
- *   - Chaque niveau a 2 semestres ; chaque semestre a un `name` ("Semestre 1"),
- *     un `title` optionnel (thème de l'année) et la liste des matières.
+ *   - Chaque niveau : `title` (année), `theme` (spécialisation, optionnel),
+ *     `objective` (objectif pédagogique, optionnel) et 2 semestres.
+ *   - Chaque semestre : `name` ("Semestre 1"), `title` (thème) et la liste des matières.
  *   - `outcomes` = la liste des débouchés (métiers, postes).
- *
- * Convention IPMD : le 1er semestre de chaque niveau porte les enseignements
- * théoriques ; le 2e semestre est consacré à la stratégie, aux projets et au stage.
  */
 
 export interface Semester {
@@ -26,6 +24,10 @@ export interface ProgramLevel {
   level: string;
   /** Intitulé de l'année, ex. "Licence 1". */
   title: string;
+  /** Thème / spécialisation de l'année (optionnel). */
+  theme?: string;
+  /** Objectif pédagogique de l'année (optionnel). */
+  objective?: string;
   /** Les 2 semestres (LMD). */
   semesters: Semester[];
 }
@@ -36,12 +38,6 @@ export interface ProgramDetail {
   outcomes: string[];
 }
 
-/** Semestre « pratique » commun (stratégie, projets, stage). */
-const practice = (courses: string[]): Semester => ({
-  name: "",
-  courses,
-});
-
 export const programDetails: Record<string, ProgramDetail> = {
   // ── Marketing digital (IPMD Campus) ────────────────────────
   "campus-marketing": {
@@ -49,6 +45,8 @@ export const programDetails: Record<string, ProgramDetail> = {
       {
         level: "Bac+1",
         title: "Licence 1",
+        objective:
+          "Apprendre les bases du digital, du marketing, de la communication, des réseaux sociaux, de l'e-commerce, de l'IA et des outils professionnels.",
         semesters: [
           {
             name: "Semestre 1",
@@ -85,116 +83,150 @@ export const programDetails: Record<string, ProgramDetail> = {
       {
         level: "Bac+2",
         title: "Licence 2",
+        theme: "Marketing digital avancé, IA et performance",
+        objective:
+          "Approfondir les compétences, gérer des campagnes digitales, analyser les performances, utiliser l'IA et développer des projets digitaux plus avancés.",
         semesters: [
           {
             name: "Semestre 3",
-            title: "Acquisition, contenu et publicité en ligne",
+            title: "Approfondissement du marketing digital, IA et performance",
             courses: [
-              "SEO — référencement naturel",
-              "Création de contenu (rédaction web)",
-              "Community management",
-              "Email marketing",
-              "Anglais professionnel 2",
-              "SEA — publicité en ligne (Google Ads)",
-              "Visuels & création graphique",
-              "Analytics & mesure de performance",
-              "Bases du marketing mobile",
-              "Projet pratique : gestion de réseaux sociaux",
+              "Marketing digital avancé",
+              "Communication digitale avancée",
+              "E-commerce avancé",
+              "Réseaux sociaux et community management",
+              "Design graphique appliqué au marketing digital",
+              "Développement d'applications appliqué au digital",
+              "Intelligence artificielle appliquée au marketing digital",
+              "FinTech et services financiers digitaux",
+              "Data marketing et analyse de performance",
+              "Publicité digitale et acquisition client",
             ],
           },
           {
-            ...practice([
-              "Stratégie",
+            name: "Semestre 4",
+            title: "Stratégie, projets et immersion professionnelle",
+            courses: [
+              "Stratégie marketing digital avancée",
+              "Gestion de projets digitaux",
+              "Intelligence artificielle appliquée aux campagnes digitales",
               "Projet collectif",
               "Projet individuel",
               "Stage",
-            ]),
-            name: "Semestre 4",
+            ],
           },
         ],
       },
       {
         level: "Bac+3",
         title: "Licence 3",
+        theme: "Spécialisation en marketing digital, IA et stratégie de marque",
+        objective:
+          "Se spécialiser, piloter une stratégie digitale, travailler sur la marque, le contenu, la performance, l'e-commerce, la data et les projets professionnels.",
         semesters: [
           {
             name: "Semestre 5",
-            title: "Stratégie, growth et data marketing",
+            title:
+              "Spécialisation en marketing digital, IA et stratégie de marque",
             courses: [
-              "Stratégie de marketing digital",
-              "Growth marketing & acquisition",
+              "Stratégie marketing digital",
+              "Communication digitale stratégique",
+              "E-commerce et business en ligne",
+              "Social media management",
+              "Brand content et stratégie de marque",
+              "Data marketing et pilotage de performance",
+              "Intelligence artificielle appliquée au marketing digital",
               "Marketing automation",
-              "Data marketing & CRM",
-              "E-commerce avancé",
-              "Gestion de budget & ROI",
-              "Marketing d'influence",
-              "Stratégie social media",
+              "FinTech et marketing des services financiers digitaux",
+              "Projet professionnel digital",
             ],
           },
           {
-            ...practice([
-              "Stratégie",
+            name: "Semestre 6",
+            title: "Stratégie, projets et immersion professionnelle",
+            courses: [
+              "Stratégie marketing digital avancée",
+              "Gestion de projets digitaux",
+              "Intelligence artificielle appliquée aux stratégies marketing",
               "Projet collectif",
               "Projet individuel",
-              "Stage & rapport de stage",
-              "Mémoire",
-            ]),
-            name: "Semestre 6",
+              "Stage ou mémoire de fin de cycle",
+            ],
           },
         ],
       },
       {
         level: "Bac+4",
         title: "Master 1",
+        theme: "Expertise en marketing digital, IA et transformation digitale",
+        objective:
+          "Développer une expertise avancée en stratégie digitale, transformation numérique, automatisation marketing, data, CRM, IA et management de projets digitaux.",
         semesters: [
           {
             name: "Semestre 7",
-            title: "Stratégie avancée, IA et pilotage marketing",
+            title:
+              "Expertise en marketing digital, IA et transformation digitale",
             courses: [
-              "Stratégie omnicanale",
-              "Marketing augmenté par l'IA",
-              "Brand management",
-              "Études de marché avancées",
-              "Pilotage d'équipe marketing",
-              "Marketing international",
-              "Marketing automation avancé",
+              "Stratégie digitale avancée",
+              "Communication digitale et influence",
+              "E-commerce avancé et business model digital",
+              "Data marketing et analytics",
+              "Intelligence artificielle appliquée au marketing et à la décision",
+              "Marketing automation et CRM",
+              "FinTech, paiement digital et innovation financière",
+              "Management de projets digitaux",
+              "Transformation digitale des organisations",
+              "Projet professionnel avancé",
             ],
           },
           {
-            ...practice([
-              "Stratégie",
+            name: "Semestre 8",
+            title: "Stratégie, projets et immersion professionnelle",
+            courses: [
+              "Stratégie digitale et pilotage de performance",
+              "Management de projets digitaux",
+              "Intelligence artificielle appliquée à la transformation digitale",
               "Projet collectif",
               "Projet individuel",
-              "Stage",
-            ]),
-            name: "Semestre 8",
+              "Stage ou mission professionnelle",
+            ],
           },
         ],
       },
       {
         level: "Bac+5",
         title: "Master 2",
+        theme: "Direction marketing digital, IA et gouvernance numérique",
+        objective:
+          "Former des profils capables de diriger une stratégie marketing digitale, piloter la performance, manager des équipes, accompagner la transformation digitale et la gouvernance numérique des organisations.",
         semesters: [
           {
             name: "Semestre 9",
-            title: "Direction, innovation et gouvernance digitale",
+            title: "Direction marketing digital, IA et gouvernance numérique",
             courses: [
-              "Direction de la stratégie digitale",
-              "Innovation & transformation digitale",
-              "Marketing prédictif & data science",
-              "Leadership & management d'équipe",
-              "Conduite de projet à l'échelle",
-              "Stratégie & gouvernance digitale",
+              "Direction marketing digital",
+              "Stratégie de marque et leadership digital",
+              "Growth marketing et acquisition avancée",
+              "Data, analytics et pilotage stratégique",
+              "Intelligence artificielle appliquée au business digital",
+              "Gouvernance numérique",
+              "Innovation, FinTech et transformation des services",
+              "Management d'équipes et leadership",
+              "Stratégie omnicanale",
+              "Projet de consulting digital",
             ],
           },
           {
-            ...practice([
-              "Stratégie",
+            name: "Semestre 10",
+            title: "Stratégie, projets et insertion professionnelle",
+            courses: [
+              "Stratégie digitale de haut niveau",
+              "Gouvernance de projets digitaux",
+              "Intelligence artificielle appliquée à la performance des organisations",
               "Projet collectif",
               "Projet individuel",
-              "Stage / mémoire professionnel",
-            ]),
-            name: "Semestre 10",
+              "Stage, mémoire ou projet professionnel de fin d'études",
+            ],
           },
         ],
       },

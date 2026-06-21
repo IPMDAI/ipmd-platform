@@ -54,6 +54,18 @@ export function ProgramLevels({ programTitle, detail }: ProgramLevelsProps) {
         title={`${programTitle} — Programme ${activeLevel?.level ?? ""}`}
         subtitle={activeLevel?.title}
       >
+        {activeLevel?.theme && (
+          <p className="-mt-1 mb-3 text-base font-bold text-ipmd-black">
+            {activeLevel.theme}
+          </p>
+        )}
+        {activeLevel?.objective && (
+          <p className="mb-5 rounded-2xl bg-ipmd-light p-4 text-sm leading-relaxed text-black/75">
+            <span className="font-bold text-ipmd-black">Objectif : </span>
+            {activeLevel.objective}
+          </p>
+        )}
+
         <div className="space-y-6">
           {activeLevel?.semesters.map((semester) => (
             <div key={semester.name}>
