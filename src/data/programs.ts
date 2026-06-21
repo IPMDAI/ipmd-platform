@@ -11,7 +11,7 @@ export const programs: Program[] = [
     universe: "campus",
     title: "Marketing digital",
     description:
-      "Le Marketing digital permet de promouvoir une entreprise, une marque, un produit ou un service à travers les canaux numériques.\n\nTrès demandé sur le marché, il couvre les réseaux sociaux, le e-commerce, la publicité en ligne, le référencement, la création de contenu, l'analyse des données, l'intelligence artificielle et les technologies financières digitales.\n\nÀ l'IPMD, la formation en Marketing digital, quel que soit le niveau, est orientée à 80 % vers la pratique afin de former des étudiants capables de concevoir, gérer et optimiser des campagnes digitales performantes à l'ère de l'intelligence artificielle.",
+      "Le Marketing digital permet de promouvoir une entreprise, une marque, un produit ou un service à travers les canaux numériques.\n\nTrès demandé sur le marché, il couvre les réseaux sociaux, le e-commerce, la publicité en ligne, le référencement, la création de contenu, l'analyse des données, l'intelligence artificielle et les technologies financières digitales.\n\nÀ l'IPMD, la formation est orientée à 80 % vers la pratique, quel que soit le niveau, afin de former des étudiants capables de concevoir, gérer et optimiser des campagnes digitales performantes à l'ère de l'IA.",
     degrees: ["Licence", "Bachelor", "Master"],
     entryLevels: ["Bac", "Bac+1", "Bac+2", "Bac+3", "Bac+4"],
     field: "Marketing",
@@ -22,7 +22,7 @@ export const programs: Program[] = [
     universe: "campus",
     title: "Communication digitale",
     description:
-      "Communication, contenu et influence boostés par l'IA : créez plus vite, mieux et à grande échelle. Des compétences indispensables aux marques, 80 % de pratique et de vrais débouchés.",
+      "La Communication digitale permet de gérer l'image, la visibilité et la relation d'une entreprise, d'une marque ou d'une organisation sur les canaux numériques.\n\nTrès recherchée sur le marché, elle couvre la création de contenu, les réseaux sociaux, l'influence, la gestion de communauté, la communication de marque, la stratégie éditoriale et l'utilisation de l'intelligence artificielle pour produire plus vite et mieux.\n\nÀ l'IPMD, la formation est orientée à 80 % vers la pratique, afin de former des profils capables de concevoir, diffuser et piloter des actions de communication digitale efficaces.",
     degrees: ["Licence", "Bachelor", "Master"],
     entryLevels: ["Bac", "Bac+1", "Bac+2", "Bac+3", "Bac+4"],
     field: "Communication",
@@ -33,7 +33,7 @@ export const programs: Program[] = [
     universe: "campus",
     title: "Graphisme & Design",
     description:
-      "Créez visuels et interfaces qui marquent, propulsés par l'IA générative. Design, UX/UI et motion : un métier créatif très demandé, 80 % de pratique et un portfolio prêt pour l'emploi.",
+      "Le Graphisme & Design permet de créer des visuels, des identités de marque, des supports de communication et des interfaces digitales attractives.\n\nTrès demandé dans les entreprises, agences, médias et projets digitaux, ce domaine couvre le design graphique, la création visuelle, l'UX/UI design, le branding, le motion design et l'utilisation de l'intelligence artificielle générative.\n\nÀ l'IPMD, la formation est orientée à 80 % vers la pratique, quel que soit le niveau, afin de former des étudiants capables de concevoir des visuels professionnels, des interfaces modernes et des supports créatifs adaptés aux besoins du marché.",
     degrees: ["Licence", "Bachelor", "Master"],
     entryLevels: ["Bac", "Bac+1", "Bac+2", "Bac+3", "Bac+4"],
     field: "Design",
@@ -44,7 +44,7 @@ export const programs: Program[] = [
     universe: "campus",
     title: "E-commerce & commerce international",
     description:
-      "Lancez et développez le commerce en ligne à l'international, optimisé par l'IA (recommandation, personnalisation, automatisation). Un secteur en plein essor, 80 % de pratique et de belles opportunités.",
+      "Le E-commerce & Commerce international permet de vendre des produits et services en ligne, de gérer une boutique digitale et de développer des activités commerciales sur les marchés locaux et internationaux.\n\nTrès demandé avec la croissance du numérique, ce domaine couvre le commerce en ligne, les marketplaces, la logistique, le paiement digital, le marketing e-commerce, la relation client, l'import-export et les outils d'intelligence artificielle pour améliorer les ventes.\n\nÀ l'IPMD, la formation est orientée à 80 % vers la pratique, afin de former des profils capables de créer, gérer et développer des activités commerciales digitales performantes.",
     degrees: ["Licence", "Bachelor", "Master"],
     entryLevels: ["Bac", "Bac+1", "Bac+2", "Bac+3", "Bac+4"],
     field: "Commerce",
@@ -55,7 +55,7 @@ export const programs: Program[] = [
     universe: "campus",
     title: "Développement d'applications",
     description:
-      "Codez les applications web et mobile de demain, assisté par l'IA. Des compétences techniques parmi les plus recherchées du marché, 80 % de pratique et un accès direct à l'emploi tech.",
+      "Le Développement d'applications permet de concevoir des sites web, des applications mobiles, des plateformes digitales et des solutions numériques adaptées aux besoins des entreprises.\n\nTrès demandé dans le monde professionnel, ce domaine couvre la programmation, le développement web et mobile, les bases de données, l'UX/UI, les API, la sécurité, les outils collaboratifs et l'intelligence artificielle appliquée au développement.\n\nÀ l'IPMD, la formation est orientée à 80 % vers la pratique, avec des projets concrets, afin de former des étudiants capables de créer, tester et déployer des applications utiles et performantes.",
     degrees: ["Licence", "Bachelor", "Master"],
     entryLevels: ["Bac", "Bac+1", "Bac+2", "Bac+3", "Bac+4"],
     field: "Développement",
@@ -66,7 +66,7 @@ export const programs: Program[] = [
     universe: "campus",
     title: "Informatique & intelligence artificielle",
     description:
-      "Maîtrisez la révolution de l'IA : data, machine learning et IA générative. Le domaine le plus porteur du moment, 80 % de pratique et des métiers d'avenir hautement valorisés.",
+      "L'Informatique & Intelligence Artificielle prépare aux métiers du numérique, de la programmation, de la data, de l'automatisation et des technologies intelligentes.\n\nTrès demandée sur le marché, cette formation couvre les bases de l'informatique, le développement logiciel, les bases de données, les systèmes numériques, la cybersécurité, l'analyse de données, le machine learning, l'IA générative et l'automatisation des processus.\n\nÀ l'IPMD, la formation est orientée à 80 % vers la pratique, afin de former des étudiants capables de concevoir, utiliser et développer des solutions numériques et intelligentes adaptées aux besoins des entreprises.",
     degrees: ["Licence", "Bachelor", "Master"],
     entryLevels: ["Bac", "Bac+1", "Bac+2", "Bac+3", "Bac+4"],
     field: "IA",
@@ -77,7 +77,7 @@ export const programs: Program[] = [
     universe: "campus",
     title: "Management de projet digital",
     description:
-      "Pilotez la transformation digitale et l'IA des organisations : agilité, leadership et data pour des projets à fort impact. Des compétences clés, 80 % de pratique et des postes à responsabilité.",
+      "Le Management de projet digital permet de planifier, organiser, piloter et suivre des projets numériques au sein des entreprises et organisations.\n\nTrès utile dans tous les secteurs, il couvre la gestion de projet, les méthodes agiles, la coordination d'équipes, les outils collaboratifs, la transformation digitale, le suivi des performances et l'intégration de l'intelligence artificielle dans la gestion des projets.\n\nÀ l'IPMD, la formation est orientée à 80 % vers la pratique, afin de former des profils capables de conduire des projets digitaux de l'idée jusqu'à la réalisation.",
     degrees: ["Licence", "Bachelor", "Master"],
     entryLevels: ["Bac", "Bac+1", "Bac+2", "Bac+3", "Bac+4"],
     field: "Management",
@@ -88,7 +88,7 @@ export const programs: Program[] = [
     universe: "campus",
     title: "Comptabilité & finance digitale",
     description:
-      "Réinventez la finance avec la FinTech et l'IA : automatisation, data et finance prédictive. Des compétences rares et stratégiques, 80 % de pratique et une employabilité solide.",
+      "La Comptabilité et Finance digitale forme aux nouvelles pratiques de gestion financière, de comptabilité numérique et d'analyse des données financières.\n\nTrès demandée par les entreprises, cabinets, banques, fintechs et organisations, elle couvre la comptabilité, la finance, les outils digitaux de gestion, les tableaux de bord, la digitalisation financière, les paiements numériques, la FinTech et l'intelligence artificielle appliquée à la finance.\n\nÀ l'IPMD, la formation est orientée à 80 % vers la pratique, afin de former des étudiants capables de gérer, analyser et optimiser les opérations financières dans un environnement digitalisé.",
     degrees: ["Licence", "Bachelor", "Master"],
     entryLevels: ["Bac", "Bac+1", "Bac+2", "Bac+3", "Bac+4"],
     field: "Finance",
