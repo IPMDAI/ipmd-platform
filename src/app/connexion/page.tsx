@@ -4,6 +4,7 @@ import { useActionState, useState } from "react";
 import { signIn, signUp } from "@/lib/auth-actions";
 import { Container } from "@/components/ui/Container";
 import { ActionButton } from "@/components/ui/Button";
+import { Logo } from "@/components/ui/Logo";
 import { Field, inputBase } from "@/components/forms/FormField";
 import type { FormResult } from "@/types";
 
@@ -25,6 +26,9 @@ export default function ConnexionPage() {
     <section className="bg-ipmd-light">
       <Container className="flex min-h-[80vh] items-center justify-center py-16">
         <div className="w-full max-w-md rounded-3xl bg-white p-8 shadow-xl ring-1 ring-black/5">
+          <div className="mb-4 flex justify-center">
+            <Logo hideText />
+          </div>
           <h1 className="text-center text-2xl font-extrabold tracking-tight text-ipmd-black">
             Espace IPMD
           </h1>
