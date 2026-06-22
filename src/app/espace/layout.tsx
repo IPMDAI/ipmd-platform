@@ -27,10 +27,28 @@ export default async function EspaceLayout({
   const userName = profile?.full_name || profile?.email || "Mon compte";
   const groups = getNavForRole(role);
 
+  // Badges de compteur sur le menu (admins).
+  let badges: Record<string, { count: number; alert: boolean }> = {};
+  if (role === "admin" || role === "super_admin") {
+    const [cand, msg, fil, mod] = await Promise.all([
+      supabase.from("inscription_requests").select("*", { count: "exact", head: true }),
+      supabase.from("contact_messages").select("*", { count: "exact", head: true }),
+      supabase.from("filieres").select("*", { count: "exact", head: true }).eq("status", "en_attente"),
+      supabase.from("modules").select("*", { count: "exact", head: true }).eq("status", "en_attente"),
+    ]);
+    const toValidate = (fil.count ?? 0) + (mod.count ?? 0);
+    badges = {
+      "/espace/candidatures": { count: cand.count ?? 0, alert: false },
+      "/espace/messages": { count: msg.count ?? 0, alert: false },
+      "/espace/classes": { count: toValidate, alert: toValidate > 0 },
+    };
+  }
+
   return (
     <div className="min-h-screen bg-ipmd-light lg:flex">
       <Sidebar
         groups={groups}
+        badges={badges}
         roleLabel={roleLabels[role] ?? role}
         userName={userName}
       />

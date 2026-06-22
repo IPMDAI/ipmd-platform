@@ -13,10 +13,12 @@ function isActive(pathname: string, href: string): boolean {
 
 export function Sidebar({
   groups,
+  badges = {},
   roleLabel,
   userName,
 }: {
   groups: NavGroup[];
+  badges?: Record<string, { count: number; alert: boolean }>;
   roleLabel: string;
   userName: string;
 }) {
@@ -47,6 +49,7 @@ export function Sidebar({
             <ul className="space-y-0.5">
               {group.items.map((item) => {
                 const active = isActive(pathname, item.href);
+                const badge = badges[item.href];
                 return (
                   <li key={item.href}>
                     <Link
@@ -59,7 +62,20 @@ export function Sidebar({
                       }`}
                     >
                       <span className="text-base leading-none">{item.icon}</span>
-                      <span className="truncate">{item.label}</span>
+                      <span className="min-w-0 flex-1 truncate">{item.label}</span>
+                      {badge && badge.count > 0 && (
+                        <span
+                          className={`shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-bold leading-none ${
+                            active
+                              ? "bg-white/25 text-white"
+                              : badge.alert
+                              ? "bg-ipmd-red text-white"
+                              : "bg-white/15 text-white/90"
+                          }`}
+                        >
+                          {badge.count}
+                        </span>
+                      )}
                     </Link>
                   </li>
                 );
