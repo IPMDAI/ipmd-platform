@@ -15,7 +15,7 @@ export function ContactForm() {
   return (
     <form action={formAction} className="space-y-5">
       <div className="grid gap-5 sm:grid-cols-2">
-        <Field label="Nom complet" htmlFor="c-fullName" required>
+        <Field label="Nom et prénom" htmlFor="c-fullName" required>
           <input
             id="c-fullName"
             name="fullName"

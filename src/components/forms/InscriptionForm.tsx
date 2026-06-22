@@ -5,6 +5,7 @@ import { submitInscription } from "@/lib/actions";
 import { universes } from "@/data/universes";
 import { ActionButton } from "@/components/ui/Button";
 import { Field, inputBase } from "./FormField";
+import { PhoneField } from "./PhoneField";
 import type { FormResult } from "@/types";
 
 const entryLevels = ["Bac", "Bac+1", "Bac+2", "Bac+3", "Bac+4", "Bac+5"];
@@ -18,7 +19,7 @@ export function InscriptionForm() {
   return (
     <form action={formAction} className="space-y-5">
       <div className="grid gap-5 sm:grid-cols-2">
-        <Field label="Nom complet" htmlFor="fullName" required>
+        <Field label="Nom et prénom" htmlFor="fullName" required>
           <input
             id="fullName"
             name="fullName"
@@ -44,15 +45,7 @@ export function InscriptionForm() {
 
       <div className="grid gap-5 sm:grid-cols-2">
         <Field label="Téléphone" htmlFor="phone" required>
-          <input
-            id="phone"
-            name="phone"
-            type="tel"
-            required
-            autoComplete="tel"
-            placeholder="+33 6 12 34 56 78"
-            className={inputBase}
-          />
+          <PhoneField id="phone" name="phone" required />
         </Field>
         <Field label="Niveau d'entrée" htmlFor="entryLevel">
           <select id="entryLevel" name="entryLevel" className={inputBase}>

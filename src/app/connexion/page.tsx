@@ -106,7 +106,7 @@ export default function ConnexionPage() {
           {/* Création de compte */}
           {tab === "signup" && (
             <form action={signupAction} className="mt-6 space-y-4">
-              <Field label="Nom complet" htmlFor="signup-name" required>
+              <Field label="Nom et prénom" htmlFor="signup-name" required>
                 <input
                   id="signup-name"
                   name="fullName"

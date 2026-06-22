@@ -3,6 +3,7 @@
 import { useActionState } from "react";
 import { submitTeacherApplication } from "@/lib/recruitment-actions";
 import { Field, inputBase } from "@/components/forms/FormField";
+import { PhoneField } from "@/components/forms/PhoneField";
 import { ActionButton } from "@/components/ui/Button";
 import type { FormResult } from "@/types";
 
@@ -27,7 +28,7 @@ export function TeacherApplicationForm() {
       className="space-y-5 rounded-2xl bg-white p-6 shadow-sm ring-1 ring-black/5 sm:p-8"
     >
       <div className="grid gap-5 sm:grid-cols-2">
-        <Field label="Nom complet" htmlFor="ta-name" required>
+        <Field label="Nom et prénom" htmlFor="ta-name" required>
           <input id="ta-name" name="full_name" required className={inputBase} />
         </Field>
         <Field label="Email" htmlFor="ta-email" required>
@@ -36,7 +37,7 @@ export function TeacherApplicationForm() {
       </div>
       <div className="grid gap-5 sm:grid-cols-2">
         <Field label="Téléphone" htmlFor="ta-phone">
-          <input id="ta-phone" name="phone" type="tel" className={inputBase} />
+          <PhoneField id="ta-phone" name="phone" />
         </Field>
         <Field label="Matière / domaine" htmlFor="ta-subject">
           <input
