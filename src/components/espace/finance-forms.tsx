@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useEffect, useRef } from "react";
-import { setStudentDue, addPayment } from "@/lib/finance-actions";
+import { setStudentDue, addPayment, addSchedule } from "@/lib/finance-actions";
 import { Field, inputBase } from "@/components/forms/FormField";
 import { ActionButton } from "@/components/ui/Button";
 import { PAYMENT_METHODS } from "@/lib/finance";
@@ -114,6 +114,55 @@ export function AddPaymentForm({ studentId }: { studentId: string }) {
       </Field>
       <ActionButton type="submit" disabled={pending}>
         {pending ? "…" : "Enregistrer le paiement"}
+      </ActionButton>
+      <Feedback state={state} />
+    </form>
+  );
+}
+
+export function AddScheduleForm({ studentId }: { studentId: string }) {
+  const bound = addSchedule.bind(null, studentId);
+  const [state, action, pending] = useActionState<FormResult | null, FormData>(
+    bound,
+    null
+  );
+  const ref = useRef<HTMLFormElement>(null);
+  useEffect(() => {
+    if (state?.ok) ref.current?.reset();
+  }, [state]);
+
+  return (
+    <form
+      ref={ref}
+      action={action}
+      className="space-y-3 rounded-2xl bg-white p-6 shadow-sm ring-1 ring-black/5"
+    >
+      <h2 className="text-lg font-bold text-ipmd-black">Nouvelle échéance</h2>
+      <Field label="Montant (FCFA)" htmlFor="s-amount" required>
+        <input
+          id="s-amount"
+          name="amount"
+          type="number"
+          min="1"
+          step="1000"
+          required
+          placeholder="200000"
+          className={inputBase}
+        />
+      </Field>
+      <Field label="Date d'échéance" htmlFor="s-date" required>
+        <input id="s-date" name="due_date" type="date" required className={inputBase} />
+      </Field>
+      <Field label="Libellé (optionnel)" htmlFor="s-label">
+        <input
+          id="s-label"
+          name="label"
+          placeholder="Ex. Tranche 2"
+          className={inputBase}
+        />
+      </Field>
+      <ActionButton type="submit" disabled={pending}>
+        {pending ? "…" : "Ajouter l'échéance"}
       </ActionButton>
       <Feedback state={state} />
     </form>

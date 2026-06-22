@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { requireUser } from "@/lib/require-user";
 import { Container } from "@/components/ui/Container";
-import { formatFCFA } from "@/lib/finance";
+import { formatFCFA, computeSchedule, SCHED_STATUS } from "@/lib/finance";
 
 export const metadata: Metadata = {
   title: "Ma scolarité",
@@ -19,23 +19,35 @@ function formatDate(iso: string): string {
 export default async function MesPaiementsPage() {
   const { supabase, userId } = await requireUser();
 
-  const [{ data: finance }, { data: paymentRows }] = await Promise.all([
-    supabase
-      .from("student_finance")
-      .select("total_due")
-      .eq("student_id", userId)
-      .maybeSingle(),
-    supabase
-      .from("payments")
-      .select("id, amount, method, label, paid_at")
-      .eq("student_id", userId)
-      .order("paid_at", { ascending: false }),
-  ]);
+  const [{ data: finance }, { data: paymentRows }, { data: scheduleRows }] =
+    await Promise.all([
+      supabase
+        .from("student_finance")
+        .select("total_due")
+        .eq("student_id", userId)
+        .maybeSingle(),
+      supabase
+        .from("payments")
+        .select("id, amount, method, label, paid_at")
+        .eq("student_id", userId)
+        .order("paid_at", { ascending: false }),
+      supabase
+        .from("payment_schedules")
+        .select("id, label, amount, due_date")
+        .eq("student_id", userId),
+    ]);
 
   const totalDue = Number(finance?.total_due ?? 0);
   const payments = paymentRows ?? [];
   const totalPaid = payments.reduce((a, p) => a + Number(p.amount), 0);
   const balance = totalDue - totalPaid;
+
+  const today = new Date().toISOString().slice(0, 10);
+  const { rows: schedule, next } = computeSchedule(
+    scheduleRows ?? [],
+    totalPaid,
+    today
+  );
 
   return (
     <section className="min-h-[70vh] bg-ipmd-light">
@@ -87,6 +99,67 @@ export default async function MesPaiementsPage() {
               </p>
             </div>
           </div>
+
+          {/* Prochain paiement */}
+          {next && (
+            <div className="mt-6 flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-ipmd-black px-5 py-4 text-white">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wide text-white/60">
+                  Prochain paiement
+                </p>
+                <p className="mt-1 text-lg font-extrabold">
+                  {formatFCFA(next.amount)}
+                  <span className="ml-2 text-sm font-medium text-white/70">
+                    {next.label || "Échéance"}
+                  </span>
+                </p>
+              </div>
+              <span
+                className={`rounded-full px-3 py-1 text-xs font-bold ${
+                  next.status === "retard"
+                    ? "bg-ipmd-red text-white"
+                    : "bg-white/15 text-white"
+                }`}
+              >
+                {next.status === "retard" ? "En retard depuis le" : "Avant le"}{" "}
+                {formatDate(next.due_date)}
+              </span>
+            </div>
+          )}
+
+          {/* Échéancier */}
+          {schedule.length > 0 && (
+            <>
+              <h2 className="mt-8 text-lg font-bold text-ipmd-black">
+                Échéancier
+              </h2>
+              <ul className="mt-3 divide-y divide-black/5 overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-black/5">
+                {schedule.map((s) => (
+                  <li
+                    key={s.id}
+                    className="flex items-center justify-between gap-3 p-4"
+                  >
+                    <div className="min-w-0">
+                      <p className="font-semibold text-ipmd-black">
+                        {formatFCFA(s.amount)}
+                        <span className="ml-2 text-xs font-normal text-black/45">
+                          {s.label || "Échéance"}
+                        </span>
+                      </p>
+                      <p className="text-xs text-black/50">
+                        Échéance : {formatDate(s.due_date)}
+                      </p>
+                    </div>
+                    <span
+                      className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-bold ${SCHED_STATUS[s.status].cls}`}
+                    >
+                      {SCHED_STATUS[s.status].label}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </>
+          )}
 
           {/* Historique */}
           <h2 className="mt-8 text-lg font-bold text-ipmd-black">

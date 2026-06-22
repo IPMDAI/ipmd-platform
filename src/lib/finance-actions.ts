@@ -84,6 +84,46 @@ export async function addPayment(
   return { ok: true, message: "Paiement enregistré." };
 }
 
+/** Ajoute une échéance de paiement à un étudiant. */
+export async function addSchedule(
+  studentId: string,
+  _prev: FormResult | null,
+  formData: FormData
+): Promise<FormResult> {
+  const ctx = await getAdmin();
+  if (!ctx) return { ok: false, message: "Action réservée à l'administration." };
+
+  const amount = num(str(formData, "amount"));
+  if (Number.isNaN(amount) || amount <= 0) {
+    return { ok: false, message: "Montant invalide." };
+  }
+  const dueDate = str(formData, "due_date");
+  if (!dueDate) return { ok: false, message: "La date d'échéance est requise." };
+
+  const { error } = await ctx.supabase.from("payment_schedules").insert({
+    student_id: studentId,
+    amount,
+    due_date: dueDate,
+    label: str(formData, "label") || null,
+  });
+  if (error) return { ok: false, message: error.message };
+
+  revalidatePath(`/espace/finance/${studentId}`);
+  return { ok: true, message: "Échéance ajoutée." };
+}
+
+/** Supprime une échéance (action de formulaire simple). */
+export async function deleteSchedule(
+  studentId: string,
+  scheduleId: string,
+  _formData?: FormData
+): Promise<void> {
+  const ctx = await getAdmin();
+  if (!ctx) return;
+  await ctx.supabase.from("payment_schedules").delete().eq("id", scheduleId);
+  revalidatePath(`/espace/finance/${studentId}`);
+}
+
 /** Supprime un paiement (action de formulaire simple). */
 export async function deletePayment(
   studentId: string,
