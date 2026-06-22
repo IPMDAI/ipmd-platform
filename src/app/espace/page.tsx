@@ -5,21 +5,17 @@ import { Container } from "@/components/ui/Container";
 import { ActionButton } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { TuteurChat } from "@/components/espace/TuteurChat";
+import { DashboardTile } from "@/components/espace/DashboardTile";
 import { signOut } from "@/lib/auth-actions";
+import {
+  dashboardTiles,
+  roleLabels,
+  roleTagline,
+  LEARNER_ROLES,
+} from "@/lib/dashboards";
 
 export const metadata: Metadata = {
   title: "Mon espace",
-};
-
-/** Libellés lisibles des rôles. */
-const roleLabels: Record<string, string> = {
-  super_admin: "Super Admin",
-  admin: "Administration",
-  enseignant: "Enseignant",
-  etudiant: "Étudiant",
-  parent: "Parent",
-  professionnel: "Professionnel",
-  dirigeant: "Dirigeant",
 };
 
 export default async function EspacePage() {
@@ -43,11 +39,13 @@ export default async function EspacePage() {
   const fullName =
     profile?.full_name || (user.user_metadata?.full_name as string) || "—";
   const role = profile?.role ?? "etudiant";
+  const tiles = dashboardTiles[role] ?? dashboardTiles.etudiant;
+  const showTutor = LEARNER_ROLES.has(role);
 
   return (
     <section className="min-h-[70vh] bg-ipmd-light">
       <Container className="py-12 sm:py-16">
-        <div className="mx-auto max-w-3xl">
+        <div className="mx-auto max-w-5xl">
           {/* En-tête */}
           <div className="flex flex-col gap-4 rounded-3xl bg-ipmd-black p-8 text-white sm:flex-row sm:items-center sm:justify-between">
             <div>
@@ -56,7 +54,7 @@ export default async function EspacePage() {
                 Bonjour, {fullName} 👋
               </h1>
               <p className="mt-1 text-sm text-white/60">
-                {profile?.email ?? user.email}
+                {roleTagline[role] ?? profile?.email ?? user.email}
               </p>
             </div>
             <form action={signOut}>
@@ -70,34 +68,19 @@ export default async function EspacePage() {
             </form>
           </div>
 
-          {/* Contenu */}
-          <div className="mt-8 grid gap-6 lg:grid-cols-3">
-            <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-black/5 lg:col-span-1">
-              <h2 className="text-lg font-bold text-ipmd-black">Mon profil</h2>
-              <dl className="mt-4 space-y-3 text-sm">
-                <div>
-                  <dt className="text-black/40">Nom</dt>
-                  <dd className="font-semibold text-ipmd-black">{fullName}</dd>
-                </div>
-                <div>
-                  <dt className="text-black/40">Email</dt>
-                  <dd className="font-semibold text-ipmd-black">
-                    {profile?.email ?? user.email}
-                  </dd>
-                </div>
-                <div>
-                  <dt className="text-black/40">Rôle</dt>
-                  <dd className="font-semibold text-ipmd-black">
-                    {roleLabels[role] ?? role}
-                  </dd>
-                </div>
-              </dl>
-            </div>
+          {/* Tuiles du rôle */}
+          <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            {tiles.map((tile) => (
+              <DashboardTile key={tile.title} tile={tile} />
+            ))}
+          </div>
 
-            <div className="lg:col-span-2">
+          {/* Tuteur IA (rôles apprenants) */}
+          {showTutor && (
+            <div className="mt-8">
               <TuteurChat firstName={fullName.split(" ")[0]} />
             </div>
-          </div>
+          )}
         </div>
       </Container>
     </section>
