@@ -48,10 +48,12 @@ export default async function CourseNotesPage({
   // Notes du cours.
   const { data: gradeRows } = await supabase
     .from("grades")
-    .select("id, student_id, title, score, max_score, comment, created_at")
+    .select("id, student_id, title, score, max_score, type, coefficient, comment, created_at")
     .eq("course_id", id)
     .order("created_at", { ascending: false });
   const grades = gradeRows ?? [];
+  const nbClasse = grades.filter((g) => g.type !== "examen").length;
+  const nbExamen = grades.filter((g) => g.type === "examen").length;
 
   return (
     <section className="min-h-[70vh] bg-ipmd-light">
@@ -67,7 +69,9 @@ export default async function CourseNotesPage({
             Notes — {course.title}
           </h1>
           <p className="mt-1 text-sm text-black/55">
-            Saisissez les notes de vos étudiants pour ce cours.
+            Saisissez les notes de vos étudiants. Rappel IPMD : au moins{" "}
+            <strong>2 notes de classe</strong> + <strong>1 examen</strong> par
+            étudiant ({nbClasse} de classe · {nbExamen} examen saisies).
           </p>
 
           <div className="mt-8 grid gap-8 lg:grid-cols-[1fr_22rem]">
@@ -100,7 +104,20 @@ export default async function CourseNotesPage({
                             <p className="truncate font-semibold text-ipmd-black">
                               {student?.full_name || student?.email || "—"}
                             </p>
-                            <p className="text-sm text-black/55">{g.title}</p>
+                            <p className="text-sm text-black/55">
+                              {g.title}
+                              <span
+                                className={`ml-2 rounded-full px-2 py-0.5 text-[10px] font-bold ${
+                                  g.type === "examen"
+                                    ? "bg-ipmd-red/10 text-ipmd-red"
+                                    : "bg-ipmd-light text-black/50"
+                                }`}
+                              >
+                                {g.type === "examen" ? "Examen" : "Classe"}
+                                {Number(g.coefficient) !== 1 &&
+                                  ` ·×${Number(g.coefficient)}`}
+                              </span>
+                            </p>
                             {g.comment && (
                               <p className="mt-1 text-xs italic text-black/45">
                                 {g.comment}

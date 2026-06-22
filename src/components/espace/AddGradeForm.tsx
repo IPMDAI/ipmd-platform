@@ -4,6 +4,7 @@ import { useActionState, useEffect, useRef } from "react";
 import { addGrade } from "@/lib/teaching-actions";
 import { Field, inputBase } from "@/components/forms/FormField";
 import { ActionButton } from "@/components/ui/Button";
+import { GRADE_TYPES } from "@/lib/grades";
 import type { FormResult } from "@/types";
 
 type Student = { id: string; full_name: string | null; email: string };
@@ -69,6 +70,29 @@ export function AddGradeForm({
               className={inputBase}
             />
           </Field>
+
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="Type" htmlFor="g-type">
+              <select id="g-type" name="type" defaultValue="classe" className={inputBase}>
+                {GRADE_TYPES.map((t) => (
+                  <option key={t.value} value={t.value}>
+                    {t.label}
+                  </option>
+                ))}
+              </select>
+            </Field>
+            <Field label="Coefficient" htmlFor="g-coef">
+              <input
+                id="g-coef"
+                name="coefficient"
+                type="number"
+                step="0.5"
+                min="0.5"
+                defaultValue="1"
+                className={inputBase}
+              />
+            </Field>
+          </div>
 
           <div className="grid grid-cols-2 gap-3">
             <Field label="Note" htmlFor="g-score" required>

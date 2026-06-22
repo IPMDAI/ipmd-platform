@@ -210,12 +210,18 @@ export async function addGrade(
     return { ok: false, message: "La note dépasse le barème." };
   }
 
+  const type = str(formData, "type") === "examen" ? "examen" : "classe";
+  const coefRaw = str(formData, "coefficient").replace(",", ".");
+  const coef = coefRaw ? Number.parseFloat(coefRaw) : 1;
+
   const { error } = await ctx.supabase.from("grades").insert({
     course_id: courseId,
     student_id: studentId,
     title,
     score,
     max_score: maxScore,
+    type,
+    coefficient: !Number.isNaN(coef) && coef > 0 ? coef : 1,
     comment: str(formData, "comment") || null,
   });
   if (error) return { ok: false, message: error.message };

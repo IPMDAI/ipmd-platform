@@ -51,7 +51,7 @@ export default async function MesCoursDetailPage({
 
   const { data: gRows } = await supabase
     .from("grades")
-    .select("id, title, score, max_score, comment")
+    .select("id, title, score, max_score, type, coefficient, comment")
     .eq("course_id", id)
     .order("created_at", { ascending: false });
   const grades = gRows ?? [];
@@ -136,7 +136,18 @@ export default async function MesCoursDetailPage({
                   className="flex items-start justify-between gap-3 p-4"
                 >
                   <div className="min-w-0">
-                    <p className="font-medium text-ipmd-black">{g.title}</p>
+                    <p className="font-medium text-ipmd-black">
+                      {g.title}
+                      <span
+                        className={`ml-2 rounded-full px-2 py-0.5 text-[10px] font-bold ${
+                          g.type === "examen"
+                            ? "bg-ipmd-red/10 text-ipmd-red"
+                            : "bg-ipmd-light text-black/50"
+                        }`}
+                      >
+                        {g.type === "examen" ? "Examen" : "Classe"}
+                      </span>
+                    </p>
                     {g.comment && (
                       <p className="mt-0.5 text-xs italic text-black/45">
                         {g.comment}

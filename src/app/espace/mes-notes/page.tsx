@@ -14,6 +14,8 @@ type Grade = {
   title: string;
   score: number;
   max_score: number;
+  type: string | null;
+  coefficient: number | null;
   comment: string | null;
 };
 
@@ -22,7 +24,7 @@ export default async function MesNotesPage() {
 
   const { data: gradeRows } = await supabase
     .from("grades")
-    .select("id, course_id, title, score, max_score, comment, created_at")
+    .select("id, course_id, title, score, max_score, type, coefficient, comment, created_at")
     .eq("student_id", userId)
     .order("created_at", { ascending: false });
 
@@ -93,6 +95,15 @@ export default async function MesNotesPage() {
                         <div className="min-w-0">
                           <p className="font-medium text-ipmd-black">
                             {g.title}
+                            <span
+                              className={`ml-2 rounded-full px-2 py-0.5 text-[10px] font-bold ${
+                                g.type === "examen"
+                                  ? "bg-ipmd-red/10 text-ipmd-red"
+                                  : "bg-ipmd-light text-black/50"
+                              }`}
+                            >
+                              {g.type === "examen" ? "Examen" : "Classe"}
+                            </span>
                           </p>
                           {g.comment && (
                             <p className="mt-0.5 text-xs italic text-black/45">
