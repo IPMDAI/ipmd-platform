@@ -32,7 +32,7 @@ export default async function EspaceLayout({
   let badges: Record<string, { count: number; alert: boolean }> = {};
   if (role === "admin" || role === "super_admin") {
     const [cand, msg, fil, mod] = await Promise.all([
-      supabase.from("inscription_requests").select("*", { count: "exact", head: true }),
+      supabase.from("inscription_requests").select("*", { count: "exact", head: true }).eq("status", "nouveau"),
       supabase.from("contact_messages").select("*", { count: "exact", head: true }),
       supabase.from("filieres").select("*", { count: "exact", head: true }).eq("status", "en_attente"),
       supabase.from("modules").select("*", { count: "exact", head: true }).eq("status", "en_attente"),

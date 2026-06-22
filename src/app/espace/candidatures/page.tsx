@@ -3,6 +3,12 @@ import Link from "next/link";
 import { requireAdmin } from "@/lib/require-admin";
 import { universes } from "@/data/universes";
 import { Container } from "@/components/ui/Container";
+import { CandidatureActions } from "@/components/espace/CandidatureActions";
+import {
+  CANDIDATURE_STATUSES,
+  CANDIDATURE_LABEL,
+  candidatureBadgeClass,
+} from "@/lib/candidatures";
 
 export const metadata: Metadata = {
   title: "Candidatures",
@@ -20,17 +26,47 @@ function formatDate(iso: string): string {
   });
 }
 
-export default async function CandidaturesPage() {
+export default async function CandidaturesPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ statut?: string }>;
+}) {
+  const { statut } = await searchParams;
   const { supabase } = await requireAdmin();
 
   const { data: rows } = await supabase
     .from("inscription_requests")
     .select(
-      "id, full_name, email, phone, universe, program_interest, entry_level, message, created_at"
+      "id, full_name, email, phone, universe, program_interest, entry_level, message, created_at, status"
     )
     .order("created_at", { ascending: false });
 
-  const candidatures = rows ?? [];
+  const all = (rows ?? []).map((c) => ({ ...c, status: c.status ?? "nouveau" }));
+
+  // Compteurs par statut.
+  const counts: Record<string, number> = {};
+  for (const c of all) counts[c.status] = (counts[c.status] ?? 0) + 1;
+
+  const active = statut && CANDIDATURE_LABEL[statut] ? statut : "";
+  const candidatures = active ? all.filter((c) => c.status === active) : all;
+
+  const tab = (key: string, label: string, count: number) => {
+    const on = active === key || (!active && key === "");
+    const href = key ? `/espace/candidatures?statut=${key}` : "/espace/candidatures";
+    return (
+      <Link
+        key={key || "tous"}
+        href={href}
+        className={`rounded-full px-3 py-1.5 text-sm font-semibold transition-colors ${
+          on
+            ? "bg-ipmd-red text-white"
+            : "bg-white text-black/60 ring-1 ring-black/10 hover:text-ipmd-red"
+        }`}
+      >
+        {label} <span className="opacity-70">{count}</span>
+      </Link>
+    );
+  };
 
   return (
     <section className="min-h-[70vh] bg-ipmd-light">
@@ -42,25 +78,28 @@ export default async function CandidaturesPage() {
           >
             ← Retour à l&apos;espace
           </Link>
-          <div className="mt-3 flex items-baseline gap-3">
-            <h1 className="text-2xl font-extrabold tracking-tight text-ipmd-black">
-              Candidatures
-            </h1>
-            <span className="rounded-full bg-ipmd-red px-2.5 py-1 text-xs font-bold text-white">
-              {candidatures.length}
-            </span>
-          </div>
+          <h1 className="mt-3 text-2xl font-extrabold tracking-tight text-ipmd-black">
+            Candidatures
+          </h1>
           <p className="mt-1 text-sm text-black/55">
-            Demandes d&apos;inscription reçues via le site, de la plus récente à
-            la plus ancienne.
+            Pipeline d&apos;inscription : traite chaque demande de Nouveau à
+            Inscrit.
           </p>
+
+          {/* Filtres par statut */}
+          <div className="mt-5 flex flex-wrap gap-2">
+            {tab("", "Toutes", all.length)}
+            {CANDIDATURE_STATUSES.map((s) =>
+              tab(s.value, s.label, counts[s.value] ?? 0)
+            )}
+          </div>
 
           {candidatures.length === 0 ? (
             <p className="mt-8 rounded-2xl bg-white p-6 text-sm text-black/55 shadow-sm ring-1 ring-black/5">
-              Aucune candidature pour le moment.
+              Aucune candidature {active ? `« ${CANDIDATURE_LABEL[active]} »` : ""}.
             </p>
           ) : (
-            <ul className="mt-8 space-y-4">
+            <ul className="mt-6 space-y-4">
               {candidatures.map((c) => (
                 <li
                   key={c.id}
@@ -70,9 +109,18 @@ export default async function CandidaturesPage() {
                     <h2 className="text-lg font-bold text-ipmd-black">
                       {c.full_name}
                     </h2>
-                    <span className="text-xs text-black/40">
-                      {formatDate(c.created_at)}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span
+                        className={`rounded-full px-2.5 py-1 text-[11px] font-bold ${candidatureBadgeClass(
+                          c.status
+                        )}`}
+                      >
+                        {CANDIDATURE_LABEL[c.status] ?? c.status}
+                      </span>
+                      <span className="text-xs text-black/40">
+                        {formatDate(c.created_at)}
+                      </span>
+                    </div>
                   </div>
 
                   <div className="mt-2 flex flex-wrap gap-2">
@@ -111,6 +159,8 @@ export default async function CandidaturesPage() {
                       {c.message}
                     </p>
                   )}
+
+                  <CandidatureActions id={c.id} status={c.status} />
                 </li>
               ))}
             </ul>

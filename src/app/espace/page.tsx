@@ -62,7 +62,7 @@ export default async function EspacePage() {
   } | null = null;
   if (isAdmin) {
     const [cand, msg, fil, mod] = await Promise.all([
-      supabase.from("inscription_requests").select("*", { count: "exact", head: true }),
+      supabase.from("inscription_requests").select("*", { count: "exact", head: true }).eq("status", "nouveau"),
       supabase.from("contact_messages").select("*", { count: "exact", head: true }),
       supabase.from("filieres").select("*", { count: "exact", head: true }).eq("status", "en_attente"),
       supabase.from("modules").select("*", { count: "exact", head: true }).eq("status", "en_attente"),
@@ -127,7 +127,7 @@ export default async function EspacePage() {
               </h2>
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                 {[
-                  { href: "/espace/candidatures", icon: "📥", label: "Candidatures reçues", value: pending.candidatures, alert: false },
+                  { href: "/espace/candidatures", icon: "📥", label: "Nouvelles candidatures", value: pending.candidatures, alert: pending.candidatures > 0 },
                   { href: "/espace/messages", icon: "✉️", label: "Messages de contact", value: pending.messages, alert: false },
                   { href: "/espace/classes", icon: "🏫", label: "Filières à valider", value: pending.filieres, alert: pending.filieres > 0 },
                   { href: "/espace/classes", icon: "📦", label: "Modules à valider", value: pending.modules, alert: pending.modules > 0 },
