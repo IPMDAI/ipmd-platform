@@ -95,7 +95,10 @@ const PARENT_NAV: NavGroup[] = [
 
 const ACCOUNT_GROUP: NavGroup = {
   title: "Compte",
-  items: [{ label: "Paramètres", href: "/espace/parametres", icon: "⚙️" }],
+  items: [
+    { label: "Messagerie", href: "/espace/messagerie", icon: "💬" },
+    { label: "Paramètres", href: "/espace/parametres", icon: "⚙️" },
+  ],
 };
 
 export function getNavForRole(role: string): NavGroup[] {
