@@ -6,6 +6,7 @@ import { Container } from "@/components/ui/Container";
 import { CandidatureActions } from "@/components/espace/CandidatureActions";
 import { CandidatureInvite } from "@/components/espace/CandidatureInvite";
 import { roleForUniverse } from "@/data/universes";
+import { roleLabels } from "@/lib/dashboards";
 import {
   CANDIDATURE_STATUSES,
   CANDIDATURE_LABEL,
@@ -41,7 +42,7 @@ export default async function CandidaturesPage({
     supabase
       .from("inscription_requests")
       .select(
-        "id, full_name, email, phone, universe, program_interest, entry_level, message, created_at, status"
+        "id, full_name, email, phone, universe, program_interest, entry_level, message, created_at, status, desired_role"
       )
       .order("created_at", { ascending: false }),
     supabase.from("classes").select("id, name").order("name"),
@@ -144,6 +145,11 @@ export default async function CandidaturesPage({
                         {c.entry_level}
                       </span>
                     )}
+                    {c.desired_role && (
+                      <span className="rounded-full bg-ipmd-black/5 px-2.5 py-1 text-[11px] font-semibold text-ipmd-black">
+                        👤 {roleLabels[c.desired_role] ?? c.desired_role}
+                      </span>
+                    )}
                   </div>
 
                   <div className="mt-3 flex flex-wrap gap-x-6 gap-y-1 text-sm">
@@ -172,7 +178,7 @@ export default async function CandidaturesPage({
                   {isSuper && c.status === "accepte" && (
                     <CandidatureInvite
                       candidatureId={c.id}
-                      defaultRole={roleForUniverse(c.universe)}
+                      defaultRole={c.desired_role || roleForUniverse(c.universe)}
                       classes={classes}
                     />
                   )}

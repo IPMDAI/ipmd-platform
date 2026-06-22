@@ -47,14 +47,13 @@ export function InscriptionForm() {
         <Field label="Téléphone" htmlFor="phone" required>
           <PhoneField id="phone" name="phone" required />
         </Field>
-        <Field label="Niveau d'entrée" htmlFor="entryLevel">
-          <select id="entryLevel" name="entryLevel" className={inputBase}>
+        <Field label="Profil souhaité" htmlFor="profile" required>
+          <select id="profile" name="profile" required className={inputBase}>
             <option value="">— Sélectionner —</option>
-            {entryLevels.map((lvl) => (
-              <option key={lvl} value={lvl}>
-                {lvl}
-              </option>
-            ))}
+            <option value="etudiant">Étudiant</option>
+            <option value="professionnel">Professionnel</option>
+            <option value="parent">Parent</option>
+            <option value="dirigeant">Dirigeant</option>
           </select>
         </Field>
       </div>
@@ -70,16 +69,27 @@ export function InscriptionForm() {
             ))}
           </select>
         </Field>
-        <Field label="Formation souhaitée" htmlFor="programInterest">
-          <input
-            id="programInterest"
-            name="programInterest"
-            type="text"
-            placeholder="Ex. Marketing digital, Développement…"
-            className={inputBase}
-          />
+        <Field label="Niveau d'entrée" htmlFor="entryLevel">
+          <select id="entryLevel" name="entryLevel" className={inputBase}>
+            <option value="">— Sélectionner —</option>
+            {entryLevels.map((lvl) => (
+              <option key={lvl} value={lvl}>
+                {lvl}
+              </option>
+            ))}
+          </select>
         </Field>
       </div>
+
+      <Field label="Formation souhaitée" htmlFor="programInterest">
+        <input
+          id="programInterest"
+          name="programInterest"
+          type="text"
+          placeholder="Ex. Marketing digital, Développement…"
+          className={inputBase}
+        />
+      </Field>
 
       <Field label="Message (optionnel)" htmlFor="message">
         <textarea

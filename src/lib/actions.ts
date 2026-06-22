@@ -37,6 +37,12 @@ export async function submitInscription(
     universe: getString(formData, "universe") as UniverseId,
     program_interest: getString(formData, "programInterest"),
     entry_level: getString(formData, "entryLevel") || null,
+    desired_role:
+      ["etudiant", "professionnel", "dirigeant", "parent"].includes(
+        getString(formData, "profile")
+      )
+        ? getString(formData, "profile")
+        : null,
     message: getString(formData, "message") || null,
   };
 
