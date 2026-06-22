@@ -7,7 +7,11 @@ import { ActionButton } from "@/components/ui/Button";
 import { MESSAGE_CATEGORIES } from "@/lib/messaging";
 import type { FormResult } from "@/types";
 
-export function SendMessageForm() {
+export function SendMessageForm({
+  services,
+}: {
+  services: { value: string; label: string }[];
+}) {
   const [state, action, pending] = useActionState<FormResult | null, FormData>(
     sendInternalMessage,
     null
@@ -23,9 +27,16 @@ export function SendMessageForm() {
       action={action}
       className="space-y-3 rounded-2xl bg-white p-6 shadow-sm ring-1 ring-black/5"
     >
-      <h2 className="text-lg font-bold text-ipmd-black">
-        Écrire à l&apos;administration
-      </h2>
+      <h2 className="text-lg font-bold text-ipmd-black">Écrire à un service</h2>
+      <Field label="Destinataire" htmlFor="m-to" required>
+        <select id="m-to" name="recipient_role" className={inputBase}>
+          {services.map((s) => (
+            <option key={s.value} value={s.value}>
+              {s.label}
+            </option>
+          ))}
+        </select>
+      </Field>
       <Field label="Motif" htmlFor="m-cat">
         <select id="m-cat" name="category" defaultValue="question" className={inputBase}>
           {MESSAGE_CATEGORIES.map((c) => (

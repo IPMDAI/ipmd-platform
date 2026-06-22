@@ -18,6 +18,8 @@ export type DashSection = { title: string; tiles: DashTile[] };
 export const roleLabels: Record<string, string> = {
   super_admin: "Super Admin",
   admin: "Administration",
+  scolarite: "Scolarité",
+  pedagogie: "Pédagogie",
   enseignant: "Enseignant",
   etudiant: "Étudiant",
   parent: "Parent",
@@ -29,6 +31,8 @@ export const roleLabels: Record<string, string> = {
 export const roleTagline: Record<string, string> = {
   super_admin: "Recteur / DSI — pilotage global de l'établissement",
   admin: "Scolarité, ressources humaines et finance",
+  scolarite: "Inscriptions, dossiers et finance des étudiants",
+  pedagogie: "Cours, planning et suivi pédagogique",
   enseignant: "Vos cours, devoirs et notes",
   etudiant: "Votre apprentissage et votre scolarité",
   parent: "Le suivi de votre enfant",
@@ -46,6 +50,8 @@ export const ROLE_OPTIONS: { value: string; label: string }[] = [
   { value: "enseignant", label: "Enseignant" },
   { value: "professionnel", label: "Professionnel" },
   { value: "dirigeant", label: "Dirigeant" },
+  { value: "scolarite", label: "Scolarité" },
+  { value: "pedagogie", label: "Pédagogie" },
   { value: "admin", label: "Administration" },
   { value: "super_admin", label: "Super Admin" },
 ];
@@ -123,6 +129,12 @@ export const dashboardTiles: Record<string, DashTile[]> = {
     { title: "Emploi du temps", icon: "🗓️", status: "ready", href: "/espace/emploi-du-temps", description: "Vos séances de la semaine." },
     { title: "Saisie des notes", icon: "🖊️", status: "ready", href: "/espace/cours", description: "Ouvrez un cours pour saisir les notes." },
     { title: "Mes classes", icon: "👥", status: "soon", description: "Vos groupes et étudiants." },
+  ],
+  scolarite: [
+    { title: "Messagerie", icon: "💬", status: "ready", href: "/espace/messagerie", description: "Messages des étudiants, parents…" },
+  ],
+  pedagogie: [
+    { title: "Messagerie", icon: "💬", status: "ready", href: "/espace/messagerie", description: "Messages des étudiants et enseignants." },
   ],
 };
 

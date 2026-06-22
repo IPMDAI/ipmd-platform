@@ -46,6 +46,13 @@ export default async function EspaceLayout({
       "/espace/messagerie": { count: inbox.count ?? 0, alert: (inbox.count ?? 0) > 0 },
       "/espace/classes": { count: toValidate, alert: toValidate > 0 },
     };
+  } else if (role === "scolarite" || role === "pedagogie") {
+    const inbox = await supabase
+      .from("internal_messages")
+      .select("*", { count: "exact", head: true })
+      .eq("status", "nouveau");
+    const n = inbox.count ?? 0;
+    if (n > 0) badges["/espace/messagerie"] = { count: n, alert: true };
   }
 
   const flatItems = groups.flatMap((g) =>

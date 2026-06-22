@@ -2,7 +2,11 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import { MESSAGE_CATEGORY_VALUES } from "@/lib/messaging";
+import {
+  MESSAGE_CATEGORY_VALUES,
+  servicesForRole,
+  STAFF_ROLES,
+} from "@/lib/messaging";
 import type { FormResult } from "@/types";
 
 function str(formData: FormData, key: string): string {
@@ -30,11 +34,22 @@ export async function sendInternalMessage(
   }
   if (!MESSAGE_CATEGORY_VALUES.includes(category)) category = "question";
 
+  // Service destinataire, validé selon le rôle de l'expéditeur.
+  const { data: me } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .single();
+  const allowed = servicesForRole(me?.role ?? "etudiant").map((s) => s.value);
+  let recipientRole = str(formData, "recipient_role");
+  if (!allowed.includes(recipientRole)) recipientRole = allowed[0] ?? "admin";
+
   const { error } = await supabase.from("internal_messages").insert({
     sender_id: user.id,
     category,
     subject,
     body,
+    recipient_role: recipientRole,
   });
   if (error) return { ok: false, message: error.message };
 
@@ -59,8 +74,8 @@ export async function replyInternalMessage(
     .select("role")
     .eq("id", user.id)
     .single();
-  if (me?.role !== "admin" && me?.role !== "super_admin") {
-    return { ok: false, message: "Action réservée à l'administration." };
+  if (!STAFF_ROLES.includes(me?.role ?? "")) {
+    return { ok: false, message: "Action réservée aux services IPMD." };
   }
 
   const reply = str(formData, "reply");

@@ -4,7 +4,12 @@ import { requireUser } from "@/lib/require-user";
 import { Container } from "@/components/ui/Container";
 import { SendMessageForm } from "@/components/espace/SendMessageForm";
 import { AdminMessageReply } from "@/components/espace/AdminMessageReply";
-import { MESSAGE_CATEGORY_LABEL } from "@/lib/messaging";
+import {
+  MESSAGE_CATEGORY_LABEL,
+  SERVICE_LABEL,
+  servicesForRole,
+  STAFF_ROLES,
+} from "@/lib/messaging";
 
 export const metadata: Metadata = {
   title: "Messagerie",
@@ -19,6 +24,7 @@ type Msg = {
   admin_reply: string | null;
   status: string;
   created_at: string;
+  recipient_role: string;
 };
 
 function frDate(iso: string): string {
@@ -37,17 +43,20 @@ export default async function MessageriePage() {
     .select("role")
     .eq("id", userId)
     .single();
-  const isAdmin = me?.role === "admin" || me?.role === "super_admin";
+  const role = me?.role ?? "etudiant";
+  const isStaff = STAFF_ROLES.includes(role);
 
   const { data: rows } = await supabase
     .from("internal_messages")
-    .select("id, sender_id, category, subject, body, admin_reply, status, created_at")
+    .select(
+      "id, sender_id, category, subject, body, admin_reply, status, created_at, recipient_role"
+    )
     .order("created_at", { ascending: false });
   const messages = (rows ?? []) as Msg[];
 
-  // Noms des expéditeurs (admin).
+  // Noms des expéditeurs (services).
   const senderName = new Map<string, string>();
-  if (isAdmin && messages.length > 0) {
+  if (isStaff && messages.length > 0) {
     const ids = [...new Set(messages.map((m) => m.sender_id))];
     const { data: people } = await supabase
       .from("profiles")
@@ -71,15 +80,15 @@ export default async function MessageriePage() {
             Messagerie
           </h1>
           <p className="mt-1 text-sm text-black/55">
-            {isAdmin
-              ? "Messages reçus des étudiants, parents et enseignants."
-              : "Échange avec l'administration de l'IPMD."}
+            {isStaff
+              ? "Messages reçus pour votre service."
+              : "Écris à un service de l'IPMD (administration, scolarité, pédagogie)."}
           </p>
 
-          {/* Formulaire d'envoi (non-admin) */}
-          {!isAdmin && (
+          {/* Formulaire d'envoi (non-staff) */}
+          {!isStaff && (
             <div className="mt-8">
-              <SendMessageForm />
+              <SendMessageForm services={servicesForRole(role)} />
             </div>
           )}
 
@@ -87,9 +96,9 @@ export default async function MessageriePage() {
           <div className="mt-8 space-y-4">
             {messages.length === 0 ? (
               <p className="rounded-2xl bg-white p-6 text-sm text-black/55 shadow-sm ring-1 ring-black/5">
-                {isAdmin
+                {isStaff
                   ? "Aucun message reçu."
-                  : "Tu n'as pas encore écrit à l'administration."}
+                  : "Tu n'as pas encore écrit à un service."}
               </p>
             ) : (
               messages.map((m) => (
@@ -115,10 +124,14 @@ export default async function MessageriePage() {
                     </div>
                   </div>
                   <div className="mt-1 flex flex-wrap gap-2 text-[11px]">
+                    <span className="rounded-full bg-ipmd-red/10 px-2.5 py-1 font-semibold text-ipmd-red">
+                      {isStaff ? "Pour : " : "À : "}
+                      {SERVICE_LABEL[m.recipient_role] ?? m.recipient_role}
+                    </span>
                     <span className="rounded-full bg-ipmd-black px-2.5 py-1 font-semibold text-white">
                       {MESSAGE_CATEGORY_LABEL[m.category] ?? m.category}
                     </span>
-                    {isAdmin && (
+                    {isStaff && (
                       <span className="rounded-full bg-ipmd-light px-2.5 py-1 font-semibold text-black/60">
                         👤 {senderName.get(m.sender_id) ?? "—"}
                       </span>
@@ -132,7 +145,7 @@ export default async function MessageriePage() {
                   {m.admin_reply && (
                     <div className="mt-3 rounded-xl bg-ipmd-light px-4 py-3">
                       <p className="text-xs font-bold uppercase tracking-wider text-ipmd-red">
-                        Réponse de l&apos;administration
+                        Réponse du service
                       </p>
                       <p className="mt-1 whitespace-pre-line text-sm leading-relaxed text-black/75">
                         {m.admin_reply}
@@ -140,7 +153,7 @@ export default async function MessageriePage() {
                     </div>
                   )}
 
-                  {isAdmin && (
+                  {isStaff && (
                     <AdminMessageReply messageId={m.id} current={m.admin_reply} />
                   )}
                 </div>

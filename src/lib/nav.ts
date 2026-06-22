@@ -102,9 +102,12 @@ const ACCOUNT_GROUP: NavGroup = {
   ],
 };
 
+const STAFF_NAV: NavGroup[] = [{ items: [HOME] }];
+
 export function getNavForRole(role: string): NavGroup[] {
   let base: NavGroup[];
   if (role === "admin" || role === "super_admin") base = ADMIN_NAV;
+  else if (role === "scolarite" || role === "pedagogie") base = STAFF_NAV;
   else if (role === "enseignant") base = TEACHER_NAV;
   else if (role === "parent") base = PARENT_NAV;
   else base = LEARNER_NAV; // etudiant, professionnel, dirigeant
