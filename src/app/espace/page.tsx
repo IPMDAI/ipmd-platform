@@ -12,6 +12,7 @@ import { LearnerOverview } from "@/components/espace/LearnerOverview";
 import { NotificationsPanel } from "@/components/espace/NotificationsPanel";
 import { AnnouncementsPanel } from "@/components/espace/AnnouncementsPanel";
 import { TeacherOverview } from "@/components/espace/TeacherOverview";
+import { TeacherTodo } from "@/components/espace/TeacherTodo";
 import { signOut } from "@/lib/auth-actions";
 import {
   findConflicts,
@@ -226,7 +227,8 @@ export default async function EspacePage() {
           {/* Cockpit de l'apprenant : ses cours du jour + ses résultats */}
           {showTutor && <LearnerOverview userId={user.id} />}
 
-          {/* Cockpit de l'enseignant : ses cours du jour + volumes */}
+          {/* Cockpit de l'enseignant : à faire + ses cours du jour + volumes */}
+          {role === "enseignant" && <TeacherTodo userId={user.id} />}
           {role === "enseignant" && <TeacherOverview userId={user.id} />}
 
           {/* Tuiles du rôle — en sections pour les admins, à plat sinon */}
