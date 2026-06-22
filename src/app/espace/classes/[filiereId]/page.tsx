@@ -109,9 +109,12 @@ export default async function FiliereModulesPage({
                                     key={m.id}
                                     className="flex items-center justify-between gap-3 px-4 py-3"
                                   >
-                                    <span className="font-medium text-ipmd-black">
+                                    <Link
+                                      href={`/espace/module/${m.id}`}
+                                      className="min-w-0 flex-1 font-medium text-ipmd-black transition-colors hover:text-ipmd-red"
+                                    >
                                       {m.name}
-                                    </span>
+                                    </Link>
                                     <form
                                       action={deleteModule.bind(
                                         null,
