@@ -5,6 +5,7 @@ import { addGrade } from "@/lib/teaching-actions";
 import { Field, inputBase } from "@/components/forms/FormField";
 import { ActionButton } from "@/components/ui/Button";
 import { GRADE_TYPES } from "@/lib/grades";
+import { SEMESTERS } from "@/lib/referentiel";
 import type { FormResult } from "@/types";
 
 type Student = { id: string; full_name: string | null; email: string };
@@ -69,6 +70,17 @@ export function AddGradeForm({
               placeholder="Ex. Contrôle continu 1"
               className={inputBase}
             />
+          </Field>
+
+          <Field label="Semestre" htmlFor="g-sem">
+            <select id="g-sem" name="semester" defaultValue="" className={inputBase}>
+              <option value="">—</option>
+              {SEMESTERS.map((s) => (
+                <option key={s} value={s}>
+                  {s}
+                </option>
+              ))}
+            </select>
           </Field>
 
           <div className="grid grid-cols-2 gap-3">

@@ -4,6 +4,7 @@ import { useActionState, useEffect, useRef } from "react";
 import { createExam } from "@/lib/exam-actions";
 import { Field, inputBase } from "@/components/forms/FormField";
 import { ActionButton } from "@/components/ui/Button";
+import { SEMESTERS } from "@/lib/referentiel";
 import type { FormResult } from "@/types";
 
 export function NewExamForm({ courseId }: { courseId: string }) {
@@ -32,6 +33,16 @@ export function NewExamForm({ courseId }: { courseId: string }) {
           placeholder="Ex. Examen final — Marketing digital"
           className={inputBase}
         />
+      </Field>
+      <Field label="Semestre" htmlFor="e-sem">
+        <select id="e-sem" name="semester" defaultValue="" className={inputBase}>
+          <option value="">—</option>
+          {SEMESTERS.map((s) => (
+            <option key={s} value={s}>
+              {s}
+            </option>
+          ))}
+        </select>
       </Field>
       <ActionButton type="submit" disabled={pending}>
         {pending ? "…" : "Créer l'examen"}

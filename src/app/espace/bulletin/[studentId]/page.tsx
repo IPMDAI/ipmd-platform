@@ -12,10 +12,13 @@ export const metadata: Metadata = {
 
 export default async function BulletinPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ studentId: string }>;
+  searchParams: Promise<{ sem?: string }>;
 }) {
   const { studentId } = await params;
+  const { sem } = await searchParams;
   const { supabase } = await requireUser();
 
   // La RLS ne renvoie le profil que si l'utilisateur est autorisé
@@ -47,7 +50,12 @@ export default async function BulletinPage({
           </h1>
 
           <div className="mt-6">
-            <BulletinView studentId={studentId} studentName={name} />
+            <BulletinView
+              studentId={studentId}
+              studentName={name}
+              basePath={`/espace/bulletin/${studentId}`}
+              selectedSemester={sem}
+            />
           </div>
         </div>
       </Container>

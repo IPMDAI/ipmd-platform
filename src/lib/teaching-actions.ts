@@ -222,6 +222,7 @@ export async function addGrade(
     max_score: maxScore,
     type,
     coefficient: !Number.isNaN(coef) && coef > 0 ? coef : 1,
+    semester: str(formData, "semester") || null,
     comment: str(formData, "comment") || null,
   });
   if (error) return { ok: false, message: error.message };

@@ -9,7 +9,12 @@ export const metadata: Metadata = {
   title: "Mon bulletin",
 };
 
-export default async function MonBulletinPage() {
+export default async function MonBulletinPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ sem?: string }>;
+}) {
+  const { sem } = await searchParams;
   const { supabase, userId } = await requireUser();
 
   const { data: profile } = await supabase
@@ -57,6 +62,8 @@ export default async function MonBulletinPage() {
               studentId={userId}
               studentName={name}
               className={className}
+              basePath="/espace/mon-bulletin"
+              selectedSemester={sem}
             />
           </div>
         </div>

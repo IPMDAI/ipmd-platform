@@ -49,7 +49,7 @@ export async function createExam(
 
   const { error } = await ctx.supabase
     .from("exams")
-    .insert({ course_id: courseId, title });
+    .insert({ course_id: courseId, title, semester: str(formData, "semester") || null });
   if (error) return { ok: false, message: error.message };
 
   revalidatePath(`/espace/cours/${courseId}/examens`);
