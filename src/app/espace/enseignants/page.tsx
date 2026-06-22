@@ -146,6 +146,15 @@ export default async function EnseignantsPage() {
                         </div>
                       )}
 
+                      <div className="mt-3">
+                        <Link
+                          href={`/espace/contrat/${t.id}`}
+                          className="inline-flex items-center gap-2 rounded-full bg-ipmd-light px-3 py-1.5 text-xs font-semibold text-ipmd-black transition-colors hover:bg-black/5"
+                        >
+                          📄 Générer le contrat de vacataire
+                        </Link>
+                      </div>
+
                       <TeacherProfileForm teacherId={t.id} sheet={sheet} />
                     </details>
                   </li>
