@@ -70,24 +70,35 @@ const LEARNER_SCOLARITE: DashTile = {
   description: "Tes frais, paiements et ton solde.",
 };
 
+const BULLETIN: DashTile = {
+  title: "Mon bulletin",
+  icon: "📄",
+  status: "ready",
+  href: "/espace/mon-bulletin",
+  description: "Tes résultats et ta moyenne générale.",
+};
+
 /** Tuiles des rôles apprenants / parent / enseignant. */
 export const dashboardTiles: Record<string, DashTile[]> = {
   etudiant: [
     { title: "Mes cours", icon: "📚", status: "ready", href: "/espace/mes-cours", description: "Tes cours, devoirs et séances." },
     { title: "Emploi du temps", icon: "🗓️", status: "ready", href: "/espace/mon-emploi-du-temps", description: "Le planning de ta classe." },
     { title: "Mes notes", icon: "📊", status: "ready", href: "/espace/mes-notes", description: "Tes résultats et ta moyenne." },
+    BULLETIN,
     LEARNER_SCOLARITE,
   ],
   professionnel: [
     { title: "Mon parcours", icon: "🚀", status: "ready", href: "/espace/mes-cours", description: "Tes cours, devoirs et séances." },
     { title: "Emploi du temps", icon: "🗓️", status: "ready", href: "/espace/mon-emploi-du-temps", description: "Le planning de ta classe." },
     { title: "Mes notes", icon: "📊", status: "ready", href: "/espace/mes-notes", description: "Validation de tes compétences." },
+    BULLETIN,
     LEARNER_SCOLARITE,
   ],
   dirigeant: [
     { title: "Mon programme", icon: "🏛️", status: "ready", href: "/espace/mes-cours", description: "Tes cours, devoirs et séances." },
     { title: "Emploi du temps", icon: "🗓️", status: "ready", href: "/espace/mon-emploi-du-temps", description: "Le planning de ta classe." },
     { title: "Mes notes", icon: "📊", status: "ready", href: "/espace/mes-notes", description: "Validation du programme." },
+    BULLETIN,
     LEARNER_SCOLARITE,
   ],
   parent: [
@@ -115,6 +126,7 @@ const ADMIN_TILES = {
   planning: { title: "Planning", icon: "🗓️", status: "ready", href: "/espace/planning", description: "Emploi du temps par classe." },
   recrutement: { title: "Recrutement profs", icon: "🧑‍🏫", status: "ready", href: "/espace/recrutement", description: "Candidatures enseignants + tri IA." },
   finance: { title: "Finance", icon: "💰", status: "ready", href: "/espace/finance", description: "Frais, paiements et soldes." },
+  bulletins: { title: "Bulletins", icon: "📄", status: "ready", href: "/espace/bulletins", description: "Bulletins de notes des étudiants." },
   etudiants: { title: "Étudiants", icon: "🎓", status: "soon", description: "Gestion des étudiants." },
   scolarite: { title: "Scolarité", icon: "🗂️", status: "soon", description: "Inscriptions et dossiers." },
 } satisfies Record<string, DashTile>;
@@ -128,7 +140,12 @@ export const dashboardSections: Record<string, DashSection[]> = {
     },
     {
       title: "Scolarité & finance",
-      tiles: [ADMIN_TILES.etudiants, ADMIN_TILES.scolarite, ADMIN_TILES.finance],
+      tiles: [
+        ADMIN_TILES.etudiants,
+        ADMIN_TILES.scolarite,
+        ADMIN_TILES.finance,
+        ADMIN_TILES.bulletins,
+      ],
     },
     {
       title: "Relations & accès",
@@ -142,7 +159,12 @@ export const dashboardSections: Record<string, DashSection[]> = {
     },
     {
       title: "Scolarité & finance",
-      tiles: [ADMIN_TILES.etudiants, ADMIN_TILES.scolarite, ADMIN_TILES.finance],
+      tiles: [
+        ADMIN_TILES.etudiants,
+        ADMIN_TILES.scolarite,
+        ADMIN_TILES.finance,
+        ADMIN_TILES.bulletins,
+      ],
     },
     {
       title: "Relations",

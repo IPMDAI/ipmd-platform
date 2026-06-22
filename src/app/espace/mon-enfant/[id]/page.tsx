@@ -146,6 +146,12 @@ export default async function EnfantDetailPage({
           <h1 className="mt-3 text-2xl font-extrabold tracking-tight text-ipmd-black">
             {child.full_name || child.email}
           </h1>
+          <Link
+            href={`/espace/bulletin/${id}`}
+            className="mt-2 inline-flex items-center gap-2 rounded-full bg-ipmd-black px-4 py-2 text-sm font-semibold text-white transition-opacity hover:opacity-90"
+          >
+            📄 Voir le bulletin
+          </Link>
 
           {/* Notes */}
           <h2 className="mt-8 text-lg font-bold text-ipmd-black">Notes</h2>

@@ -16,9 +16,9 @@ export const GRADE_TYPE_LABELS: Record<string, string> = Object.fromEntries(
   GRADE_TYPES.map((t) => [t.value, t.label])
 );
 
-/** Moyenne pondérée (par coefficient), ramenée sur 20. "—" si aucune note. */
-export function averageOn20(grades: GradeLike[]): string {
-  if (grades.length === 0) return "—";
+/** Moyenne pondérée (par coefficient), sur 20. null si aucune note. */
+export function averageValue(grades: GradeLike[]): number | null {
+  if (grades.length === 0) return null;
   let weighted = 0;
   let coefSum = 0;
   for (const g of grades) {
@@ -26,6 +26,22 @@ export function averageOn20(grades: GradeLike[]): string {
     weighted += (Number(g.score) / Number(g.max_score)) * 20 * coef;
     coefSum += coef;
   }
-  if (coefSum === 0) return "—";
-  return `${Math.round((weighted / coefSum) * 100) / 100}/20`;
+  if (coefSum === 0) return null;
+  return Math.round((weighted / coefSum) * 100) / 100;
+}
+
+/** Moyenne pondérée formatée « X/20 ». "—" si aucune note. */
+export function averageOn20(grades: GradeLike[]): string {
+  const v = averageValue(grades);
+  return v === null ? "—" : `${v}/20`;
+}
+
+/** Mention selon la moyenne /20. */
+export function mention(value: number | null): string {
+  if (value === null) return "—";
+  if (value >= 16) return "Très bien";
+  if (value >= 14) return "Bien";
+  if (value >= 12) return "Assez bien";
+  if (value >= 10) return "Passable";
+  return "Insuffisant";
 }
