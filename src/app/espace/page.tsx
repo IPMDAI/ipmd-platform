@@ -7,7 +7,14 @@ import { ActionButton } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { TuteurChat } from "@/components/espace/TuteurChat";
 import { DashboardTile } from "@/components/espace/DashboardTile";
+import { DailyBriefing } from "@/components/espace/DailyBriefing";
 import { signOut } from "@/lib/auth-actions";
+import {
+  findConflicts,
+  CONFLICT_LABEL,
+  type Conflict,
+  type Slot,
+} from "@/lib/planning-conflicts";
 import {
   dashboardTiles,
   dashboardSections,
@@ -66,6 +73,24 @@ export default async function EspacePage() {
       filieres: fil.count ?? 0,
       modules: mod.count ?? 0,
     };
+  }
+
+  // Détection automatique des conflits de planning (admins).
+  let conflicts: Conflict[] = [];
+  if (isAdmin) {
+    const [slotRows, classRows, roomRows, teacherRows] = await Promise.all([
+      supabase
+        .from("timetable_slots")
+        .select("id, class_id, subject, teacher_id, room_id, day_of_week, start_time, end_time"),
+      supabase.from("classes").select("id, name"),
+      supabase.from("rooms").select("id, name"),
+      supabase.from("profiles").select("id, full_name").eq("role", "enseignant"),
+    ]);
+    conflicts = findConflicts((slotRows.data ?? []) as Slot[], {
+      classes: new Map((classRows.data ?? []).map((c) => [c.id, c.name])),
+      rooms: new Map((roomRows.data ?? []).map((r) => [r.id, r.name])),
+      teachers: new Map((teacherRows.data ?? []).map((t) => [t.id, t.full_name ?? "?"])),
+    });
   }
 
   return (
@@ -130,6 +155,61 @@ export default async function EspacePage() {
                   </Link>
                 ))}
               </div>
+            </div>
+          )}
+
+          {/* Pilotage intelligent (admins) : conflits + synthèse IA */}
+          {isAdmin && (
+            <div className="mt-8 grid gap-5 lg:grid-cols-2">
+              <div className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-black/5">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xl">🗓️</span>
+                    <h3 className="font-bold text-ipmd-black">
+                      Conflits de planning
+                    </h3>
+                  </div>
+                  {conflicts.length > 0 && (
+                    <span className="rounded-full bg-ipmd-red px-2 py-0.5 text-xs font-bold text-white">
+                      {conflicts.length}
+                    </span>
+                  )}
+                </div>
+                {conflicts.length === 0 ? (
+                  <p className="mt-3 text-sm font-medium text-green-700">
+                    ✅ Aucun conflit détecté dans le planning.
+                  </p>
+                ) : (
+                  <ul className="mt-3 space-y-2">
+                    {conflicts.slice(0, 6).map((c, i) => (
+                      <li
+                        key={i}
+                        className="rounded-lg bg-ipmd-light px-3 py-2 text-sm"
+                      >
+                        <span className="font-semibold text-ipmd-red">
+                          {CONFLICT_LABEL[c.kind]}
+                        </span>
+                        <span className="text-black/60"> · {c.detail}</span>
+                      </li>
+                    ))}
+                    {conflicts.length > 6 && (
+                      <li className="text-xs text-black/45">
+                        + {conflicts.length - 6} autre(s)…
+                      </li>
+                    )}
+                    <li>
+                      <Link
+                        href="/espace/planning"
+                        className="text-xs font-semibold text-ipmd-red hover:underline"
+                      >
+                        Ouvrir le planning →
+                      </Link>
+                    </li>
+                  </ul>
+                )}
+              </div>
+
+              <DailyBriefing />
             </div>
           )}
 
