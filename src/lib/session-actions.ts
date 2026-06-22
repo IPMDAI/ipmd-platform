@@ -1,0 +1,117 @@
+"use server";
+
+import { revalidatePath } from "next/cache";
+import { createClient } from "@/lib/supabase/server";
+import { SESSION_STATUS_VALUES } from "@/lib/sessions";
+import type { FormResult } from "@/types";
+
+async function getStaff() {
+  const supabase = await createClient();
+  if (!supabase) return null;
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return null;
+  const { data: me } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .single();
+  if (!["admin", "super_admin", "pedagogie"].includes(me?.role ?? "")) return null;
+  return { supabase, userId: user.id, role: me!.role as string };
+}
+
+function ourDow(iso: string): number {
+  const js = new Date(iso + "T00:00:00Z").getUTCDay();
+  return js === 0 ? 7 : js;
+}
+
+/** Génère les séances datées d'une classe sur une période (fériés exclus). */
+export async function generateSessions(
+  _prev: FormResult | null,
+  formData: FormData
+): Promise<FormResult> {
+  const ctx = await getStaff();
+  if (!ctx) return { ok: false, message: "Action réservée aux services IPMD." };
+
+  const classId = ((formData.get("class_id") as string) ?? "").trim();
+  if (!classId) return { ok: false, message: "Choisissez une classe." };
+  const start = ((formData.get("start") as string) ?? "").trim();
+  const end = ((formData.get("end") as string) ?? "").trim();
+  const semester = ((formData.get("semester") as string) ?? "").trim() || null;
+  if (!start || !end || start > end) {
+    return { ok: false, message: "Période invalide." };
+  }
+  // Garde-fou : 120 jours max.
+  const days =
+    (new Date(end + "T00:00:00Z").getTime() -
+      new Date(start + "T00:00:00Z").getTime()) /
+    86400000;
+  if (days > 120) return { ok: false, message: "Période trop longue (max ~4 mois)." };
+
+  const [{ data: slots }, { data: holidays }] = await Promise.all([
+    ctx.supabase
+      .from("timetable_slots")
+      .select("day_of_week, start_time, end_time, subject, teacher_id, room_id")
+      .eq("class_id", classId),
+    ctx.supabase
+      .from("holidays")
+      .select("day")
+      .gte("day", start)
+      .lte("day", end),
+  ]);
+  if (!slots || slots.length === 0) {
+    return { ok: false, message: "Aucun créneau au planning de cette classe." };
+  }
+  const holiSet = new Set((holidays ?? []).map((h) => h.day));
+
+  const rows: Record<string, unknown>[] = [];
+  const cur = new Date(start + "T00:00:00Z");
+  const last = new Date(end + "T00:00:00Z");
+  while (cur.getTime() <= last.getTime()) {
+    const iso = cur.toISOString().slice(0, 10);
+    const dow = ourDow(iso);
+    for (const s of slots) {
+      if (s.day_of_week !== dow) continue;
+      rows.push({
+        class_id: classId,
+        teacher_id: s.teacher_id,
+        subject: s.subject,
+        room_id: s.room_id,
+        session_date: iso,
+        start_time: s.start_time,
+        end_time: s.end_time,
+        semester,
+        status: holiSet.has(iso) ? "ferie" : "prevue",
+      });
+    }
+    cur.setUTCDate(cur.getUTCDate() + 1);
+  }
+  if (rows.length === 0) {
+    return { ok: false, message: "Aucune séance sur cette période." };
+  }
+
+  const { error } = await ctx.supabase
+    .from("course_sessions")
+    .upsert(rows, { onConflict: "class_id,session_date,start_time", ignoreDuplicates: true });
+  if (error) return { ok: false, message: error.message };
+
+  revalidatePath("/espace/seances");
+  return { ok: true, message: `${rows.length} séance(s) générée(s).` };
+}
+
+/** Change le statut d'une séance (staff ou enseignant de la séance). */
+export async function setSessionStatus(
+  sessionId: string,
+  status: string,
+  _formData?: FormData
+): Promise<void> {
+  if (!SESSION_STATUS_VALUES.includes(status)) return;
+  const supabase = await createClient();
+  if (!supabase) return;
+  await supabase
+    .from("course_sessions")
+    .update({ status })
+    .eq("id", sessionId);
+  revalidatePath("/espace/seances");
+}

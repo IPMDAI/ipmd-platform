@@ -32,3 +32,11 @@ create policy "Staff manage teacher profiles" on public.teacher_profiles
 drop policy if exists "Teacher reads own profile sheet" on public.teacher_profiles;
 create policy "Teacher reads own profile sheet" on public.teacher_profiles
   for select to authenticated using (teacher_id = auth.uid());
+
+-- Les services (pédagogie / scolarité) peuvent lire les profils (noms des
+-- enseignants et étudiants) — comme les admins. (Les étudiants, eux, ne
+-- voient toujours pas les profils des autres.)
+drop policy if exists "Staff read profiles" on public.profiles;
+create policy "Staff read profiles" on public.profiles
+  for select to authenticated
+  using (public.current_user_role()::text in ('admin', 'super_admin', 'pedagogie', 'scolarite'));
