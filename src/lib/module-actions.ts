@@ -53,6 +53,9 @@ export async function updateModule(
       teacher_id: str(formData, "teacher_id") || null,
       hours: numOrNull(str(formData, "hours")),
       coefficient: numOrNull(str(formData, "coefficient")),
+      objectives: str(formData, "objectives") || null,
+      skills: str(formData, "skills") || null,
+      evaluation_methods: str(formData, "evaluation_methods") || null,
       syllabus: str(formData, "syllabus") || null,
     })
     .eq("id", moduleId);
@@ -73,10 +76,33 @@ export async function addModuleSupport(
   if (!ctx) return { ok: false, message: "Action réservée à l'administration." };
   const label = str(formData, "label");
   if (!label) return { ok: false, message: "Le titre du support est requis." };
+
+  let url = str(formData, "url") || null;
+
+  // Upload de fichier (PDF / PowerPoint…) si fourni.
+  const file = formData.get("file");
+  if (file instanceof File && file.size > 0) {
+    const safe = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+    const path = `${moduleId}/${Date.now()}-${safe}`;
+    const { error: upErr } = await ctx.supabase.storage
+      .from("module-supports")
+      .upload(path, file, {
+        upsert: false,
+        contentType: file.type || undefined,
+      });
+    if (upErr) {
+      return { ok: false, message: "Échec de l'envoi du fichier : " + upErr.message };
+    }
+    const { data: pub } = ctx.supabase.storage
+      .from("module-supports")
+      .getPublicUrl(path);
+    url = pub.publicUrl;
+  }
+
   const { error } = await ctx.supabase.from("module_supports").insert({
     module_id: moduleId,
     label,
-    url: str(formData, "url") || null,
+    url,
   });
   if (error) return { ok: false, message: error.message };
   revalidatePath(`/espace/module/${moduleId}`);

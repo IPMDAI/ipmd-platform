@@ -22,7 +22,7 @@ export default async function ModulePage({
   const { data: module } = await supabase
     .from("modules")
     .select(
-      "id, name, level, semester, teacher_id, hours, coefficient, syllabus, filiere_id"
+      "id, name, level, semester, teacher_id, hours, coefficient, objectives, skills, evaluation_methods, syllabus, filiere_id"
     )
     .eq("id", moduleId)
     .single();
@@ -57,9 +57,12 @@ export default async function ModulePage({
         <div className="mx-auto max-w-4xl">
           <Link
             href={`/espace/classes/${module.filiere_id}`}
-            className="text-sm font-semibold text-black/50 transition-colors hover:text-ipmd-red"
+            className="inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1.5 text-sm font-semibold text-ipmd-black shadow-sm ring-1 ring-black/5 transition-colors hover:text-ipmd-red"
           >
-            ← {filiere?.name ?? "Filière"}
+            ← Retour aux modules
+            {filiere?.name && (
+              <span className="text-black/40">· {filiere.name}</span>
+            )}
           </Link>
           <h1 className="mt-3 text-2xl font-extrabold tracking-tight text-ipmd-black">
             {module.name}

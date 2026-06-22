@@ -33,7 +33,16 @@ export function AddSupportForm({ moduleId }: { moduleId: string }) {
           className={inputBase}
         />
       </Field>
-      <Field label="Lien (optionnel)" htmlFor="s-url">
+      <Field label="Fichier (PDF, PowerPoint…)" htmlFor="s-file">
+        <input
+          id="s-file"
+          name="file"
+          type="file"
+          accept=".pdf,.ppt,.pptx,.doc,.docx,.xls,.xlsx,.zip,image/*"
+          className="block w-full text-sm text-black/70 file:mr-3 file:rounded-lg file:border-0 file:bg-ipmd-black file:px-3 file:py-2 file:text-sm file:font-semibold file:text-white hover:file:opacity-90"
+        />
+      </Field>
+      <Field label="…ou un lien" htmlFor="s-url">
         <input
           id="s-url"
           name="url"
@@ -42,7 +51,7 @@ export function AddSupportForm({ moduleId }: { moduleId: string }) {
         />
       </Field>
       <ActionButton type="submit" disabled={pending}>
-        {pending ? "…" : "Ajouter le support"}
+        {pending ? "Envoi…" : "Ajouter le support"}
       </ActionButton>
       {state && (
         <p

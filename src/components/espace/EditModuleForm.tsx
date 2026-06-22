@@ -17,6 +17,9 @@ export type ModuleData = {
   teacher_id: string | null;
   hours: number | null;
   coefficient: number | null;
+  objectives: string | null;
+  skills: string | null;
+  evaluation_methods: string | null;
   syllabus: string | null;
 };
 
@@ -128,13 +131,46 @@ export function EditModuleForm({
         </Field>
       </div>
 
-      <Field label="Syllabus" htmlFor="em-syllabus">
+      <Field label="Objectifs du module" htmlFor="em-obj">
+        <textarea
+          id="em-obj"
+          name="objectives"
+          rows={3}
+          defaultValue={module.objectives ?? ""}
+          placeholder="Ce que le module vise à atteindre…"
+          className={inputBase}
+        />
+      </Field>
+
+      <Field label="Compétences visées" htmlFor="em-skills">
+        <textarea
+          id="em-skills"
+          name="skills"
+          rows={3}
+          defaultValue={module.skills ?? ""}
+          placeholder="Compétences acquises à la fin du module…"
+          className={inputBase}
+        />
+      </Field>
+
+      <Field label="Modalités d'évaluation" htmlFor="em-eval">
+        <textarea
+          id="em-eval"
+          name="evaluation_methods"
+          rows={3}
+          defaultValue={module.evaluation_methods ?? ""}
+          placeholder="Ex. 2 notes de classe + 1 examen, projet, QCM…"
+          className={inputBase}
+        />
+      </Field>
+
+      <Field label="Syllabus / plan du cours" htmlFor="em-syllabus">
         <textarea
           id="em-syllabus"
           name="syllabus"
           rows={5}
           defaultValue={module.syllabus ?? ""}
-          placeholder="Objectifs, plan du cours, compétences visées, modalités d'évaluation…"
+          placeholder="Plan détaillé, chapitres, séances…"
           className={inputBase}
         />
       </Field>
