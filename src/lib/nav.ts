@@ -87,9 +87,16 @@ const PARENT_NAV: NavGroup[] = [
   },
 ];
 
+const ACCOUNT_GROUP: NavGroup = {
+  title: "Compte",
+  items: [{ label: "Paramètres", href: "/espace/parametres", icon: "⚙️" }],
+};
+
 export function getNavForRole(role: string): NavGroup[] {
-  if (role === "admin" || role === "super_admin") return ADMIN_NAV;
-  if (role === "enseignant") return TEACHER_NAV;
-  if (role === "parent") return PARENT_NAV;
-  return LEARNER_NAV; // etudiant, professionnel, dirigeant
+  let base: NavGroup[];
+  if (role === "admin" || role === "super_admin") base = ADMIN_NAV;
+  else if (role === "enseignant") base = TEACHER_NAV;
+  else if (role === "parent") base = PARENT_NAV;
+  else base = LEARNER_NAV; // etudiant, professionnel, dirigeant
+  return [...base, ACCOUNT_GROUP];
 }
