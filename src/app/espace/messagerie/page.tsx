@@ -51,10 +51,10 @@ export default async function MessageriePage() {
     const ids = [...new Set(messages.map((m) => m.sender_id))];
     const { data: people } = await supabase
       .from("profiles")
-      .select("id, full_name, email")
+      .select("id, full_name")
       .in("id", ids);
     for (const p of people ?? [])
-      senderName.set(p.id, p.full_name || p.email || "—");
+      senderName.set(p.id, p.full_name || "Membre");
   }
 
   return (

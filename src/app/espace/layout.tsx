@@ -48,14 +48,6 @@ export default async function EspaceLayout({
     };
   }
 
-  // Badge social (tous les rôles) : demandes d'amis + messages non lus.
-  const [reqC, dmC] = await Promise.all([
-    supabase.from("friendships").select("*", { count: "exact", head: true }).eq("addressee_id", user.id).eq("status", "pending"),
-    supabase.from("direct_messages").select("*", { count: "exact", head: true }).eq("recipient_id", user.id).is("read_at", null),
-  ]);
-  const social = (reqC.count ?? 0) + (dmC.count ?? 0);
-  if (social > 0) badges["/espace/amis"] = { count: social, alert: true };
-
   const flatItems = groups.flatMap((g) =>
     g.items.map((it) => ({ ...it, group: g.title }))
   );

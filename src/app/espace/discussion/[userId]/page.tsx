@@ -1,7 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { requireUser } from "@/lib/require-user";
+
+/** Messages privés désactivés pour le moment. */
+const SOCIAL_ENABLED = false;
 import { Container } from "@/components/ui/Container";
 import { SendDmForm } from "@/components/espace/SendDmForm";
 
@@ -14,6 +17,7 @@ export default async function DiscussionPage({
 }: {
   params: Promise<{ userId: string }>;
 }) {
+  if (!SOCIAL_ENABLED) redirect("/espace");
   const { userId: otherId } = await params;
   const { supabase, userId } = await requireUser();
 

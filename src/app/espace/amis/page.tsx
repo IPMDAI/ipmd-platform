@@ -1,6 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { requireUser } from "@/lib/require-user";
+
+/** Réseau social désactivé pour le moment (messagerie officielle uniquement). */
+const SOCIAL_ENABLED = false;
 import { Container } from "@/components/ui/Container";
 import {
   FriendDirectory,
@@ -20,6 +24,7 @@ type Friendship = {
 };
 
 export default async function AmisPage() {
+  if (!SOCIAL_ENABLED) redirect("/espace");
   const { supabase, userId } = await requireUser();
 
   const [{ data: friendRows }, { data: people }] = await Promise.all([
