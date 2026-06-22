@@ -10,6 +10,7 @@ import { DailyBriefing } from "@/components/espace/DailyBriefing";
 import { LearnerOverview } from "@/components/espace/LearnerOverview";
 import { NotificationsPanel } from "@/components/espace/NotificationsPanel";
 import { AnnouncementsPanel } from "@/components/espace/AnnouncementsPanel";
+import { ClassFeed } from "@/components/espace/ClassFeed";
 import { TeacherOverview } from "@/components/espace/TeacherOverview";
 import { TeacherTodo } from "@/components/espace/TeacherTodo";
 import { signOut } from "@/lib/auth-actions";
@@ -219,6 +220,9 @@ export default async function EspacePage() {
               <DailyBriefing />
             </div>
           )}
+
+          {/* Annonces de la classe (apprenants) */}
+          {showTutor && <ClassFeed userId={user.id} />}
 
           {/* Notifications dérivées (apprenants) : ce qui est important */}
           {showTutor && <NotificationsPanel userId={user.id} />}

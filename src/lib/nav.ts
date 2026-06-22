@@ -59,6 +59,7 @@ const TEACHER_NAV: NavGroup[] = [
     items: [
       { label: "Mes cours", href: "/espace/cours", icon: "📚" },
       { label: "Emploi du temps", href: "/espace/emploi-du-temps", icon: "🗓️" },
+      { label: "Ma classe", href: "/espace/ma-classe", icon: "📣" },
     ],
   },
 ];
@@ -104,10 +105,19 @@ const ACCOUNT_GROUP: NavGroup = {
 
 const STAFF_NAV: NavGroup[] = [{ items: [HOME] }];
 
+const PEDAGOGIE_NAV: NavGroup[] = [
+  { items: [HOME] },
+  {
+    title: "Pédagogie",
+    items: [{ label: "Annonces de classe", href: "/espace/ma-classe", icon: "📣" }],
+  },
+];
+
 export function getNavForRole(role: string): NavGroup[] {
   let base: NavGroup[];
   if (role === "admin" || role === "super_admin") base = ADMIN_NAV;
-  else if (role === "scolarite" || role === "pedagogie") base = STAFF_NAV;
+  else if (role === "pedagogie") base = PEDAGOGIE_NAV;
+  else if (role === "scolarite") base = STAFF_NAV;
   else if (role === "enseignant") base = TEACHER_NAV;
   else if (role === "parent") base = PARENT_NAV;
   else base = LEARNER_NAV; // etudiant, professionnel, dirigeant
