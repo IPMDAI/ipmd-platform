@@ -100,7 +100,7 @@ export const dashboardTiles: Record<string, DashTile[]> = {
     { title: "Étudiants", icon: "🎓", status: "soon", description: "Gestion des étudiants." },
     { title: "Scolarité", icon: "🗂️", status: "soon", description: "Inscriptions et dossiers." },
     { title: "Recrutement profs", icon: "🧑‍🏫", status: "ready", href: "/espace/recrutement", description: "Candidatures enseignants + tri IA." },
-    { title: "Finance", icon: "💰", status: "soon", description: "Paiements et facturation." },
+    { title: "Finance", icon: "💰", status: "ready", href: "/espace/finance", description: "Frais, paiements et soldes." },
   ],
   super_admin: [
     { title: "Gestion des utilisateurs", icon: "🔑", status: "ready", href: "/espace/utilisateurs", description: "Attribuer les rôles aux comptes." },
@@ -113,6 +113,6 @@ export const dashboardTiles: Record<string, DashTile[]> = {
     { title: "Étudiants", icon: "🎓", status: "soon", description: "Gestion des étudiants." },
     { title: "Scolarité", icon: "🗂️", status: "soon", description: "Inscriptions et dossiers." },
     { title: "Recrutement profs", icon: "🧑‍🏫", status: "ready", href: "/espace/recrutement", description: "Candidatures enseignants + tri IA." },
-    { title: "Finance", icon: "💰", status: "soon", description: "Paiements et facturation." },
+    { title: "Finance", icon: "💰", status: "ready", href: "/espace/finance", description: "Frais, paiements et soldes." },
   ],
 };
