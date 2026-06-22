@@ -64,6 +64,7 @@ const TEACHER_NAV: NavGroup[] = [
     items: [
       { label: "Mes cours", href: "/espace/cours", icon: "📚" },
       { label: "Emploi du temps", href: "/espace/emploi-du-temps", icon: "🗓️" },
+      { label: "Mes séances", href: "/espace/mes-seances", icon: "📝" },
       { label: "Ma classe", href: "/espace/ma-classe", icon: "📣" },
     ],
   },

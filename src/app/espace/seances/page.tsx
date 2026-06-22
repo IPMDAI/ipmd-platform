@@ -5,6 +5,7 @@ import { requireUser } from "@/lib/require-user";
 import { Container } from "@/components/ui/Container";
 import { GenerateSessionsForm } from "@/components/espace/GenerateSessionsForm";
 import { SessionStatusSelect } from "@/components/espace/SessionStatusSelect";
+import { validateSessionReport } from "@/lib/report-actions";
 import { formatTime, DAY_LABELS } from "@/lib/schedule";
 
 export const metadata: Metadata = {
@@ -52,6 +53,7 @@ export default async function SeancesPage({
   }[] = [];
   const teacherName = new Map<string, string>();
   const roomName = new Map<string, string>();
+  const reportBy = new Map<string, { id: string; validated: boolean; filled: boolean }>();
   if (classId) {
     const { data } = await supabase
       .from("course_sessions")
@@ -60,6 +62,19 @@ export default async function SeancesPage({
       .order("session_date")
       .order("start_time");
     sessions = data ?? [];
+    const sIds = sessions.map((s) => s.id);
+    if (sIds.length > 0) {
+      const { data: reps } = await supabase
+        .from("session_reports")
+        .select("id, session_id, content, validated")
+        .in("session_id", sIds);
+      for (const r of reps ?? [])
+        reportBy.set(r.session_id, {
+          id: r.id,
+          validated: r.validated,
+          filled: Boolean(r.content),
+        });
+    }
     const tIds = [...new Set(sessions.map((s) => s.teacher_id).filter(Boolean))] as string[];
     const rIds = [...new Set(sessions.map((s) => s.room_id).filter(Boolean))] as string[];
     if (tIds.length > 0) {
@@ -140,7 +155,33 @@ export default async function SeancesPage({
                             : ""}
                         </p>
                       </div>
-                      <SessionStatusSelect sessionId={s.id} current={s.status} />
+                      <div className="flex items-center gap-2">
+                        {(() => {
+                          const rep = reportBy.get(s.id);
+                          if (!rep)
+                            return (
+                              <span className="text-[11px] font-semibold text-black/35">
+                                Pas de fiche
+                              </span>
+                            );
+                          if (rep.validated)
+                            return (
+                              <form action={validateSessionReport.bind(null, rep.id, false)}>
+                                <button className="rounded-full bg-green-50 px-2.5 py-1 text-[11px] font-bold text-green-700">
+                                  ✅ Fiche validée
+                                </button>
+                              </form>
+                            );
+                          return (
+                            <form action={validateSessionReport.bind(null, rep.id, true)}>
+                              <button className="rounded-full bg-ipmd-black px-2.5 py-1 text-[11px] font-bold text-white">
+                                Valider la fiche
+                              </button>
+                            </form>
+                          );
+                        })()}
+                        <SessionStatusSelect sessionId={s.id} current={s.status} />
+                      </div>
                     </li>
                   ))}
                 </ul>
