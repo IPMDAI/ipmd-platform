@@ -19,7 +19,7 @@ export default async function BulletinPage({
 }) {
   const { studentId } = await params;
   const { sem } = await searchParams;
-  const { supabase } = await requireUser();
+  const { supabase, userId } = await requireUser();
 
   // La RLS ne renvoie le profil que si l'utilisateur est autorisé
   // (l'étudiant lui-même, son parent, ou un admin).
@@ -31,6 +31,14 @@ export default async function BulletinPage({
   if (!student) notFound();
 
   const name = student.full_name || student.email || "—";
+
+  // Le mode « gestion » (voir + valider les notes) est réservé à l'admin.
+  const { data: me } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", userId)
+    .single();
+  const isAdmin = me?.role === "admin" || me?.role === "super_admin";
 
   return (
     <section className="min-h-[70vh] bg-ipmd-light">
@@ -55,6 +63,7 @@ export default async function BulletinPage({
               studentName={name}
               basePath={`/espace/bulletin/${studentId}`}
               selectedSemester={sem}
+              manage={isAdmin}
             />
           </div>
         </div>
