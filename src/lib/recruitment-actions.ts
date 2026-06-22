@@ -104,6 +104,22 @@ export async function updateApplicationStatus(
   return { ok: true, message: "Statut mis à jour." };
 }
 
+/** Attache (ou met à jour) le lien du contrat d'un enseignant. */
+export async function updateContractLink(
+  appId: string,
+  url: string
+): Promise<FormResult> {
+  const ctx = await getAdmin();
+  if (!ctx) return { ok: false, message: "Action réservée à l'administration." };
+  const { error } = await ctx.supabase
+    .from("teacher_applications")
+    .update({ contract_url: url.trim() || null })
+    .eq("id", appId);
+  if (error) return { ok: false, message: error.message };
+  revalidatePath("/espace/recrutement");
+  return { ok: true, message: "Contrat enregistré." };
+}
+
 /** Analyse une candidature avec l'IA (Claude) : résumé + adéquation + 80% pratique. */
 export async function analyzeApplication(appId: string): Promise<FormResult> {
   const ctx = await getAdmin();

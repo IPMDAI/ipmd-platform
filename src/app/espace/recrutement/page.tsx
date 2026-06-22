@@ -17,7 +17,7 @@ export default async function RecrutementAdminPage() {
   const { data: rows } = await supabase
     .from("teacher_applications")
     .select(
-      "id, full_name, email, phone, subject, availability, syllabus, cv_url, diploma_url, authorization_url, message, status, ai_summary, created_at"
+      "id, full_name, email, phone, subject, availability, syllabus, cv_url, diploma_url, authorization_url, message, status, ai_summary, contract_url, created_at"
     )
     .order("created_at", { ascending: false });
 

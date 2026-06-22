@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import {
   updateApplicationStatus,
   analyzeApplication,
+  updateContractLink,
 } from "@/lib/recruitment-actions";
 import { APPLICATION_STATUSES } from "@/lib/recruitment";
 
@@ -21,6 +22,7 @@ export type Application = {
   message: string | null;
   status: string;
   ai_summary: string | null;
+  contract_url: string | null;
   created_at: string;
 };
 
@@ -52,6 +54,15 @@ export function RecruitmentList({ applications }: { applications: Application[] 
   const [msg, setMsg] = useState<{ id: string; ok: boolean; text: string } | null>(
     null
   );
+  const [contractVals, setContractVals] = useState<Record<string, string>>(
+    Object.fromEntries(applications.map((a) => [a.id, a.contract_url ?? ""]))
+  );
+
+  function saveContract(id: string) {
+    startTransition(async () => {
+      await updateContractLink(id, contractVals[id] ?? "");
+    });
+  }
 
   function changeStatus(id: string, status: string) {
     startTransition(async () => {
@@ -126,6 +137,37 @@ export function RecruitmentList({ applications }: { applications: Application[] 
               <DocLink href={a.authorization_url} label="Autorisation" />
             </div>
           )}
+
+          {/* Contrat */}
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <span className="text-xs font-semibold text-black/45">Contrat :</span>
+            <input
+              value={contractVals[a.id] ?? ""}
+              onChange={(e) =>
+                setContractVals((v) => ({ ...v, [a.id]: e.target.value }))
+              }
+              placeholder="Lien du contrat (https://…)"
+              className="min-w-[200px] flex-1 rounded-lg border border-black/15 px-3 py-1.5 text-sm outline-none focus:border-ipmd-red"
+            />
+            <button
+              type="button"
+              onClick={() => saveContract(a.id)}
+              disabled={pending}
+              className="rounded-lg bg-ipmd-black px-3 py-1.5 text-xs font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-50"
+            >
+              Enregistrer
+            </button>
+            {a.contract_url && (
+              <a
+                href={a.contract_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs font-semibold text-ipmd-red"
+              >
+                Voir ↗
+              </a>
+            )}
+          </div>
 
           {a.syllabus && (
             <details className="mt-3 rounded-xl bg-ipmd-light p-3">

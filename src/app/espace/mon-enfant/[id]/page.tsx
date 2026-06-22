@@ -5,6 +5,7 @@ import { requireUser } from "@/lib/require-user";
 import { Container } from "@/components/ui/Container";
 import { DAY_OPTIONS, formatTime } from "@/lib/schedule";
 import { averageOn20 } from "@/lib/grades";
+import { formatFCFA } from "@/lib/finance";
 
 export const metadata: Metadata = {
   title: "Suivi",
@@ -118,6 +119,20 @@ export default async function EnfantDetailPage({
     .map((a) => lessonInfo.get(a.lesson_id))
     .filter(Boolean) as { date: string; courseTitle: string }[];
 
+  // Scolarité / paiements de l'enfant.
+  const { data: finance } = await supabase
+    .from("student_finance")
+    .select("total_due")
+    .eq("student_id", id)
+    .maybeSingle();
+  const { data: payRows } = await supabase
+    .from("payments")
+    .select("amount")
+    .eq("student_id", id);
+  const totalDue = Number(finance?.total_due ?? 0);
+  const totalPaid = (payRows ?? []).reduce((a, p) => a + Number(p.amount), 0);
+  const balance = totalDue - totalPaid;
+
   return (
     <section className="min-h-[70vh] bg-ipmd-light">
       <Container className="py-12 sm:py-16">
@@ -213,6 +228,35 @@ export default async function EnfantDetailPage({
                 ))}
               </ul>
             )}
+          </div>
+
+          {/* Scolarité / paiements */}
+          <h2 className="mt-8 text-lg font-bold text-ipmd-black">Scolarité</h2>
+          <div className="mt-3 grid gap-4 sm:grid-cols-3">
+            <div className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-black/5">
+              <p className="text-xs font-semibold uppercase text-black/40">Dû</p>
+              <p className="mt-1 text-base font-extrabold text-ipmd-black">
+                {formatFCFA(totalDue)}
+              </p>
+            </div>
+            <div className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-black/5">
+              <p className="text-xs font-semibold uppercase text-black/40">Payé</p>
+              <p className="mt-1 text-base font-extrabold text-green-600">
+                {formatFCFA(totalPaid)}
+              </p>
+            </div>
+            <div className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-black/5">
+              <p className="text-xs font-semibold uppercase text-black/40">
+                Solde
+              </p>
+              <p
+                className={`mt-1 text-base font-extrabold ${
+                  balance <= 0 ? "text-green-600" : "text-ipmd-red"
+                }`}
+              >
+                {balance <= 0 ? "À jour" : formatFCFA(balance)}
+              </p>
+            </div>
           </div>
 
           {/* Emploi du temps */}

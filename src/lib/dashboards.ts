@@ -61,25 +61,34 @@ const SCOLARITE: DashTile = {
   description: "Frais de formation et options de financement.",
 };
 
+/** Pour les apprenants connectés : leur situation de paiement personnelle. */
+const LEARNER_SCOLARITE: DashTile = {
+  title: "Ma scolarité",
+  icon: "💳",
+  status: "ready",
+  href: "/espace/mes-paiements",
+  description: "Tes frais, paiements et ton solde.",
+};
+
 /** Tuiles des rôles apprenants / parent / enseignant. */
 export const dashboardTiles: Record<string, DashTile[]> = {
   etudiant: [
     { title: "Mes cours", icon: "📚", status: "ready", href: "/espace/mes-cours", description: "Tes cours, devoirs et séances." },
     { title: "Emploi du temps", icon: "🗓️", status: "ready", href: "/espace/mon-emploi-du-temps", description: "Le planning de ta classe." },
     { title: "Mes notes", icon: "📊", status: "ready", href: "/espace/mes-notes", description: "Tes résultats et ta moyenne." },
-    SCOLARITE,
+    LEARNER_SCOLARITE,
   ],
   professionnel: [
     { title: "Mon parcours", icon: "🚀", status: "ready", href: "/espace/mes-cours", description: "Tes cours, devoirs et séances." },
     { title: "Emploi du temps", icon: "🗓️", status: "ready", href: "/espace/mon-emploi-du-temps", description: "Le planning de ta classe." },
     { title: "Mes notes", icon: "📊", status: "ready", href: "/espace/mes-notes", description: "Validation de tes compétences." },
-    SCOLARITE,
+    LEARNER_SCOLARITE,
   ],
   dirigeant: [
     { title: "Mon programme", icon: "🏛️", status: "ready", href: "/espace/mes-cours", description: "Tes cours, devoirs et séances." },
     { title: "Emploi du temps", icon: "🗓️", status: "ready", href: "/espace/mon-emploi-du-temps", description: "Le planning de ta classe." },
     { title: "Mes notes", icon: "📊", status: "ready", href: "/espace/mes-notes", description: "Validation du programme." },
-    SCOLARITE,
+    LEARNER_SCOLARITE,
   ],
   parent: [
     { title: "Suivi de mon enfant", icon: "👨‍👩‍👧", status: "ready", href: "/espace/mon-enfant", description: "Cours, emploi du temps et notes." },
