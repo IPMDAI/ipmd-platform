@@ -38,7 +38,7 @@ create policy "Read class announcements" on public.class_announcements
     public.in_class(class_id)
     or author_id = auth.uid()
     or public.teaches_class(class_id)
-    or public.current_user_role() in ('admin', 'super_admin', 'pedagogie')
+    or public.current_user_role()::text in ('admin', 'super_admin', 'pedagogie')
   );
 
 drop policy if exists "Post class announcements" on public.class_announcements;
@@ -48,7 +48,7 @@ create policy "Post class announcements" on public.class_announcements
     author_id = auth.uid()
     and (
       public.teaches_class(class_id)
-      or public.current_user_role() in ('admin', 'super_admin', 'pedagogie')
+      or public.current_user_role()::text in ('admin', 'super_admin', 'pedagogie')
     )
   );
 
@@ -57,5 +57,5 @@ create policy "Delete class announcements" on public.class_announcements
   for delete to authenticated
   using (
     author_id = auth.uid()
-    or public.current_user_role() in ('admin', 'super_admin')
+    or public.current_user_role()::text in ('admin', 'super_admin')
   );

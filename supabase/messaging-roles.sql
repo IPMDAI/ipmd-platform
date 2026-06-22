@@ -17,22 +17,22 @@ alter table public.internal_messages
 drop policy if exists "Scolarite read messages" on public.internal_messages;
 create policy "Scolarite read messages" on public.internal_messages
   for select to authenticated
-  using (public.current_user_role() = 'scolarite' and recipient_role = 'scolarite');
+  using (public.current_user_role()::text = 'scolarite' and recipient_role = 'scolarite');
 
 drop policy if exists "Pedagogie read messages" on public.internal_messages;
 create policy "Pedagogie read messages" on public.internal_messages
   for select to authenticated
-  using (public.current_user_role() = 'pedagogie' and recipient_role = 'pedagogie');
+  using (public.current_user_role()::text = 'pedagogie' and recipient_role = 'pedagogie');
 
 -- Réponse par service.
 drop policy if exists "Scolarite reply messages" on public.internal_messages;
 create policy "Scolarite reply messages" on public.internal_messages
   for update to authenticated
-  using (public.current_user_role() = 'scolarite' and recipient_role = 'scolarite')
-  with check (public.current_user_role() = 'scolarite' and recipient_role = 'scolarite');
+  using (public.current_user_role()::text = 'scolarite' and recipient_role = 'scolarite')
+  with check (public.current_user_role()::text = 'scolarite' and recipient_role = 'scolarite');
 
 drop policy if exists "Pedagogie reply messages" on public.internal_messages;
 create policy "Pedagogie reply messages" on public.internal_messages
   for update to authenticated
-  using (public.current_user_role() = 'pedagogie' and recipient_role = 'pedagogie')
-  with check (public.current_user_role() = 'pedagogie' and recipient_role = 'pedagogie');
+  using (public.current_user_role()::text = 'pedagogie' and recipient_role = 'pedagogie')
+  with check (public.current_user_role()::text = 'pedagogie' and recipient_role = 'pedagogie');
