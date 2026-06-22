@@ -124,3 +124,51 @@ export async function createSession(
   revalidatePath("/espace/emploi-du-temps");
   return { ok: true, message: "Séance ajoutée." };
 }
+
+/** Inscrit un étudiant à un cours de l'enseignant courant. */
+export async function enrollStudent(
+  courseId: string,
+  _prev: FormResult | null,
+  formData: FormData
+): Promise<FormResult> {
+  const ctx = await getTeacher();
+  if (!ctx) return { ok: false, message: "Action réservée aux enseignants." };
+
+  const { data: course } = await ctx.supabase
+    .from("courses")
+    .select("id, teacher_id")
+    .eq("id", courseId)
+    .single();
+  if (!course || course.teacher_id !== ctx.userId) {
+    return { ok: false, message: "Cours introuvable." };
+  }
+
+  const studentId = str(formData, "student_id");
+  if (!studentId) return { ok: false, message: "Sélectionnez un étudiant." };
+
+  const { error } = await ctx.supabase
+    .from("enrollments")
+    .insert({ course_id: courseId, student_id: studentId });
+
+  if (error) {
+    if (error.code === "23505") {
+      return { ok: false, message: "Cet étudiant est déjà inscrit." };
+    }
+    return { ok: false, message: error.message };
+  }
+
+  revalidatePath(`/espace/cours/${courseId}`);
+  return { ok: true, message: "Étudiant inscrit." };
+}
+
+/** Retire une inscription (action de formulaire simple). */
+export async function removeEnrollment(
+  courseId: string,
+  enrollmentId: string,
+  _formData?: FormData
+): Promise<void> {
+  const ctx = await getTeacher();
+  if (!ctx) return;
+  await ctx.supabase.from("enrollments").delete().eq("id", enrollmentId);
+  revalidatePath(`/espace/cours/${courseId}`);
+}

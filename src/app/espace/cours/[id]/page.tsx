@@ -5,6 +5,8 @@ import { requireTeacher } from "@/lib/require-teacher";
 import { Container } from "@/components/ui/Container";
 import { NewAssignmentForm } from "@/components/espace/NewAssignmentForm";
 import { NewSessionForm } from "@/components/espace/NewSessionForm";
+import { EnrollStudentForm } from "@/components/espace/EnrollStudentForm";
+import { removeEnrollment } from "@/lib/teaching-actions";
 import { DAY_LABELS, formatTime } from "@/lib/schedule";
 
 export const metadata: Metadata = {
@@ -53,6 +55,52 @@ export default async function CourseDetailPage({
 
   const sessions = sessRows ?? [];
 
+  // Étudiants inscrits à ce cours.
+  const { data: enrRows } = await supabase
+    .from("enrollments")
+    .select("id, student_id")
+    .eq("course_id", id)
+    .order("created_at");
+
+  const enrollments = enrRows ?? [];
+  const enrolledIds = enrollments.map((e) => e.student_id);
+
+  let enrolledStudents: {
+    enrollmentId: string;
+    id: string;
+    full_name: string | null;
+    email: string;
+  }[] = [];
+
+  if (enrolledIds.length > 0) {
+    const { data: profs } = await supabase
+      .from("profiles")
+      .select("id, full_name, email")
+      .in("id", enrolledIds);
+    const map = new Map((profs ?? []).map((p) => [p.id, p]));
+    enrolledStudents = enrollments.map((e) => {
+      const p = map.get(e.student_id);
+      return {
+        enrollmentId: e.id,
+        id: e.student_id,
+        full_name: p?.full_name ?? null,
+        email: p?.email ?? "",
+      };
+    });
+  }
+
+  // Étudiants disponibles (non encore inscrits).
+  const { data: allStudents } = await supabase
+    .from("profiles")
+    .select("id, full_name, email")
+    .eq("role", "etudiant")
+    .order("full_name");
+
+  const enrolledSet = new Set(enrolledIds);
+  const availableStudents = (allStudents ?? []).filter(
+    (s) => !enrolledSet.has(s.id)
+  );
+
   return (
     <section className="min-h-[70vh] bg-ipmd-light">
       <Container className="py-12 sm:py-16">
@@ -76,6 +124,65 @@ export default async function CourseDetailPage({
           {course.description && (
             <p className="mt-1 text-sm text-black/55">{course.description}</p>
           )}
+
+          {/* Étudiants inscrits */}
+          <div className="mt-8 grid gap-8 lg:grid-cols-[1fr_22rem]">
+            <div className="order-2 lg:order-1">
+              <div className="mb-4 flex items-baseline gap-3">
+                <h2 className="text-lg font-bold text-ipmd-black">
+                  Étudiants inscrits
+                </h2>
+                <span className="rounded-full bg-ipmd-black px-2.5 py-1 text-xs font-bold text-white">
+                  {enrolledStudents.length}
+                </span>
+              </div>
+
+              {enrolledStudents.length === 0 ? (
+                <p className="rounded-2xl bg-white p-6 text-sm text-black/55 shadow-sm ring-1 ring-black/5">
+                  Aucun étudiant inscrit. Inscrivez-en un →
+                </p>
+              ) : (
+                <ul className="divide-y divide-black/5 overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-black/5">
+                  {enrolledStudents.map((s) => (
+                    <li
+                      key={s.enrollmentId}
+                      className="flex items-center justify-between gap-3 p-4"
+                    >
+                      <div className="min-w-0">
+                        <p className="truncate font-semibold text-ipmd-black">
+                          {s.full_name || "—"}
+                        </p>
+                        <p className="truncate text-sm text-black/50">
+                          {s.email}
+                        </p>
+                      </div>
+                      <form
+                        action={removeEnrollment.bind(
+                          null,
+                          course.id,
+                          s.enrollmentId
+                        )}
+                      >
+                        <button
+                          type="submit"
+                          className="shrink-0 rounded-lg px-3 py-1.5 text-xs font-semibold text-ipmd-red transition-colors hover:bg-ipmd-red/10"
+                        >
+                          Retirer
+                        </button>
+                      </form>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+
+            <div className="order-1 lg:order-2">
+              <EnrollStudentForm
+                courseId={course.id}
+                students={availableStudents}
+              />
+            </div>
+          </div>
 
           {/* Séances (emploi du temps du cours) */}
           <div className="mt-8 grid gap-8 lg:grid-cols-[1fr_22rem]">

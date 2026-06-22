@@ -61,19 +61,19 @@ const SCOLARITE: DashTile = {
 /** Tuiles affichées selon le rôle. */
 export const dashboardTiles: Record<string, DashTile[]> = {
   etudiant: [
-    { title: "Mes cours", icon: "📚", status: "soon", description: "Tes cours, supports et ressources pédagogiques." },
+    { title: "Mes cours", icon: "📚", status: "ready", href: "/espace/mes-cours", description: "Tes cours, devoirs et séances." },
     { title: "Mes devoirs", icon: "📝", status: "soon", description: "Devoirs à rendre, dépôts et corrigés." },
     { title: "Mes notes", icon: "📊", status: "soon", description: "Tes résultats et ta progression." },
     SCOLARITE,
   ],
   professionnel: [
-    { title: "Mon parcours", icon: "🚀", status: "soon", description: "Tes modules de formation continue." },
+    { title: "Mon parcours", icon: "🚀", status: "ready", href: "/espace/mes-cours", description: "Tes cours, devoirs et séances." },
     { title: "Mes travaux", icon: "📝", status: "soon", description: "Projets et travaux pratiques." },
     { title: "Mes notes", icon: "📊", status: "soon", description: "Validation de tes compétences." },
     SCOLARITE,
   ],
   dirigeant: [
-    { title: "Mon programme", icon: "🏛️", status: "soon", description: "Tes modules de formation executive." },
+    { title: "Mon programme", icon: "🏛️", status: "ready", href: "/espace/mes-cours", description: "Tes cours, devoirs et séances." },
     { title: "Mes travaux", icon: "📝", status: "soon", description: "Études de cas et livrables." },
     { title: "Mes notes", icon: "📊", status: "soon", description: "Validation du programme." },
     SCOLARITE,
