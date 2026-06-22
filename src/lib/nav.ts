@@ -39,6 +39,7 @@ const ADMIN_NAV: NavGroup[] = [
       { label: "Bulletins", href: "/espace/bulletins", icon: "📄" },
       { label: "Documents officiels", href: "/espace/documents", icon: "🪪" },
       { label: "Finance", href: "/espace/finance", icon: "💰" },
+      { label: "Paie enseignants", href: "/espace/paie", icon: "💼" },
     ],
   },
   {

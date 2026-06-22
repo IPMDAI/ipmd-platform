@@ -155,6 +155,7 @@ const ADMIN_TILES = {
   finance: { title: "Finance", icon: "💰", status: "ready", href: "/espace/finance", description: "Frais, paiements et soldes." },
   bulletins: { title: "Bulletins", icon: "📄", status: "ready", href: "/espace/bulletins", description: "Bulletins de notes des étudiants." },
   documents: { title: "Documents officiels", icon: "🪪", status: "ready", href: "/espace/documents", description: "Attestations, certificats, cartes étudiant." },
+  paie: { title: "Paie enseignants", icon: "💼", status: "ready", href: "/espace/paie", description: "Taux par prof / forfait projet." },
   etudiants: { title: "Étudiants", icon: "🎓", status: "ready", href: "/espace/etudiants", description: "Annuaire, bulletins et documents." },
   scolarite: { title: "Scolarité", icon: "🗂️", status: "soon", description: "Inscriptions et dossiers." },
 } satisfies Record<string, DashTile>;
@@ -173,6 +174,7 @@ export const dashboardSections: Record<string, DashSection[]> = {
         ADMIN_TILES.etudiants,
         ADMIN_TILES.scolarite,
         ADMIN_TILES.finance,
+        ADMIN_TILES.paie,
         ADMIN_TILES.bulletins,
         ADMIN_TILES.documents,
       ],
@@ -194,6 +196,7 @@ export const dashboardSections: Record<string, DashSection[]> = {
         ADMIN_TILES.etudiants,
         ADMIN_TILES.scolarite,
         ADMIN_TILES.finance,
+        ADMIN_TILES.paie,
         ADMIN_TILES.bulletins,
         ADMIN_TILES.documents,
       ],
