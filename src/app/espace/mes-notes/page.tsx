@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { requireUser } from "@/lib/require-user";
 import { Container } from "@/components/ui/Container";
+import { averageOn20 } from "@/lib/grades";
 
 export const metadata: Metadata = {
   title: "Mes notes",
@@ -15,17 +16,6 @@ type Grade = {
   max_score: number;
   comment: string | null;
 };
-
-/** Moyenne ramenée sur 20 à partir des pourcentages. */
-function average(grades: Grade[]): string {
-  if (grades.length === 0) return "—";
-  const sum = grades.reduce(
-    (acc, g) => acc + (Number(g.score) / Number(g.max_score)) * 20,
-    0
-  );
-  const moy = sum / grades.length;
-  return `${Math.round(moy * 100) / 100}/20`;
-}
 
 export default async function MesNotesPage() {
   const { supabase, userId } = await requireUser();
@@ -91,7 +81,7 @@ export default async function MesNotesPage() {
                       {courseTitle.get(courseId) ?? "Cours"}
                     </h2>
                     <span className="rounded-full bg-ipmd-red/10 px-3 py-1 text-sm font-bold text-ipmd-red">
-                      Moyenne {average(list)}
+                      Moyenne {averageOn20(list)}
                     </span>
                   </div>
                   <ul className="divide-y divide-black/5">

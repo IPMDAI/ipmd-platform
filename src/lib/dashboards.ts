@@ -79,7 +79,7 @@ export const dashboardTiles: Record<string, DashTile[]> = {
     SCOLARITE,
   ],
   parent: [
-    { title: "Suivi de mon enfant", icon: "👨‍👩‍👧", status: "soon", description: "Présence, progression et résultats." },
+    { title: "Suivi de mon enfant", icon: "👨‍👩‍👧", status: "ready", href: "/espace/mon-enfant", description: "Cours, emploi du temps et notes." },
     { title: "Notes & bulletins", icon: "📊", status: "soon", description: "Les résultats de votre enfant." },
     { title: "Communication école", icon: "✉️", status: "soon", description: "Échanges avec l'équipe pédagogique." },
     { ...SCOLARITE, title: "Scolarité & paiements" },
@@ -93,6 +93,7 @@ export const dashboardTiles: Record<string, DashTile[]> = {
   admin: [
     { title: "Candidatures", icon: "📥", status: "ready", href: "/espace/candidatures", description: "Demandes d'inscription reçues." },
     { title: "Messages de contact", icon: "✉️", status: "ready", href: "/espace/messages", description: "Messages envoyés via le site." },
+    { title: "Parents & élèves", icon: "👨‍👩‍👧", status: "ready", href: "/espace/parents", description: "Relier les parents à leurs enfants." },
     { title: "Étudiants", icon: "🎓", status: "soon", description: "Gestion des étudiants." },
     { title: "Scolarité", icon: "🗂️", status: "soon", description: "Inscriptions et dossiers." },
     { title: "Ressources humaines", icon: "🧑‍💼", status: "soon", description: "Personnel et enseignants." },
@@ -102,6 +103,7 @@ export const dashboardTiles: Record<string, DashTile[]> = {
     { title: "Gestion des utilisateurs", icon: "🔑", status: "ready", href: "/espace/utilisateurs", description: "Attribuer les rôles aux comptes." },
     { title: "Candidatures", icon: "📥", status: "ready", href: "/espace/candidatures", description: "Demandes d'inscription reçues." },
     { title: "Messages de contact", icon: "✉️", status: "ready", href: "/espace/messages", description: "Messages envoyés via le site." },
+    { title: "Parents & élèves", icon: "👨‍👩‍👧", status: "ready", href: "/espace/parents", description: "Relier les parents à leurs enfants." },
     { title: "Étudiants", icon: "🎓", status: "soon", description: "Gestion des étudiants." },
     { title: "Scolarité", icon: "🗂️", status: "soon", description: "Inscriptions et dossiers." },
     { title: "Ressources humaines", icon: "🧑‍💼", status: "soon", description: "Personnel et enseignants." },

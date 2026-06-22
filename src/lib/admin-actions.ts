@@ -51,3 +51,60 @@ export async function updateUserRole(
   revalidatePath("/espace/utilisateurs");
   return { ok: true, message: "Rôle mis à jour." };
 }
+
+/** Vérifie que le demandeur est admin ou super_admin. */
+async function getAdmin() {
+  const supabase = await createClient();
+  if (!supabase) return null;
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return null;
+  const { data: me } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .single();
+  if (me?.role !== "super_admin" && me?.role !== "admin") return null;
+  return { supabase };
+}
+
+/** Relie un parent à un enfant (réservé aux admins). */
+export async function linkParentChild(
+  _prev: FormResult | null,
+  formData: FormData
+): Promise<FormResult> {
+  const ctx = await getAdmin();
+  if (!ctx) return { ok: false, message: "Action réservée à l'administration." };
+
+  const parentId = formData.get("parent_id");
+  const studentId = formData.get("student_id");
+  if (typeof parentId !== "string" || typeof studentId !== "string" || !parentId || !studentId) {
+    return { ok: false, message: "Sélectionnez un parent et un enfant." };
+  }
+
+  const { error } = await ctx.supabase
+    .from("parent_links")
+    .insert({ parent_id: parentId, student_id: studentId });
+
+  if (error) {
+    if (error.code === "23505") {
+      return { ok: false, message: "Ce lien existe déjà." };
+    }
+    return { ok: false, message: error.message };
+  }
+
+  revalidatePath("/espace/parents");
+  return { ok: true, message: "Lien créé." };
+}
+
+/** Supprime un lien parent ↔ enfant (action de formulaire simple). */
+export async function unlinkParentChild(
+  linkId: string,
+  _formData?: FormData
+): Promise<void> {
+  const ctx = await getAdmin();
+  if (!ctx) return;
+  await ctx.supabase.from("parent_links").delete().eq("id", linkId);
+  revalidatePath("/espace/parents");
+}
