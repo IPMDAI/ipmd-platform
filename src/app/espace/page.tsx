@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/Badge";
 import { TuteurChat } from "@/components/espace/TuteurChat";
 import { DashboardTile } from "@/components/espace/DashboardTile";
 import { DailyBriefing } from "@/components/espace/DailyBriefing";
+import { LearnerOverview } from "@/components/espace/LearnerOverview";
 import { signOut } from "@/lib/auth-actions";
 import {
   findConflicts,
@@ -212,6 +213,9 @@ export default async function EspacePage() {
               <DailyBriefing />
             </div>
           )}
+
+          {/* Cockpit de l'apprenant : ses cours du jour + ses résultats */}
+          {showTutor && <LearnerOverview userId={user.id} />}
 
           {/* Tuiles du rôle — en sections pour les admins, à plat sinon */}
           {sections ? (
