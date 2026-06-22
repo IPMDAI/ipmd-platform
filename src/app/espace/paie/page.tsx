@@ -17,7 +17,7 @@ function minutes(t: string): number {
 export default async function PaiePage() {
   const { supabase } = await requireAdmin();
 
-  const [{ data: teachers }, { data: slots }, { data: pays }] =
+  const [{ data: teachers }, { data: slots }, { data: pays }, { data: sheets }] =
     await Promise.all([
       supabase
         .from("profiles")
@@ -28,7 +28,9 @@ export default async function PaiePage() {
       supabase
         .from("teacher_pay")
         .select("teacher_id, pay_type, hourly_rate, project_fee"),
+      supabase.from("teacher_profiles").select("teacher_id, function"),
     ]);
+  const fnMap = new Map((sheets ?? []).map((s) => [s.teacher_id, s.function]));
 
   // Heures hebdomadaires par enseignant.
   const hours = new Map<string, number>();
@@ -113,6 +115,11 @@ export default async function PaiePage() {
                       <p className="font-bold text-ipmd-black">
                         {r.full_name || r.email}
                       </p>
+                      {fnMap.get(r.id) && (
+                        <p className="text-xs font-medium text-ipmd-red">
+                          {fnMap.get(r.id)}
+                        </p>
+                      )}
                       <p className="text-xs text-black/50">
                         {r.wHours.toFixed(1).replace(".0", "")} h / semaine au
                         planning
