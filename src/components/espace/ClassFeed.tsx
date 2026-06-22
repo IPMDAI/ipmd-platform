@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { ReportButton } from "@/components/espace/ReportButton";
 
 function frDate(iso: string): string {
   return new Date(iso).toLocaleDateString("fr-FR", {
@@ -46,6 +47,9 @@ export async function ClassFeed({ userId }: { userId: string }) {
             <p className="mt-1 whitespace-pre-line text-sm leading-relaxed text-black/70">
               {p.body}
             </p>
+            <div className="mt-2">
+              <ReportButton contentType="class_announcement" contentId={p.id} />
+            </div>
           </li>
         ))}
       </ul>

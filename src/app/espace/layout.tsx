@@ -32,18 +32,20 @@ export default async function EspaceLayout({
   // Badges de compteur sur le menu (admins).
   let badges: Record<string, { count: number; alert: boolean }> = {};
   if (role === "admin" || role === "super_admin") {
-    const [cand, msg, fil, mod, inbox] = await Promise.all([
+    const [cand, msg, fil, mod, inbox, reports] = await Promise.all([
       supabase.from("inscription_requests").select("*", { count: "exact", head: true }).eq("status", "nouveau"),
       supabase.from("contact_messages").select("*", { count: "exact", head: true }),
       supabase.from("filieres").select("*", { count: "exact", head: true }).eq("status", "en_attente"),
       supabase.from("modules").select("*", { count: "exact", head: true }).eq("status", "en_attente"),
-      supabase.from("internal_messages").select("*", { count: "exact", head: true }).eq("status", "nouveau"),
+      supabase.from("internal_messages").select("*", { count: "exact", head: true }).eq("status", "nouveau").eq("archived", false),
+      supabase.from("content_reports").select("*", { count: "exact", head: true }).eq("status", "open"),
     ]);
     const toValidate = (fil.count ?? 0) + (mod.count ?? 0);
     badges = {
       "/espace/candidatures": { count: cand.count ?? 0, alert: false },
       "/espace/messages": { count: msg.count ?? 0, alert: false },
       "/espace/messagerie": { count: inbox.count ?? 0, alert: (inbox.count ?? 0) > 0 },
+      "/espace/moderation": { count: reports.count ?? 0, alert: (reports.count ?? 0) > 0 },
       "/espace/classes": { count: toValidate, alert: toValidate > 0 },
     };
   } else if (role === "scolarite" || role === "pedagogie") {

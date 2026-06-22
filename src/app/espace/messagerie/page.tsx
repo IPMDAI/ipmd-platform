@@ -4,6 +4,7 @@ import { requireUser } from "@/lib/require-user";
 import { Container } from "@/components/ui/Container";
 import { SendMessageForm } from "@/components/espace/SendMessageForm";
 import { AdminMessageReply } from "@/components/espace/AdminMessageReply";
+import { archiveInternalMessage } from "@/lib/messaging-actions";
 import {
   MESSAGE_CATEGORY_LABEL,
   SERVICE_LABEL,
@@ -35,7 +36,12 @@ function frDate(iso: string): string {
   });
 }
 
-export default async function MessageriePage() {
+export default async function MessageriePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ vue?: string }>;
+}) {
+  const { vue } = await searchParams;
   const { supabase, userId } = await requireUser();
 
   const { data: me } = await supabase
@@ -45,13 +51,16 @@ export default async function MessageriePage() {
     .single();
   const role = me?.role ?? "etudiant";
   const isStaff = STAFF_ROLES.includes(role);
+  const archivedView = isStaff && vue === "archives";
 
-  const { data: rows } = await supabase
+  let query = supabase
     .from("internal_messages")
     .select(
       "id, sender_id, category, subject, body, admin_reply, status, created_at, recipient_role"
     )
     .order("created_at", { ascending: false });
+  if (isStaff) query = query.eq("archived", archivedView);
+  const { data: rows } = await query;
   const messages = (rows ?? []) as Msg[];
 
   // Noms des expéditeurs (services).
@@ -84,6 +93,32 @@ export default async function MessageriePage() {
               ? "Messages reçus pour votre service."
               : "Écris à un service de l'IPMD (administration, scolarité, pédagogie)."}
           </p>
+
+          {/* Onglets Actifs / Archivées (staff) */}
+          {isStaff && (
+            <div className="mt-5 flex flex-wrap gap-2">
+              <Link
+                href="/espace/messagerie"
+                className={`rounded-full px-3 py-1.5 text-sm font-semibold transition-colors ${
+                  !archivedView
+                    ? "bg-ipmd-red text-white"
+                    : "bg-white text-black/60 ring-1 ring-black/10 hover:text-ipmd-red"
+                }`}
+              >
+                Actifs
+              </Link>
+              <Link
+                href="/espace/messagerie?vue=archives"
+                className={`rounded-full px-3 py-1.5 text-sm font-semibold transition-colors ${
+                  archivedView
+                    ? "bg-ipmd-red text-white"
+                    : "bg-white text-black/60 ring-1 ring-black/10 hover:text-ipmd-red"
+                }`}
+              >
+                Archivées
+              </Link>
+            </div>
+          )}
 
           {/* Formulaire d'envoi (non-staff) */}
           {!isStaff && (
@@ -154,7 +189,21 @@ export default async function MessageriePage() {
                   )}
 
                   {isStaff && (
-                    <AdminMessageReply messageId={m.id} current={m.admin_reply} />
+                    <>
+                      <AdminMessageReply messageId={m.id} current={m.admin_reply} />
+                      <form
+                        action={archiveInternalMessage.bind(
+                          null,
+                          m.id,
+                          !archivedView
+                        )}
+                        className="mt-2"
+                      >
+                        <button className="text-xs font-semibold text-black/40 hover:text-ipmd-red">
+                          {archivedView ? "↩ Désarchiver" : "🗄 Archiver"}
+                        </button>
+                      </form>
+                    </>
                   )}
                 </div>
               ))

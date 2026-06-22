@@ -64,6 +64,31 @@ export async function sendInternalMessage(
   return { ok: true, message: "Message envoyé à l'administration." };
 }
 
+/** Archive / désarchive un message (service). */
+export async function archiveInternalMessage(
+  messageId: string,
+  archived: boolean,
+  _formData?: FormData
+): Promise<void> {
+  const supabase = await createClient();
+  if (!supabase) return;
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return;
+  const { data: me } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .single();
+  if (!STAFF_ROLES.includes(me?.role ?? "")) return;
+  await supabase
+    .from("internal_messages")
+    .update({ archived })
+    .eq("id", messageId);
+  revalidatePath("/espace/messagerie");
+}
+
 /** L'administration répond à un message. */
 export async function replyInternalMessage(
   messageId: string,

@@ -145,6 +145,7 @@ const ADMIN_TILES = {
   messages: { title: "Messages de contact", icon: "✉️", status: "ready", href: "/espace/messages", description: "Messages envoyés via le site." },
   annonces: { title: "Annonces", icon: "📢", status: "ready", href: "/espace/annonces", description: "Communiquer avec étudiants et parents." },
   messagerie: { title: "Messagerie", icon: "💬", status: "ready", href: "/espace/messagerie", description: "Messages reçus (absences, questions…)." },
+  moderation: { title: "Modération", icon: "🛡️", status: "ready", href: "/espace/moderation", description: "Contenus signalés à traiter." },
   statistiques: { title: "Statistiques", icon: "📊", status: "ready", href: "/espace/statistiques", description: "Pilotage global de l'établissement." },
   parents: { title: "Parents & élèves", icon: "👨‍👩‍👧", status: "ready", href: "/espace/parents", description: "Relier les parents à leurs enfants." },
   classes: { title: "Classes & filières", icon: "🏫", status: "ready", href: "/espace/classes", description: "Filières, promotions et affectation." },
@@ -178,7 +179,7 @@ export const dashboardSections: Record<string, DashSection[]> = {
     },
     {
       title: "Relations & accès",
-      tiles: [ADMIN_TILES.annonces, ADMIN_TILES.messagerie, ADMIN_TILES.users, ADMIN_TILES.candidatures, ADMIN_TILES.messages, ADMIN_TILES.parents],
+      tiles: [ADMIN_TILES.annonces, ADMIN_TILES.messagerie, ADMIN_TILES.moderation, ADMIN_TILES.users, ADMIN_TILES.candidatures, ADMIN_TILES.messages, ADMIN_TILES.parents],
     },
   ],
   admin: [
@@ -199,7 +200,7 @@ export const dashboardSections: Record<string, DashSection[]> = {
     },
     {
       title: "Relations",
-      tiles: [ADMIN_TILES.annonces, ADMIN_TILES.messagerie, ADMIN_TILES.candidatures, ADMIN_TILES.messages, ADMIN_TILES.parents],
+      tiles: [ADMIN_TILES.annonces, ADMIN_TILES.messagerie, ADMIN_TILES.moderation, ADMIN_TILES.candidatures, ADMIN_TILES.messages, ADMIN_TILES.parents],
     },
   ],
 };
