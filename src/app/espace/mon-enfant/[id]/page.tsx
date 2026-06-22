@@ -3,9 +3,15 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireUser } from "@/lib/require-user";
 import { Container } from "@/components/ui/Container";
-import { DAY_OPTIONS, formatTime } from "@/lib/schedule";
-import { averageOn20 } from "@/lib/grades";
+import { DAY_OPTIONS, DAY_LABELS, formatTime } from "@/lib/schedule";
+import { averageOn20, averageValue, mention } from "@/lib/grades";
 import { formatFCFA } from "@/lib/finance";
+
+/** Aujourd'hui au format planning (1 = Lundi … 7 = Dimanche). */
+function todayDow(): number {
+  const js = new Date().getDay();
+  return js === 0 ? 7 : js;
+}
 
 export const metadata: Metadata = {
   title: "Suivi",
@@ -133,6 +139,13 @@ export default async function EnfantDetailPage({
   const totalPaid = (payRows ?? []).reduce((a, p) => a + Number(p.amount), 0);
   const balance = totalDue - totalPaid;
 
+  // Résumé en tête.
+  const avg = averageValue(grades);
+  const dow = todayDow();
+  const todaySessions = sessions
+    .filter((s) => s.day_of_week === dow)
+    .sort((a, b) => (a.start_time < b.start_time ? -1 : 1));
+
   return (
     <section className="min-h-[70vh] bg-ipmd-light">
       <Container className="py-12 sm:py-16">
@@ -159,6 +172,69 @@ export default async function EnfantDetailPage({
             >
               🪪 Documents officiels
             </Link>
+          </div>
+
+          {/* Résumé : l'essentiel d'un coup d'œil */}
+          <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-black/5">
+              <p className="text-xs font-semibold uppercase tracking-wider text-black/40">
+                Moyenne générale
+              </p>
+              <p className="mt-1 text-2xl font-extrabold text-ipmd-black">
+                {avg !== null ? `${avg}/20` : "—"}
+              </p>
+              {avg !== null && (
+                <p className="text-xs font-semibold text-ipmd-red">
+                  {mention(avg)}
+                </p>
+              )}
+            </div>
+            <div className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-black/5">
+              <p className="text-xs font-semibold uppercase tracking-wider text-black/40">
+                Présence
+              </p>
+              <p className="mt-1 text-2xl font-extrabold text-green-600">
+                {presentCount}
+                <span className="text-sm font-semibold text-black/40">
+                  {" "}
+                  prés.
+                </span>
+              </p>
+              <p className="text-xs font-semibold text-ipmd-red">
+                {absences.length} absence(s)
+              </p>
+            </div>
+            <div className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-black/5">
+              <p className="text-xs font-semibold uppercase tracking-wider text-black/40">
+                Solde
+              </p>
+              <p
+                className={`mt-1 text-2xl font-extrabold ${
+                  balance <= 0 ? "text-green-600" : "text-ipmd-red"
+                }`}
+              >
+                {balance <= 0 ? "À jour" : formatFCFA(balance)}
+              </p>
+            </div>
+            <div className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-black/5">
+              <p className="text-xs font-semibold uppercase tracking-wider text-black/40">
+                Aujourd&apos;hui ({DAY_LABELS[dow] ?? ""})
+              </p>
+              {todaySessions.length === 0 ? (
+                <p className="mt-1 text-sm text-black/55">Pas de cours 🎉</p>
+              ) : (
+                <ul className="mt-1 space-y-1">
+                  {todaySessions.slice(0, 3).map((s) => (
+                    <li key={s.id} className="text-sm text-ipmd-black">
+                      <span className="font-bold text-ipmd-red">
+                        {formatTime(s.start_time)}
+                      </span>{" "}
+                      {courseTitle.get(s.course_id) ?? "Cours"}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
           </div>
 
           {/* Notes */}
