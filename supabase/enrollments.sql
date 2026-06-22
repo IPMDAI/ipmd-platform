@@ -3,8 +3,20 @@
 -- À exécuter dans Supabase > SQL Editor APRÈS teaching.sql + schedule.sql.
 -- ──────────────────────────────────────────────────────────────
 
+-- ── Inscriptions ───────────────────────────────────────────────
+create table if not exists public.enrollments (
+  id uuid primary key default gen_random_uuid(),
+  course_id uuid not null references public.courses (id) on delete cascade,
+  student_id uuid not null references public.profiles (id) on delete cascade,
+  created_at timestamptz not null default now(),
+  unique (course_id, student_id)
+);
+
+alter table public.enrollments enable row level security;
+
 -- Fonctions security definer : évitent la récursion infinie entre les
 -- policies de courses ↔ enrollments (elles lisent sans déclencher la RLS).
+-- Définies APRÈS la table enrollments qu'elles référencent.
 create or replace function public.owns_course(p_course_id uuid)
 returns boolean
 language sql stable security definer set search_path = public
@@ -24,17 +36,6 @@ as $$
     where course_id = p_course_id and student_id = auth.uid()
   );
 $$;
-
--- ── Inscriptions ───────────────────────────────────────────────
-create table if not exists public.enrollments (
-  id uuid primary key default gen_random_uuid(),
-  course_id uuid not null references public.courses (id) on delete cascade,
-  student_id uuid not null references public.profiles (id) on delete cascade,
-  created_at timestamptz not null default now(),
-  unique (course_id, student_id)
-);
-
-alter table public.enrollments enable row level security;
 
 -- L'enseignant gère les inscriptions de ses cours.
 drop policy if exists "Teachers manage enrollments" on public.enrollments;
