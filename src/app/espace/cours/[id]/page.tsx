@@ -125,6 +125,13 @@ export default async function CourseDetailPage({
             <p className="mt-1 text-sm text-black/55">{course.description}</p>
           )}
 
+          <Link
+            href={`/espace/cours/${course.id}/notes`}
+            className="mt-4 inline-flex items-center gap-2 rounded-full bg-ipmd-black px-4 py-2 text-sm font-semibold text-white transition-opacity hover:opacity-90"
+          >
+            🖊️ Saisir les notes
+          </Link>
+
           {/* Étudiants inscrits */}
           <div className="mt-8 grid gap-8 lg:grid-cols-[1fr_22rem]">
             <div className="order-2 lg:order-1">

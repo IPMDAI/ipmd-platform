@@ -49,6 +49,13 @@ export default async function MesCoursDetailPage({
     .order("start_time");
   const sessions = sRows ?? [];
 
+  const { data: gRows } = await supabase
+    .from("grades")
+    .select("id, title, score, max_score, comment")
+    .eq("course_id", id)
+    .order("created_at", { ascending: false });
+  const grades = gRows ?? [];
+
   return (
     <section className="min-h-[70vh] bg-ipmd-light">
       <Container className="py-12 sm:py-16">
@@ -95,6 +102,35 @@ export default async function MesCoursDetailPage({
                   {s.room && (
                     <span className="text-sm text-black/55">📍 {s.room}</span>
                   )}
+                </li>
+              ))}
+            </ul>
+          )}
+
+          {/* Mes notes pour ce cours */}
+          <h2 className="mt-8 text-lg font-bold text-ipmd-black">Mes notes</h2>
+          {grades.length === 0 ? (
+            <p className="mt-3 rounded-2xl bg-white p-5 text-sm text-black/55 shadow-sm ring-1 ring-black/5">
+              Aucune note pour l&apos;instant.
+            </p>
+          ) : (
+            <ul className="mt-3 divide-y divide-black/5 overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-black/5">
+              {grades.map((g) => (
+                <li
+                  key={g.id}
+                  className="flex items-start justify-between gap-3 p-4"
+                >
+                  <div className="min-w-0">
+                    <p className="font-medium text-ipmd-black">{g.title}</p>
+                    {g.comment && (
+                      <p className="mt-0.5 text-xs italic text-black/45">
+                        {g.comment}
+                      </p>
+                    )}
+                  </div>
+                  <span className="shrink-0 rounded-lg bg-ipmd-light px-2.5 py-1 text-sm font-bold text-ipmd-black">
+                    {Number(g.score)}/{Number(g.max_score)}
+                  </span>
                 </li>
               ))}
             </ul>

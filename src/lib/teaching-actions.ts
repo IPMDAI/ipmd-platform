@@ -172,3 +172,66 @@ export async function removeEnrollment(
   await ctx.supabase.from("enrollments").delete().eq("id", enrollmentId);
   revalidatePath(`/espace/cours/${courseId}`);
 }
+
+/** Saisit une note pour un étudiant d'un cours de l'enseignant courant. */
+export async function addGrade(
+  courseId: string,
+  _prev: FormResult | null,
+  formData: FormData
+): Promise<FormResult> {
+  const ctx = await getTeacher();
+  if (!ctx) return { ok: false, message: "Action réservée aux enseignants." };
+
+  const { data: course } = await ctx.supabase
+    .from("courses")
+    .select("id, teacher_id")
+    .eq("id", courseId)
+    .single();
+  if (!course || course.teacher_id !== ctx.userId) {
+    return { ok: false, message: "Cours introuvable." };
+  }
+
+  const studentId = str(formData, "student_id");
+  const title = str(formData, "title");
+  if (!studentId) return { ok: false, message: "Sélectionnez un étudiant." };
+  if (!title) return { ok: false, message: "Le titre de l'évaluation est requis." };
+
+  const score = Number.parseFloat(str(formData, "score").replace(",", "."));
+  const maxScore = Number.parseFloat(
+    (str(formData, "max_score") || "20").replace(",", ".")
+  );
+  if (Number.isNaN(score) || score < 0) {
+    return { ok: false, message: "Note invalide." };
+  }
+  if (Number.isNaN(maxScore) || maxScore <= 0) {
+    return { ok: false, message: "Barème invalide." };
+  }
+  if (score > maxScore) {
+    return { ok: false, message: "La note dépasse le barème." };
+  }
+
+  const { error } = await ctx.supabase.from("grades").insert({
+    course_id: courseId,
+    student_id: studentId,
+    title,
+    score,
+    max_score: maxScore,
+    comment: str(formData, "comment") || null,
+  });
+  if (error) return { ok: false, message: error.message };
+
+  revalidatePath(`/espace/cours/${courseId}/notes`);
+  return { ok: true, message: "Note enregistrée." };
+}
+
+/** Supprime une note (action de formulaire simple). */
+export async function removeGrade(
+  courseId: string,
+  gradeId: string,
+  _formData?: FormData
+): Promise<void> {
+  const ctx = await getTeacher();
+  if (!ctx) return;
+  await ctx.supabase.from("grades").delete().eq("id", gradeId);
+  revalidatePath(`/espace/cours/${courseId}/notes`);
+}

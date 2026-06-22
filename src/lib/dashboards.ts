@@ -63,19 +63,19 @@ export const dashboardTiles: Record<string, DashTile[]> = {
   etudiant: [
     { title: "Mes cours", icon: "📚", status: "ready", href: "/espace/mes-cours", description: "Tes cours, devoirs et séances." },
     { title: "Mes devoirs", icon: "📝", status: "soon", description: "Devoirs à rendre, dépôts et corrigés." },
-    { title: "Mes notes", icon: "📊", status: "soon", description: "Tes résultats et ta progression." },
+    { title: "Mes notes", icon: "📊", status: "ready", href: "/espace/mes-notes", description: "Tes résultats et ta moyenne." },
     SCOLARITE,
   ],
   professionnel: [
     { title: "Mon parcours", icon: "🚀", status: "ready", href: "/espace/mes-cours", description: "Tes cours, devoirs et séances." },
     { title: "Mes travaux", icon: "📝", status: "soon", description: "Projets et travaux pratiques." },
-    { title: "Mes notes", icon: "📊", status: "soon", description: "Validation de tes compétences." },
+    { title: "Mes notes", icon: "📊", status: "ready", href: "/espace/mes-notes", description: "Validation de tes compétences." },
     SCOLARITE,
   ],
   dirigeant: [
     { title: "Mon programme", icon: "🏛️", status: "ready", href: "/espace/mes-cours", description: "Tes cours, devoirs et séances." },
     { title: "Mes travaux", icon: "📝", status: "soon", description: "Études de cas et livrables." },
-    { title: "Mes notes", icon: "📊", status: "soon", description: "Validation du programme." },
+    { title: "Mes notes", icon: "📊", status: "ready", href: "/espace/mes-notes", description: "Validation du programme." },
     SCOLARITE,
   ],
   parent: [
@@ -87,7 +87,7 @@ export const dashboardTiles: Record<string, DashTile[]> = {
   enseignant: [
     { title: "Mes cours", icon: "📚", status: "ready", href: "/espace/cours", description: "Créer vos cours et leurs devoirs." },
     { title: "Emploi du temps", icon: "🗓️", status: "ready", href: "/espace/emploi-du-temps", description: "Vos séances de la semaine." },
-    { title: "Saisie des notes", icon: "🖊️", status: "soon", description: "Évaluer et saisir les notes." },
+    { title: "Saisie des notes", icon: "🖊️", status: "ready", href: "/espace/cours", description: "Ouvrez un cours pour saisir les notes." },
     { title: "Mes classes", icon: "👥", status: "soon", description: "Vos groupes et étudiants." },
   ],
   admin: [
