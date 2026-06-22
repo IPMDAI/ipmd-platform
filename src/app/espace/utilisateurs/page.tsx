@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { Container } from "@/components/ui/Container";
 import { RoleManager } from "@/components/espace/RoleManager";
+import { CreateUserForm } from "@/components/espace/CreateUserForm";
 
 export const metadata: Metadata = {
   title: "Gestion des utilisateurs",
@@ -48,6 +49,10 @@ export default async function UtilisateursPage() {
           <p className="mt-1 text-sm text-black/55">
             Attribuez un rôle à chaque compte. Les changements sont immédiats.
           </p>
+
+          <div className="mt-8">
+            <CreateUserForm />
+          </div>
 
           <div className="mt-8">
             <RoleManager
