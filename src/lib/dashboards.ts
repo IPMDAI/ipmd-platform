@@ -62,19 +62,19 @@ const SCOLARITE: DashTile = {
 export const dashboardTiles: Record<string, DashTile[]> = {
   etudiant: [
     { title: "Mes cours", icon: "📚", status: "ready", href: "/espace/mes-cours", description: "Tes cours, devoirs et séances." },
-    { title: "Mes devoirs", icon: "📝", status: "soon", description: "Devoirs à rendre, dépôts et corrigés." },
+    { title: "Emploi du temps", icon: "🗓️", status: "ready", href: "/espace/mon-emploi-du-temps", description: "Le planning de ta classe." },
     { title: "Mes notes", icon: "📊", status: "ready", href: "/espace/mes-notes", description: "Tes résultats et ta moyenne." },
     SCOLARITE,
   ],
   professionnel: [
     { title: "Mon parcours", icon: "🚀", status: "ready", href: "/espace/mes-cours", description: "Tes cours, devoirs et séances." },
-    { title: "Mes travaux", icon: "📝", status: "soon", description: "Projets et travaux pratiques." },
+    { title: "Emploi du temps", icon: "🗓️", status: "ready", href: "/espace/mon-emploi-du-temps", description: "Le planning de ta classe." },
     { title: "Mes notes", icon: "📊", status: "ready", href: "/espace/mes-notes", description: "Validation de tes compétences." },
     SCOLARITE,
   ],
   dirigeant: [
     { title: "Mon programme", icon: "🏛️", status: "ready", href: "/espace/mes-cours", description: "Tes cours, devoirs et séances." },
-    { title: "Mes travaux", icon: "📝", status: "soon", description: "Études de cas et livrables." },
+    { title: "Emploi du temps", icon: "🗓️", status: "ready", href: "/espace/mon-emploi-du-temps", description: "Le planning de ta classe." },
     { title: "Mes notes", icon: "📊", status: "ready", href: "/espace/mes-notes", description: "Validation du programme." },
     SCOLARITE,
   ],
@@ -96,6 +96,7 @@ export const dashboardTiles: Record<string, DashTile[]> = {
     { title: "Parents & élèves", icon: "👨‍👩‍👧", status: "ready", href: "/espace/parents", description: "Relier les parents à leurs enfants." },
     { title: "Classes & filières", icon: "🏫", status: "ready", href: "/espace/classes", description: "Filières, promotions et affectation." },
     { title: "Salles", icon: "🚪", status: "ready", href: "/espace/salles", description: "Salles disponibles pour le planning." },
+    { title: "Planning", icon: "🗓️", status: "ready", href: "/espace/planning", description: "Emploi du temps par classe." },
     { title: "Étudiants", icon: "🎓", status: "soon", description: "Gestion des étudiants." },
     { title: "Scolarité", icon: "🗂️", status: "soon", description: "Inscriptions et dossiers." },
     { title: "Ressources humaines", icon: "🧑‍💼", status: "soon", description: "Personnel et enseignants." },
@@ -108,6 +109,7 @@ export const dashboardTiles: Record<string, DashTile[]> = {
     { title: "Parents & élèves", icon: "👨‍👩‍👧", status: "ready", href: "/espace/parents", description: "Relier les parents à leurs enfants." },
     { title: "Classes & filières", icon: "🏫", status: "ready", href: "/espace/classes", description: "Filières, promotions et affectation." },
     { title: "Salles", icon: "🚪", status: "ready", href: "/espace/salles", description: "Salles disponibles pour le planning." },
+    { title: "Planning", icon: "🗓️", status: "ready", href: "/espace/planning", description: "Emploi du temps par classe." },
     { title: "Étudiants", icon: "🎓", status: "soon", description: "Gestion des étudiants." },
     { title: "Scolarité", icon: "🗂️", status: "soon", description: "Inscriptions et dossiers." },
     { title: "Ressources humaines", icon: "🧑‍💼", status: "soon", description: "Personnel et enseignants." },
