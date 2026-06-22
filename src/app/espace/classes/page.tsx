@@ -7,7 +7,11 @@ import {
   NewClasseForm,
 } from "@/components/espace/referentiel-forms";
 import { ClassAssigner } from "@/components/espace/ClassAssigner";
-import { deleteFiliere, deleteClasse } from "@/lib/referentiel-actions";
+import {
+  deleteFiliere,
+  deleteClasse,
+  seedFilieres,
+} from "@/lib/referentiel-actions";
 
 export const metadata: Metadata = {
   title: "Classes & filières",
@@ -21,6 +25,7 @@ export default async function ClassesPage() {
     { data: classes },
     { data: students },
     { data: members },
+    { data: modules },
   ] = await Promise.all([
     supabase.from("filieres").select("id, name").order("name"),
     supabase
@@ -33,7 +38,13 @@ export default async function ClassesPage() {
       .eq("role", "etudiant")
       .order("full_name"),
     supabase.from("class_members").select("student_id, class_id"),
+    supabase.from("modules").select("filiere_id"),
   ]);
+
+  const moduleCount = new Map<string, number>();
+  for (const m of modules ?? []) {
+    moduleCount.set(m.filiere_id, (moduleCount.get(m.filiere_id) ?? 0) + 1);
+  }
 
   const filiereName = new Map((filieres ?? []).map((f) => [f.id, f.name]));
   const memberMap = new Map(
@@ -68,25 +79,42 @@ export default async function ClassesPage() {
           <h2 className="mt-8 text-lg font-bold text-ipmd-black">Filières</h2>
           <div className="mt-3 grid gap-6 lg:grid-cols-[1fr_22rem]">
             <div className="order-2 lg:order-1">
+              <form action={seedFilieres} className="mb-3">
+                <button
+                  type="submit"
+                  className="rounded-full bg-ipmd-black px-4 py-2 text-sm font-semibold text-white transition-opacity hover:opacity-90"
+                >
+                  ✨ Importer les filières IPMD
+                </button>
+              </form>
               {(filieres ?? []).length === 0 ? (
                 <p className="rounded-2xl bg-white p-5 text-sm text-black/55 shadow-sm ring-1 ring-black/5">
                   Aucune filière.
                 </p>
               ) : (
-                <ul className="flex flex-wrap gap-2">
+                <ul className="divide-y divide-black/5 overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-black/5">
                   {(filieres ?? []).map((f) => (
                     <li
                       key={f.id}
-                      className="flex items-center gap-2 rounded-full bg-white py-1.5 pl-4 pr-1.5 text-sm font-semibold text-ipmd-black shadow-sm ring-1 ring-black/5"
+                      className="flex items-center justify-between gap-3 p-4"
                     >
-                      {f.name}
+                      <Link
+                        href={`/espace/classes/${f.id}`}
+                        className="min-w-0 flex-1"
+                      >
+                        <span className="font-semibold text-ipmd-black">
+                          {f.name}
+                        </span>
+                        <span className="ml-2 text-xs font-semibold text-ipmd-red">
+                          {moduleCount.get(f.id) ?? 0} module(s) →
+                        </span>
+                      </Link>
                       <form action={deleteFiliere.bind(null, f.id)}>
                         <button
                           type="submit"
-                          className="rounded-full px-2 text-xs font-bold text-ipmd-red hover:bg-ipmd-red/10"
-                          aria-label="Supprimer"
+                          className="shrink-0 rounded-lg px-3 py-1.5 text-xs font-semibold text-ipmd-red transition-colors hover:bg-ipmd-red/10"
                         >
-                          ✕
+                          Supprimer
                         </button>
                       </form>
                     </li>

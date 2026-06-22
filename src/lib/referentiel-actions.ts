@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { IPMD_FILIERES } from "@/lib/referentiel";
 import type { FormResult } from "@/types";
 
 /** Contexte admin (admin ou super_admin), sinon null. */
@@ -40,6 +41,21 @@ export async function createFiliere(
   return { ok: true, message: "Filière créée." };
 }
 
+/** Importe les filières standard de l'IPMD (sans doublon). */
+export async function seedFilieres(_formData?: FormData): Promise<void> {
+  const ctx = await getAdmin();
+  if (!ctx) return;
+  const { data: existing } = await ctx.supabase.from("filieres").select("name");
+  const have = new Set((existing ?? []).map((f) => f.name));
+  const toAdd = IPMD_FILIERES.filter((n) => !have.has(n)).map((name) => ({
+    name,
+  }));
+  if (toAdd.length > 0) {
+    await ctx.supabase.from("filieres").insert(toAdd);
+  }
+  revalidatePath("/espace/classes");
+}
+
 export async function createClasse(
   _prev: FormResult | null,
   formData: FormData
@@ -57,6 +73,35 @@ export async function createClasse(
   if (error) return { ok: false, message: error.message };
   revalidatePath("/espace/classes");
   return { ok: true, message: "Classe créée." };
+}
+
+/** Ajoute un module à une filière. */
+export async function createModule(
+  filiereId: string,
+  _prev: FormResult | null,
+  formData: FormData
+): Promise<FormResult> {
+  const ctx = await getAdmin();
+  if (!ctx) return { ok: false, message: "Action réservée à l'administration." };
+  const name = str(formData, "name");
+  if (!name) return { ok: false, message: "Le nom du module est requis." };
+  const { error } = await ctx.supabase
+    .from("modules")
+    .insert({ filiere_id: filiereId, name });
+  if (error) return { ok: false, message: error.message };
+  revalidatePath(`/espace/classes/${filiereId}`);
+  return { ok: true, message: "Module ajouté." };
+}
+
+export async function deleteModule(
+  filiereId: string,
+  moduleId: string,
+  _formData?: FormData
+): Promise<void> {
+  const ctx = await getAdmin();
+  if (!ctx) return;
+  await ctx.supabase.from("modules").delete().eq("id", moduleId);
+  revalidatePath(`/espace/classes/${filiereId}`);
 }
 
 export async function createRoom(
