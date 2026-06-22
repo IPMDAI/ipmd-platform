@@ -54,6 +54,32 @@ export default async function ClassPlanningPage({
     byDay.set(s.day_of_week, arr);
   }
 
+  // Message WhatsApp tout prêt (à partager dans le groupe de la classe).
+  const waLines: string[] = [`🗓️ *Emploi du temps — ${klass.name}*`, ""];
+  for (const day of DAY_OPTIONS) {
+    const list = [...(byDay.get(day.value) ?? [])].sort((a, b) =>
+      a.start_time.localeCompare(b.start_time)
+    );
+    if (list.length === 0) continue;
+    waLines.push(`*${day.label}*`);
+    for (const s of list) {
+      const extra = [
+        s.teacher_id ? teacherName.get(s.teacher_id) : null,
+        s.room_id ? roomName.get(s.room_id) : null,
+      ]
+        .filter(Boolean)
+        .join(" · ");
+      waLines.push(
+        `${formatTime(s.start_time)}–${formatTime(s.end_time)} · ${s.subject}${
+          extra ? ` · ${extra}` : ""
+        }`
+      );
+    }
+    waLines.push("");
+  }
+  waLines.push("👉 https://www.ipmd.pro/espace/mon-emploi-du-temps");
+  const waHref = `https://wa.me/?text=${encodeURIComponent(waLines.join("\n"))}`;
+
   return (
     <section className="min-h-[70vh] bg-ipmd-light">
       <Container className="py-12 sm:py-16">
@@ -72,8 +98,16 @@ export default async function ClassPlanningPage({
               "Emploi du temps de la semaine"}
           </p>
 
-          <div className="mt-4">
+          <div className="mt-4 flex flex-wrap items-center gap-3">
             <NotifyClassButton classId={classId} />
+            <a
+              href={waHref}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 rounded-full bg-[#25D366] px-5 py-2.5 text-sm font-semibold text-white transition-opacity hover:opacity-90"
+            >
+              📲 Partager sur WhatsApp
+            </a>
           </div>
 
           <div className="mt-8 grid gap-8 lg:grid-cols-[1fr_22rem]">
