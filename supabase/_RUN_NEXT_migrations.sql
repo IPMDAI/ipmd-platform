@@ -1,5 +1,5 @@
 -- ════════════════════════════════════════════════════════════════
--- IPMD — MIGRATIONS EN ATTENTE (2) — copier-coller dans Supabase > SQL Editor, RUN.
+-- IPMD — MIGRATIONS EN ATTENTE (3) — copier-coller dans Supabase > SQL Editor, RUN.
 -- Idempotent : ré-exécutable sans risque.
 -- ════════════════════════════════════════════════════════════════
 
@@ -46,4 +46,16 @@ create policy "Admins manage announcements" on public.announcements
 
 alter table public.profiles
   add column if not exists universe text;
+
+
+-- ███  candidature-profile.sql
+
+-- ──────────────────────────────────────────────────────────────
+-- IPMD — Profil souhaité sur la candidature
+-- Permet de pré-remplir le rôle au moment de l'invitation.
+-- À exécuter dans Supabase > SQL Editor.
+-- ──────────────────────────────────────────────────────────────
+
+alter table public.inscription_requests
+  add column if not exists desired_role text;
 
