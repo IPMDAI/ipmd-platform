@@ -65,6 +65,25 @@ export async function generateSessions(
   }
   const holiSet = new Set((holidays ?? []).map((h) => h.day));
 
+  // Instantané nom / fonction / salle (le staff peut lire ces données).
+  const teacherIds = [...new Set(slots.map((s) => s.teacher_id).filter(Boolean))] as string[];
+  const roomIds = [...new Set(slots.map((s) => s.room_id).filter(Boolean))] as string[];
+  const tName = new Map<string, string>();
+  const tFn = new Map<string, string>();
+  const rName = new Map<string, string>();
+  if (teacherIds.length > 0) {
+    const [{ data: profs }, { data: sheets }] = await Promise.all([
+      ctx.supabase.from("profiles").select("id, full_name").in("id", teacherIds),
+      ctx.supabase.from("teacher_profiles").select("teacher_id, function").in("teacher_id", teacherIds),
+    ]);
+    for (const p of profs ?? []) tName.set(p.id, p.full_name || "—");
+    for (const s of sheets ?? []) if (s.function) tFn.set(s.teacher_id, s.function);
+  }
+  if (roomIds.length > 0) {
+    const { data: rooms } = await ctx.supabase.from("rooms").select("id, name").in("id", roomIds);
+    for (const r of rooms ?? []) rName.set(r.id, r.name);
+  }
+
   const rows: Record<string, unknown>[] = [];
   const cur = new Date(start + "T00:00:00Z");
   const last = new Date(end + "T00:00:00Z");
@@ -78,6 +97,9 @@ export async function generateSessions(
         teacher_id: s.teacher_id,
         subject: s.subject,
         room_id: s.room_id,
+        teacher_name: s.teacher_id ? tName.get(s.teacher_id) ?? null : null,
+        teacher_function: s.teacher_id ? tFn.get(s.teacher_id) ?? null : null,
+        room_name: s.room_id ? rName.get(s.room_id) ?? null : null,
         session_date: iso,
         start_time: s.start_time,
         end_time: s.end_time,

@@ -7,6 +7,7 @@ import {
   type TimetableSlot,
 } from "@/components/espace/WeeklyTimetable";
 import { weekDates, weekLabel } from "@/lib/holidays";
+import { StudentSessions } from "@/components/espace/StudentSessions";
 
 export const metadata: Metadata = {
   title: "Mon emploi du temps",
@@ -113,12 +114,20 @@ export default async function MonEmploiDuTempsPage() {
               Aucun créneau planifié pour ta classe pour l&apos;instant.
             </p>
           ) : (
-            <div className="mt-8">
-              <WeeklyTimetable
-                slots={slots}
-                weekDates={dates}
-                holidays={holidays}
-              />
+            <div className="mt-8 space-y-8">
+              {member?.class_id && (
+                <StudentSessions classId={member.class_id} />
+              )}
+              <div>
+                <h2 className="mb-3 text-sm font-bold uppercase tracking-wider text-black/40">
+                  Grille hebdomadaire type
+                </h2>
+                <WeeklyTimetable
+                  slots={slots}
+                  weekDates={dates}
+                  holidays={holidays}
+                />
+              </div>
             </div>
           )}
         </div>

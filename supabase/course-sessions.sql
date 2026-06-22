@@ -15,11 +15,20 @@ create table if not exists public.course_sessions (
   start_time time not null,
   end_time time not null,
   semester text,
+  -- Instantané affichable par l'étudiant (sans accès aux profils / fiches).
+  teacher_name text,
+  teacher_function text,
+  room_name text,
   status text not null default 'prevue',
   -- prevue | realisee | reportee | annulee | remplacee | ferie | absence_prof | absence_classe
   created_at timestamptz not null default now(),
   unique (class_id, session_date, start_time)
 );
+-- Colonnes instantané (si la table existait déjà sans elles).
+alter table public.course_sessions add column if not exists teacher_name text;
+alter table public.course_sessions add column if not exists teacher_function text;
+alter table public.course_sessions add column if not exists room_name text;
+
 alter table public.course_sessions enable row level security;
 
 -- Lecture : étudiant de la classe, enseignant de la séance, ou services.
