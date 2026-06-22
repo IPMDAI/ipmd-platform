@@ -15,7 +15,7 @@ create table if not exists public.teacher_profiles (
   bio text,
   cv_url text,
   diplomas text,
-  authorization text,   -- autorisation d'enseigner
+  "authorization" text, -- autorisation d'enseigner (mot réservé → entre guillemets)
   status text not null default 'en_attente', -- en_attente | valide | actif | inactif | archive
   updated_at timestamptz not null default now()
 );
