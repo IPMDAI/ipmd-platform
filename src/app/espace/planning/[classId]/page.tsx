@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { requireAdmin } from "@/lib/require-admin";
 import { Container } from "@/components/ui/Container";
 import { NewSlotForm } from "@/components/espace/NewSlotForm";
+import { NotifyClassButton } from "@/components/espace/NotifyClassButton";
 import { removeTimetableSlot } from "@/lib/planning-actions";
 import { DAY_OPTIONS, formatTime } from "@/lib/schedule";
 
@@ -70,6 +71,10 @@ export default async function ClassPlanningPage({
             {[klass.level, klass.academic_year].filter(Boolean).join(" · ") ||
               "Emploi du temps de la semaine"}
           </p>
+
+          <div className="mt-4">
+            <NotifyClassButton classId={classId} />
+          </div>
 
           <div className="mt-8 grid gap-8 lg:grid-cols-[1fr_22rem]">
             {/* Grille hebdomadaire */}

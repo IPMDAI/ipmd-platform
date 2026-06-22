@@ -13,6 +13,9 @@ const RESEND_TO = process.env.RESEND_TO ?? "";
 export const isEmailConfigured =
   RESEND_API_KEY.length > 0 && RESEND_TO.length > 0;
 
+/** Pour envoyer à des destinataires arbitraires (ex. étudiants), seule la clé suffit. */
+export const canSendEmail = RESEND_API_KEY.length > 0;
+
 /** Échappe le HTML pour éviter toute injection dans l'email. */
 function esc(value: string): string {
   return value
@@ -55,6 +58,60 @@ export function emailLayout(title: string, rows: string): string {
     </div>
   </div>
 </div>`;
+}
+
+/** Échappe le HTML (réexporté pour construire des corps personnalisés). */
+export const escapeHtml = esc;
+
+/** Enveloppe un corps HTML libre dans la mise en page IPMD. */
+export function emailDocument(title: string, bodyHtml: string): string {
+  return `<div style="font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:#f6f7f9;padding:24px">
+  <div style="max-width:560px;margin:0 auto;background:#fff;border-radius:16px;overflow:hidden;border:1px solid #eceef1">
+    <div style="background:#0b0b0d;padding:20px 24px">
+      <span style="color:#fff;font-size:18px;font-weight:800">IPMD</span>
+      <span style="color:#e01228;font-size:18px;font-weight:800"> ·</span>
+      <span style="color:#9ca3af;font-size:13px"> Institut Polytechnique des Métiers du Digital</span>
+    </div>
+    <div style="padding:24px">
+      <h1 style="margin:0 0 16px;font-size:18px;color:#0b0b0d">${esc(title)}</h1>
+      ${bodyHtml}
+    </div>
+    <div style="padding:14px 24px;background:#f6f7f9;color:#9ca3af;font-size:12px">
+      Email automatique — www.ipmd.pro · Ose. Agis. Impacte.
+    </div>
+  </div>
+</div>`;
+}
+
+/**
+ * Envoie un email à des destinataires précis (étudiants, profs…).
+ * Best-effort : ne lève jamais. Renvoie le nombre d'envois réussis.
+ * Nécessite un expéditeur (RESEND_FROM) sur un domaine vérifié.
+ */
+export async function sendEmailTo(
+  recipients: string[],
+  subject: string,
+  html: string
+): Promise<number> {
+  if (!canSendEmail) return 0;
+  const valid = recipients.filter((e) => e && e.includes("@"));
+
+  const results = await Promise.allSettled(
+    valid.map((to) =>
+      fetch("https://api.resend.com/emails", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${RESEND_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ from: RESEND_FROM, to: [to], subject, html }),
+      }).then((r) => {
+        if (!r.ok) throw new Error(String(r.status));
+      })
+    )
+  );
+
+  return results.filter((r) => r.status === "fulfilled").length;
 }
 
 /** Envoie un email de notification. Ne lève jamais d'exception. */
