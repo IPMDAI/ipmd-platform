@@ -33,6 +33,15 @@ export const SEMESTERS = [
   "Semestre 10",
 ];
 
+/** Logique pédagogique IPMD : la « phase » de chaque niveau. */
+export const LEVEL_PHASE: Record<string, string> = {
+  "Licence 1": "Tronc commun digital",
+  "Licence 2": "Approfondissement par filière",
+  "Licence 3": "Spécialisation par filière",
+  "Master 1": "Expertise",
+  "Master 2": "Direction, stratégie & gouvernance",
+};
+
 /** Correspondance Bac+N (programmes) → niveau LMD. */
 export const LEVEL_FROM_DEGREE: Record<string, string> = {
   "Bac+1": "Licence 1",

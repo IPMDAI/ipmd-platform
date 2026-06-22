@@ -5,7 +5,7 @@ import { requireAdmin } from "@/lib/require-admin";
 import { Container } from "@/components/ui/Container";
 import { NewModuleForm } from "@/components/espace/NewModuleForm";
 import { deleteModule } from "@/lib/referentiel-actions";
-import { NIVEAUX, SEMESTERS } from "@/lib/referentiel";
+import { NIVEAUX, SEMESTERS, LEVEL_PHASE } from "@/lib/referentiel";
 
 export const metadata: Metadata = {
   title: "Modules de la filière",
@@ -84,9 +84,16 @@ export default async function FiliereModulesPage({
                     const sems = semOrder.filter((s) => semMap.has(s));
                     return (
                       <div key={lvl}>
-                        <h3 className="mb-2 text-sm font-extrabold uppercase tracking-wide text-ipmd-red">
-                          {lvl}
-                        </h3>
+                        <div className="mb-2 flex flex-wrap items-center gap-2">
+                          <h3 className="text-sm font-extrabold uppercase tracking-wide text-ipmd-red">
+                            {lvl}
+                          </h3>
+                          {LEVEL_PHASE[lvl] && (
+                            <span className="rounded-full bg-ipmd-black px-2.5 py-0.5 text-[11px] font-semibold text-white">
+                              {LEVEL_PHASE[lvl]}
+                            </span>
+                          )}
+                        </div>
                         <div className="space-y-3">
                           {sems.map((sem) => (
                             <div
