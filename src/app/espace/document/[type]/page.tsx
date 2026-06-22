@@ -7,6 +7,7 @@ import { PrintButton } from "@/components/espace/PrintButton";
 import { DocumentLetter } from "@/components/espace/documents/DocumentLetter";
 import { StudentCard } from "@/components/espace/documents/StudentCard";
 import { getDossier, isDocumentSlug } from "@/lib/documents";
+import { signDoc, verifyUrl } from "@/lib/doc-verify";
 
 export const metadata: Metadata = {
   title: "Document officiel",
@@ -29,6 +30,18 @@ export default async function DocumentPage({
   const dossier = await getDossier(targetId);
   if (!dossier) notFound();
 
+  const verifyHref = verifyUrl(
+    signDoc({
+      t: type,
+      m: dossier.matricule,
+      n: dossier.name,
+      y: dossier.year,
+      ...(type === "attestation-reussite"
+        ? { a: dossier.average, me: dossier.mention }
+        : {}),
+    })
+  );
+
   const backHref = student
     ? `/espace/documents?student=${student}`
     : "/espace/documents";
@@ -49,10 +62,11 @@ export default async function DocumentPage({
 
           <div className="mt-6">
             {type === "carte" ? (
-              <StudentCard dossier={dossier} />
+              <StudentCard dossier={dossier} verifyHref={verifyHref} />
             ) : (
               <DocumentLetter
                 dossier={dossier}
+                verifyHref={verifyHref}
                 kind={
                   type === "certificat-scolarite"
                     ? "certificat"

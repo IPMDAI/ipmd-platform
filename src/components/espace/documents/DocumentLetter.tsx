@@ -1,5 +1,6 @@
 import Image from "next/image";
 import { longDate, type Dossier } from "@/lib/documents";
+import { QrCode } from "@/components/espace/documents/QrCode";
 
 type Kind = "scolarite" | "certificat" | "reussite";
 
@@ -18,9 +19,11 @@ function programLine(d: Dossier): string {
 export function DocumentLetter({
   dossier,
   kind,
+  verifyHref,
 }: {
   dossier: Dossier;
   kind: Kind;
+  verifyHref: string;
 }) {
   const title = TITLES[kind];
 
@@ -123,9 +126,17 @@ export function DocumentLetter({
 
         {/* Signature */}
         <div className="mt-12 flex items-end justify-between gap-6">
-          <div className="text-[11px] text-black/45">
-            <p>Document généré numériquement par la plateforme IPMD.</p>
-            <p>Authenticité vérifiable auprès du service de la scolarité.</p>
+          <div className="flex items-center gap-3">
+            <span className="shrink-0 rounded-lg bg-white p-1 ring-1 ring-black/10">
+              <QrCode value={verifyHref} size={84} />
+            </span>
+            <div className="text-[11px] text-black/45">
+              <p className="font-semibold text-ipmd-black">
+                Vérifier l&apos;authenticité
+              </p>
+              <p>Scannez ce QR code pour confirmer ce document.</p>
+              <p>Signé numériquement par l&apos;IPMD · ipmd.pro/verifier</p>
+            </div>
           </div>
           <div className="text-center">
             <p className="text-sm text-black/60">Fait à Abidjan,</p>

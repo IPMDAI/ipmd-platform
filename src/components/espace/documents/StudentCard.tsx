@@ -1,5 +1,6 @@
 import Image from "next/image";
 import type { Dossier } from "@/lib/documents";
+import { QrCode } from "@/components/espace/documents/QrCode";
 
 function initials(name: string): string {
   return name
@@ -11,7 +12,13 @@ function initials(name: string): string {
 }
 
 /** Carte étudiant IPMD digitale (recto), pensée pour l'impression. */
-export function StudentCard({ dossier }: { dossier: Dossier }) {
+export function StudentCard({
+  dossier,
+  verifyHref,
+}: {
+  dossier: Dossier;
+  verifyHref: string;
+}) {
   const program = [dossier.filiereName, dossier.level].filter(Boolean).join(" · ");
 
   return (
@@ -74,16 +81,10 @@ export function StudentCard({ dossier }: { dossier: Dossier }) {
                 {dossier.year}
               </p>
             </div>
-            {/* Code-barres décoratif */}
-            <div className="flex h-7 items-end gap-[2px]" aria-hidden>
-              {[3, 6, 2, 7, 4, 2, 6, 3, 5, 2, 7, 3, 4, 6, 2, 5].map((h, i) => (
-                <span
-                  key={i}
-                  className="w-[2px] bg-white/80"
-                  style={{ height: `${h * 3 + 6}px` }}
-                />
-              ))}
-            </div>
+            {/* QR de vérification */}
+            <span className="rounded-md bg-white p-1">
+              <QrCode value={verifyHref} size={50} />
+            </span>
           </div>
         </div>
       </div>
