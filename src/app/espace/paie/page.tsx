@@ -6,6 +6,8 @@ import { Field, inputBase } from "@/components/forms/FormField";
 import { ActionButton } from "@/components/ui/Button";
 import { formatFCFA } from "@/lib/finance";
 import { TeacherPayForm } from "@/components/espace/TeacherPayForm";
+import { PayoutControl } from "@/components/espace/PayoutControl";
+import { PAYOUT_STATUS_LABEL } from "@/lib/payout";
 
 export const metadata: Metadata = {
   title: "Paie enseignants",
@@ -42,7 +44,7 @@ export default async function PaiePage({
 
   const { supabase } = await requireAdmin();
 
-  const [{ data: teachers }, { data: pays }, { data: sheets }, { data: sessions }] =
+  const [{ data: teachers }, { data: pays }, { data: sheets }, { data: sessions }, { data: payouts }] =
     await Promise.all([
       supabase.from("profiles").select("id, full_name, email").eq("role", "enseignant").order("full_name"),
       supabase.from("teacher_pay").select("teacher_id, pay_type, hourly_rate, project_fee"),
@@ -52,7 +54,13 @@ export default async function PaiePage({
         .select("id, teacher_id, start_time, end_time, status")
         .gte("session_date", from)
         .lte("session_date", to),
+      supabase
+        .from("teacher_payouts")
+        .select("teacher_id, status")
+        .eq("period_start", from)
+        .eq("period_end", to),
     ]);
+  const payoutStatus = new Map((payouts ?? []).map((p) => [p.teacher_id, p.status]));
 
   // Fiches validées pour ces séances.
   const sessIds = (sessions ?? []).map((s) => s.id);
@@ -182,6 +190,33 @@ export default async function PaiePage({
                       projectFee={r.cfg.fee}
                     />
                   </details>
+
+                  {(() => {
+                    const st = payoutStatus.get(r.id) ?? "en_attente";
+                    return (
+                      <div className="mt-2 border-t border-black/5 pt-2">
+                        <span
+                          className={`rounded-full px-2.5 py-1 text-[11px] font-bold ${
+                            st === "paye"
+                              ? "bg-green-50 text-green-700"
+                              : st === "valide"
+                              ? "bg-blue-50 text-blue-700"
+                              : "bg-amber-50 text-amber-700"
+                          }`}
+                        >
+                          {PAYOUT_STATUS_LABEL[st] ?? st}
+                        </span>
+                        <PayoutControl
+                          teacherId={r.id}
+                          periodStart={from}
+                          periodEnd={to}
+                          hours={r.validated}
+                          amount={r.montant}
+                          current={st}
+                        />
+                      </div>
+                    );
+                  })()}
                 </li>
               ))}
             </ul>
