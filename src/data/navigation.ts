@@ -36,6 +36,7 @@ export const footerNav = {
     { label: "Scolarité & financement", href: "/scolarite" },
     { label: "Admission / Inscription", href: "/admission" },
     { label: "Toutes les formations", href: "/formations" },
+    { label: "Enseigner à l'IPMD", href: "/recrutement" },
     { label: "Contact", href: "/contact" },
   ] satisfies NavItem[],
 };

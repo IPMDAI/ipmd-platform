@@ -99,7 +99,7 @@ export const dashboardTiles: Record<string, DashTile[]> = {
     { title: "Planning", icon: "🗓️", status: "ready", href: "/espace/planning", description: "Emploi du temps par classe." },
     { title: "Étudiants", icon: "🎓", status: "soon", description: "Gestion des étudiants." },
     { title: "Scolarité", icon: "🗂️", status: "soon", description: "Inscriptions et dossiers." },
-    { title: "Ressources humaines", icon: "🧑‍💼", status: "soon", description: "Personnel et enseignants." },
+    { title: "Recrutement profs", icon: "🧑‍🏫", status: "ready", href: "/espace/recrutement", description: "Candidatures enseignants + tri IA." },
     { title: "Finance", icon: "💰", status: "soon", description: "Paiements et facturation." },
   ],
   super_admin: [
@@ -112,7 +112,7 @@ export const dashboardTiles: Record<string, DashTile[]> = {
     { title: "Planning", icon: "🗓️", status: "ready", href: "/espace/planning", description: "Emploi du temps par classe." },
     { title: "Étudiants", icon: "🎓", status: "soon", description: "Gestion des étudiants." },
     { title: "Scolarité", icon: "🗂️", status: "soon", description: "Inscriptions et dossiers." },
-    { title: "Ressources humaines", icon: "🧑‍💼", status: "soon", description: "Personnel et enseignants." },
+    { title: "Recrutement profs", icon: "🧑‍🏫", status: "ready", href: "/espace/recrutement", description: "Candidatures enseignants + tri IA." },
     { title: "Finance", icon: "💰", status: "soon", description: "Paiements et facturation." },
   ],
 };
