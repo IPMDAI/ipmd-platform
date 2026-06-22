@@ -11,6 +11,7 @@ import {
   deleteFiliere,
   deleteClasse,
   seedFilieres,
+  seedModules,
 } from "@/lib/referentiel-actions";
 
 export const metadata: Metadata = {
@@ -79,14 +80,24 @@ export default async function ClassesPage() {
           <h2 className="mt-8 text-lg font-bold text-ipmd-black">Filières</h2>
           <div className="mt-3 grid gap-6 lg:grid-cols-[1fr_22rem]">
             <div className="order-2 lg:order-1">
-              <form action={seedFilieres} className="mb-3">
-                <button
-                  type="submit"
-                  className="rounded-full bg-ipmd-black px-4 py-2 text-sm font-semibold text-white transition-opacity hover:opacity-90"
-                >
-                  ✨ Importer les filières IPMD
-                </button>
-              </form>
+              <div className="mb-3 flex flex-wrap gap-2">
+                <form action={seedFilieres}>
+                  <button
+                    type="submit"
+                    className="rounded-full bg-ipmd-black px-4 py-2 text-sm font-semibold text-white transition-opacity hover:opacity-90"
+                  >
+                    ✨ Importer les filières IPMD
+                  </button>
+                </form>
+                <form action={seedModules}>
+                  <button
+                    type="submit"
+                    className="rounded-full border border-ipmd-black/15 bg-white px-4 py-2 text-sm font-semibold text-ipmd-black transition-colors hover:border-ipmd-red hover:text-ipmd-red"
+                  >
+                    ✨ Pré-remplir les modules
+                  </button>
+                </form>
+              </div>
               {(filieres ?? []).length === 0 ? (
                 <p className="rounded-2xl bg-white p-5 text-sm text-black/55 shadow-sm ring-1 ring-black/5">
                   Aucune filière.

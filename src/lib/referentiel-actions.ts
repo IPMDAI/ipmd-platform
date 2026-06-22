@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import { IPMD_FILIERES } from "@/lib/referentiel";
+import { IPMD_FILIERES, MODULE_SEED } from "@/lib/referentiel";
 import type { FormResult } from "@/types";
 
 /** Contexte admin (admin ou super_admin), sinon null. */
@@ -73,6 +73,34 @@ export async function createClasse(
   if (error) return { ok: false, message: error.message };
   revalidatePath("/espace/classes");
   return { ok: true, message: "Classe créée." };
+}
+
+/** Pré-remplit les modules de chaque filière (sans doublon). */
+export async function seedModules(_formData?: FormData): Promise<void> {
+  const ctx = await getAdmin();
+  if (!ctx) return;
+  const { data: filieres } = await ctx.supabase
+    .from("filieres")
+    .select("id, name");
+  const { data: existing } = await ctx.supabase
+    .from("modules")
+    .select("filiere_id, name");
+  const have = new Set(
+    (existing ?? []).map((m) => `${m.filiere_id}::${m.name}`)
+  );
+
+  const rows: { filiere_id: string; name: string }[] = [];
+  for (const f of filieres ?? []) {
+    for (const name of MODULE_SEED[f.name] ?? []) {
+      if (!have.has(`${f.id}::${name}`)) {
+        rows.push({ filiere_id: f.id, name });
+      }
+    }
+  }
+  if (rows.length > 0) {
+    await ctx.supabase.from("modules").insert(rows);
+  }
+  revalidatePath("/espace/classes");
 }
 
 /** Ajoute un module à une filière. */
