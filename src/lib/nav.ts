@@ -27,6 +27,7 @@ const ADMIN_NAV: NavGroup[] = [
   {
     title: "Scolarité & finance",
     items: [
+      { label: "Étudiants", href: "/espace/etudiants", icon: "🎓" },
       { label: "Bulletins", href: "/espace/bulletins", icon: "📄" },
       { label: "Documents officiels", href: "/espace/documents", icon: "🪪" },
       { label: "Finance", href: "/espace/finance", icon: "💰" },

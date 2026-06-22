@@ -1,0 +1,98 @@
+"use client";
+
+import { useMemo, useState } from "react";
+import Link from "next/link";
+
+export type StudentRow = {
+  id: string;
+  name: string;
+  email: string;
+  className: string | null;
+  filiereName: string | null;
+};
+
+function normalize(s: string): string {
+  return s
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "")
+    .toLowerCase();
+}
+
+export function StudentDirectory({ students }: { students: StudentRow[] }) {
+  const [query, setQuery] = useState("");
+
+  const results = useMemo(() => {
+    const q = normalize(query.trim());
+    if (!q) return students;
+    return students.filter((s) =>
+      normalize(
+        `${s.name} ${s.email} ${s.className ?? ""} ${s.filiereName ?? ""}`
+      ).includes(q)
+    );
+  }, [students, query]);
+
+  return (
+    <div>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <input
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Rechercher un étudiant, une classe…"
+          className="w-full rounded-xl border border-black/10 bg-white px-4 py-2.5 text-sm text-ipmd-black outline-none ring-ipmd-red/20 transition-shadow focus:ring-2 sm:max-w-sm"
+        />
+        <span className="text-sm text-black/45">
+          {results.length} / {students.length} étudiant
+          {students.length > 1 ? "s" : ""}
+        </span>
+      </div>
+
+      {results.length === 0 ? (
+        <p className="mt-8 rounded-2xl bg-white p-6 text-sm text-black/55 shadow-sm ring-1 ring-black/5">
+          Aucun étudiant ne correspond.
+        </p>
+      ) : (
+        <ul className="mt-5 divide-y divide-black/5 overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-black/5">
+          {results.map((s) => (
+            <li
+              key={s.id}
+              className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between"
+            >
+              <div className="min-w-0">
+                <p className="truncate font-semibold text-ipmd-black">
+                  {s.name}
+                </p>
+                <p className="truncate text-sm text-black/50">{s.email}</p>
+                <p className="mt-0.5 text-xs text-black/45">
+                  {s.className || s.filiereName ? (
+                    <>
+                      {s.filiereName ? `${s.filiereName} · ` : ""}
+                      {s.className ?? "—"}
+                    </>
+                  ) : (
+                    <span className="text-ipmd-red/70">
+                      Aucune classe affectée
+                    </span>
+                  )}
+                </p>
+              </div>
+              <div className="flex shrink-0 flex-wrap gap-2">
+                <Link
+                  href={`/espace/bulletin/${s.id}`}
+                  className="rounded-full bg-ipmd-light px-3 py-1.5 text-xs font-semibold text-ipmd-black transition-colors hover:bg-black/5"
+                >
+                  📄 Bulletin
+                </Link>
+                <Link
+                  href={`/espace/documents?student=${s.id}`}
+                  className="rounded-full bg-ipmd-light px-3 py-1.5 text-xs font-semibold text-ipmd-black transition-colors hover:bg-black/5"
+                >
+                  🪪 Documents
+                </Link>
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}

@@ -139,7 +139,7 @@ const ADMIN_TILES = {
   finance: { title: "Finance", icon: "💰", status: "ready", href: "/espace/finance", description: "Frais, paiements et soldes." },
   bulletins: { title: "Bulletins", icon: "📄", status: "ready", href: "/espace/bulletins", description: "Bulletins de notes des étudiants." },
   documents: { title: "Documents officiels", icon: "🪪", status: "ready", href: "/espace/documents", description: "Attestations, certificats, cartes étudiant." },
-  etudiants: { title: "Étudiants", icon: "🎓", status: "soon", description: "Gestion des étudiants." },
+  etudiants: { title: "Étudiants", icon: "🎓", status: "ready", href: "/espace/etudiants", description: "Annuaire, bulletins et documents." },
   scolarite: { title: "Scolarité", icon: "🗂️", status: "soon", description: "Inscriptions et dossiers." },
 } satisfies Record<string, DashTile>;
 
