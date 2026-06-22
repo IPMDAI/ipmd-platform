@@ -2,7 +2,9 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import { IPMD_FILIERES, MODULE_SEED } from "@/lib/referentiel";
+import { IPMD_FILIERES, LEVEL_FROM_DEGREE } from "@/lib/referentiel";
+import { programs } from "@/data/programs";
+import { programDetails } from "@/data/programDetails";
 import type { FormResult } from "@/types";
 
 /** Contexte admin (admin ou super_admin), sinon null. */
@@ -75,30 +77,67 @@ export async function createClasse(
   return { ok: true, message: "Classe créée." };
 }
 
-/** Pré-remplit les modules de chaque filière (sans doublon). */
+/**
+ * Pré-remplit les modules par filière → niveau → semestre, à partir du
+ * vrai programme LMD (src/data/programDetails.ts). Remplace l'ancien
+ * pré-remplissage plat (modules sans niveau).
+ */
 export async function seedModules(_formData?: FormData): Promise<void> {
   const ctx = await getAdmin();
   if (!ctx) return;
+
   const { data: filieres } = await ctx.supabase
     .from("filieres")
     .select("id, name");
+  const byName = new Map((filieres ?? []).map((f) => [f.name, f.id]));
+
+  // Retire l'ancien pré-remplissage (modules sans niveau).
+  await ctx.supabase.from("modules").delete().is("level", null);
+
   const { data: existing } = await ctx.supabase
     .from("modules")
-    .select("filiere_id, name");
+    .select("filiere_id, level, semester, name");
   const have = new Set(
-    (existing ?? []).map((m) => `${m.filiere_id}::${m.name}`)
+    (existing ?? []).map(
+      (m) => `${m.filiere_id}|${m.level}|${m.semester}|${m.name}`
+    )
   );
 
-  const rows: { filiere_id: string; name: string }[] = [];
-  for (const f of filieres ?? []) {
-    for (const name of MODULE_SEED[f.name] ?? []) {
-      if (!have.has(`${f.id}::${name}`)) {
-        rows.push({ filiere_id: f.id, name });
+  const rows: {
+    filiere_id: string;
+    level: string;
+    semester: string;
+    name: string;
+  }[] = [];
+
+  for (const p of programs) {
+    if (p.universe !== "campus") continue; // une formation campus = une filière
+    const fid = byName.get(p.title);
+    if (!fid) continue;
+    const detail = programDetails[p.id];
+    if (!detail) continue;
+
+    for (const lvl of detail.levels) {
+      const level = LEVEL_FROM_DEGREE[lvl.level] ?? lvl.level;
+      for (const sem of lvl.semesters) {
+        for (const course of sem.courses) {
+          const key = `${fid}|${level}|${sem.name}|${course}`;
+          if (have.has(key)) continue;
+          have.add(key);
+          rows.push({
+            filiere_id: fid,
+            level,
+            semester: sem.name,
+            name: course,
+          });
+        }
       }
     }
   }
-  if (rows.length > 0) {
-    await ctx.supabase.from("modules").insert(rows);
+
+  // Insertion par lots.
+  for (let i = 0; i < rows.length; i += 100) {
+    await ctx.supabase.from("modules").insert(rows.slice(i, i + 100));
   }
   revalidatePath("/espace/classes");
 }
@@ -113,9 +152,12 @@ export async function createModule(
   if (!ctx) return { ok: false, message: "Action réservée à l'administration." };
   const name = str(formData, "name");
   if (!name) return { ok: false, message: "Le nom du module est requis." };
-  const { error } = await ctx.supabase
-    .from("modules")
-    .insert({ filiere_id: filiereId, name });
+  const { error } = await ctx.supabase.from("modules").insert({
+    filiere_id: filiereId,
+    name,
+    level: str(formData, "level") || null,
+    semester: str(formData, "semester") || null,
+  });
   if (error) return { ok: false, message: error.message };
   revalidatePath(`/espace/classes/${filiereId}`);
   return { ok: true, message: "Module ajouté." };

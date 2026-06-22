@@ -5,6 +5,7 @@ import { requireAdmin } from "@/lib/require-admin";
 import { Container } from "@/components/ui/Container";
 import { NewModuleForm } from "@/components/espace/NewModuleForm";
 import { deleteModule } from "@/lib/referentiel-actions";
+import { NIVEAUX, SEMESTERS } from "@/lib/referentiel";
 
 export const metadata: Metadata = {
   title: "Modules de la filière",
@@ -27,10 +28,24 @@ export default async function FiliereModulesPage({
 
   const { data: rows } = await supabase
     .from("modules")
-    .select("id, name")
+    .select("id, name, level, semester")
     .eq("filiere_id", filiereId)
     .order("created_at");
   const modules = rows ?? [];
+
+  // Regroupe par niveau → semestre.
+  type Mod = { id: string; name: string };
+  const grouped = new Map<string, Map<string, Mod[]>>();
+  for (const m of modules) {
+    const lvl = m.level ?? "Autres";
+    const sem = m.semester ?? "—";
+    if (!grouped.has(lvl)) grouped.set(lvl, new Map());
+    const semMap = grouped.get(lvl)!;
+    if (!semMap.has(sem)) semMap.set(sem, []);
+    semMap.get(sem)!.push({ id: m.id, name: m.name });
+  }
+  const levelOrder = [...NIVEAUX, "Autres"].filter((l) => grouped.has(l));
+  const semOrder = [...SEMESTERS, "—"];
 
   return (
     <section className="min-h-[70vh] bg-ipmd-light">
@@ -63,26 +78,57 @@ export default async function FiliereModulesPage({
                   Aucun module. Ajoutez-en un →
                 </p>
               ) : (
-                <ul className="divide-y divide-black/5 overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-black/5">
-                  {modules.map((m) => (
-                    <li
-                      key={m.id}
-                      className="flex items-center justify-between gap-3 p-4"
-                    >
-                      <span className="font-semibold text-ipmd-black">
-                        {m.name}
-                      </span>
-                      <form action={deleteModule.bind(null, filiereId, m.id)}>
-                        <button
-                          type="submit"
-                          className="shrink-0 rounded-lg px-3 py-1.5 text-xs font-semibold text-ipmd-red transition-colors hover:bg-ipmd-red/10"
-                        >
-                          Supprimer
-                        </button>
-                      </form>
-                    </li>
-                  ))}
-                </ul>
+                <div className="space-y-6">
+                  {levelOrder.map((lvl) => {
+                    const semMap = grouped.get(lvl)!;
+                    const sems = semOrder.filter((s) => semMap.has(s));
+                    return (
+                      <div key={lvl}>
+                        <h3 className="mb-2 text-sm font-extrabold uppercase tracking-wide text-ipmd-red">
+                          {lvl}
+                        </h3>
+                        <div className="space-y-3">
+                          {sems.map((sem) => (
+                            <div
+                              key={sem}
+                              className="overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-black/5"
+                            >
+                              <p className="border-b border-black/5 bg-ipmd-light px-4 py-2 text-xs font-bold text-black/55">
+                                {sem}
+                              </p>
+                              <ul className="divide-y divide-black/5">
+                                {semMap.get(sem)!.map((m) => (
+                                  <li
+                                    key={m.id}
+                                    className="flex items-center justify-between gap-3 px-4 py-3"
+                                  >
+                                    <span className="font-medium text-ipmd-black">
+                                      {m.name}
+                                    </span>
+                                    <form
+                                      action={deleteModule.bind(
+                                        null,
+                                        filiereId,
+                                        m.id
+                                      )}
+                                    >
+                                      <button
+                                        type="submit"
+                                        className="shrink-0 rounded-lg px-3 py-1.5 text-xs font-semibold text-ipmd-red transition-colors hover:bg-ipmd-red/10"
+                                      >
+                                        Supprimer
+                                      </button>
+                                    </form>
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
               )}
             </div>
 

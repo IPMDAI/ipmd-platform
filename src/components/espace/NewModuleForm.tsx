@@ -4,6 +4,7 @@ import { useActionState, useEffect, useRef } from "react";
 import { createModule } from "@/lib/referentiel-actions";
 import { Field, inputBase } from "@/components/forms/FormField";
 import { ActionButton } from "@/components/ui/Button";
+import { NIVEAUX, SEMESTERS } from "@/lib/referentiel";
 import type { FormResult } from "@/types";
 
 export function NewModuleForm({ filiereId }: { filiereId: string }) {
@@ -29,10 +30,37 @@ export function NewModuleForm({ filiereId }: { filiereId: string }) {
           id="m-name"
           name="name"
           required
-          placeholder="Ex. Référencement (SEO)"
+          placeholder="Ex. Fondamentaux du marketing digital"
           className={inputBase}
         />
       </Field>
+      <div className="grid grid-cols-2 gap-3">
+        <Field label="Niveau" htmlFor="m-level">
+          <select id="m-level" name="level" defaultValue="" className={inputBase}>
+            <option value="">—</option>
+            {NIVEAUX.map((n) => (
+              <option key={n} value={n}>
+                {n}
+              </option>
+            ))}
+          </select>
+        </Field>
+        <Field label="Semestre" htmlFor="m-semester">
+          <select
+            id="m-semester"
+            name="semester"
+            defaultValue=""
+            className={inputBase}
+          >
+            <option value="">—</option>
+            {SEMESTERS.map((s) => (
+              <option key={s} value={s}>
+                {s}
+              </option>
+            ))}
+          </select>
+        </Field>
+      </div>
       <ActionButton type="submit" disabled={pending}>
         {pending ? "…" : "Ajouter le module"}
       </ActionButton>
