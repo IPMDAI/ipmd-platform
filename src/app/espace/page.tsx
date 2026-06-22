@@ -125,7 +125,7 @@ export default async function EspacePage() {
           </div>
 
           {/* Annonces de l'administration (tous rôles) */}
-          <AnnouncementsPanel role={role} />
+          <AnnouncementsPanel role={role} userId={user.id} />
 
           {/* À traiter (admins) : ce qui attend une action, en tête */}
           {pending && (

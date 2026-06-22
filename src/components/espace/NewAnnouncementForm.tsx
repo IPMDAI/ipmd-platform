@@ -1,20 +1,30 @@
 "use client";
 
-import { useActionState, useEffect, useRef } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
 import { createAnnouncement } from "@/lib/announcement-actions";
 import { Field, inputBase } from "@/components/forms/FormField";
 import { ActionButton } from "@/components/ui/Button";
-import { AUDIENCES } from "@/lib/announcements";
+import { AUDIENCES, TARGET_TYPES } from "@/lib/announcements";
+import { NIVEAUX } from "@/lib/referentiel";
+import { UNIVERSE_OPTIONS } from "@/data/universes";
 import type { FormResult } from "@/types";
 
-export function NewAnnouncementForm() {
+export function NewAnnouncementForm({
+  filieres,
+}: {
+  filieres: string[];
+}) {
   const [state, action, pending] = useActionState<FormResult | null, FormData>(
     createAnnouncement,
     null
   );
+  const [target, setTarget] = useState("all");
   const ref = useRef<HTMLFormElement>(null);
   useEffect(() => {
-    if (state?.ok) ref.current?.reset();
+    if (state?.ok) {
+      ref.current?.reset();
+      setTarget("all");
+    }
   }, [state]);
 
   return (
@@ -52,6 +62,54 @@ export function NewAnnouncementForm() {
           ))}
         </select>
       </Field>
+      <Field label="Cible" htmlFor="a-target">
+        <select
+          id="a-target"
+          name="target_type"
+          value={target}
+          onChange={(e) => setTarget(e.target.value)}
+          className={inputBase}
+        >
+          {TARGET_TYPES.map((t) => (
+            <option key={t.value} value={t.value}>
+              {t.label}
+            </option>
+          ))}
+        </select>
+      </Field>
+      {target === "filiere" && (
+        <Field label="Filière" htmlFor="a-filiere" required>
+          <select id="a-filiere" name="target_filiere" required className={inputBase}>
+            {filieres.map((f) => (
+              <option key={f} value={f}>
+                {f}
+              </option>
+            ))}
+          </select>
+        </Field>
+      )}
+      {target === "niveau" && (
+        <Field label="Niveau" htmlFor="a-niveau" required>
+          <select id="a-niveau" name="target_niveau" required className={inputBase}>
+            {NIVEAUX.map((n) => (
+              <option key={n} value={n}>
+                {n}
+              </option>
+            ))}
+          </select>
+        </Field>
+      )}
+      {target === "univers" && (
+        <Field label="Univers" htmlFor="a-univers" required>
+          <select id="a-univers" name="target_univers" required className={inputBase}>
+            {UNIVERSE_OPTIONS.map((u) => (
+              <option key={u.value} value={u.value}>
+                {u.label}
+              </option>
+            ))}
+          </select>
+        </Field>
+      )}
       <label className="flex items-center gap-2 text-sm text-black/70">
         <input
           type="checkbox"

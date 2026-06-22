@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import { AUDIENCE_VALUES } from "@/lib/announcements";
+import { AUDIENCE_VALUES, TARGET_VALUES } from "@/lib/announcements";
 import {
   canSendEmail,
   emailDocument,
@@ -56,11 +56,18 @@ export async function createAnnouncement(
   let audience = str(formData, "audience");
   if (!AUDIENCE_VALUES.includes(audience)) audience = "all";
 
+  let targetType = str(formData, "target_type");
+  if (!TARGET_VALUES.includes(targetType)) targetType = "all";
+  const targetValue =
+    targetType === "all" ? null : str(formData, `target_${targetType}`) || null;
+
   const { error } = await ctx.supabase.from("announcements").insert({
     title,
     body,
     audience,
     author_id: ctx.userId,
+    target_type: targetType,
+    target_value: targetValue,
   });
   if (error) return { ok: false, message: error.message };
 

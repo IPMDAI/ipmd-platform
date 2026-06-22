@@ -21,11 +21,15 @@ function frDate(iso: string): string {
 export default async function AnnoncesPage() {
   const { supabase } = await requireAdmin();
 
-  const { data: rows } = await supabase
-    .from("announcements")
-    .select("id, title, body, audience, created_at")
-    .order("created_at", { ascending: false });
+  const [{ data: rows }, { data: filiereRows }] = await Promise.all([
+    supabase
+      .from("announcements")
+      .select("id, title, body, audience, created_at, target_type, target_value")
+      .order("created_at", { ascending: false }),
+    supabase.from("filieres").select("name").order("name"),
+  ]);
   const announcements = rows ?? [];
+  const filieres = [...new Set((filiereRows ?? []).map((f) => f.name))];
 
   return (
     <section className="min-h-[70vh] bg-ipmd-light">
@@ -73,6 +77,11 @@ export default async function AnnoncesPage() {
                         <span className="rounded-full bg-ipmd-black px-2.5 py-1 font-semibold text-white">
                           {AUDIENCE_LABEL[a.audience] ?? a.audience}
                         </span>
+                        {a.target_type && a.target_type !== "all" && (
+                          <span className="rounded-full bg-ipmd-red/10 px-2.5 py-1 font-semibold text-ipmd-red">
+                            🎯 {a.target_value}
+                          </span>
+                        )}
                         <span className="rounded-full bg-ipmd-light px-2.5 py-1 font-semibold text-black/55">
                           {frDate(a.created_at)}
                         </span>
@@ -88,7 +97,7 @@ export default async function AnnoncesPage() {
 
             {/* Formulaire */}
             <div className="order-1 lg:order-2">
-              <NewAnnouncementForm />
+              <NewAnnouncementForm filieres={filieres} />
             </div>
           </div>
         </div>
