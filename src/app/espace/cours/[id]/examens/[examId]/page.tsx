@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { requireTeacher } from "@/lib/require-teacher";
 import { Container } from "@/components/ui/Container";
 import { NewQuestionForm } from "@/components/espace/NewQuestionForm";
+import { GenerateQuestionsForm } from "@/components/espace/GenerateQuestionsForm";
 import { toggleExamPublish, deleteQuestion } from "@/lib/exam-actions";
 
 export const metadata: Metadata = {
@@ -168,8 +169,9 @@ export default async function ExamBuilderPage({
               )}
             </div>
 
-            {/* Ajouter une question */}
-            <div className="order-1 lg:order-2">
+            {/* Génération IA + ajout manuel */}
+            <div className="order-1 space-y-6 lg:order-2">
+              <GenerateQuestionsForm courseId={id} examId={examId} />
               <NewQuestionForm courseId={id} examId={examId} />
             </div>
           </div>

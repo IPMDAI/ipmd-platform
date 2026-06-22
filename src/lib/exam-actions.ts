@@ -1,5 +1,6 @@
 "use server";
 
+import Anthropic from "@anthropic-ai/sdk";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import type { FormResult } from "@/types";
@@ -96,6 +97,91 @@ export async function addQuestion(
 
   revalidatePath(`/espace/cours/${courseId}/examens/${examId}`);
   return { ok: true, message: "Question ajoutée." };
+}
+
+/** Génère des questions QCM avec l'IA (Claude) à partir d'un thème. */
+export async function generateExamQuestions(
+  courseId: string,
+  examId: string,
+  _prev: FormResult | null,
+  formData: FormData
+): Promise<FormResult> {
+  const ctx = await getTeacher();
+  if (!ctx) return { ok: false, message: "Action réservée aux enseignants." };
+
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) {
+    return {
+      ok: false,
+      message: "IA non configurée (clé ANTHROPIC_API_KEY manquante).",
+    };
+  }
+
+  const topic = str(formData, "topic");
+  if (!topic) return { ok: false, message: "Indiquez un thème." };
+  let count = Number.parseInt(str(formData, "count") || "5", 10);
+  if (Number.isNaN(count) || count < 1) count = 5;
+  if (count > 10) count = 10;
+
+  const client = new Anthropic({ apiKey });
+  try {
+    const msg = await client.messages.create({
+      model: "claude-opus-4-8",
+      max_tokens: 3000,
+      system:
+        "Tu es un assistant pédagogique de l'IPMD (école du digital à Abidjan, pédagogie orientée pratique). Tu génères des questions de QCM en français, claires et pertinentes, avec exactement 4 options et une seule bonne réponse.",
+      messages: [
+        {
+          role: "user",
+          content: `Génère ${count} questions de QCM sur le thème : « ${topic} ».
+Réponds UNIQUEMENT avec un objet JSON valide (sans texte autour, sans balises de code) de la forme :
+{"questions":[{"question":"...","options":["...","...","...","..."],"correct_index":0}]}
+Chaque question a exactement 4 options ; "correct_index" est l'index (0 à 3) de la bonne réponse.`,
+        },
+      ],
+    });
+
+    let text = msg.content
+      .filter((b): b is Anthropic.TextBlock => b.type === "text")
+      .map((b) => b.text)
+      .join("")
+      .trim();
+    const start = text.indexOf("{");
+    const end = text.lastIndexOf("}");
+    if (start >= 0 && end > start) text = text.slice(start, end + 1);
+
+    const parsed = JSON.parse(text) as {
+      questions?: { question?: string; options?: string[]; correct_index?: number }[];
+    };
+
+    const rows = (parsed.questions ?? [])
+      .map((q) => {
+        const options = (q.options ?? []).map((o) => String(o).trim()).filter(Boolean);
+        if (!q.question || options.length < 2) return null;
+        let ci = Number(q.correct_index);
+        if (!(ci >= 0 && ci < options.length)) ci = 0;
+        return {
+          exam_id: examId,
+          question: String(q.question).trim(),
+          options,
+          correct_index: ci,
+          points: 1,
+        };
+      })
+      .filter(Boolean);
+
+    if (rows.length === 0) {
+      return { ok: false, message: "L'IA n'a pas pu générer de questions. Réessaie." };
+    }
+
+    const { error } = await ctx.supabase.from("exam_questions").insert(rows);
+    if (error) return { ok: false, message: error.message };
+
+    revalidatePath(`/espace/cours/${courseId}/examens/${examId}`);
+    return { ok: true, message: `🤖 ${rows.length} question(s) générée(s).` };
+  } catch {
+    return { ok: false, message: "Erreur lors de la génération IA. Réessaie." };
+  }
 }
 
 /** Publie / dépublie un examen (action simple). */
