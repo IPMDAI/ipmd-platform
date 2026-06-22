@@ -14,7 +14,12 @@ const HOME: NavItem = {
 };
 
 const ADMIN_NAV: NavGroup[] = [
-  { items: [HOME] },
+  {
+    items: [
+      HOME,
+      { label: "Statistiques", href: "/espace/statistiques", icon: "📊" },
+    ],
+  },
   {
     title: "Pédagogie & planning",
     items: [

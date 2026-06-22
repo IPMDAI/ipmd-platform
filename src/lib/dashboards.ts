@@ -132,6 +132,7 @@ const ADMIN_TILES = {
   candidatures: { title: "Candidatures", icon: "📥", status: "ready", href: "/espace/candidatures", description: "Demandes d'inscription reçues." },
   messages: { title: "Messages de contact", icon: "✉️", status: "ready", href: "/espace/messages", description: "Messages envoyés via le site." },
   annonces: { title: "Annonces", icon: "📢", status: "ready", href: "/espace/annonces", description: "Communiquer avec étudiants et parents." },
+  statistiques: { title: "Statistiques", icon: "📊", status: "ready", href: "/espace/statistiques", description: "Pilotage global de l'établissement." },
   parents: { title: "Parents & élèves", icon: "👨‍👩‍👧", status: "ready", href: "/espace/parents", description: "Relier les parents à leurs enfants." },
   classes: { title: "Classes & filières", icon: "🏫", status: "ready", href: "/espace/classes", description: "Filières, promotions et affectation." },
   salles: { title: "Salles", icon: "🚪", status: "ready", href: "/espace/salles", description: "Salles disponibles pour le planning." },
@@ -154,6 +155,7 @@ export const dashboardSections: Record<string, DashSection[]> = {
     {
       title: "Scolarité & finance",
       tiles: [
+        ADMIN_TILES.statistiques,
         ADMIN_TILES.etudiants,
         ADMIN_TILES.scolarite,
         ADMIN_TILES.finance,
@@ -174,6 +176,7 @@ export const dashboardSections: Record<string, DashSection[]> = {
     {
       title: "Scolarité & finance",
       tiles: [
+        ADMIN_TILES.statistiques,
         ADMIN_TILES.etudiants,
         ADMIN_TILES.scolarite,
         ADMIN_TILES.finance,
