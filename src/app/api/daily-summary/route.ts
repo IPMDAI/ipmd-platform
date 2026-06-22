@@ -1,39 +1,41 @@
-"use server";
-
 import Anthropic from "@anthropic-ai/sdk";
 import { createClient } from "@/lib/supabase/server";
-import { findConflicts, CONFLICT_LABEL, type Slot } from "@/lib/planning-conflicts";
+import {
+  findConflicts,
+  CONFLICT_LABEL,
+  type Slot,
+} from "@/lib/planning-conflicts";
 
-export type SummaryResult =
-  | { ok: true; summary: string }
-  | { ok: false; message: string };
+export const runtime = "nodejs";
 
-async function getAdmin() {
+/** Synthèse intelligente du jour pour l'administration (Claude). */
+export async function POST() {
   const supabase = await createClient();
-  if (!supabase) return null;
+  if (!supabase) {
+    return Response.json({ error: "Service indisponible." }, { status: 503 });
+  }
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return null;
+  if (!user) {
+    return Response.json({ error: "Veuillez vous reconnecter." }, { status: 401 });
+  }
   const { data: me } = await supabase
     .from("profiles")
     .select("role")
     .eq("id", user.id)
     .single();
-  if (me?.role !== "admin" && me?.role !== "super_admin") return null;
-  return { supabase, role: me.role as string };
-}
-
-/** Synthèse intelligente du jour pour l'administration (Claude). */
-export async function generateDailySummary(): Promise<SummaryResult> {
-  const ctx = await getAdmin();
-  if (!ctx) return { ok: false, message: "Action réservée à l'administration." };
-  const { supabase } = ctx;
+  if (me?.role !== "admin" && me?.role !== "super_admin") {
+    return Response.json(
+      { error: "Action réservée à l'administration." },
+      { status: 403 }
+    );
+  }
 
   // Rassemble l'état de l'établissement.
   const [cand, msg, fil, mod, students, slotRows, classRows, roomRows, teacherRows] =
     await Promise.all([
-      supabase.from("inscription_requests").select("*", { count: "exact", head: true }),
+      supabase.from("inscription_requests").select("*", { count: "exact", head: true }).eq("status", "nouveau"),
       supabase.from("contact_messages").select("*", { count: "exact", head: true }),
       supabase.from("filieres").select("*", { count: "exact", head: true }).eq("status", "en_attente"),
       supabase.from("modules").select("*", { count: "exact", head: true }).eq("status", "en_attente"),
@@ -54,7 +56,7 @@ export async function generateDailySummary(): Promise<SummaryResult> {
   });
 
   const facts = {
-    candidatures_recues: cand.count ?? 0,
+    candidatures_nouvelles: cand.count ?? 0,
     messages_contact: msg.count ?? 0,
     filieres_a_valider: fil.count ?? 0,
     modules_a_valider: mod.count ?? 0,
@@ -65,11 +67,13 @@ export async function generateDailySummary(): Promise<SummaryResult> {
 
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
-    return {
-      ok: false,
-      message:
-        "Synthèse IA non configurée (clé ANTHROPIC_API_KEY manquante). Les conflits de planning restent affichés automatiquement ci-dessous.",
-    };
+    return Response.json(
+      {
+        error:
+          "Synthèse IA non configurée (clé ANTHROPIC_API_KEY manquante). Les conflits de planning restent affichés ci-dessous.",
+      },
+      { status: 503 }
+    );
   }
 
   const client = new Anthropic({ apiKey });
@@ -98,10 +102,17 @@ export async function generateDailySummary(): Promise<SummaryResult> {
       .trim();
 
     if (!summary) {
-      return { ok: false, message: "L'IA n'a pas renvoyé de synthèse. Réessaie." };
+      return Response.json(
+        { error: "L'IA n'a pas renvoyé de synthèse. Réessaie." },
+        { status: 502 }
+      );
     }
-    return { ok: true, summary };
-  } catch {
-    return { ok: false, message: "Erreur lors de la génération IA. Réessaie." };
+    return Response.json({ summary });
+  } catch (err) {
+    console.error("Synthèse IA error:", err);
+    return Response.json(
+      { error: "Erreur lors de la génération IA. Réessaie." },
+      { status: 502 }
+    );
   }
 }

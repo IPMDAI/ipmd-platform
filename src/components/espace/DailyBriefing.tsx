@@ -1,15 +1,31 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { generateDailySummary, type SummaryResult } from "@/lib/ai-actions";
+
+type Result =
+  | { ok: true; summary: string }
+  | { ok: false; message: string };
 
 export function DailyBriefing() {
   const [pending, start] = useTransition();
-  const [result, setResult] = useState<SummaryResult | null>(null);
+  const [result, setResult] = useState<Result | null>(null);
 
   const run = () => {
     start(async () => {
-      setResult(await generateDailySummary());
+      try {
+        const res = await fetch("/api/daily-summary", { method: "POST" });
+        const data = await res.json();
+        if (res.ok && data.summary) {
+          setResult({ ok: true, summary: data.summary });
+        } else {
+          setResult({
+            ok: false,
+            message: data.error || "Une erreur est survenue. Réessaie.",
+          });
+        }
+      } catch {
+        setResult({ ok: false, message: "Connexion impossible. Réessaie." });
+      }
     });
   };
 
