@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { ACADEMIC_STATUS_VALUES } from "@/lib/academic";
 import type { FormResult } from "@/types";
 
 async function getAdmin() {
@@ -17,7 +18,7 @@ async function getAdmin() {
     .eq("id", user.id)
     .single();
   if (me?.role !== "super_admin" && me?.role !== "admin") return null;
-  return { supabase };
+  return { supabase, role: me.role as string };
 }
 
 function str(formData: FormData, key: string): string {
@@ -44,26 +45,60 @@ export async function updateModule(
   const name = str(formData, "name");
   if (!name) return { ok: false, message: "Le nom du module est requis." };
 
+  const fields: Record<string, unknown> = {
+    name,
+    level: str(formData, "level") || null,
+    semester: str(formData, "semester") || null,
+    teacher_id: str(formData, "teacher_id") || null,
+    hours: numOrNull(str(formData, "hours")),
+    coefficient: numOrNull(str(formData, "coefficient")),
+    objectives: str(formData, "objectives") || null,
+    skills: str(formData, "skills") || null,
+    evaluation_methods: str(formData, "evaluation_methods") || null,
+    syllabus: str(formData, "syllabus") || null,
+  };
+  // Une modification par un non-Super-Admin repasse le module en attente.
+  if (ctx.role !== "super_admin") fields.status = "en_attente";
+
   const { error } = await ctx.supabase
     .from("modules")
-    .update({
-      name,
-      level: str(formData, "level") || null,
-      semester: str(formData, "semester") || null,
-      teacher_id: str(formData, "teacher_id") || null,
-      hours: numOrNull(str(formData, "hours")),
-      coefficient: numOrNull(str(formData, "coefficient")),
-      objectives: str(formData, "objectives") || null,
-      skills: str(formData, "skills") || null,
-      evaluation_methods: str(formData, "evaluation_methods") || null,
-      syllabus: str(formData, "syllabus") || null,
-    })
+    .update(fields)
     .eq("id", moduleId);
   if (error) return { ok: false, message: error.message };
 
   revalidatePath(`/espace/module/${moduleId}`);
   revalidatePath(`/espace/classes/${filiereId}`);
-  return { ok: true, message: "Module enregistré." };
+  return {
+    ok: true,
+    message:
+      ctx.role === "super_admin"
+        ? "Module enregistré."
+        : "Modifications enregistrées (en attente de validation).",
+  };
+}
+
+/** Change le statut de validation d'un module (Super Admin uniquement). */
+export async function setModuleStatus(
+  moduleId: string,
+  filiereId: string,
+  status: string
+): Promise<FormResult> {
+  const ctx = await getAdmin();
+  if (!ctx) return { ok: false, message: "Action réservée à l'administration." };
+  if (ctx.role !== "super_admin") {
+    return { ok: false, message: "Validation réservée au Super Admin." };
+  }
+  if (!ACADEMIC_STATUS_VALUES.includes(status)) {
+    return { ok: false, message: "Statut invalide." };
+  }
+  const { error } = await ctx.supabase
+    .from("modules")
+    .update({ status })
+    .eq("id", moduleId);
+  if (error) return { ok: false, message: error.message };
+  revalidatePath(`/espace/module/${moduleId}`);
+  revalidatePath(`/espace/classes/${filiereId}`);
+  return { ok: true, message: "Statut mis à jour." };
 }
 
 /** Ajoute un support de cours à un module. */

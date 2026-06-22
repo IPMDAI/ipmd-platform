@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { IPMD_FILIERES, LEVEL_FROM_DEGREE } from "@/lib/referentiel";
+import { ACADEMIC_STATUS_VALUES } from "@/lib/academic";
 import { programs } from "@/data/programs";
 import { programDetails } from "@/data/programDetails";
 import type { FormResult } from "@/types";
@@ -21,7 +22,7 @@ async function getAdmin() {
     .eq("id", user.id)
     .single();
   if (me?.role !== "super_admin" && me?.role !== "admin") return null;
-  return { supabase };
+  return { supabase, role: me.role as string };
 }
 
 function str(formData: FormData, key: string): string {
@@ -140,6 +141,28 @@ export async function seedModules(_formData?: FormData): Promise<void> {
     await ctx.supabase.from("modules").insert(rows.slice(i, i + 100));
   }
   revalidatePath("/espace/classes");
+}
+
+/** Change le statut de validation d'une filière (Super Admin uniquement). */
+export async function setFiliereStatus(
+  filiereId: string,
+  status: string
+): Promise<FormResult> {
+  const ctx = await getAdmin();
+  if (!ctx) return { ok: false, message: "Action réservée à l'administration." };
+  if (ctx.role !== "super_admin") {
+    return { ok: false, message: "Validation réservée au Super Admin." };
+  }
+  if (!ACADEMIC_STATUS_VALUES.includes(status)) {
+    return { ok: false, message: "Statut invalide." };
+  }
+  const { error } = await ctx.supabase
+    .from("filieres")
+    .update({ status })
+    .eq("id", filiereId);
+  if (error) return { ok: false, message: error.message };
+  revalidatePath("/espace/classes");
+  return { ok: true, message: "Statut mis à jour." };
 }
 
 /** Ajoute un module à une filière. */

@@ -5,6 +5,8 @@ import { requireAdmin } from "@/lib/require-admin";
 import { Container } from "@/components/ui/Container";
 import { EditModuleForm } from "@/components/espace/EditModuleForm";
 import { AddSupportForm } from "@/components/espace/AddSupportForm";
+import { StatusSelect } from "@/components/espace/StatusSelect";
+import { statusBadgeClass, STATUS_LABEL } from "@/lib/academic";
 import { deleteModuleSupport } from "@/lib/module-actions";
 
 export const metadata: Metadata = {
@@ -17,12 +19,13 @@ export default async function ModulePage({
   params: Promise<{ moduleId: string }>;
 }) {
   const { moduleId } = await params;
-  const { supabase } = await requireAdmin();
+  const { supabase, role } = await requireAdmin();
+  const isSuper = role === "super_admin";
 
   const { data: module } = await supabase
     .from("modules")
     .select(
-      "id, name, level, semester, teacher_id, hours, coefficient, objectives, skills, evaluation_methods, syllabus, filiere_id"
+      "id, name, level, semester, teacher_id, hours, coefficient, objectives, skills, evaluation_methods, syllabus, status, filiere_id"
     )
     .eq("id", moduleId)
     .single();
@@ -67,7 +70,22 @@ export default async function ModulePage({
           <h1 className="mt-3 text-2xl font-extrabold tracking-tight text-ipmd-black">
             {module.name}
           </h1>
-          <div className="mt-2 flex flex-wrap gap-2 text-xs">
+          <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
+            <span
+              className={`rounded-full px-2.5 py-1 font-bold ${statusBadgeClass(
+                module.status
+              )}`}
+            >
+              {STATUS_LABEL[module.status] ?? module.status}
+            </span>
+            {isSuper && (
+              <StatusSelect
+                kind="module"
+                id={module.id}
+                filiereId={module.filiere_id}
+                current={module.status}
+              />
+            )}
             {module.level && (
               <span className="rounded-full bg-ipmd-red/10 px-2.5 py-1 font-semibold text-ipmd-red">
                 {module.level}

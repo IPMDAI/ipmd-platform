@@ -7,6 +7,8 @@ import {
   NewClasseForm,
 } from "@/components/espace/referentiel-forms";
 import { ClassAssigner } from "@/components/espace/ClassAssigner";
+import { StatusSelect } from "@/components/espace/StatusSelect";
+import { statusBadgeClass, STATUS_LABEL } from "@/lib/academic";
 import {
   deleteFiliere,
   deleteClasse,
@@ -19,7 +21,8 @@ export const metadata: Metadata = {
 };
 
 export default async function ClassesPage() {
-  const { supabase } = await requireAdmin();
+  const { supabase, role } = await requireAdmin();
+  const isSuper = role === "super_admin";
 
   const [
     { data: filieres },
@@ -28,7 +31,7 @@ export default async function ClassesPage() {
     { data: members },
     { data: modules },
   ] = await Promise.all([
-    supabase.from("filieres").select("id, name").order("name"),
+    supabase.from("filieres").select("id, name, status").order("name"),
     supabase
       .from("classes")
       .select("id, name, level, academic_year, filiere_id")
@@ -116,18 +119,34 @@ export default async function ClassesPage() {
                         <span className="font-semibold text-ipmd-black">
                           {f.name}
                         </span>
+                        <span
+                          className={`ml-2 rounded-full px-2 py-0.5 text-[10px] font-bold ${statusBadgeClass(
+                            f.status
+                          )}`}
+                        >
+                          {STATUS_LABEL[f.status] ?? f.status}
+                        </span>
                         <span className="ml-2 text-xs font-semibold text-ipmd-red">
                           {moduleCount.get(f.id) ?? 0} module(s) →
                         </span>
                       </Link>
-                      <form action={deleteFiliere.bind(null, f.id)}>
-                        <button
-                          type="submit"
-                          className="shrink-0 rounded-lg px-3 py-1.5 text-xs font-semibold text-ipmd-red transition-colors hover:bg-ipmd-red/10"
-                        >
-                          Supprimer
-                        </button>
-                      </form>
+                      <div className="flex shrink-0 items-center gap-2">
+                        {isSuper && (
+                          <StatusSelect
+                            kind="filiere"
+                            id={f.id}
+                            current={f.status}
+                          />
+                        )}
+                        <form action={deleteFiliere.bind(null, f.id)}>
+                          <button
+                            type="submit"
+                            className="rounded-lg px-3 py-1.5 text-xs font-semibold text-ipmd-red transition-colors hover:bg-ipmd-red/10"
+                          >
+                            Supprimer
+                          </button>
+                        </form>
+                      </div>
                     </li>
                   ))}
                 </ul>
