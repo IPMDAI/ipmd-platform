@@ -10,6 +10,7 @@ import { DashboardTile } from "@/components/espace/DashboardTile";
 import { DailyBriefing } from "@/components/espace/DailyBriefing";
 import { LearnerOverview } from "@/components/espace/LearnerOverview";
 import { NotificationsPanel } from "@/components/espace/NotificationsPanel";
+import { AnnouncementsPanel } from "@/components/espace/AnnouncementsPanel";
 import { TeacherOverview } from "@/components/espace/TeacherOverview";
 import { signOut } from "@/lib/auth-actions";
 import {
@@ -121,6 +122,9 @@ export default async function EspacePage() {
               </ActionButton>
             </form>
           </div>
+
+          {/* Annonces de l'administration (tous rôles) */}
+          <AnnouncementsPanel role={role} />
 
           {/* À traiter (admins) : ce qui attend une action, en tête */}
           {pending && (

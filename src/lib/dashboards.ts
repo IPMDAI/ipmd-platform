@@ -131,6 +131,7 @@ const ADMIN_TILES = {
   users: { title: "Gestion des utilisateurs", icon: "🔑", status: "ready", href: "/espace/utilisateurs", description: "Attribuer les rôles aux comptes." },
   candidatures: { title: "Candidatures", icon: "📥", status: "ready", href: "/espace/candidatures", description: "Demandes d'inscription reçues." },
   messages: { title: "Messages de contact", icon: "✉️", status: "ready", href: "/espace/messages", description: "Messages envoyés via le site." },
+  annonces: { title: "Annonces", icon: "📢", status: "ready", href: "/espace/annonces", description: "Communiquer avec étudiants et parents." },
   parents: { title: "Parents & élèves", icon: "👨‍👩‍👧", status: "ready", href: "/espace/parents", description: "Relier les parents à leurs enfants." },
   classes: { title: "Classes & filières", icon: "🏫", status: "ready", href: "/espace/classes", description: "Filières, promotions et affectation." },
   salles: { title: "Salles", icon: "🚪", status: "ready", href: "/espace/salles", description: "Salles disponibles pour le planning." },
@@ -162,7 +163,7 @@ export const dashboardSections: Record<string, DashSection[]> = {
     },
     {
       title: "Relations & accès",
-      tiles: [ADMIN_TILES.users, ADMIN_TILES.candidatures, ADMIN_TILES.messages, ADMIN_TILES.parents],
+      tiles: [ADMIN_TILES.annonces, ADMIN_TILES.users, ADMIN_TILES.candidatures, ADMIN_TILES.messages, ADMIN_TILES.parents],
     },
   ],
   admin: [
@@ -182,7 +183,7 @@ export const dashboardSections: Record<string, DashSection[]> = {
     },
     {
       title: "Relations",
-      tiles: [ADMIN_TILES.candidatures, ADMIN_TILES.messages, ADMIN_TILES.parents],
+      tiles: [ADMIN_TILES.annonces, ADMIN_TILES.candidatures, ADMIN_TILES.messages, ADMIN_TILES.parents],
     },
   ],
 };
