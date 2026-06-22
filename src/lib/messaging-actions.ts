@@ -7,6 +7,13 @@ import {
   servicesForRole,
   STAFF_ROLES,
 } from "@/lib/messaging";
+import { createAdminClient } from "@/lib/supabase/admin";
+import {
+  canSendEmail,
+  emailDocument,
+  escapeHtml,
+  sendEmailTo,
+} from "@/lib/email";
 import type { FormResult } from "@/types";
 
 function str(formData: FormData, key: string): string {
@@ -90,6 +97,39 @@ export async function replyInternalMessage(
     })
     .eq("id", messageId);
   if (error) return { ok: false, message: error.message };
+
+  // Notifie l'expéditeur par email (best-effort).
+  if (canSendEmail) {
+    const lookup = createAdminClient() ?? supabase;
+    const { data: msg } = await lookup
+      .from("internal_messages")
+      .select("sender_id, subject")
+      .eq("id", messageId)
+      .single();
+    if (msg) {
+      const { data: p } = await lookup
+        .from("profiles")
+        .select("email")
+        .eq("id", msg.sender_id)
+        .single();
+      if (p?.email) {
+        await sendEmailTo(
+          [p.email],
+          "IPMD — Réponse à votre message",
+          emailDocument(
+            "Réponse de l'IPMD",
+            `<p style="font-size:14px;color:#374151">Votre message « <strong>${escapeHtml(
+              msg.subject
+            )}</strong> » a reçu une réponse :</p>
+             <p style="font-size:14px;line-height:1.7;color:#374151;white-space:pre-line;background:#f6f7f9;border-radius:12px;padding:12px">${escapeHtml(
+               reply
+             )}</p>
+             <p style="font-size:13px;color:#6b7280">Connectez-vous à votre espace IPMD pour poursuivre l'échange.</p>`
+          )
+        );
+      }
+    }
+  }
 
   revalidatePath("/espace/messagerie");
   revalidatePath("/espace");
