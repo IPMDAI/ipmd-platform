@@ -1,8 +1,9 @@
 import { createClient } from "@/lib/supabase/server";
 import { Sidebar } from "@/components/espace/Sidebar";
 import { CommandPalette } from "@/components/espace/CommandPalette";
+import { TutorLauncher } from "@/components/espace/TutorLauncher";
 import { getNavForRole } from "@/lib/nav";
-import { roleLabels } from "@/lib/dashboards";
+import { roleLabels, LEARNER_ROLES } from "@/lib/dashboards";
 
 export default async function EspaceLayout({
   children,
@@ -61,6 +62,9 @@ export default async function EspaceLayout({
       />
       <main className="min-w-0 flex-1">{children}</main>
       <CommandPalette items={flatItems} />
+      {LEARNER_ROLES.has(role) && (
+        <TutorLauncher firstName={userName.split(" ")[0]} />
+      )}
     </div>
   );
 }

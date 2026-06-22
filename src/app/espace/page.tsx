@@ -5,7 +5,6 @@ import { createClient } from "@/lib/supabase/server";
 import { Container } from "@/components/ui/Container";
 import { ActionButton } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
-import { TuteurChat } from "@/components/espace/TuteurChat";
 import { DashboardTile } from "@/components/espace/DashboardTile";
 import { DailyBriefing } from "@/components/espace/DailyBriefing";
 import { LearnerOverview } from "@/components/espace/LearnerOverview";
@@ -252,13 +251,6 @@ export default async function EspacePage() {
               {tiles.map((tile) => (
                 <DashboardTile key={tile.title} tile={tile} />
               ))}
-            </div>
-          )}
-
-          {/* Tuteur IA (rôles apprenants) */}
-          {showTutor && (
-            <div className="mt-8">
-              <TuteurChat firstName={fullName.split(" ")[0]} />
             </div>
           )}
         </div>
