@@ -4,11 +4,19 @@ import { requireAdmin } from "@/lib/require-admin";
 import { universes } from "@/data/universes";
 import { Container } from "@/components/ui/Container";
 import { CandidatureActions } from "@/components/espace/CandidatureActions";
+import { CandidatureInvite } from "@/components/espace/CandidatureInvite";
 import {
   CANDIDATURE_STATUSES,
   CANDIDATURE_LABEL,
   candidatureBadgeClass,
 } from "@/lib/candidatures";
+
+/** Rôle proposé par défaut selon l'univers de formation visé. */
+function roleFromUniverse(universe: string): string {
+  if (universe === "pro") return "professionnel";
+  if (universe === "executive") return "dirigeant";
+  return "etudiant";
+}
 
 export const metadata: Metadata = {
   title: "Candidatures",
@@ -32,14 +40,19 @@ export default async function CandidaturesPage({
   searchParams: Promise<{ statut?: string }>;
 }) {
   const { statut } = await searchParams;
-  const { supabase } = await requireAdmin();
+  const { supabase, role } = await requireAdmin();
+  const isSuper = role === "super_admin";
 
-  const { data: rows } = await supabase
-    .from("inscription_requests")
-    .select(
-      "id, full_name, email, phone, universe, program_interest, entry_level, message, created_at, status"
-    )
-    .order("created_at", { ascending: false });
+  const [{ data: rows }, { data: classRows }] = await Promise.all([
+    supabase
+      .from("inscription_requests")
+      .select(
+        "id, full_name, email, phone, universe, program_interest, entry_level, message, created_at, status"
+      )
+      .order("created_at", { ascending: false }),
+    supabase.from("classes").select("id, name").order("name"),
+  ]);
+  const classes = (classRows ?? []).map((c) => ({ id: c.id, name: c.name }));
 
   const all = (rows ?? []).map((c) => ({ ...c, status: c.status ?? "nouveau" }));
 
@@ -161,6 +174,14 @@ export default async function CandidaturesPage({
                   )}
 
                   <CandidatureActions id={c.id} status={c.status} />
+
+                  {isSuper && c.status === "accepte" && (
+                    <CandidatureInvite
+                      candidatureId={c.id}
+                      defaultRole={roleFromUniverse(c.universe)}
+                      classes={classes}
+                    />
+                  )}
                 </li>
               ))}
             </ul>
