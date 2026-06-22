@@ -52,6 +52,15 @@ export function NewAnnouncementForm() {
           ))}
         </select>
       </Field>
+      <label className="flex items-center gap-2 text-sm text-black/70">
+        <input
+          type="checkbox"
+          name="notify"
+          defaultChecked
+          className="h-4 w-4 rounded border-black/20 text-ipmd-red focus:ring-ipmd-red"
+        />
+        Envoyer aussi par email aux destinataires
+      </label>
       <ActionButton type="submit" disabled={pending}>
         {pending ? "Publication…" : "Publier l'annonce"}
       </ActionButton>

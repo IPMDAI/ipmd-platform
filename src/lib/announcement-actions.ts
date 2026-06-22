@@ -3,7 +3,21 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { AUDIENCE_VALUES } from "@/lib/announcements";
+import {
+  canSendEmail,
+  emailDocument,
+  escapeHtml,
+  sendEmailTo,
+} from "@/lib/email";
 import type { FormResult } from "@/types";
+
+/** Rôles ciblés par une audience (pour l'envoi d'emails). */
+function rolesForAudience(audience: string): string[] | null {
+  if (audience === "etudiant") return ["etudiant", "professionnel", "dirigeant"];
+  if (audience === "parent") return ["parent"];
+  if (audience === "enseignant") return ["enseignant"];
+  return null; // all
+}
 
 async function getAdmin() {
   const supabase = await createClient();
@@ -52,7 +66,33 @@ export async function createAnnouncement(
 
   revalidatePath("/espace/annonces");
   revalidatePath("/espace");
-  return { ok: true, message: "Annonce publiée." };
+
+  // Notification email (optionnelle) aux destinataires.
+  let emailNote = "";
+  const notify = str(formData, "notify") === "on";
+  if (notify && canSendEmail) {
+    let q = ctx.supabase.from("profiles").select("email");
+    const roles = rolesForAudience(audience);
+    if (roles) q = q.in("role", roles);
+    const { data: people } = await q;
+    const emails = (people ?? [])
+      .map((p) => p.email)
+      .filter((e): e is string => Boolean(e));
+    if (emails.length > 0) {
+      const html = emailDocument(
+        title,
+        `<p style="font-size:14px;line-height:1.7;color:#374151;white-space:pre-line">${escapeHtml(
+          body
+        )}</p>`
+      );
+      const sent = await sendEmailTo(emails, `IPMD — ${title}`, html);
+      emailNote = ` ${sent} email(s) envoyé(s).`;
+    }
+  } else if (notify && !canSendEmail) {
+    emailNote = " (email non configuré : RESEND_API_KEY manquante.)";
+  }
+
+  return { ok: true, message: `Annonce publiée.${emailNote}` };
 }
 
 /** Supprime une annonce (action de formulaire simple). */
