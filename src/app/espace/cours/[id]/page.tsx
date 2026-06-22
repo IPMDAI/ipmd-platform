@@ -138,6 +138,12 @@ export default async function CourseDetailPage({
             >
               📋 Séances & présence
             </Link>
+            <Link
+              href={`/espace/cours/${course.id}/examens`}
+              className="inline-flex items-center gap-2 rounded-full bg-ipmd-black px-4 py-2 text-sm font-semibold text-white transition-opacity hover:opacity-90"
+            >
+              📝 Examens en ligne
+            </Link>
           </div>
 
           {/* Étudiants inscrits */}

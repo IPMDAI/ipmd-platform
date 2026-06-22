@@ -71,6 +71,27 @@ export default async function MesCoursDetailPage({
   const presentCount = lessons.filter((l) => attMap.get(l.id) === true).length;
   const absentCount = lessons.filter((l) => attMap.get(l.id) === false).length;
 
+  const { data: examRows } = await supabase
+    .from("exams")
+    .select("id, title")
+    .eq("course_id", id)
+    .eq("published", true)
+    .order("created_at", { ascending: false });
+  const exams = examRows ?? [];
+  const subMap = new Map<string, { score: number; max_score: number }>();
+  if (exams.length > 0) {
+    const { data: subs } = await supabase
+      .from("exam_submissions")
+      .select("exam_id, score, max_score")
+      .eq("student_id", userId)
+      .in(
+        "exam_id",
+        exams.map((e) => e.id)
+      );
+    for (const s of subs ?? [])
+      subMap.set(s.exam_id, { score: s.score, max_score: s.max_score });
+  }
+
   return (
     <section className="min-h-[70vh] bg-ipmd-light">
       <Container className="py-12 sm:py-16">
@@ -205,6 +226,40 @@ export default async function MesCoursDetailPage({
                       >
                         {st === undefined ? "—" : st ? "Présent" : "Absent"}
                       </span>
+                    </li>
+                  );
+                })}
+              </ul>
+            </>
+          )}
+
+          {/* Examens en ligne */}
+          {exams.length > 0 && (
+            <>
+              <h2 className="mt-8 text-lg font-bold text-ipmd-black">
+                Examens en ligne
+              </h2>
+              <ul className="mt-3 space-y-3">
+                {exams.map((e) => {
+                  const sub = subMap.get(e.id);
+                  return (
+                    <li
+                      key={e.id}
+                      className="flex items-center justify-between gap-3 rounded-2xl bg-white p-4 shadow-sm ring-1 ring-black/5"
+                    >
+                      <p className="font-semibold text-ipmd-black">{e.title}</p>
+                      {sub ? (
+                        <span className="shrink-0 rounded-lg bg-ipmd-light px-3 py-1.5 text-sm font-bold text-ipmd-black">
+                          {Number(sub.score)}/{Number(sub.max_score)}
+                        </span>
+                      ) : (
+                        <Link
+                          href={`/espace/examen/${e.id}`}
+                          className="shrink-0 rounded-full bg-ipmd-red px-4 py-2 text-sm font-semibold text-white transition-opacity hover:opacity-90"
+                        >
+                          Passer l&apos;examen
+                        </Link>
+                      )}
                     </li>
                   );
                 })}
