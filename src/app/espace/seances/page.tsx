@@ -5,6 +5,7 @@ import { requireUser } from "@/lib/require-user";
 import { Container } from "@/components/ui/Container";
 import { GenerateSessionsForm } from "@/components/espace/GenerateSessionsForm";
 import { SessionStatusSelect } from "@/components/espace/SessionStatusSelect";
+import { RescheduleForm } from "@/components/espace/RescheduleForm";
 import { validateSessionReport } from "@/lib/report-actions";
 import { formatTime, DAY_LABELS } from "@/lib/schedule";
 
@@ -139,7 +140,8 @@ export default async function SeancesPage({
               ) : (
                 <ul className="divide-y divide-black/5 overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-black/5">
                   {sessions.map((s) => (
-                    <li key={s.id} className="flex flex-wrap items-center justify-between gap-3 p-4">
+                    <li key={s.id} className="p-4">
+                     <div className="flex flex-wrap items-center justify-between gap-3">
                       <div className="min-w-0">
                         <p className="text-sm font-semibold capitalize text-ipmd-black">
                           {dayLabel(s.session_date)} ·{" "}
@@ -182,6 +184,13 @@ export default async function SeancesPage({
                         })()}
                         <SessionStatusSelect sessionId={s.id} current={s.status} />
                       </div>
+                     </div>
+                     <details className="mt-2">
+                       <summary className="cursor-pointer text-xs font-semibold text-ipmd-red">
+                         Reprogrammer (rattrapage)
+                       </summary>
+                       <RescheduleForm sessionId={s.id} />
+                     </details>
                     </li>
                   ))}
                 </ul>

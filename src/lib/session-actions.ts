@@ -122,6 +122,59 @@ export async function generateSessions(
   return { ok: true, message: `${rows.length} séance(s) générée(s).` };
 }
 
+/** Reprogramme une séance (rattrapage) : crée une nouvelle séance datée et
+ *  marque l'originale « remplacée ». */
+export async function rescheduleSession(
+  originalId: string,
+  _prev: FormResult | null,
+  formData: FormData
+): Promise<FormResult> {
+  const ctx = await getStaff();
+  if (!ctx) return { ok: false, message: "Action réservée aux services IPMD." };
+
+  const newDate = ((formData.get("new_date") as string) ?? "").trim();
+  if (!newDate) return { ok: false, message: "Date de rattrapage requise." };
+
+  const { data: orig } = await ctx.supabase
+    .from("course_sessions")
+    .select(
+      "class_id, teacher_id, subject, room_id, teacher_name, teacher_function, room_name, start_time, end_time, semester"
+    )
+    .eq("id", originalId)
+    .single();
+  if (!orig) return { ok: false, message: "Séance introuvable." };
+
+  const start = ((formData.get("new_start") as string) ?? "").trim() || orig.start_time;
+  const end = ((formData.get("new_end") as string) ?? "").trim() || orig.end_time;
+
+  const { error } = await ctx.supabase.from("course_sessions").upsert(
+    {
+      class_id: orig.class_id,
+      teacher_id: orig.teacher_id,
+      subject: orig.subject,
+      room_id: orig.room_id,
+      teacher_name: orig.teacher_name,
+      teacher_function: orig.teacher_function,
+      room_name: orig.room_name,
+      session_date: newDate,
+      start_time: start,
+      end_time: end,
+      semester: orig.semester,
+      status: "prevue",
+    },
+    { onConflict: "class_id,session_date,start_time", ignoreDuplicates: true }
+  );
+  if (error) return { ok: false, message: error.message };
+
+  await ctx.supabase
+    .from("course_sessions")
+    .update({ status: "remplacee" })
+    .eq("id", originalId);
+
+  revalidatePath("/espace/seances");
+  return { ok: true, message: "Rattrapage programmé." };
+}
+
 /** Change le statut d'une séance (staff ou enseignant de la séance). */
 export async function setSessionStatus(
   sessionId: string,
