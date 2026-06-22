@@ -93,6 +93,29 @@ export default async function EnfantDetailPage({
     byDay.set(s.day_of_week, arr);
   }
 
+  // Présence de l'enfant.
+  const { data: attRows } = await supabase
+    .from("attendance")
+    .select("lesson_id, present")
+    .eq("student_id", id);
+  const lessonInfo = new Map<string, { date: string; courseTitle: string }>();
+  if (courseIds.length > 0) {
+    const { data: lessonRows } = await supabase
+      .from("course_lessons")
+      .select("id, course_id, lesson_date")
+      .in("course_id", courseIds);
+    for (const l of lessonRows ?? [])
+      lessonInfo.set(l.id, {
+        date: l.lesson_date,
+        courseTitle: courseTitle.get(l.course_id) ?? "Cours",
+      });
+  }
+  const presentCount = (attRows ?? []).filter((a) => a.present).length;
+  const absences = (attRows ?? [])
+    .filter((a) => !a.present)
+    .map((a) => lessonInfo.get(a.lesson_id))
+    .filter(Boolean) as { date: string; courseTitle: string }[];
+
   return (
     <section className="min-h-[70vh] bg-ipmd-light">
       <Container className="py-12 sm:py-16">
@@ -154,6 +177,32 @@ export default async function EnfantDetailPage({
               ))}
             </div>
           )}
+
+          {/* Présence */}
+          <h2 className="mt-8 text-lg font-bold text-ipmd-black">Présence</h2>
+          <div className="mt-3 rounded-2xl bg-white p-5 shadow-sm ring-1 ring-black/5">
+            <p className="text-sm text-black/60">
+              <span className="font-bold text-green-600">{presentCount}</span>{" "}
+              présence(s) ·{" "}
+              <span className="font-bold text-ipmd-red">{absences.length}</span>{" "}
+              absence(s)
+            </p>
+            {absences.length > 0 && (
+              <ul className="mt-3 space-y-1.5">
+                {absences.map((a, i) => (
+                  <li key={i} className="text-sm text-black/60">
+                    <span className="font-semibold text-ipmd-red">Absent</span> ·{" "}
+                    {new Date(a.date).toLocaleDateString("fr-FR", {
+                      day: "2-digit",
+                      month: "long",
+                      year: "numeric",
+                    })}{" "}
+                    · {a.courseTitle}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
 
           {/* Emploi du temps */}
           <h2 className="mt-8 text-lg font-bold text-ipmd-black">

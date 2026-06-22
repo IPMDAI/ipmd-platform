@@ -23,7 +23,7 @@ export default async function MesCoursDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const { supabase } = await requireUser();
+  const { supabase, userId } = await requireUser();
 
   // La RLS ne renvoie le cours que si l'étudiant y est inscrit.
   const { data: course } = await supabase
@@ -55,6 +55,21 @@ export default async function MesCoursDetailPage({
     .eq("course_id", id)
     .order("created_at", { ascending: false });
   const grades = gRows ?? [];
+
+  const { data: lessonRows } = await supabase
+    .from("course_lessons")
+    .select("id, lesson_date, theme")
+    .eq("course_id", id)
+    .order("lesson_date", { ascending: false });
+  const lessons = lessonRows ?? [];
+
+  const { data: attRows } = await supabase
+    .from("attendance")
+    .select("lesson_id, present")
+    .eq("student_id", userId);
+  const attMap = new Map((attRows ?? []).map((a) => [a.lesson_id, a.present]));
+  const presentCount = lessons.filter((l) => attMap.get(l.id) === true).length;
+  const absentCount = lessons.filter((l) => attMap.get(l.id) === false).length;
 
   return (
     <section className="min-h-[70vh] bg-ipmd-light">
@@ -134,6 +149,56 @@ export default async function MesCoursDetailPage({
                 </li>
               ))}
             </ul>
+          )}
+
+          {/* Ma présence */}
+          <h2 className="mt-8 text-lg font-bold text-ipmd-black">Ma présence</h2>
+          {lessons.length === 0 ? (
+            <p className="mt-3 rounded-2xl bg-white p-5 text-sm text-black/55 shadow-sm ring-1 ring-black/5">
+              Aucune séance enregistrée pour l&apos;instant.
+            </p>
+          ) : (
+            <>
+              <p className="mt-1 text-sm text-black/55">
+                <span className="font-bold text-green-600">{presentCount}</span>{" "}
+                présence(s) ·{" "}
+                <span className="font-bold text-ipmd-red">{absentCount}</span>{" "}
+                absence(s)
+              </p>
+              <ul className="mt-3 divide-y divide-black/5 overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-black/5">
+                {lessons.map((l) => {
+                  const st = attMap.get(l.id);
+                  return (
+                    <li
+                      key={l.id}
+                      className="flex items-center justify-between gap-3 p-4"
+                    >
+                      <div className="min-w-0">
+                        <p className="font-medium capitalize text-ipmd-black">
+                          {formatDate(l.lesson_date)}
+                        </p>
+                        {l.theme && (
+                          <p className="truncate text-xs text-black/50">
+                            {l.theme}
+                          </p>
+                        )}
+                      </div>
+                      <span
+                        className={`shrink-0 rounded-full px-3 py-1 text-xs font-bold ${
+                          st === undefined
+                            ? "bg-ipmd-light text-black/40"
+                            : st
+                              ? "bg-green-600/10 text-green-700"
+                              : "bg-ipmd-red/10 text-ipmd-red"
+                        }`}
+                      >
+                        {st === undefined ? "—" : st ? "Présent" : "Absent"}
+                      </span>
+                    </li>
+                  );
+                })}
+              </ul>
+            </>
           )}
 
           {/* Devoirs */}
