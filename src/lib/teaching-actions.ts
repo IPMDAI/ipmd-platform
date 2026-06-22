@@ -82,3 +82,45 @@ export async function createAssignment(
   revalidatePath(`/espace/cours/${courseId}`);
   return { ok: true, message: "Devoir ajouté." };
 }
+
+/** Ajoute une séance (emploi du temps) à un cours de l'enseignant courant. */
+export async function createSession(
+  courseId: string,
+  _prev: FormResult | null,
+  formData: FormData
+): Promise<FormResult> {
+  const ctx = await getTeacher();
+  if (!ctx) return { ok: false, message: "Action réservée aux enseignants." };
+
+  const { data: course } = await ctx.supabase
+    .from("courses")
+    .select("id, teacher_id")
+    .eq("id", courseId)
+    .single();
+  if (!course || course.teacher_id !== ctx.userId) {
+    return { ok: false, message: "Cours introuvable." };
+  }
+
+  const day = Number.parseInt(str(formData, "day_of_week"), 10);
+  const start = str(formData, "start_time");
+  const end = str(formData, "end_time");
+  if (!day || !start || !end) {
+    return { ok: false, message: "Jour et horaires sont requis." };
+  }
+  if (end <= start) {
+    return { ok: false, message: "L'heure de fin doit suivre l'heure de début." };
+  }
+
+  const { error } = await ctx.supabase.from("schedule_sessions").insert({
+    course_id: courseId,
+    day_of_week: day,
+    start_time: start,
+    end_time: end,
+    room: str(formData, "room") || null,
+  });
+  if (error) return { ok: false, message: error.message };
+
+  revalidatePath(`/espace/cours/${courseId}`);
+  revalidatePath("/espace/emploi-du-temps");
+  return { ok: true, message: "Séance ajoutée." };
+}

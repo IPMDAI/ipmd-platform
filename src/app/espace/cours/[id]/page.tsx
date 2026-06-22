@@ -4,6 +4,8 @@ import { notFound } from "next/navigation";
 import { requireTeacher } from "@/lib/require-teacher";
 import { Container } from "@/components/ui/Container";
 import { NewAssignmentForm } from "@/components/espace/NewAssignmentForm";
+import { NewSessionForm } from "@/components/espace/NewSessionForm";
+import { DAY_LABELS, formatTime } from "@/lib/schedule";
 
 export const metadata: Metadata = {
   title: "Cours",
@@ -42,6 +44,15 @@ export default async function CourseDetailPage({
 
   const assignments = rows ?? [];
 
+  const { data: sessRows } = await supabase
+    .from("schedule_sessions")
+    .select("id, day_of_week, start_time, end_time, room")
+    .eq("course_id", id)
+    .order("day_of_week")
+    .order("start_time");
+
+  const sessions = sessRows ?? [];
+
   return (
     <section className="min-h-[70vh] bg-ipmd-light">
       <Container className="py-12 sm:py-16">
@@ -65,6 +76,47 @@ export default async function CourseDetailPage({
           {course.description && (
             <p className="mt-1 text-sm text-black/55">{course.description}</p>
           )}
+
+          {/* Séances (emploi du temps du cours) */}
+          <div className="mt-8 grid gap-8 lg:grid-cols-[1fr_22rem]">
+            <div className="order-2 lg:order-1">
+              <div className="mb-4 flex items-baseline gap-3">
+                <h2 className="text-lg font-bold text-ipmd-black">Séances</h2>
+                <span className="rounded-full bg-ipmd-black px-2.5 py-1 text-xs font-bold text-white">
+                  {sessions.length}
+                </span>
+              </div>
+
+              {sessions.length === 0 ? (
+                <p className="rounded-2xl bg-white p-6 text-sm text-black/55 shadow-sm ring-1 ring-black/5">
+                  Aucune séance planifiée. Ajoutez un créneau →
+                </p>
+              ) : (
+                <ul className="space-y-3">
+                  {sessions.map((s) => (
+                    <li
+                      key={s.id}
+                      className="flex flex-wrap items-center gap-x-4 gap-y-1 rounded-2xl bg-white p-4 shadow-sm ring-1 ring-black/5"
+                    >
+                      <span className="rounded-full bg-ipmd-red/10 px-3 py-1 text-sm font-bold text-ipmd-red">
+                        {DAY_LABELS[s.day_of_week] ?? "—"}
+                      </span>
+                      <span className="text-sm font-semibold text-ipmd-black">
+                        {formatTime(s.start_time)} – {formatTime(s.end_time)}
+                      </span>
+                      {s.room && (
+                        <span className="text-sm text-black/55">📍 {s.room}</span>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+
+            <div className="order-1 lg:order-2">
+              <NewSessionForm courseId={course.id} />
+            </div>
+          </div>
 
           <div className="mt-8 grid gap-8 lg:grid-cols-[1fr_22rem]">
             {/* Devoirs */}
