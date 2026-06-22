@@ -5,18 +5,12 @@ import { universes } from "@/data/universes";
 import { Container } from "@/components/ui/Container";
 import { CandidatureActions } from "@/components/espace/CandidatureActions";
 import { CandidatureInvite } from "@/components/espace/CandidatureInvite";
+import { roleForUniverse } from "@/data/universes";
 import {
   CANDIDATURE_STATUSES,
   CANDIDATURE_LABEL,
   candidatureBadgeClass,
 } from "@/lib/candidatures";
-
-/** Rôle proposé par défaut selon l'univers de formation visé. */
-function roleFromUniverse(universe: string): string {
-  if (universe === "pro") return "professionnel";
-  if (universe === "executive") return "dirigeant";
-  return "etudiant";
-}
 
 export const metadata: Metadata = {
   title: "Candidatures",
@@ -178,7 +172,7 @@ export default async function CandidaturesPage({
                   {isSuper && c.status === "accepte" && (
                     <CandidatureInvite
                       candidatureId={c.id}
-                      defaultRole={roleFromUniverse(c.universe)}
+                      defaultRole={roleForUniverse(c.universe)}
                       classes={classes}
                     />
                   )}

@@ -106,3 +106,21 @@ export const universes: Universe[] = [
 
 export const getUniverse = (id: string): Universe | undefined =>
   universes.find((u) => u.id === id);
+
+/** Nom lisible d'un univers (id → « IPMD Campus »). */
+export const universeNameById: Record<string, string> = Object.fromEntries(
+  universes.map((u) => [u.id, u.name])
+);
+
+/** Rôle apprenant proposé par défaut selon l'univers de formation. */
+export function roleForUniverse(id: string): string {
+  if (id === "professionnel" || id === "ultraboost") return "professionnel";
+  if (id === "gouvernance" || id === "ultraexecutive") return "dirigeant";
+  return "etudiant"; // campus, ultrajobs
+}
+
+/** Options d'univers pour les sélecteurs (id + nom). */
+export const UNIVERSE_OPTIONS = universes.map((u) => ({
+  value: u.id,
+  label: u.name,
+}));

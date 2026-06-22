@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { universeNameById } from "@/data/universes";
 import { averageValue, mention } from "@/lib/grades";
 
 /** Documents officiels délivrés par l'IPMD. */
@@ -63,6 +64,7 @@ export type Dossier = {
   className: string | null;
   filiereName: string | null;
   level: string | null;
+  universe: string | null;
   matricule: string;
   year: string;
   average: number | null;
@@ -79,7 +81,7 @@ export async function getDossier(studentId: string): Promise<Dossier | null> {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("full_name, email")
+    .select("full_name, email, universe")
     .eq("id", studentId)
     .single();
   if (!profile) return null;
@@ -123,6 +125,7 @@ export async function getDossier(studentId: string): Promise<Dossier | null> {
     className,
     filiereName,
     level,
+    universe: profile.universe ? universeNameById[profile.universe] ?? null : null,
     matricule: matricule(studentId),
     year: academicYear(),
     average,

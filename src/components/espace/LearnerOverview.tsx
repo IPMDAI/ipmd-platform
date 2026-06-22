@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { averageValue, mention } from "@/lib/grades";
 import { DAY_LABELS, formatTime } from "@/lib/schedule";
 import { academicYear } from "@/lib/documents";
+import { universeNameById } from "@/data/universes";
 
 type Sess = {
   subject: string;
@@ -44,6 +45,16 @@ function nextSession(slots: Sess[]): Sess | null {
 export async function LearnerOverview({ userId }: { userId: string }) {
   const supabase = await createClient();
   if (!supabase) return null;
+
+  // Univers de formation (profil).
+  const { data: prof } = await supabase
+    .from("profiles")
+    .select("universe")
+    .eq("id", userId)
+    .single();
+  const universe = prof?.universe
+    ? universeNameById[prof.universe] ?? null
+    : null;
 
   // Classe → niveau / filière.
   let className: string | null = null;
@@ -142,7 +153,9 @@ export async function LearnerOverview({ userId }: { userId: string }) {
     ? { label: "Inscrit", cls: "bg-green-50 text-green-700" }
     : { label: "En attente d'affectation", cls: "bg-amber-50 text-amber-700" };
 
-  const programLine = [filiereName, level].filter(Boolean).join(" — ") || "Affectation à venir";
+  const programLine =
+    [universe, filiereName, level].filter(Boolean).join(" — ") ||
+    "Affectation à venir";
 
   return (
     <div className="mt-8 space-y-5">

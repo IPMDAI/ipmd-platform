@@ -69,9 +69,10 @@ export async function createUserAccount(
 
   // 2. Le trigger a créé le profil (rôle « etudiant »). On applique le rôle
   //    choisi via le client du Super Admin (autorisé par la policy + garde).
+  const universe = str(formData, "universe");
   const { error: upErr } = await ctx.supabase
     .from("profiles")
-    .update({ role, full_name: fullName })
+    .update({ role, full_name: fullName, universe: universe || null })
     .eq("id", newId);
   if (upErr) {
     return {
@@ -109,7 +110,7 @@ export async function inviteFromCandidature(
 
   const { data: cand } = await ctx.supabase
     .from("inscription_requests")
-    .select("full_name, email")
+    .select("full_name, email, universe")
     .eq("id", candidatureId)
     .single();
   if (!cand) return { ok: false, message: "Candidature introuvable." };
@@ -137,10 +138,10 @@ export async function inviteFromCandidature(
   const newId = invited.user?.id;
   if (!newId) return { ok: false, message: "Le compte n'a pas pu être créé." };
 
-  // 2. Rôle + nom (via le client Super Admin, autorisé par la garde).
+  // 2. Rôle + nom + univers (via le client Super Admin, autorisé par la garde).
   await ctx.supabase
     .from("profiles")
-    .update({ role, full_name: fullName })
+    .update({ role, full_name: fullName, universe: cand.universe ?? null })
     .eq("id", newId);
 
   // 3. Affectation à une classe (optionnelle).

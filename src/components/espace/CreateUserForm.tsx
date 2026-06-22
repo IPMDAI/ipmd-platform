@@ -5,6 +5,7 @@ import { createUserAccount } from "@/lib/user-admin-actions";
 import { Field, inputBase } from "@/components/forms/FormField";
 import { ActionButton } from "@/components/ui/Button";
 import { ROLE_OPTIONS } from "@/lib/dashboards";
+import { UNIVERSE_OPTIONS } from "@/data/universes";
 import type { FormResult } from "@/types";
 
 export function CreateUserForm() {
@@ -43,6 +44,17 @@ export function CreateUserForm() {
           </select>
         </Field>
       </div>
+
+      <Field label="Univers de formation (optionnel)" htmlFor="u-universe">
+        <select id="u-universe" name="universe" defaultValue="" className={inputBase}>
+          <option value="">—</option>
+          {UNIVERSE_OPTIONS.map((u) => (
+            <option key={u.value} value={u.value}>
+              {u.label}
+            </option>
+          ))}
+        </select>
+      </Field>
 
       <Field label="Email" htmlFor="u-email" required>
         <input

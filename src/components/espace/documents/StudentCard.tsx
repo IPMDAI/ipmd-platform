@@ -19,7 +19,9 @@ export function StudentCard({
   dossier: Dossier;
   verifyHref: string;
 }) {
-  const program = [dossier.filiereName, dossier.level].filter(Boolean).join(" · ");
+  const program = [dossier.universe, dossier.filiereName, dossier.level]
+    .filter(Boolean)
+    .join(" · ");
 
   return (
     <div className="mx-auto w-full max-w-md">

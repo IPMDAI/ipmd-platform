@@ -5,6 +5,7 @@ import { Container } from "@/components/ui/Container";
 import { formatFCFA } from "@/lib/finance";
 import { averageValue, mention } from "@/lib/grades";
 import { CANDIDATURE_STATUSES, CANDIDATURE_LABEL } from "@/lib/candidatures";
+import { universeNameById } from "@/data/universes";
 
 export const metadata: Metadata = {
   title: "Statistiques",
@@ -28,6 +29,7 @@ export default async function StatistiquesPage() {
     { data: attendance },
     { data: grades },
     { data: candidatures },
+    { data: learners },
   ] = await Promise.all([
     supabase.from("profiles").select("*", { count: "exact", head: true }).eq("role", "etudiant"),
     supabase.from("profiles").select("*", { count: "exact", head: true }).eq("role", "enseignant"),
@@ -41,7 +43,21 @@ export default async function StatistiquesPage() {
     supabase.from("attendance").select("present"),
     supabase.from("grades").select("score, max_score, coefficient, status"),
     supabase.from("inscription_requests").select("status"),
+    supabase
+      .from("profiles")
+      .select("universe")
+      .in("role", ["etudiant", "professionnel", "dirigeant"]),
   ]);
+
+  // Effectifs par univers de formation.
+  const byUniverse = new Map<string, number>();
+  for (const p of learners ?? []) {
+    const name = p.universe
+      ? universeNameById[p.universe] ?? "Autre"
+      : "Non précisé";
+    byUniverse.set(name, (byUniverse.get(name) ?? 0) + 1);
+  }
+  const universeRows = [...byUniverse.entries()].sort((a, b) => b[1] - a[1]);
 
   // Effectifs par filière + par niveau.
   const classInfo = new Map(
@@ -162,6 +178,20 @@ export default async function StatistiquesPage() {
                 bars(levelRows, "bg-ipmd-black")
               )}
             </div>
+          </div>
+
+          {/* Effectifs par univers */}
+          <div className="mt-6 rounded-2xl bg-white p-5 shadow-sm ring-1 ring-black/5">
+            <h2 className="mb-3 font-bold text-ipmd-black">
+              Effectifs par univers
+            </h2>
+            {universeRows.length === 0 ? (
+              <p className="text-sm text-black/45">
+                Aucun univers renseigné sur les profils.
+              </p>
+            ) : (
+              bars(universeRows, "bg-ipmd-red")
+            )}
           </div>
 
           {/* Finance / Assiduité / Résultats */}
