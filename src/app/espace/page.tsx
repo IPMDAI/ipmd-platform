@@ -9,6 +9,7 @@ import { TuteurChat } from "@/components/espace/TuteurChat";
 import { DashboardTile } from "@/components/espace/DashboardTile";
 import { DailyBriefing } from "@/components/espace/DailyBriefing";
 import { LearnerOverview } from "@/components/espace/LearnerOverview";
+import { NotificationsPanel } from "@/components/espace/NotificationsPanel";
 import { TeacherOverview } from "@/components/espace/TeacherOverview";
 import { signOut } from "@/lib/auth-actions";
 import {
@@ -214,6 +215,9 @@ export default async function EspacePage() {
               <DailyBriefing />
             </div>
           )}
+
+          {/* Notifications dérivées (apprenants) : ce qui est important */}
+          {showTutor && <NotificationsPanel userId={user.id} />}
 
           {/* Cockpit de l'apprenant : ses cours du jour + ses résultats */}
           {showTutor && <LearnerOverview userId={user.id} />}
