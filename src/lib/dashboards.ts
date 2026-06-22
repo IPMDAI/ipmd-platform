@@ -78,6 +78,14 @@ const BULLETIN: DashTile = {
   description: "Tes résultats et ta moyenne générale.",
 };
 
+const DOCUMENTS: DashTile = {
+  title: "Mes documents",
+  icon: "🪪",
+  status: "ready",
+  href: "/espace/documents",
+  description: "Attestations, certificat et carte étudiant.",
+};
+
 /** Tuiles des rôles apprenants / parent / enseignant. */
 export const dashboardTiles: Record<string, DashTile[]> = {
   etudiant: [
@@ -85,6 +93,7 @@ export const dashboardTiles: Record<string, DashTile[]> = {
     { title: "Emploi du temps", icon: "🗓️", status: "ready", href: "/espace/mon-emploi-du-temps", description: "Le planning de ta classe." },
     { title: "Mes notes", icon: "📊", status: "ready", href: "/espace/mes-notes", description: "Tes résultats et ta moyenne." },
     BULLETIN,
+    DOCUMENTS,
     LEARNER_SCOLARITE,
   ],
   professionnel: [
@@ -92,6 +101,7 @@ export const dashboardTiles: Record<string, DashTile[]> = {
     { title: "Emploi du temps", icon: "🗓️", status: "ready", href: "/espace/mon-emploi-du-temps", description: "Le planning de ta classe." },
     { title: "Mes notes", icon: "📊", status: "ready", href: "/espace/mes-notes", description: "Validation de tes compétences." },
     BULLETIN,
+    DOCUMENTS,
     LEARNER_SCOLARITE,
   ],
   dirigeant: [
@@ -99,6 +109,7 @@ export const dashboardTiles: Record<string, DashTile[]> = {
     { title: "Emploi du temps", icon: "🗓️", status: "ready", href: "/espace/mon-emploi-du-temps", description: "Le planning de ta classe." },
     { title: "Mes notes", icon: "📊", status: "ready", href: "/espace/mes-notes", description: "Validation du programme." },
     BULLETIN,
+    DOCUMENTS,
     LEARNER_SCOLARITE,
   ],
   parent: [
@@ -127,6 +138,7 @@ const ADMIN_TILES = {
   recrutement: { title: "Recrutement profs", icon: "🧑‍🏫", status: "ready", href: "/espace/recrutement", description: "Candidatures enseignants + tri IA." },
   finance: { title: "Finance", icon: "💰", status: "ready", href: "/espace/finance", description: "Frais, paiements et soldes." },
   bulletins: { title: "Bulletins", icon: "📄", status: "ready", href: "/espace/bulletins", description: "Bulletins de notes des étudiants." },
+  documents: { title: "Documents officiels", icon: "🪪", status: "ready", href: "/espace/documents", description: "Attestations, certificats, cartes étudiant." },
   etudiants: { title: "Étudiants", icon: "🎓", status: "soon", description: "Gestion des étudiants." },
   scolarite: { title: "Scolarité", icon: "🗂️", status: "soon", description: "Inscriptions et dossiers." },
 } satisfies Record<string, DashTile>;
@@ -145,6 +157,7 @@ export const dashboardSections: Record<string, DashSection[]> = {
         ADMIN_TILES.scolarite,
         ADMIN_TILES.finance,
         ADMIN_TILES.bulletins,
+        ADMIN_TILES.documents,
       ],
     },
     {
@@ -164,6 +177,7 @@ export const dashboardSections: Record<string, DashSection[]> = {
         ADMIN_TILES.scolarite,
         ADMIN_TILES.finance,
         ADMIN_TILES.bulletins,
+        ADMIN_TILES.documents,
       ],
     },
     {

@@ -1,0 +1,151 @@
+import Image from "next/image";
+import { longDate, type Dossier } from "@/lib/documents";
+
+type Kind = "scolarite" | "certificat" | "reussite";
+
+const TITLES: Record<Kind, string> = {
+  scolarite: "Attestation de scolarité",
+  certificat: "Certificat de scolarité",
+  reussite: "Attestation de réussite",
+};
+
+function programLine(d: Dossier): string {
+  const parts = [d.filiereName, d.level, d.className].filter(Boolean);
+  return parts.length ? parts.join(" · ") : "Formation IPMD";
+}
+
+/** Document officiel imprimable (attestation / certificat). */
+export function DocumentLetter({
+  dossier,
+  kind,
+}: {
+  dossier: Dossier;
+  kind: Kind;
+}) {
+  const title = TITLES[kind];
+
+  return (
+    <div className="relative overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-black/5 print:rounded-none print:shadow-none print:ring-0">
+      {/* Liseré décoratif */}
+      <div className="h-2 w-full bg-gradient-to-r from-ipmd-black via-ipmd-red to-ipmd-black" />
+
+      <div className="px-8 py-10 sm:px-12">
+        {/* En-tête institutionnel */}
+        <div className="flex items-start justify-between gap-4 border-b border-black/10 pb-6">
+          <div className="flex items-center gap-3">
+            <span className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-full bg-white ring-1 ring-black/10">
+              <Image
+                src="/logo-ipmd.png"
+                alt="Logo IPMD"
+                width={56}
+                height={56}
+                className="h-full w-full object-contain"
+              />
+            </span>
+            <div className="leading-tight">
+              <p className="text-base font-extrabold tracking-tight text-ipmd-black">
+                IPMD
+              </p>
+              <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-black/55">
+                Institut Polytechnique des Métiers du Digital &amp; IA
+              </p>
+              <p className="text-[11px] text-black/45">
+                Abidjan — Côte d&apos;Ivoire · ipmd.pro
+              </p>
+            </div>
+          </div>
+          <div className="text-right text-[11px] text-black/50">
+            <p className="font-semibold text-ipmd-black">N° {dossier.matricule}</p>
+            <p>Année {dossier.year}</p>
+          </div>
+        </div>
+
+        {/* Titre */}
+        <h1 className="mt-8 text-center text-xl font-extrabold uppercase tracking-wide text-ipmd-black sm:text-2xl">
+          {title}
+        </h1>
+        <div className="mx-auto mt-2 h-1 w-16 rounded-full bg-ipmd-red" />
+
+        {/* Corps */}
+        <div className="mt-8 space-y-4 text-[15px] leading-relaxed text-black/80">
+          <p>
+            Je soussigné, le Directeur de l&apos;Institut Polytechnique des
+            Métiers du Digital (IPMD),{" "}
+            {kind === "certificat" ? "certifie" : "atteste"} que :
+          </p>
+
+          <div className="rounded-xl bg-ipmd-light px-5 py-4">
+            <p className="text-lg font-extrabold text-ipmd-black">
+              {dossier.name}
+            </p>
+            <p className="text-sm text-black/55">
+              Matricule {dossier.matricule}
+            </p>
+          </div>
+
+          {kind === "reussite" ? (
+            <>
+              <p>
+                a satisfait aux exigences pédagogiques de l&apos;IPMD et{" "}
+                <strong>validé son parcours</strong> en{" "}
+                <strong>{programLine(dossier)}</strong> au titre de
+                l&apos;année académique <strong>{dossier.year}</strong>
+                {dossier.average !== null ? (
+                  <>
+                    , avec une moyenne générale de{" "}
+                    <strong>{dossier.average}/20</strong>, mention{" "}
+                    <strong>{dossier.mention}</strong>
+                  </>
+                ) : null}
+                .
+              </p>
+              <p>
+                La présente attestation est délivrée pour servir et valoir ce
+                que de droit.
+              </p>
+            </>
+          ) : (
+            <>
+              <p>
+                est régulièrement inscrit(e) à l&apos;IPMD au titre de
+                l&apos;année académique <strong>{dossier.year}</strong>, en{" "}
+                <strong>{programLine(dossier)}</strong>, et y suit assidûment
+                les enseignements.
+              </p>
+              <p>
+                {kind === "certificat" ? "Le présent certificat" : "La présente attestation"}{" "}
+                est délivré(e) à l&apos;intéressé(e) pour servir et valoir ce
+                que de droit.
+              </p>
+            </>
+          )}
+        </div>
+
+        {/* Signature */}
+        <div className="mt-12 flex items-end justify-between gap-6">
+          <div className="text-[11px] text-black/45">
+            <p>Document généré numériquement par la plateforme IPMD.</p>
+            <p>Authenticité vérifiable auprès du service de la scolarité.</p>
+          </div>
+          <div className="text-center">
+            <p className="text-sm text-black/60">Fait à Abidjan,</p>
+            <p className="text-sm font-medium text-ipmd-black">
+              le {longDate()}
+            </p>
+            <div className="mt-6 flex h-16 w-44 items-center justify-center rounded-lg border border-dashed border-black/20 text-[11px] text-black/40">
+              Cachet &amp; signature
+            </div>
+            <p className="mt-2 text-sm font-bold text-ipmd-black">
+              La Direction
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Pied de page */}
+      <div className="bg-ipmd-black px-8 py-3 text-center text-[11px] font-medium uppercase tracking-[0.15em] text-white/70 sm:px-12">
+        Ose. Agis. Impacte. — 80% de pratique
+      </div>
+    </div>
+  );
+}

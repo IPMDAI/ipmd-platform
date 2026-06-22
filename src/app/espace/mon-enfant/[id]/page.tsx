@@ -146,12 +146,20 @@ export default async function EnfantDetailPage({
           <h1 className="mt-3 text-2xl font-extrabold tracking-tight text-ipmd-black">
             {child.full_name || child.email}
           </h1>
-          <Link
-            href={`/espace/bulletin/${id}`}
-            className="mt-2 inline-flex items-center gap-2 rounded-full bg-ipmd-black px-4 py-2 text-sm font-semibold text-white transition-opacity hover:opacity-90"
-          >
-            📄 Voir le bulletin
-          </Link>
+          <div className="mt-2 flex flex-wrap gap-2">
+            <Link
+              href={`/espace/bulletin/${id}`}
+              className="inline-flex items-center gap-2 rounded-full bg-ipmd-black px-4 py-2 text-sm font-semibold text-white transition-opacity hover:opacity-90"
+            >
+              📄 Voir le bulletin
+            </Link>
+            <Link
+              href={`/espace/documents?student=${id}`}
+              className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-semibold text-ipmd-black ring-1 ring-black/10 transition-colors hover:ring-ipmd-red/40"
+            >
+              🪪 Documents officiels
+            </Link>
+          </div>
 
           {/* Notes */}
           <h2 className="mt-8 text-lg font-bold text-ipmd-black">Notes</h2>
