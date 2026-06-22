@@ -91,7 +91,8 @@ export const dashboardTiles: Record<string, DashTile[]> = {
     { title: "Mes classes", icon: "👥", status: "soon", description: "Vos groupes et étudiants." },
   ],
   admin: [
-    { title: "Candidatures", icon: "📥", status: "soon", description: "Demandes d'inscription reçues." },
+    { title: "Candidatures", icon: "📥", status: "ready", href: "/espace/candidatures", description: "Demandes d'inscription reçues." },
+    { title: "Messages de contact", icon: "✉️", status: "ready", href: "/espace/messages", description: "Messages envoyés via le site." },
     { title: "Étudiants", icon: "🎓", status: "soon", description: "Gestion des étudiants." },
     { title: "Scolarité", icon: "🗂️", status: "soon", description: "Inscriptions et dossiers." },
     { title: "Ressources humaines", icon: "🧑‍💼", status: "soon", description: "Personnel et enseignants." },
@@ -99,7 +100,8 @@ export const dashboardTiles: Record<string, DashTile[]> = {
   ],
   super_admin: [
     { title: "Gestion des utilisateurs", icon: "🔑", status: "ready", href: "/espace/utilisateurs", description: "Attribuer les rôles aux comptes." },
-    { title: "Candidatures", icon: "📥", status: "soon", description: "Demandes d'inscription reçues." },
+    { title: "Candidatures", icon: "📥", status: "ready", href: "/espace/candidatures", description: "Demandes d'inscription reçues." },
+    { title: "Messages de contact", icon: "✉️", status: "ready", href: "/espace/messages", description: "Messages envoyés via le site." },
     { title: "Étudiants", icon: "🎓", status: "soon", description: "Gestion des étudiants." },
     { title: "Scolarité", icon: "🗂️", status: "soon", description: "Inscriptions et dossiers." },
     { title: "Ressources humaines", icon: "🧑‍💼", status: "soon", description: "Personnel et enseignants." },
