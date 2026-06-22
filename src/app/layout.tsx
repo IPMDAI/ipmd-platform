@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
+import { createClient } from "@/lib/supabase/server";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.ipmd.pro";
 
@@ -42,15 +43,24 @@ export const viewport: Viewport = {
   initialScale: 1,
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const supabase = await createClient();
+  let isAuthenticated = false;
+  if (supabase) {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    isAuthenticated = !!user;
+  }
+
   return (
     <html lang="fr">
       <body className="flex min-h-screen flex-col">
-        <Header />
+        <Header isAuthenticated={isAuthenticated} />
         <main className="flex-1">{children}</main>
         <Footer />
       </body>

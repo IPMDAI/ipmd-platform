@@ -7,8 +7,9 @@ import { mainNav } from "@/data/navigation";
 import { Container } from "@/components/ui/Container";
 import { Button } from "@/components/ui/Button";
 import { Logo } from "@/components/ui/Logo";
+import { signOut } from "@/lib/auth-actions";
 
-export function Header() {
+export function Header({ isAuthenticated = false }: { isAuthenticated?: boolean }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
@@ -87,15 +88,33 @@ export function Header() {
         </nav>
 
         <div className="hidden items-center gap-4 lg:flex">
-          <Link
-            href="/connexion"
-            className="text-sm font-semibold text-ipmd-black/80 transition-colors hover:text-ipmd-red"
-          >
-            Connexion
-          </Link>
-          <Button href="/admission" size="md">
-            Demander une inscription
-          </Button>
+          {isAuthenticated ? (
+            <>
+              <form action={signOut}>
+                <button
+                  type="submit"
+                  className="text-sm font-semibold text-ipmd-black/80 transition-colors hover:text-ipmd-red"
+                >
+                  Déconnexion
+                </button>
+              </form>
+              <Button href="/espace" size="md">
+                Mon espace
+              </Button>
+            </>
+          ) : (
+            <>
+              <Link
+                href="/connexion"
+                className="text-sm font-semibold text-ipmd-black/80 transition-colors hover:text-ipmd-red"
+              >
+                Connexion
+              </Link>
+              <Button href="/admission" size="md">
+                Demander une inscription
+              </Button>
+            </>
+          )}
         </div>
 
         {/* Bouton menu mobile */}
@@ -154,15 +173,33 @@ export function Header() {
               </div>
             ))}
             <div className="space-y-2 pt-3">
-              <Link
-                href="/connexion"
-                className="block rounded-lg px-3 py-2.5 text-base font-semibold text-ipmd-black"
-              >
-                Connexion
-              </Link>
-              <Button href="/admission" className="w-full">
-                Demander une inscription
-              </Button>
+              {isAuthenticated ? (
+                <>
+                  <Button href="/espace" className="w-full">
+                    Mon espace
+                  </Button>
+                  <form action={signOut}>
+                    <button
+                      type="submit"
+                      className="block w-full rounded-lg px-3 py-2.5 text-left text-base font-semibold text-ipmd-black"
+                    >
+                      Déconnexion
+                    </button>
+                  </form>
+                </>
+              ) : (
+                <>
+                  <Link
+                    href="/connexion"
+                    className="block rounded-lg px-3 py-2.5 text-base font-semibold text-ipmd-black"
+                  >
+                    Connexion
+                  </Link>
+                  <Button href="/admission" className="w-full">
+                    Demander une inscription
+                  </Button>
+                </>
+              )}
             </div>
           </Container>
         </div>
