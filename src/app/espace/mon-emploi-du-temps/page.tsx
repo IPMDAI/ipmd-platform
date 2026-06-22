@@ -6,6 +6,7 @@ import {
   WeeklyTimetable,
   type TimetableSlot,
 } from "@/components/espace/WeeklyTimetable";
+import { weekDates, weekLabel } from "@/lib/holidays";
 
 export const metadata: Metadata = {
   title: "Mon emploi du temps",
@@ -13,6 +14,16 @@ export const metadata: Metadata = {
 
 export default async function MonEmploiDuTempsPage() {
   const { supabase, userId } = await requireUser();
+
+  // Dates de la semaine en cours + jours fériés.
+  const dates = weekDates();
+  const { data: holidayRows } = await supabase
+    .from("holidays")
+    .select("day, label")
+    .gte("day", dates[1])
+    .lte("day", dates[6]);
+  const holidays: Record<string, string> = {};
+  for (const h of holidayRows ?? []) holidays[h.day] = h.label;
 
   // Classe de l'étudiant.
   const { data: member } = await supabase
@@ -88,9 +99,8 @@ export default async function MonEmploiDuTempsPage() {
             Mon emploi du temps
           </h1>
           <p className="mt-1 text-sm text-black/55">
-            {className
-              ? `Classe : ${className}`
-              : "Ta classe et ton planning."}
+            {className ? `Classe : ${className} · ` : ""}
+            Semaine du {weekLabel(dates)}
           </p>
 
           {!member?.class_id ? (
@@ -104,7 +114,11 @@ export default async function MonEmploiDuTempsPage() {
             </p>
           ) : (
             <div className="mt-8">
-              <WeeklyTimetable slots={slots} />
+              <WeeklyTimetable
+                slots={slots}
+                weekDates={dates}
+                holidays={holidays}
+              />
             </div>
           )}
         </div>

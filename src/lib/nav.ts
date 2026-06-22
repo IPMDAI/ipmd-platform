@@ -26,6 +26,7 @@ const ADMIN_NAV: NavGroup[] = [
       { label: "Classes & filières", href: "/espace/classes", icon: "🏫" },
       { label: "Salles", href: "/espace/salles", icon: "🚪" },
       { label: "Planning", href: "/espace/planning", icon: "🗓️" },
+      { label: "Jours fériés", href: "/espace/jours-feries", icon: "📆" },
       { label: "Présences", href: "/espace/presences", icon: "✅" },
       { label: "Fiches pédagogiques", href: "/espace/fiches", icon: "🗂️" },
       { label: "Recrutement profs", href: "/espace/recrutement", icon: "🧑‍🏫" },
@@ -110,7 +111,10 @@ const PEDAGOGIE_NAV: NavGroup[] = [
   { items: [HOME] },
   {
     title: "Pédagogie",
-    items: [{ label: "Annonces de classe", href: "/espace/ma-classe", icon: "📣" }],
+    items: [
+      { label: "Annonces de classe", href: "/espace/ma-classe", icon: "📣" },
+      { label: "Jours fériés", href: "/espace/jours-feries", icon: "📆" },
+    ],
   },
 ];
 

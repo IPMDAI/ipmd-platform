@@ -4,6 +4,7 @@ import {
   SLOT_STATUS_LABEL,
   slotStatusClass,
 } from "@/lib/schedule";
+import { shortDate } from "@/lib/holidays";
 
 export type TimetableSlot = {
   id: string;
@@ -17,7 +18,15 @@ export type TimetableSlot = {
 };
 
 /** Grille hebdomadaire en lecture seule (étudiant, parent, prof). */
-export function WeeklyTimetable({ slots }: { slots: TimetableSlot[] }) {
+export function WeeklyTimetable({
+  slots,
+  weekDates,
+  holidays,
+}: {
+  slots: TimetableSlot[];
+  weekDates?: Record<number, string>;
+  holidays?: Record<string, string>;
+}) {
   const byDay = new Map<number, TimetableSlot[]>();
   for (const s of slots) {
     const arr = byDay.get(s.day_of_week) ?? [];
@@ -32,15 +41,27 @@ export function WeeklyTimetable({ slots }: { slots: TimetableSlot[] }) {
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
       {DAY_OPTIONS.map((day) => {
         const list = byDay.get(day.value) ?? [];
+        const date = weekDates?.[day.value];
+        const holidayLabel = date ? holidays?.[date] : undefined;
         return (
           <div
             key={day.value}
             className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-black/5"
           >
-            <h3 className="border-b border-black/5 pb-2 text-sm font-bold uppercase tracking-wide text-ipmd-black">
-              {day.label}
+            <h3 className="flex items-baseline justify-between gap-2 border-b border-black/5 pb-2 text-sm font-bold uppercase tracking-wide text-ipmd-black">
+              <span>{day.label}</span>
+              {date && (
+                <span className="text-xs font-medium normal-case text-black/40">
+                  {shortDate(date)}
+                </span>
+              )}
             </h3>
-            {list.length === 0 ? (
+            {holidayLabel ? (
+              <div className="mt-3 rounded-xl bg-ipmd-red/10 px-3 py-3 text-center">
+                <p className="text-xs font-bold text-ipmd-red">Jour férié</p>
+                <p className="text-xs text-ipmd-red/80">{holidayLabel}</p>
+              </div>
+            ) : list.length === 0 ? (
               <p className="mt-3 text-xs text-black/35">—</p>
             ) : (
               <ul className="mt-3 space-y-3">
