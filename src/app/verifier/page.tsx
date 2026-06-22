@@ -15,6 +15,7 @@ const TYPE_LABELS: Record<string, string> = {
   "attestation-reussite": "Attestation de réussite",
   carte: "Carte étudiant",
   recu: "Reçu de paiement",
+  contrat: "Contrat de vacataire",
 };
 
 export default async function VerifierPage({

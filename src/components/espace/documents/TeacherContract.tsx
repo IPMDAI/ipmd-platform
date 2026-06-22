@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { QrCode } from "@/components/espace/documents/QrCode";
 
 export type ContractData = {
   name: string;
@@ -9,6 +10,9 @@ export type ContractData = {
   specialty?: string | null;
   diplomas?: string | null;
   hourlyRate: number;
+  startLabel: string;
+  endLabel: string;
+  verifyHref: string;
 };
 
 const DOTS = "……………………………………………";
@@ -115,8 +119,8 @@ export function TeacherContract({ data }: { data: ContractData }) {
       <Article title="II- Nature et durée du contrat">
         <p>
           Contrat de vacation à durée déterminée (CDD), du{" "}
-          <span className="font-semibold text-ipmd-black">01 Octobre 2025</span> au{" "}
-          <span className="font-semibold text-ipmd-black">31 Juillet 2026</span>.
+          <span className="font-semibold text-ipmd-black">{data.startLabel}</span> au{" "}
+          <span className="font-semibold text-ipmd-black">{data.endLabel}</span>.
         </p>
       </Article>
 
@@ -195,6 +199,19 @@ export function TeacherContract({ data }: { data: ContractData }) {
         </div>
       </div>
       <p className="mt-4 text-[11px] text-black/50">Fait à Abidjan, le ……/……/20…….</p>
+
+      {/* QR de vérification */}
+      <div className="mt-6 flex items-center gap-3 border-t border-black/10 pt-4">
+        <span className="shrink-0 rounded-lg bg-white p-1 ring-1 ring-black/10">
+          <QrCode value={data.verifyHref} size={72} />
+        </span>
+        <div className="text-[11px] text-black/45">
+          <p className="font-semibold text-ipmd-black">
+            Vérifier l&apos;authenticité
+          </p>
+          <p>Scannez ce QR code · Signé numériquement par l&apos;IPMD · ipmd.pro/verifier</p>
+        </div>
+      </div>
     </div>
   );
 }
