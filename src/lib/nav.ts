@@ -96,6 +96,7 @@ const PARENT_NAV: NavGroup[] = [
 const ACCOUNT_GROUP: NavGroup = {
   title: "Compte",
   items: [
+    { label: "Communauté", href: "/espace/amis", icon: "👥" },
     { label: "Messagerie", href: "/espace/messagerie", icon: "💬" },
     { label: "Paramètres", href: "/espace/parametres", icon: "⚙️" },
   ],
