@@ -22,6 +22,7 @@ const ADMIN_NAV: NavGroup[] = [
       { label: "Salles", href: "/espace/salles", icon: "🚪" },
       { label: "Planning", href: "/espace/planning", icon: "🗓️" },
       { label: "Présences", href: "/espace/presences", icon: "✅" },
+      { label: "Fiches pédagogiques", href: "/espace/fiches", icon: "🗂️" },
       { label: "Recrutement profs", href: "/espace/recrutement", icon: "🧑‍🏫" },
     ],
   },
