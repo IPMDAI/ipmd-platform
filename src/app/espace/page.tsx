@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { Container } from "@/components/ui/Container";
 import { ActionButton } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
+import { TuteurChat } from "@/components/espace/TuteurChat";
 import { signOut } from "@/lib/auth-actions";
 
 export const metadata: Metadata = {
@@ -69,9 +70,9 @@ export default async function EspacePage() {
             </form>
           </div>
 
-          {/* Contenu (à enrichir selon le rôle) */}
-          <div className="mt-8 grid gap-6 sm:grid-cols-2">
-            <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-black/5">
+          {/* Contenu */}
+          <div className="mt-8 grid gap-6 lg:grid-cols-3">
+            <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-black/5 lg:col-span-1">
               <h2 className="text-lg font-bold text-ipmd-black">Mon profil</h2>
               <dl className="mt-4 space-y-3 text-sm">
                 <div>
@@ -93,17 +94,8 @@ export default async function EspacePage() {
               </dl>
             </div>
 
-            <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-black/5">
-              <h2 className="text-lg font-bold text-ipmd-black">
-                🤖 Tuteur IA
-              </h2>
-              <p className="mt-2 text-sm leading-relaxed text-black/60">
-                Bientôt : votre tuteur IA personnalisé, adapté à votre profil et
-                à votre parcours, vous accompagnera ici au quotidien.
-              </p>
-              <span className="mt-4 inline-block rounded-full bg-ipmd-light px-3 py-1 text-xs font-semibold text-black/50">
-                En préparation
-              </span>
+            <div className="lg:col-span-2">
+              <TuteurChat firstName={fullName.split(" ")[0]} />
             </div>
           </div>
         </div>
