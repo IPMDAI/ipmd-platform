@@ -3,7 +3,6 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { requireUser } from "@/lib/require-user";
 import { Container } from "@/components/ui/Container";
-import { SessionReportForm } from "@/components/espace/SessionReportForm";
 import { formatTime, DAY_LABELS } from "@/lib/schedule";
 import { SESSION_STATUS_LABEL, sessionStatusClass } from "@/lib/sessions";
 
@@ -82,12 +81,12 @@ export default async function MesSeancesPage() {
                 const filled = Boolean(rep.content || rep.actual_start);
                 const validated = rep.validated === true;
                 return (
-                  <li
-                    key={s.id}
-                    className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-black/5"
-                  >
-                    <details>
-                      <summary className="flex cursor-pointer flex-wrap items-center justify-between gap-2">
+                  <li key={s.id}>
+                    <Link
+                      href={`/espace/seance/${s.id}`}
+                      className="block rounded-2xl bg-white p-5 shadow-sm ring-1 ring-black/5 transition-all hover:-translate-y-0.5 hover:shadow-md hover:ring-ipmd-red/30"
+                    >
+                      <div className="flex flex-wrap items-center justify-between gap-2">
                         <div>
                           <p className="text-sm font-semibold capitalize text-ipmd-black">
                             {dayLabel(s.session_date)} ·{" "}
@@ -117,9 +116,11 @@ export default async function MesSeancesPage() {
                             {SESSION_STATUS_LABEL[s.status] ?? s.status}
                           </span>
                         </div>
-                      </summary>
-                      <SessionReportForm sessionId={s.id} report={rep} />
-                    </details>
+                      </div>
+                      <p className="mt-2 text-xs font-semibold text-ipmd-red">
+                        Faire l&apos;appel & remplir la fiche →
+                      </p>
+                    </Link>
                   </li>
                 );
               })}
