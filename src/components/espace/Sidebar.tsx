@@ -35,6 +35,19 @@ export function Sidebar({
         <p className="mt-0.5 truncate text-sm font-semibold text-white">
           {userName}
         </p>
+        <button
+          type="button"
+          onClick={() =>
+            window.dispatchEvent(new Event("ipmd:open-search"))
+          }
+          className="mt-3 flex w-full items-center gap-2 rounded-lg bg-white/10 px-2.5 py-1.5 text-xs text-white/60 transition-colors hover:bg-white/15 hover:text-white"
+        >
+          <span className="leading-none">🔍</span>
+          <span className="flex-1 text-left">Rechercher…</span>
+          <kbd className="rounded border border-white/20 px-1 text-[9px] leading-tight">
+            ⌘K
+          </kbd>
+        </button>
       </div>
 
       {/* Groupes */}
@@ -113,6 +126,14 @@ export function Sidebar({
           <span className="text-xl">☰</span>
         </button>
         <span className="text-sm font-bold text-ipmd-black">Espace IPMD</span>
+        <button
+          type="button"
+          onClick={() => window.dispatchEvent(new Event("ipmd:open-search"))}
+          aria-label="Rechercher"
+          className="ml-auto rounded-lg p-1.5 text-ipmd-black hover:bg-black/5"
+        >
+          <span className="text-lg">🔍</span>
+        </button>
       </div>
 
       {/* Sidebar fixe (desktop) */}

@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { Sidebar } from "@/components/espace/Sidebar";
+import { CommandPalette } from "@/components/espace/CommandPalette";
 import { getNavForRole } from "@/lib/nav";
 import { roleLabels } from "@/lib/dashboards";
 
@@ -44,6 +45,10 @@ export default async function EspaceLayout({
     };
   }
 
+  const flatItems = groups.flatMap((g) =>
+    g.items.map((it) => ({ ...it, group: g.title }))
+  );
+
   return (
     <div className="min-h-screen bg-ipmd-light lg:flex">
       <Sidebar
@@ -53,6 +58,7 @@ export default async function EspaceLayout({
         userName={userName}
       />
       <main className="min-w-0 flex-1">{children}</main>
+      <CommandPalette items={flatItems} />
     </div>
   );
 }
