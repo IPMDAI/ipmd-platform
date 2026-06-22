@@ -34,7 +34,7 @@ export default async function MonEmploiDuTempsPage() {
 
     const { data: rows } = await supabase
       .from("timetable_slots")
-      .select("id, subject, teacher_id, room_id, day_of_week, start_time, end_time")
+      .select("id, subject, teacher_id, room_id, day_of_week, start_time, end_time, status")
       .eq("class_id", member.class_id)
       .order("start_time");
 
@@ -70,6 +70,7 @@ export default async function MonEmploiDuTempsPage() {
       subject: s.subject,
       teacherName: s.teacher_id ? teacherName.get(s.teacher_id) : null,
       roomName: s.room_id ? roomName.get(s.room_id) : null,
+      status: s.status ?? "prevu",
     }));
   }
 

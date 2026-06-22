@@ -8,7 +8,7 @@ import {
   escapeHtml,
   sendEmailTo,
 } from "@/lib/email";
-import { DAY_LABELS, formatTime } from "@/lib/schedule";
+import { DAY_LABELS, formatTime, SLOT_STATUS_VALUES } from "@/lib/schedule";
 import type { FormResult } from "@/types";
 
 async function getAdmin() {
@@ -25,6 +25,23 @@ async function getAdmin() {
     .single();
   if (me?.role !== "super_admin" && me?.role !== "admin") return null;
   return { supabase };
+}
+
+/** Change le statut d'un créneau (prévu / reporté / annulé / terminé). */
+export async function setSlotStatus(
+  classId: string,
+  slotId: string,
+  status: string
+): Promise<void> {
+  if (!SLOT_STATUS_VALUES.includes(status)) return;
+  const ctx = await getAdmin();
+  if (!ctx) return;
+  await ctx.supabase
+    .from("timetable_slots")
+    .update({ status })
+    .eq("id", slotId);
+  revalidatePath(`/espace/planning/${classId}`);
+  revalidatePath("/espace/mon-emploi-du-temps");
 }
 
 function str(formData: FormData, key: string): string {

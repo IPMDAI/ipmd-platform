@@ -16,3 +16,30 @@ export const DAY_LABELS: Record<number, string> = Object.fromEntries(
 export function formatTime(t: string | null): string {
   return t ? t.slice(0, 5) : "";
 }
+
+/** Statuts d'un créneau d'emploi du temps. */
+export const SLOT_STATUSES = [
+  { value: "prevu", label: "Prévu" },
+  { value: "reporte", label: "Reporté" },
+  { value: "annule", label: "Annulé" },
+  { value: "termine", label: "Terminé" },
+] as const;
+
+export const SLOT_STATUS_VALUES: string[] = SLOT_STATUSES.map((s) => s.value);
+
+export const SLOT_STATUS_LABEL: Record<string, string> = Object.fromEntries(
+  SLOT_STATUSES.map((s) => [s.value, s.label])
+);
+
+export function slotStatusClass(status: string): string {
+  switch (status) {
+    case "reporte":
+      return "bg-amber-50 text-amber-700";
+    case "annule":
+      return "bg-ipmd-red/10 text-ipmd-red";
+    case "termine":
+      return "bg-green-50 text-green-700";
+    default:
+      return "bg-black/5 text-black/50"; // prévu
+  }
+}

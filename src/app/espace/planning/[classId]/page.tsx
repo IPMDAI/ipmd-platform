@@ -5,6 +5,7 @@ import { requireAdmin } from "@/lib/require-admin";
 import { Container } from "@/components/ui/Container";
 import { NewSlotForm } from "@/components/espace/NewSlotForm";
 import { NotifyClassButton } from "@/components/espace/NotifyClassButton";
+import { SlotStatusSelect } from "@/components/espace/SlotStatusSelect";
 import { removeTimetableSlot } from "@/lib/planning-actions";
 import { DAY_OPTIONS, formatTime } from "@/lib/schedule";
 
@@ -31,7 +32,7 @@ export default async function ClassPlanningPage({
     await Promise.all([
       supabase
         .from("timetable_slots")
-        .select("id, subject, teacher_id, room_id, day_of_week, start_time, end_time")
+        .select("id, subject, teacher_id, room_id, day_of_week, start_time, end_time, status")
         .eq("class_id", classId)
         .order("start_time"),
       supabase
@@ -163,6 +164,11 @@ export default async function ClassPlanningPage({
                                 📍 {roomName.get(s.room_id)}
                               </p>
                             )}
+                            <SlotStatusSelect
+                              classId={classId}
+                              slotId={s.id}
+                              current={s.status ?? "prevu"}
+                            />
                           </li>
                         ))}
                       </ul>
