@@ -14,6 +14,7 @@ const TYPE_LABELS: Record<string, string> = {
   "certificat-scolarite": "Certificat de scolarité",
   "attestation-reussite": "Attestation de réussite",
   carte: "Carte étudiant",
+  recu: "Reçu de paiement",
 };
 
 export default async function VerifierPage({
@@ -78,6 +79,19 @@ export default async function VerifierPage({
                         : "Validé"
                     }
                   />
+                )}
+                {payload.t === "recu" && (
+                  <>
+                    <Row
+                      label="Montant"
+                      value={
+                        payload.a != null
+                          ? `${Number(payload.a).toLocaleString("fr-FR")} FCFA`
+                          : "—"
+                      }
+                    />
+                    {payload.d && <Row label="Date" value={payload.d} />}
+                  </>
                 )}
               </dl>
               <p className="border-t border-black/5 px-6 py-3 text-[11px] text-black/45">

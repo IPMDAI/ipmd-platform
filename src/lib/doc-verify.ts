@@ -21,8 +21,9 @@ export type DocPayload = {
   m: string; // matricule
   n: string; // nom complet
   y: string; // année académique
-  a?: number | null; // moyenne (réussite)
+  a?: number | null; // moyenne (réussite) OU montant (reçu)
   me?: string; // mention (réussite)
+  d?: string; // date (reçu de paiement)
 };
 
 function b64urlEncode(input: string): string {

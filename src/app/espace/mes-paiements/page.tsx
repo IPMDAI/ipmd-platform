@@ -110,7 +110,12 @@ export default async function MesPaiementsPage() {
                       {p.label && ` · ${p.label}`}
                     </p>
                   </div>
-                  <span className="shrink-0 text-green-600">✓</span>
+                  <Link
+                    href={`/espace/recu/${p.id}`}
+                    className="shrink-0 rounded-full bg-ipmd-light px-3 py-1.5 text-xs font-semibold text-ipmd-black transition-colors hover:bg-black/5"
+                  >
+                    🧾 Reçu
+                  </Link>
                 </li>
               ))}
             </ul>
