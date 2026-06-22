@@ -85,8 +85,7 @@ export const dashboardTiles: Record<string, DashTile[]> = {
     { ...SCOLARITE, title: "Scolarité & paiements" },
   ],
   enseignant: [
-    { title: "Mes cours", icon: "📚", status: "soon", description: "Gérer vos cours et supports." },
-    { title: "Devoirs", icon: "📝", status: "soon", description: "Créer et corriger les devoirs." },
+    { title: "Mes cours", icon: "📚", status: "ready", href: "/espace/cours", description: "Créer vos cours et leurs devoirs." },
     { title: "Saisie des notes", icon: "🖊️", status: "soon", description: "Évaluer et saisir les notes." },
     { title: "Mes classes", icon: "👥", status: "soon", description: "Vos groupes et étudiants." },
   ],

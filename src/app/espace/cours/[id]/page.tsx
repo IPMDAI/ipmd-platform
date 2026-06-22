@@ -1,0 +1,120 @@
+import type { Metadata } from "next";
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import { requireTeacher } from "@/lib/require-teacher";
+import { Container } from "@/components/ui/Container";
+import { NewAssignmentForm } from "@/components/espace/NewAssignmentForm";
+
+export const metadata: Metadata = {
+  title: "Cours",
+};
+
+function formatDate(iso: string): string {
+  return new Date(iso).toLocaleDateString("fr-FR", {
+    day: "2-digit",
+    month: "long",
+    year: "numeric",
+  });
+}
+
+export default async function CourseDetailPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = await params;
+  const { supabase, userId } = await requireTeacher();
+
+  const { data: course } = await supabase
+    .from("courses")
+    .select("id, title, field, description, teacher_id")
+    .eq("id", id)
+    .single();
+
+  // Cours inexistant ou n'appartenant pas à l'enseignant.
+  if (!course || course.teacher_id !== userId) notFound();
+
+  const { data: rows } = await supabase
+    .from("assignments")
+    .select("id, title, description, due_date, created_at")
+    .eq("course_id", id)
+    .order("created_at", { ascending: false });
+
+  const assignments = rows ?? [];
+
+  return (
+    <section className="min-h-[70vh] bg-ipmd-light">
+      <Container className="py-12 sm:py-16">
+        <div className="mx-auto max-w-4xl">
+          <Link
+            href="/espace/cours"
+            className="text-sm font-semibold text-black/50 transition-colors hover:text-ipmd-red"
+          >
+            ← Tous mes cours
+          </Link>
+          <div className="mt-3 flex flex-wrap items-center gap-3">
+            <h1 className="text-2xl font-extrabold tracking-tight text-ipmd-black">
+              {course.title}
+            </h1>
+            {course.field && (
+              <span className="rounded-full bg-ipmd-red/10 px-2.5 py-1 text-[11px] font-semibold text-ipmd-red">
+                {course.field}
+              </span>
+            )}
+          </div>
+          {course.description && (
+            <p className="mt-1 text-sm text-black/55">{course.description}</p>
+          )}
+
+          <div className="mt-8 grid gap-8 lg:grid-cols-[1fr_22rem]">
+            {/* Devoirs */}
+            <div className="order-2 lg:order-1">
+              <div className="mb-4 flex items-baseline gap-3">
+                <h2 className="text-lg font-bold text-ipmd-black">Devoirs</h2>
+                <span className="rounded-full bg-ipmd-red px-2.5 py-1 text-xs font-bold text-white">
+                  {assignments.length}
+                </span>
+              </div>
+
+              {assignments.length === 0 ? (
+                <p className="rounded-2xl bg-white p-6 text-sm text-black/55 shadow-sm ring-1 ring-black/5">
+                  Aucun devoir pour ce cours. Ajoutez-en un →
+                </p>
+              ) : (
+                <ul className="space-y-4">
+                  {assignments.map((a) => (
+                    <li
+                      key={a.id}
+                      className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-black/5"
+                    >
+                      <div className="flex flex-wrap items-start justify-between gap-2">
+                        <h3 className="text-base font-bold text-ipmd-black">
+                          {a.title}
+                        </h3>
+                        {a.due_date && (
+                          <span className="shrink-0 rounded-full bg-ipmd-light px-2.5 py-1 text-[11px] font-semibold text-black/60">
+                            À rendre le {formatDate(a.due_date)}
+                          </span>
+                        )}
+                      </div>
+                      {a.description && (
+                        <p className="mt-2 whitespace-pre-line text-sm leading-relaxed text-black/60">
+                          {a.description}
+                        </p>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+
+            {/* Formulaire d'ajout de devoir */}
+            <div className="order-1 lg:order-2">
+              <NewAssignmentForm courseId={course.id} />
+            </div>
+          </div>
+        </div>
+      </Container>
+    </section>
+  );
+}
