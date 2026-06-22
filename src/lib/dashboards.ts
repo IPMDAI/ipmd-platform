@@ -1,6 +1,7 @@
 /**
  * Configuration des espaces (dashboards) par rôle.
- * Chaque rôle voit un ensemble de « tuiles » adaptées à son métier.
+ * Les rôles « apprenants » et le parent/enseignant ont des tuiles simples ;
+ * les admins ont des tuiles regroupées en sections.
  */
 
 export type DashTile = {
@@ -10,6 +11,8 @@ export type DashTile = {
   status: "ready" | "soon";
   href?: string;
 };
+
+export type DashSection = { title: string; tiles: DashTile[] };
 
 /** Libellés lisibles des rôles. */
 export const roleLabels: Record<string, string> = {
@@ -58,7 +61,7 @@ const SCOLARITE: DashTile = {
   description: "Frais de formation et options de financement.",
 };
 
-/** Tuiles affichées selon le rôle. */
+/** Tuiles des rôles apprenants / parent / enseignant. */
 export const dashboardTiles: Record<string, DashTile[]> = {
   etudiant: [
     { title: "Mes cours", icon: "📚", status: "ready", href: "/espace/mes-cours", description: "Tes cours, devoirs et séances." },
@@ -90,29 +93,51 @@ export const dashboardTiles: Record<string, DashTile[]> = {
     { title: "Saisie des notes", icon: "🖊️", status: "ready", href: "/espace/cours", description: "Ouvrez un cours pour saisir les notes." },
     { title: "Mes classes", icon: "👥", status: "soon", description: "Vos groupes et étudiants." },
   ],
-  admin: [
-    { title: "Candidatures", icon: "📥", status: "ready", href: "/espace/candidatures", description: "Demandes d'inscription reçues." },
-    { title: "Messages de contact", icon: "✉️", status: "ready", href: "/espace/messages", description: "Messages envoyés via le site." },
-    { title: "Parents & élèves", icon: "👨‍👩‍👧", status: "ready", href: "/espace/parents", description: "Relier les parents à leurs enfants." },
-    { title: "Classes & filières", icon: "🏫", status: "ready", href: "/espace/classes", description: "Filières, promotions et affectation." },
-    { title: "Salles", icon: "🚪", status: "ready", href: "/espace/salles", description: "Salles disponibles pour le planning." },
-    { title: "Planning", icon: "🗓️", status: "ready", href: "/espace/planning", description: "Emploi du temps par classe." },
-    { title: "Étudiants", icon: "🎓", status: "soon", description: "Gestion des étudiants." },
-    { title: "Scolarité", icon: "🗂️", status: "soon", description: "Inscriptions et dossiers." },
-    { title: "Recrutement profs", icon: "🧑‍🏫", status: "ready", href: "/espace/recrutement", description: "Candidatures enseignants + tri IA." },
-    { title: "Finance", icon: "💰", status: "ready", href: "/espace/finance", description: "Frais, paiements et soldes." },
-  ],
+};
+
+/** Tuiles admin, réutilisées dans les sections. */
+const ADMIN_TILES = {
+  users: { title: "Gestion des utilisateurs", icon: "🔑", status: "ready", href: "/espace/utilisateurs", description: "Attribuer les rôles aux comptes." },
+  candidatures: { title: "Candidatures", icon: "📥", status: "ready", href: "/espace/candidatures", description: "Demandes d'inscription reçues." },
+  messages: { title: "Messages de contact", icon: "✉️", status: "ready", href: "/espace/messages", description: "Messages envoyés via le site." },
+  parents: { title: "Parents & élèves", icon: "👨‍👩‍👧", status: "ready", href: "/espace/parents", description: "Relier les parents à leurs enfants." },
+  classes: { title: "Classes & filières", icon: "🏫", status: "ready", href: "/espace/classes", description: "Filières, promotions et affectation." },
+  salles: { title: "Salles", icon: "🚪", status: "ready", href: "/espace/salles", description: "Salles disponibles pour le planning." },
+  planning: { title: "Planning", icon: "🗓️", status: "ready", href: "/espace/planning", description: "Emploi du temps par classe." },
+  recrutement: { title: "Recrutement profs", icon: "🧑‍🏫", status: "ready", href: "/espace/recrutement", description: "Candidatures enseignants + tri IA." },
+  finance: { title: "Finance", icon: "💰", status: "ready", href: "/espace/finance", description: "Frais, paiements et soldes." },
+  etudiants: { title: "Étudiants", icon: "🎓", status: "soon", description: "Gestion des étudiants." },
+  scolarite: { title: "Scolarité", icon: "🗂️", status: "soon", description: "Inscriptions et dossiers." },
+} satisfies Record<string, DashTile>;
+
+/** Tableaux de bord en sections (admins). */
+export const dashboardSections: Record<string, DashSection[]> = {
   super_admin: [
-    { title: "Gestion des utilisateurs", icon: "🔑", status: "ready", href: "/espace/utilisateurs", description: "Attribuer les rôles aux comptes." },
-    { title: "Candidatures", icon: "📥", status: "ready", href: "/espace/candidatures", description: "Demandes d'inscription reçues." },
-    { title: "Messages de contact", icon: "✉️", status: "ready", href: "/espace/messages", description: "Messages envoyés via le site." },
-    { title: "Parents & élèves", icon: "👨‍👩‍👧", status: "ready", href: "/espace/parents", description: "Relier les parents à leurs enfants." },
-    { title: "Classes & filières", icon: "🏫", status: "ready", href: "/espace/classes", description: "Filières, promotions et affectation." },
-    { title: "Salles", icon: "🚪", status: "ready", href: "/espace/salles", description: "Salles disponibles pour le planning." },
-    { title: "Planning", icon: "🗓️", status: "ready", href: "/espace/planning", description: "Emploi du temps par classe." },
-    { title: "Étudiants", icon: "🎓", status: "soon", description: "Gestion des étudiants." },
-    { title: "Scolarité", icon: "🗂️", status: "soon", description: "Inscriptions et dossiers." },
-    { title: "Recrutement profs", icon: "🧑‍🏫", status: "ready", href: "/espace/recrutement", description: "Candidatures enseignants + tri IA." },
-    { title: "Finance", icon: "💰", status: "ready", href: "/espace/finance", description: "Frais, paiements et soldes." },
+    {
+      title: "Pédagogie & planning",
+      tiles: [ADMIN_TILES.classes, ADMIN_TILES.salles, ADMIN_TILES.planning, ADMIN_TILES.recrutement],
+    },
+    {
+      title: "Scolarité & finance",
+      tiles: [ADMIN_TILES.etudiants, ADMIN_TILES.scolarite, ADMIN_TILES.finance],
+    },
+    {
+      title: "Relations & accès",
+      tiles: [ADMIN_TILES.users, ADMIN_TILES.candidatures, ADMIN_TILES.messages, ADMIN_TILES.parents],
+    },
+  ],
+  admin: [
+    {
+      title: "Pédagogie & planning",
+      tiles: [ADMIN_TILES.classes, ADMIN_TILES.salles, ADMIN_TILES.planning, ADMIN_TILES.recrutement],
+    },
+    {
+      title: "Scolarité & finance",
+      tiles: [ADMIN_TILES.etudiants, ADMIN_TILES.scolarite, ADMIN_TILES.finance],
+    },
+    {
+      title: "Relations",
+      tiles: [ADMIN_TILES.candidatures, ADMIN_TILES.messages, ADMIN_TILES.parents],
+    },
   ],
 };

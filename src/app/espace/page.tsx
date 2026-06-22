@@ -9,6 +9,7 @@ import { DashboardTile } from "@/components/espace/DashboardTile";
 import { signOut } from "@/lib/auth-actions";
 import {
   dashboardTiles,
+  dashboardSections,
   roleLabels,
   roleTagline,
   LEARNER_ROLES,
@@ -39,6 +40,7 @@ export default async function EspacePage() {
   const fullName =
     profile?.full_name || (user.user_metadata?.full_name as string) || "—";
   const role = profile?.role ?? "etudiant";
+  const sections = dashboardSections[role];
   const tiles = dashboardTiles[role] ?? dashboardTiles.etudiant;
   const showTutor = LEARNER_ROLES.has(role);
 
@@ -68,12 +70,29 @@ export default async function EspacePage() {
             </form>
           </div>
 
-          {/* Tuiles du rôle */}
-          <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {tiles.map((tile) => (
-              <DashboardTile key={tile.title} tile={tile} />
-            ))}
-          </div>
+          {/* Tuiles du rôle — en sections pour les admins, à plat sinon */}
+          {sections ? (
+            <div className="mt-8 space-y-8">
+              {sections.map((sec) => (
+                <div key={sec.title}>
+                  <h2 className="mb-3 text-xs font-bold uppercase tracking-wider text-black/40">
+                    {sec.title}
+                  </h2>
+                  <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+                    {sec.tiles.map((tile) => (
+                      <DashboardTile key={tile.title} tile={tile} />
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+              {tiles.map((tile) => (
+                <DashboardTile key={tile.title} tile={tile} />
+              ))}
+            </div>
+          )}
 
           {/* Tuteur IA (rôles apprenants) */}
           {showTutor && (
