@@ -13,6 +13,19 @@ export type ContractData = {
   startLabel: string;
   endLabel: string;
   verifyHref: string;
+  civilite?: string | null;
+  prenoms?: string | null;
+  typePiece?: string | null;
+  numPiece?: string | null;
+  nationalite?: string | null;
+  dateNaissance?: string | null;
+  situation?: string | null;
+  paysResidence?: string | null;
+  villeResidence?: string | null;
+  diplomaDate?: string | null;
+  diplomaSchool?: string | null;
+  emergencyName?: string | null;
+  emergencyPhone?: string | null;
 };
 
 const DOTS = "……………………………………………";
@@ -76,20 +89,28 @@ export function TeacherContract({ data }: { data: ContractData }) {
 
       <p className="mt-3 font-bold">ET</p>
       <div className="mt-1 space-y-1 leading-relaxed text-black/75">
-        <p>Civilité (M., Mme ou Mlle) : <Fill /></p>
+        <p>Civilité (M., Mme ou Mlle) : <Fill value={data.civilite} /></p>
         <p>Nom : <Fill value={data.name} /></p>
-        <p>Prénoms : <Fill /></p>
+        <p>Prénoms : <Fill value={data.prenoms} /></p>
         <p>Profession : <Fill value={data.function} /></p>
-        <p>Type de pièce : <Fill /> &nbsp; N° pièce : <Fill /></p>
-        <p>Nationalité : <Fill /> &nbsp; Date de naissance : <Fill /></p>
-        <p>Situation matrimoniale : <Fill /></p>
-        <p>Pays de résidence : <Fill /> &nbsp; Ville de résidence : <Fill /></p>
+        <p>Type de pièce : <Fill value={data.typePiece} /> &nbsp; N° pièce : <Fill value={data.numPiece} /></p>
+        <p>Nationalité : <Fill value={data.nationalite} /> &nbsp; Date de naissance : <Fill value={data.dateNaissance} /></p>
+        <p>Situation matrimoniale : <Fill value={data.situation} /></p>
+        <p>Pays de résidence : <Fill value={data.paysResidence} /> &nbsp; Ville de résidence : <Fill value={data.villeResidence} /></p>
         <p>Téléphone / Mobile : <Fill value={data.phone} /></p>
         <p>E-mail : <Fill value={data.email} /></p>
         <p>Dernier diplôme obtenu : <Fill value={data.diplomas} /></p>
         <p>Domaine d&apos;étude ou spécialité : <Fill value={data.specialty} /></p>
-        <p>Date d&apos;obtention : <Fill /> &nbsp; École : <Fill /></p>
-        <p>Personne à prévenir (nom &amp; tél) : <Fill /></p>
+        <p>Date d&apos;obtention : <Fill value={data.diplomaDate} /> &nbsp; École : <Fill value={data.diplomaSchool} /></p>
+        <p>
+          Personne à prévenir (nom &amp; tél) :{" "}
+          <Fill
+            value={
+              [data.emergencyName, data.emergencyPhone].filter(Boolean).join(" — ") ||
+              null
+            }
+          />
+        </p>
       </div>
       <p className="mt-1 italic text-black/60">
         Ci-après désigné « Enseignant/Vacataire », d&apos;autre part,

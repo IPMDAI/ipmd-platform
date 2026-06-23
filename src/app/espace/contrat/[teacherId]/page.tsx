@@ -52,7 +52,9 @@ export default async function ContratPage({
     supabase.from("profiles").select("full_name, email").eq("id", teacherId).single(),
     supabase
       .from("teacher_profiles")
-      .select("phone, function, title, specialty, diplomas")
+      .select(
+        "phone, function, title, specialty, diplomas, civilite, prenoms, type_piece, num_piece, nationalite, date_naissance, situation_matrimoniale, pays_residence, ville_residence, diploma_date, diploma_school, emergency_name, emergency_phone"
+      )
       .eq("teacher_id", teacherId)
       .maybeSingle(),
     supabase
@@ -117,6 +119,19 @@ export default async function ContratPage({
                 startLabel,
                 endLabel,
                 verifyHref,
+                civilite: sheet?.civilite,
+                prenoms: sheet?.prenoms,
+                typePiece: sheet?.type_piece,
+                numPiece: sheet?.num_piece,
+                nationalite: sheet?.nationalite,
+                dateNaissance: sheet?.date_naissance ? frLong(sheet.date_naissance) : null,
+                situation: sheet?.situation_matrimoniale,
+                paysResidence: sheet?.pays_residence,
+                villeResidence: sheet?.ville_residence,
+                diplomaDate: sheet?.diploma_date ? frLong(sheet.diploma_date) : null,
+                diplomaSchool: sheet?.diploma_school,
+                emergencyName: sheet?.emergency_name,
+                emergencyPhone: sheet?.emergency_phone,
               }}
             />
           </div>

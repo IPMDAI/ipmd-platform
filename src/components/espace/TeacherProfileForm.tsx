@@ -17,6 +17,19 @@ export type TeacherSheet = {
   diplomas?: string | null;
   authorization?: string | null;
   status?: string | null;
+  civilite?: string | null;
+  prenoms?: string | null;
+  type_piece?: string | null;
+  num_piece?: string | null;
+  nationalite?: string | null;
+  date_naissance?: string | null;
+  situation_matrimoniale?: string | null;
+  pays_residence?: string | null;
+  ville_residence?: string | null;
+  diploma_date?: string | null;
+  diploma_school?: string | null;
+  emergency_name?: string | null;
+  emergency_phone?: string | null;
 };
 
 export function TeacherProfileForm({
@@ -120,6 +133,53 @@ export function TeacherProfileForm({
           className={inputBase}
         />
       </Field>
+
+      <details>
+        <summary className="cursor-pointer text-xs font-semibold text-ipmd-red">
+          État civil & contrat (pour pré-remplir le contrat)
+        </summary>
+        <div className="mt-2 grid gap-3 sm:grid-cols-2">
+          <Field label="Civilité (M./Mme/Mlle)" htmlFor={`civ-${teacherId}`}>
+            <input id={`civ-${teacherId}`} name="civilite" defaultValue={sheet.civilite ?? ""} className={inputBase} />
+          </Field>
+          <Field label="Prénoms" htmlFor={`pre-${teacherId}`}>
+            <input id={`pre-${teacherId}`} name="prenoms" defaultValue={sheet.prenoms ?? ""} className={inputBase} />
+          </Field>
+          <Field label="Type de pièce" htmlFor={`tp-${teacherId}`}>
+            <input id={`tp-${teacherId}`} name="type_piece" defaultValue={sheet.type_piece ?? ""} placeholder="CNI, Passeport…" className={inputBase} />
+          </Field>
+          <Field label="N° pièce" htmlFor={`np-${teacherId}`}>
+            <input id={`np-${teacherId}`} name="num_piece" defaultValue={sheet.num_piece ?? ""} className={inputBase} />
+          </Field>
+          <Field label="Nationalité" htmlFor={`na-${teacherId}`}>
+            <input id={`na-${teacherId}`} name="nationalite" defaultValue={sheet.nationalite ?? ""} className={inputBase} />
+          </Field>
+          <Field label="Date de naissance" htmlFor={`dn-${teacherId}`}>
+            <input id={`dn-${teacherId}`} name="date_naissance" type="date" defaultValue={sheet.date_naissance ?? ""} className={inputBase} />
+          </Field>
+          <Field label="Situation matrimoniale" htmlFor={`sm-${teacherId}`}>
+            <input id={`sm-${teacherId}`} name="situation_matrimoniale" defaultValue={sheet.situation_matrimoniale ?? ""} className={inputBase} />
+          </Field>
+          <Field label="Pays de résidence" htmlFor={`pr-${teacherId}`}>
+            <input id={`pr-${teacherId}`} name="pays_residence" defaultValue={sheet.pays_residence ?? ""} className={inputBase} />
+          </Field>
+          <Field label="Ville de résidence" htmlFor={`vr-${teacherId}`}>
+            <input id={`vr-${teacherId}`} name="ville_residence" defaultValue={sheet.ville_residence ?? ""} className={inputBase} />
+          </Field>
+          <Field label="Date d'obtention du diplôme" htmlFor={`dd-${teacherId}`}>
+            <input id={`dd-${teacherId}`} name="diploma_date" type="date" defaultValue={sheet.diploma_date ?? ""} className={inputBase} />
+          </Field>
+          <Field label="École du diplôme" htmlFor={`ds-${teacherId}`}>
+            <input id={`ds-${teacherId}`} name="diploma_school" defaultValue={sheet.diploma_school ?? ""} className={inputBase} />
+          </Field>
+          <Field label="Personne à prévenir (nom)" htmlFor={`en-${teacherId}`}>
+            <input id={`en-${teacherId}`} name="emergency_name" defaultValue={sheet.emergency_name ?? ""} className={inputBase} />
+          </Field>
+          <Field label="Personne à prévenir (tél)" htmlFor={`ep-${teacherId}`}>
+            <input id={`ep-${teacherId}`} name="emergency_phone" defaultValue={sheet.emergency_phone ?? ""} className={inputBase} />
+          </Field>
+        </div>
+      </details>
       <ActionButton type="submit" disabled={pending}>
         {pending ? "…" : "Enregistrer la fiche"}
       </ActionButton>
