@@ -25,13 +25,14 @@ export const universes: Universe[] = [
   {
     id: "ultrajobs",
     name: "UltraJobs",
-    tagline: "Bootcamps jeunes — certificats job",
+    tagline: "Bootcamps jeunes à l'ère de l'IA",
     description:
-      "Bootcamps courts, pratiques et orientés emploi pour former rapidement les jeunes aux compétences digitales recherchées par les entreprises.",
+      "Le département d'IPMD dédié aux bootcamps certifiants, intensifs et 100% pratiques pour les jeunes de 18 à 30 ans : apprendre vite, maîtriser les outils digitaux et l'IA, et obtenir un certificat valorisable pour l'emploi, le freelance ou un projet.",
     kind: "certificat",
-    audience: "Jeunes, étudiants, chercheurs d'emploi",
+    audience:
+      "Jeunes 18-30 ans, étudiants, chercheurs d'emploi, jeunes entrepreneurs, reconversion rapide",
     target: "Jeunes & Chercheurs d'emploi",
-    credentials: ["10 bootcamps certifiants"],
+    credentials: ["15 bootcamps certifiants"],
     subdomain: "ultrajobs.ipmd.pro",
     href: "/ultrajobs",
     icon: "🚀",

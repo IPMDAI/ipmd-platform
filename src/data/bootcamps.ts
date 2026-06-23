@@ -5,52 +5,57 @@ import type { Bootcamp } from "@/types";
  * (professionnels) et UltraExecutive (dirigeants).
  */
 export const bootcamps: Bootcamp[] = [
-  // ── UltraJobs — 10 bootcamps jeunes ─────────────────────────
+  // ── UltraJobs — 15 bootcamps jeunes (à l'ère de l'IA) ───────
   {
     id: "uj-marketing",
     universe: "ultrajobs",
-    title: "Marketing digital & growth",
-    description: "Lancez et pilotez des campagnes d'acquisition en autonomie.",
+    title: "Marketing digital & Growth à l'ère de l'IA",
+    description:
+      "Attirez, convertissez et analysez vos campagnes digitales avec des outils modernes et l'IA.",
     duration: "8 semaines",
     format: "Intensif",
-    skills: ["SEO/SEA", "Réseaux sociaux", "Analytics"],
+    skills: ["SEO/SEA", "Réseaux sociaux", "Analytics IA"],
     icon: "📈",
   },
   {
     id: "uj-community",
     universe: "ultrajobs",
-    title: "Community management",
-    description: "Animez et faites grandir des communautés engagées.",
+    title: "Community Management à l'ère de l'IA",
+    description:
+      "Animez les réseaux sociaux, créez des contenus et gagnez du temps grâce à l'IA.",
     duration: "6 semaines",
     format: "Intensif",
-    skills: ["Content", "Modération", "Social ads"],
+    skills: ["Content IA", "Modération", "Social ads"],
     icon: "📣",
   },
   {
     id: "uj-design",
     universe: "ultrajobs",
-    title: "Design graphique & UI",
-    description: "Créez des visuels et des interfaces professionnels.",
+    title: "Design graphique & UI à l'ère de l'IA",
+    description:
+      "Créez rapidement des visuels et interfaces professionnels avec Canva, Figma et l'IA.",
     duration: "8 semaines",
     format: "Intensif",
-    skills: ["Figma", "Identité visuelle", "UI"],
+    skills: ["Canva", "Figma", "Design IA"],
     icon: "🎨",
   },
   {
     id: "uj-web",
     universe: "ultrajobs",
-    title: "Développement web",
-    description: "Construisez des sites et applications web modernes.",
+    title: "Développement web à l'ère de l'IA",
+    description:
+      "Construisez des sites web modernes avec la pratique, le code et les outils IA.",
     duration: "12 semaines",
     format: "Intensif",
-    skills: ["HTML/CSS", "JavaScript", "React"],
+    skills: ["HTML/CSS", "JavaScript", "Outils IA"],
     icon: "💻",
   },
   {
     id: "uj-data",
     universe: "ultrajobs",
-    title: "Data & no-code",
-    description: "Automatisez et exploitez la donnée sans écrire de code lourd.",
+    title: "Data, No-code & Automatisation IA",
+    description:
+      "Analysez, automatisez et créez des solutions digitales sans coder lourdement.",
     duration: "6 semaines",
     format: "Intensif",
     skills: ["No-code", "Automatisation", "Dashboards"],
@@ -59,8 +64,9 @@ export const bootcamps: Bootcamp[] = [
   {
     id: "uj-ia",
     universe: "ultrajobs",
-    title: "IA générative & prompting",
-    description: "Devenez productif avec les outils d'IA générative.",
+    title: "IA générative & Prompting professionnel",
+    description:
+      "Utilisez l'IA pour produire, rédiger, analyser et travailler plus vite.",
     duration: "5 semaines",
     format: "Intensif",
     skills: ["Prompting", "Assistants IA", "Productivité"],
@@ -69,42 +75,101 @@ export const bootcamps: Bootcamp[] = [
   {
     id: "uj-ecommerce",
     universe: "ultrajobs",
-    title: "E-commerce & dropshipping",
-    description: "Lancez et gérez une boutique en ligne rentable.",
+    title: "E-commerce & Business en ligne à l'ère de l'IA",
+    description:
+      "Lancez et gérez une activité en ligne avec stratégie, outils digitaux et IA.",
     duration: "6 semaines",
     format: "Intensif",
-    skills: ["Shopify", "Logistique", "Conversion"],
+    skills: ["Boutique en ligne", "Vente", "IA"],
     icon: "🛒",
   },
   {
     id: "uj-video",
     universe: "ultrajobs",
-    title: "Montage vidéo & motion",
-    description: "Produisez des contenus vidéo pour le web et le social.",
+    title: "Montage vidéo & Motion Design avec IA",
+    description:
+      "Produisez des vidéos courtes, attractives et prêtes pour les réseaux sociaux.",
     duration: "6 semaines",
     format: "Intensif",
-    skills: ["Montage", "Motion design", "Réseaux"],
+    skills: ["Montage", "Motion design", "Outils IA"],
     icon: "🎬",
   },
   {
     id: "uj-bureautique",
     universe: "ultrajobs",
-    title: "Bureautique digitale & productivité",
-    description: "Maîtrisez les outils essentiels du travail numérique.",
+    title: "Bureautique digitale & Productivité avec IA",
+    description:
+      "Travaillez plus vite avec les outils bureautiques, collaboratifs et l'IA.",
     duration: "4 semaines",
     format: "Intensif",
-    skills: ["Tableurs", "Collaboration", "Organisation"],
+    skills: ["Tableurs", "Collaboration", "Productivité IA"],
     icon: "🗂️",
   },
   {
     id: "uj-emploi",
     universe: "ultrajobs",
-    title: "Compétences d'employabilité",
-    description: "CV, entretien, posture pro et insertion en entreprise.",
+    title: "Employabilité, Télétravail & IA",
+    description:
+      "Améliorez votre CV, LinkedIn, entretien et préparation au travail hybride.",
     duration: "3 semaines",
     format: "Intensif",
-    skills: ["Personal branding", "Entretien", "Réseau"],
+    skills: ["CV & LinkedIn", "Entretien", "Posture pro"],
     icon: "🎯",
+  },
+  {
+    id: "uj-cyber",
+    universe: "ultrajobs",
+    title: "Cybersécurité & Protection numérique à l'ère de l'IA",
+    description:
+      "Protégez vos comptes, données et identité numérique avec les bons réflexes.",
+    duration: "6 semaines",
+    format: "Intensif",
+    skills: ["Sécurité", "Phishing", "Bonnes pratiques"],
+    icon: "🔐",
+  },
+  {
+    id: "uj-dataviz",
+    universe: "ultrajobs",
+    title: "Data Analytics & Power BI à l'ère de l'IA",
+    description:
+      "Transformez des données en tableaux de bord clairs et utiles pour décider.",
+    duration: "6 semaines",
+    format: "Intensif",
+    skills: ["Excel / Power BI", "Dashboards", "Analyse"],
+    icon: "📊",
+  },
+  {
+    id: "uj-freelance",
+    universe: "ultrajobs",
+    title: "Freelance digital & Télétravail avec IA",
+    description:
+      "Trouvez des missions, organisez le travail à distance et produisez avec l'IA.",
+    duration: "4 semaines",
+    format: "Intensif",
+    skills: ["Missions", "Clients", "Organisation"],
+    icon: "🌍",
+  },
+  {
+    id: "uj-assistant",
+    universe: "ultrajobs",
+    title: "Assistant virtuel & Support client avec IA",
+    description:
+      "Gérez messages, tâches et clients à distance avec des outils IA.",
+    duration: "4 semaines",
+    format: "Intensif",
+    skills: ["Support client", "Outils IA", "Communication"],
+    icon: "💬",
+  },
+  {
+    id: "uj-automation",
+    universe: "ultrajobs",
+    title: "Automatisation No-code & Agents IA",
+    description:
+      "Automatisez les tâches répétitives et créez des workflows avec des agents IA.",
+    duration: "5 semaines",
+    format: "Intensif",
+    skills: ["No-code", "Workflows", "Agents IA"],
+    icon: "⚙️",
   },
 
   // ── UltraBoost — 15 bootcamps professionnels ────────────────
