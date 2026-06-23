@@ -102,26 +102,43 @@ export async function submitInscription(
   // Pièces jointes : upload via service-role vers le bucket privé (best-effort).
   const admin = createAdminClient();
   if (admin) {
-    const fileFields = [
+    const MAX = 8 * 1024 * 1024;
+    const docs: Record<string, string> = {};
+    const ext = (f: File) =>
+      (f.name.split(".").pop() || "bin").toLowerCase().replace(/[^a-z0-9]/g, "");
+    const put = async (path: string, f: File) => {
+      const { error: upErr } = await admin.storage
+        .from("candidature-docs")
+        .upload(path, f, { upsert: true, contentType: f.type || undefined });
+      return !upErr;
+    };
+
+    // Fichiers uniques.
+    const single = [
       { field: "docDiploma", key: "diplome", col: "doc_diploma" },
-      { field: "docBulletins", key: "bulletins", col: "doc_bulletins" },
       { field: "docId", key: "piece-identite", col: "doc_id" },
       { field: "docAttestation", key: "attestation", col: "doc_attestation" },
     ];
-    const docs: Record<string, string> = {};
-    for (const { field, key, col } of fileFields) {
+    for (const { field, key, col } of single) {
       const f = formData.get(field);
-      if (f instanceof File && f.size > 0 && f.size <= 8 * 1024 * 1024) {
-        const ext = (f.name.split(".").pop() || "bin")
-          .toLowerCase()
-          .replace(/[^a-z0-9]/g, "");
-        const path = `${created.id}/${key}.${ext}`;
-        const { error: upErr } = await admin.storage
-          .from("candidature-docs")
-          .upload(path, f, { upsert: true, contentType: f.type || undefined });
-        if (!upErr) docs[col] = path;
+      if (f instanceof File && f.size > 0 && f.size <= MAX) {
+        const path = `${created.id}/${key}.${ext(f)}`;
+        if (await put(path, f)) docs[col] = path;
       }
     }
+
+    // Bulletins : plusieurs fichiers possibles.
+    const bulletins = formData
+      .getAll("docBulletins")
+      .filter((f): f is File => f instanceof File && f.size > 0 && f.size <= MAX);
+    const bulletinPaths: string[] = [];
+    for (let i = 0; i < bulletins.length; i++) {
+      const f = bulletins[i];
+      const path = `${created.id}/bulletins-${i + 1}.${ext(f)}`;
+      if (await put(path, f)) bulletinPaths.push(path);
+    }
+    if (bulletinPaths.length > 0) docs.doc_bulletins = bulletinPaths.join(",");
+
     if (Object.keys(docs).length > 0) {
       await admin.from("inscription_requests").update(docs).eq("id", created.id);
     }

@@ -66,7 +66,12 @@ export default async function CandidaturesPage({
   const admin = createAdminClient();
   if (admin) {
     const paths = candidatures
-      .flatMap((c) => [c.doc_diploma, c.doc_bulletins, c.doc_id, c.doc_attestation])
+      .flatMap((c) => [
+        c.doc_diploma,
+        ...(c.doc_bulletins ? c.doc_bulletins.split(",") : []),
+        c.doc_id,
+        c.doc_attestation,
+      ])
       .filter(Boolean) as string[];
     if (paths.length > 0) {
       const { data: signed } = await admin.storage
@@ -202,30 +207,33 @@ export default async function CandidaturesPage({
                     </p>
                   )}
 
-                  {(c.doc_diploma || c.doc_bulletins || c.doc_id || c.doc_attestation) && (
-                    <div className="mt-3 flex flex-wrap gap-2">
-                      {(
-                        [
-                          ["Diplôme", c.doc_diploma],
-                          ["Bulletins", c.doc_bulletins],
-                          ["Pièce d'identité", c.doc_id],
-                          ["Attestation", c.doc_attestation],
-                        ] as [string, string | null][]
-                      )
-                        .filter(([, p]) => p)
-                        .map(([label, p]) => (
+                  {(() => {
+                    const links: { label: string; path: string }[] = [];
+                    if (c.doc_diploma) links.push({ label: "Diplôme", path: c.doc_diploma });
+                    if (c.doc_bulletins) {
+                      const ps: string[] = c.doc_bulletins.split(",");
+                      ps.forEach((p: string, i: number) =>
+                        links.push({ label: ps.length > 1 ? `Bulletin ${i + 1}` : "Bulletins", path: p })
+                      );
+                    }
+                    if (c.doc_id) links.push({ label: "Pièce d'identité", path: c.doc_id });
+                    if (c.doc_attestation) links.push({ label: "Attestation", path: c.doc_attestation });
+                    return links.length > 0 ? (
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        {links.map((l, i) => (
                           <a
-                            key={label}
-                            href={docUrls.get(p as string) ?? "#"}
+                            key={i}
+                            href={docUrls.get(l.path) ?? "#"}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="rounded-full bg-ipmd-light px-3 py-1.5 text-xs font-semibold text-ipmd-black ring-1 ring-black/10 transition-colors hover:ring-ipmd-red/40"
                           >
-                            📎 {label}
+                            📎 {l.label}
                           </a>
                         ))}
-                    </div>
-                  )}
+                      </div>
+                    ) : null;
+                  })()}
 
                   <CandidatureActions id={c.id} status={c.status} />
 

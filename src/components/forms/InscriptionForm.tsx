@@ -7,6 +7,7 @@ import { programs } from "@/data/programs";
 import { ActionButton } from "@/components/ui/Button";
 import { Field, inputBase } from "./FormField";
 import { PhoneField } from "./PhoneField";
+import { MultiFileField } from "./MultiFileField";
 import type { FormResult } from "@/types";
 
 const entryLevels = ["Bac", "Bac+1", "Bac+2", "Bac+3", "Bac+4", "Bac+5"];
@@ -132,8 +133,8 @@ export function InscriptionForm() {
               <option value="Autre">Autre</option>
             </select>
           </Field>
-          <Field label="Dernier diplôme obtenu" htmlFor="lastDiploma">
-            <select id="lastDiploma" name="lastDiploma" defaultValue="" className={inputBase}>
+          <Field label="Dernier diplôme obtenu" htmlFor="lastDiploma" required>
+            <select id="lastDiploma" name="lastDiploma" required defaultValue="" className={inputBase}>
               <option value="">— Sélectionner —</option>
               {diplomas.map((d) => (
                 <option key={d} value={d}>
@@ -150,21 +151,26 @@ export function InscriptionForm() {
 
         <fieldset className="rounded-2xl border border-black/10 p-4">
           <legend className="px-2 text-xs font-bold uppercase tracking-wider text-ipmd-red">
-            Pièces à joindre — facultatif
+            Pièces à joindre
           </legend>
           <p className="mb-3 text-xs text-black/50">
-            Tu peux les joindre maintenant ou les transmettre plus tard à la
-            scolarité. Aucun fichier n&apos;est obligatoire pour envoyer ta demande.
+            Le <strong>dernier diplôme</strong> et la <strong>pièce d&apos;identité</strong> sont
+            requis. Pour les bulletins, clique sur « + Ajouter » pour en joindre plusieurs.
           </p>
           <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="Dernier diplôme" htmlFor="docDiploma">
-              <input id="docDiploma" name="docDiploma" type="file" accept=".pdf,.jpg,.jpeg,.png" className={fileInput} />
+            <Field label="Dernier diplôme" htmlFor="docDiploma" required>
+              <input id="docDiploma" name="docDiploma" type="file" required accept=".pdf,.jpg,.jpeg,.png" className={fileInput} />
             </Field>
             <Field label="Bulletins / relevés de notes" htmlFor="docBulletins">
-              <input id="docBulletins" name="docBulletins" type="file" accept=".pdf,.jpg,.jpeg,.png" className={fileInput} />
+              <MultiFileField
+                name="docBulletins"
+                accept=".pdf,.jpg,.jpeg,.png"
+                className={fileInput}
+                addLabel="+ Ajouter un bulletin"
+              />
             </Field>
-            <Field label="Pièce d'identité / passeport / titre de séjour" htmlFor="docId">
-              <input id="docId" name="docId" type="file" accept=".pdf,.jpg,.jpeg,.png" className={fileInput} />
+            <Field label="Pièce d'identité / passeport / titre de séjour" htmlFor="docId" required>
+              <input id="docId" name="docId" type="file" required accept=".pdf,.jpg,.jpeg,.png" className={fileInput} />
             </Field>
             <Field label="Attestation de scolarité (si nécessaire)" htmlFor="docAttestation">
               <input id="docAttestation" name="docAttestation" type="file" accept=".pdf,.jpg,.jpeg,.png" className={fileInput} />
