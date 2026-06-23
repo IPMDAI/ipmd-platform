@@ -47,10 +47,19 @@ export default async function CandidaturesPage({
       )
       .order("created_at", { ascending: false }),
     supabase.from("classes").select("id, name").order("name"),
-    supabase.from("tuition_levels").select("level").order("sort_order"),
+    supabase.from("tuition_levels").select("level, amount").order("sort_order"),
   ]);
   const classes = (classRows ?? []).map((c) => ({ id: c.id, name: c.name }));
-  const levels = (levelRows ?? []).map((l) => ({ level: l.level }));
+  const levels = (levelRows ?? []).map((l) => ({
+    level: l.level,
+    amount: Number(l.amount ?? 0),
+  }));
+  const { data: settings } = await supabase
+    .from("finance_settings")
+    .select("registration_fee")
+    .eq("id", 1)
+    .maybeSingle();
+  const registrationFee = Number(settings?.registration_fee ?? 300000);
 
   const all = (rows ?? []).map((c) => ({ ...c, status: c.status ?? "nouveau" }));
 
@@ -176,6 +185,18 @@ export default async function CandidaturesPage({
                     )}
                   </div>
 
+                  {(c.last_diploma || c.last_education) && (
+                    <p className="mt-2 text-xs text-black/55">
+                      {c.last_diploma && (
+                        <>🎓 Dernier diplôme : <span className="font-semibold text-ipmd-black">{c.last_diploma}</span></>
+                      )}
+                      {c.last_diploma && c.last_education ? " · " : ""}
+                      {c.last_education && (
+                        <>📚 Dernière formation : <span className="font-semibold text-ipmd-black">{c.last_education}</span></>
+                      )}
+                    </p>
+                  )}
+
                   <div className="mt-3 flex flex-wrap gap-x-6 gap-y-1 text-sm">
                     <a
                       href={`mailto:${c.email}`}
@@ -243,6 +264,7 @@ export default async function CandidaturesPage({
                       defaultRole={c.desired_role || roleForUniverse(c.universe)}
                       classes={classes}
                       levels={levels}
+                      registrationFee={registrationFee}
                     />
                   )}
                 </li>

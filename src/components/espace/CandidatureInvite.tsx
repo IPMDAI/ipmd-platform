@@ -1,9 +1,10 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { inviteFromCandidature } from "@/lib/user-admin-actions";
 import { inputBase } from "@/components/forms/FormField";
 import { ROLE_OPTIONS } from "@/lib/dashboards";
+import { formatFCFA } from "@/lib/finance";
 import type { FormResult } from "@/types";
 
 export function CandidatureInvite({
@@ -11,17 +12,22 @@ export function CandidatureInvite({
   defaultRole,
   classes,
   levels = [],
+  registrationFee = 300000,
 }: {
   candidatureId: string;
   defaultRole: string;
   classes: { id: string; name: string }[];
-  levels?: { level: string }[];
+  levels?: { level: string; amount: number }[];
+  registrationFee?: number;
 }) {
   const bound = inviteFromCandidature.bind(null, candidatureId);
   const [state, action, pending] = useActionState<FormResult | null, FormData>(
     bound,
     null
   );
+  const [level, setLevel] = useState("");
+  const tuition = levels.find((l) => l.level === level)?.amount ?? 0;
+  const total = registrationFee + tuition;
 
   return (
     <form
@@ -50,13 +56,14 @@ export function CandidatureInvite({
           Niveau accepté (frais)
           <select
             name="level"
-            defaultValue=""
+            value={level}
+            onChange={(e) => setLevel(e.target.value)}
             className={`${inputBase} mt-1 py-1.5 text-sm`}
           >
             <option value="">—</option>
             {levels.map((l) => (
               <option key={l.level} value={l.level}>
-                {l.level}
+                {l.level} — {l.amount > 0 ? formatFCFA(l.amount) : "tarif à définir"}
               </option>
             ))}
           </select>
@@ -84,6 +91,26 @@ export function CandidatureInvite({
           {pending ? "Envoi…" : "✉️ Créer & inviter"}
         </button>
       </div>
+
+      {/* Récap des frais (mis à jour selon le niveau choisi). */}
+      <div className="mt-3 flex flex-wrap gap-2 text-[11px] font-semibold">
+        <span className="rounded-full bg-white px-2.5 py-1 text-black/60 ring-1 ring-black/10">
+          Inscription : {formatFCFA(registrationFee)}
+        </span>
+        <span className="rounded-full bg-white px-2.5 py-1 text-black/60 ring-1 ring-black/10">
+          Scolarité : {level ? formatFCFA(tuition) : "—"}
+        </span>
+        <span className="rounded-full bg-ipmd-black px-2.5 py-1 text-white">
+          Total : {level ? formatFCFA(total) : "—"}
+        </span>
+      </div>
+      {level && tuition === 0 && (
+        <p className="mt-1 text-[11px] text-amber-600">
+          ⚠️ Tarif de scolarité non défini pour ce niveau — règle-le dans Finance →
+          Paramètres financiers, sinon la proforma n&apos;affichera que l&apos;inscription.
+        </p>
+      )}
+
       {state && (
         <p
           className={`mt-2 text-sm font-medium ${
