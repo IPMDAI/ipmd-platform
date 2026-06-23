@@ -6,6 +6,7 @@ import { Container } from "@/components/ui/Container";
 import { NewAssignmentForm } from "@/components/espace/NewAssignmentForm";
 import { NewSessionForm } from "@/components/espace/NewSessionForm";
 import { EnrollStudentForm } from "@/components/espace/EnrollStudentForm";
+import { CourseMetaForm } from "@/components/espace/CourseMetaForm";
 import { removeEnrollment } from "@/lib/teaching-actions";
 import { DAY_LABELS, formatTime } from "@/lib/schedule";
 
@@ -31,7 +32,7 @@ export default async function CourseDetailPage({
 
   const { data: course } = await supabase
     .from("courses")
-    .select("id, title, field, description, teacher_id")
+    .select("id, title, field, description, teacher_id, ue_number, ue_name, ects")
     .eq("id", id)
     .single();
 
@@ -124,6 +125,19 @@ export default async function CourseDetailPage({
           {course.description && (
             <p className="mt-1 text-sm text-black/55">{course.description}</p>
           )}
+
+          <details className="mt-3">
+            <summary className="cursor-pointer text-sm font-semibold text-ipmd-red">
+              🎓 UE & ECTS (bulletin officiel)
+              {course.ects ? ` — UE ${course.ue_number ?? "?"} · ${course.ects} ECTS` : ""}
+            </summary>
+            <CourseMetaForm
+              courseId={course.id}
+              ueNumber={course.ue_number ?? null}
+              ueName={course.ue_name ?? null}
+              ects={Number(course.ects ?? 0)}
+            />
+          </details>{" "}
 
           <div className="mt-4 flex flex-wrap gap-3">
             <Link

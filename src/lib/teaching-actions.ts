@@ -231,6 +231,43 @@ export async function addGrade(
   return { ok: true, message: "Note enregistrée." };
 }
 
+/** Définit l'UE (numéro + nom) et les crédits ECTS d'un cours. */
+export async function setCourseMeta(
+  courseId: string,
+  _prev: FormResult | null,
+  formData: FormData
+): Promise<FormResult> {
+  const ctx = await getTeacher();
+  if (!ctx) return { ok: false, message: "Action réservée aux enseignants." };
+
+  const { data: course } = await ctx.supabase
+    .from("courses")
+    .select("id, teacher_id")
+    .eq("id", courseId)
+    .single();
+  if (!course || course.teacher_id !== ctx.userId) {
+    return { ok: false, message: "Cours introuvable." };
+  }
+
+  const ueNumRaw = str(formData, "ue_number");
+  const ueNumber = ueNumRaw ? Number.parseInt(ueNumRaw, 10) : null;
+  const ectsRaw = str(formData, "ects").replace(",", ".");
+  const ects = ectsRaw ? Number.parseFloat(ectsRaw) : 0;
+
+  const { error } = await ctx.supabase
+    .from("courses")
+    .update({
+      ue_number: ueNumber && !Number.isNaN(ueNumber) ? ueNumber : null,
+      ue_name: str(formData, "ue_name") || null,
+      ects: !Number.isNaN(ects) && ects >= 0 ? ects : 0,
+    })
+    .eq("id", courseId);
+  if (error) return { ok: false, message: error.message };
+
+  revalidatePath(`/espace/cours/${courseId}`);
+  return { ok: true, message: "UE & ECTS enregistrés." };
+}
+
 /** Saisie groupée : une même évaluation notée pour plusieurs étudiants. */
 export async function addGradesBatch(
   courseId: string,
