@@ -8,6 +8,7 @@ import { GradeValidateButton } from "@/components/espace/GradeValidateButton";
 import { signDoc, verifyUrl } from "@/lib/doc-verify";
 import { matricule, academicYear } from "@/lib/documents";
 import { QrCode } from "@/components/espace/documents/QrCode";
+import { Cachet } from "@/components/espace/documents/Cachet";
 
 type Grade = {
   id: string;
@@ -362,7 +363,9 @@ export async function BulletinView({
               )}
               <div className="text-center text-[12px]">
                 <p className="font-bold text-ipmd-black">L&apos;Administrateur Général</p>
-                <div className="h-12" />
+                <div className="my-1 flex h-16 items-center justify-center">
+                  <Cachet size={96} />
+                </div>
                 <p className="font-bold text-ipmd-black">POODA ETTIEN AUBIN</p>
               </div>
             </div>
