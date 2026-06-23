@@ -87,6 +87,10 @@ export function SetFinanceForm({
         <input type="checkbox" name="lump_sum" defaultChecked={discountApplied} className="h-4 w-4 rounded border-black/20" />
         Paiement unique → réduction de 15% sur la scolarité
       </label>
+      <label className="flex items-center gap-2 text-sm font-medium text-black/70">
+        <input type="checkbox" name="send_proforma" defaultChecked className="h-4 w-4 rounded border-black/20" />
+        📧 Envoyer la facture proforma à l&apos;étudiant / parent
+      </label>
       <ActionButton type="submit" disabled={pending}>
         {pending ? "…" : "Enregistrer les frais"}
       </ActionButton>

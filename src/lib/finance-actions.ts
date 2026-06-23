@@ -103,9 +103,22 @@ export async function setStudentFinance(
   );
   if (error) return { ok: false, message: error.message };
 
+  // Proforma auto à l'enregistrement des frais (inscription).
+  let pf = 0;
+  if (formData.get("send_proforma") === "on" && totalDue > 0) {
+    try {
+      pf = await sendProformaEmail(ctx.supabase, studentId);
+    } catch {
+      // best-effort
+    }
+  }
+
   revalidatePath(`/espace/finance/${studentId}`);
   revalidatePath("/espace/finance");
-  return { ok: true, message: "Frais enregistrés." };
+  return {
+    ok: true,
+    message: pf > 0 ? `Frais enregistrés — proforma envoyée (${pf}).` : "Frais enregistrés.",
+  };
 }
 
 /** Met à jour le statut financier et l'état d'accès plateforme. */
@@ -210,20 +223,16 @@ export async function addPayment(
   };
 }
 
-/** Envoie la facture proforma par email à l'étudiant et ses parents. */
-export async function emailProforma(
-  studentId: string,
-  _prev: FormResult | null,
-  _formData: FormData
-): Promise<FormResult> {
-  const ctx = await getStaff();
-  if (!ctx) return { ok: false, message: "Action réservée à la Scolarité." };
-  if (!canSendEmail) return { ok: false, message: "Email non configuré (RESEND_API_KEY)." };
+/** Construit et envoie la facture proforma. Best-effort, renvoie le nb d'envois. */
+async function sendProformaEmail(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  studentId: string
+): Promise<number> {
+  if (!supabase || !canSendEmail) return 0;
+  const { name, emails } = await recipientsFor(supabase, studentId);
+  if (emails.length === 0) return 0;
 
-  const { name, emails } = await recipientsFor(ctx.supabase, studentId);
-  if (emails.length === 0) return { ok: false, message: "Aucune adresse email connue." };
-
-  const { data: fin2 } = await ctx.supabase
+  const { data: fin2 } = await supabase
     .from("student_finance")
     .select("registration_fee, tuition_due, discount_rate, level, academic_year")
     .eq("student_id", studentId)
@@ -246,7 +255,23 @@ export async function emailProforma(
      <p style="margin-top:16px"><a href="${link}" style="display:inline-block;background:#0b0b0d;color:#fff;text-decoration:none;padding:10px 18px;border-radius:9999px;font-weight:600">Voir / imprimer la proforma</a></p>
      <p style="color:#9ca3af;font-size:12px;margin-top:8px">Document non contractuel — scolarite@ipmd.pro</p>`
   );
-  const sent = await sendScolariteEmail(emails, "IPMD — Facture proforma", html);
+  return sendScolariteEmail(emails, "IPMD — Facture proforma", html);
+}
+
+/** Envoie la facture proforma par email à l'étudiant et ses parents (à la demande). */
+export async function emailProforma(
+  studentId: string,
+  _prev: FormResult | null,
+  _formData: FormData
+): Promise<FormResult> {
+  const ctx = await getStaff();
+  if (!ctx) return { ok: false, message: "Action réservée à la Scolarité." };
+  if (!canSendEmail) return { ok: false, message: "Email non configuré (RESEND_API_KEY)." };
+
+  const { emails } = await recipientsFor(ctx.supabase, studentId);
+  if (emails.length === 0) return { ok: false, message: "Aucune adresse email connue." };
+
+  const sent = await sendProformaEmail(ctx.supabase, studentId);
   return sent > 0
     ? { ok: true, message: `Proforma envoyée (${sent} destinataire·s).` }
     : { ok: false, message: "Échec de l'envoi." };
