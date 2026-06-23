@@ -3,6 +3,9 @@ import { createClient } from "@/lib/supabase/server";
 import { averageValue, averageOn20, mention } from "@/lib/grades";
 import { SEMESTERS } from "@/lib/referentiel";
 import { GradeValidateButton } from "@/components/espace/GradeValidateButton";
+import { signDoc, verifyUrl } from "@/lib/doc-verify";
+import { matricule } from "@/lib/documents";
+import { QrCode } from "@/components/espace/documents/QrCode";
 
 type Grade = {
   id: string;
@@ -79,6 +82,16 @@ export async function BulletinView({
   }
   const overall = averageValue(display);
 
+  // Assiduité (système d'appel par séance).
+  const { data: attRows } = await supabase
+    .from("session_attendance")
+    .select("present")
+    .eq("student_id", studentId);
+  const attTotal = (attRows ?? []).length;
+  const attAbsent = (attRows ?? []).filter((a) => !a.present).length;
+  const attRate =
+    attTotal > 0 ? Math.round(((attTotal - attAbsent) / attTotal) * 100) : null;
+
   const tab = (label: string, href: string, on: boolean) => (
     <Link
       href={href}
@@ -94,6 +107,20 @@ export async function BulletinView({
 
   // État « en attente » pour étudiant / parent.
   const awaiting = !manage && scoped.length > 0 && pending.length > 0;
+
+  // Bulletin officiel (toutes notes validées) → vérifiable par QR.
+  const official = !awaiting && pending.length === 0 && display.length > 0;
+  const verifyHref = official
+    ? verifyUrl(
+        signDoc({
+          t: "bulletin",
+          m: matricule(studentId),
+          n: studentName,
+          y: active ?? "Toute l'année",
+          a: overall ?? undefined,
+        })
+      )
+    : null;
 
   return (
     <div>
@@ -202,7 +229,16 @@ export async function BulletinView({
               ))}
             </div>
 
-            <div className="mt-6 flex flex-wrap items-center justify-between gap-3 rounded-xl bg-ipmd-black px-5 py-4 text-white">
+            {attRate !== null && (
+              <div className="mt-4 flex items-center justify-between rounded-xl bg-ipmd-light px-5 py-3 text-sm">
+                <span className="font-semibold text-black/60">Assiduité</span>
+                <span className="font-bold text-ipmd-black">
+                  {attRate}% de présence · {attAbsent} absence{attAbsent > 1 ? "s" : ""}
+                </span>
+              </div>
+            )}
+
+            <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-xl bg-ipmd-black px-5 py-4 text-white">
               <span className="text-sm font-semibold uppercase tracking-wide text-white/70">
                 Moyenne {active ? "du semestre" : "générale"}
                 {manage && pending.length > 0 ? " (provisoire)" : ""}
@@ -214,6 +250,21 @@ export async function BulletinView({
                 </span>
               </span>
             </div>
+
+            {verifyHref && (
+              <div className="mt-6 flex items-center gap-3 border-t border-black/10 pt-4 print:break-inside-avoid">
+                <span className="shrink-0 rounded-lg bg-white p-1 ring-1 ring-black/10">
+                  <QrCode value={verifyHref} size={64} />
+                </span>
+                <div className="text-[11px] text-black/45">
+                  <p className="font-semibold text-ipmd-black">Bulletin vérifiable</p>
+                  <p>
+                    Scannez ce QR · Signé numériquement par l&apos;IPMD ·
+                    ipmd.pro/verifier
+                  </p>
+                </div>
+              </div>
+            )}
           </>
         )}
       </div>

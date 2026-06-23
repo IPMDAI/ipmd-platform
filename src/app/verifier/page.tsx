@@ -16,6 +16,7 @@ const TYPE_LABELS: Record<string, string> = {
   carte: "Carte étudiant",
   recu: "Reçu de paiement",
   contrat: "Contrat de vacataire",
+  bulletin: "Bulletin de notes",
 };
 
 export default async function VerifierPage({
@@ -80,6 +81,9 @@ export default async function VerifierPage({
                         : "Validé"
                     }
                   />
+                )}
+                {payload.t === "bulletin" && payload.a != null && (
+                  <Row label="Moyenne générale" value={`${payload.a}/20`} />
                 )}
                 {payload.t === "recu" && (
                   <>
