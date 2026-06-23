@@ -87,21 +87,31 @@ export async function submitInscription(
     };
   }
 
-  const { data: created, error } = await supabase
-    .from("inscription_requests")
-    .insert(payload)
-    .select("id")
-    .single();
-  if (error || !created) {
-    return {
-      ok: false,
-      message: "Une erreur est survenue. Merci de réessayer.",
-    };
+  // Insertion. L'utilisateur anonyme ne peut pas relire la ligne (RLS),
+  // donc on récupère l'id via le client service-role quand il est disponible
+  // (nécessaire pour rattacher les pièces jointes). Sinon insertion simple.
+  const admin = createAdminClient();
+  let newId: string | null = null;
+
+  if (admin) {
+    const { data: created, error } = await admin
+      .from("inscription_requests")
+      .insert(payload)
+      .select("id")
+      .single();
+    if (error || !created) {
+      return { ok: false, message: "Une erreur est survenue. Merci de réessayer." };
+    }
+    newId = created.id;
+  } else {
+    const { error } = await supabase.from("inscription_requests").insert(payload);
+    if (error) {
+      return { ok: false, message: "Une erreur est survenue. Merci de réessayer." };
+    }
   }
 
   // Pièces jointes : upload via service-role vers le bucket privé (best-effort).
-  const admin = createAdminClient();
-  if (admin) {
+  if (admin && newId) {
     const MAX = 8 * 1024 * 1024;
     const docs: Record<string, string> = {};
     const ext = (f: File) =>
@@ -122,7 +132,7 @@ export async function submitInscription(
     for (const { field, key, col } of single) {
       const f = formData.get(field);
       if (f instanceof File && f.size > 0 && f.size <= MAX) {
-        const path = `${created.id}/${key}.${ext(f)}`;
+        const path = `${newId}/${key}.${ext(f)}`;
         if (await put(path, f)) docs[col] = path;
       }
     }
@@ -134,13 +144,13 @@ export async function submitInscription(
     const bulletinPaths: string[] = [];
     for (let i = 0; i < bulletins.length; i++) {
       const f = bulletins[i];
-      const path = `${created.id}/bulletins-${i + 1}.${ext(f)}`;
+      const path = `${newId}/bulletins-${i + 1}.${ext(f)}`;
       if (await put(path, f)) bulletinPaths.push(path);
     }
     if (bulletinPaths.length > 0) docs.doc_bulletins = bulletinPaths.join(",");
 
     if (Object.keys(docs).length > 0) {
-      await admin.from("inscription_requests").update(docs).eq("id", created.id);
+      await admin.from("inscription_requests").update(docs).eq("id", newId);
     }
   }
 
