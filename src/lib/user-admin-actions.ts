@@ -4,6 +4,13 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient, canAdminUsers } from "@/lib/supabase/admin";
 import { VALID_ROLES } from "@/lib/dashboards";
+import { formatFCFA } from "@/lib/finance";
+import {
+  canSendEmail,
+  emailDocument,
+  buildRows,
+  sendScolariteEmail,
+} from "@/lib/email";
 import type { FormResult } from "@/types";
 
 async function requireSuperAdmin() {
@@ -110,7 +117,7 @@ export async function inviteFromCandidature(
 
   const { data: cand } = await ctx.supabase
     .from("inscription_requests")
-    .select("full_name, email, universe")
+    .select("full_name, email, universe, program_interest, entry_level")
     .eq("id", candidatureId)
     .single();
   if (!cand) return { ok: false, message: "Candidature introuvable." };
@@ -154,7 +161,65 @@ export async function inviteFromCandidature(
       );
   }
 
-  // 4. La candidature passe « inscrit ».
+  // 4. Frais pré-remplis selon le niveau accepté + facture proforma.
+  const level = str(formData, "level");
+  let emailed = 0;
+  if (role === "etudiant") {
+    const [{ data: settings }, lvlRes] = await Promise.all([
+      ctx.supabase
+        .from("finance_settings")
+        .select("registration_fee, academic_year")
+        .eq("id", 1)
+        .maybeSingle(),
+      level
+        ? ctx.supabase.from("tuition_levels").select("amount").eq("level", level).maybeSingle()
+        : Promise.resolve({ data: null }),
+    ]);
+    const registrationFee = Number(settings?.registration_fee ?? 300000);
+    const tuitionDue = Number(lvlRes?.data?.amount ?? 0);
+    const totalDue = registrationFee + tuitionDue;
+
+    await ctx.supabase.from("student_finance").upsert(
+      {
+        student_id: newId,
+        registration_fee: registrationFee,
+        tuition_due: tuitionDue,
+        discount_rate: 0,
+        level: level || null,
+        academic_year: settings?.academic_year ?? null,
+        total_due: totalDue,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: "student_id" }
+    );
+
+    // Email : lettre d'acceptation + facture proforma (best-effort).
+    try {
+      if (canSendEmail) {
+        const rows = buildRows([
+          ["Formation", cand.program_interest || "—"],
+          ["Niveau accepté", level || cand.entry_level || "—"],
+          ["Frais d'inscription", formatFCFA(registrationFee)],
+          ["Frais de scolarité", formatFCFA(tuitionDue)],
+          ["Total à régler", formatFCFA(totalDue)],
+        ]);
+        const html = emailDocument(
+          "Votre dossier est accepté 🎉",
+          `<p style="margin:0 0 12px">Bonjour ${fullName || ""},</p>
+           <p style="margin:0 0 12px">Félicitations, votre dossier de candidature à l'IPMD a été <strong>accepté</strong>. Voici votre facture proforma :</p>
+           <table style="width:100%;border-collapse:collapse;font-size:14px">${rows}</table>
+           <p style="margin:16px 0 0">Veuillez procéder à votre <strong>inscription définitive</strong> en réglant les frais d'inscription de <strong>${formatFCFA(registrationFee)}</strong> via Wave, versement / virement BACI ou AFG, ou chèque. Après le paiement, transmettez votre preuve de paiement au service de la scolarité pour validation.</p>
+           <p style="margin:12px 0 0">Un email pour définir votre mot de passe vous a également été envoyé.</p>
+           <p style="color:#9ca3af;font-size:12px;margin-top:12px">scolarite@ipmd.pro · ipmd.pro</p>`
+        );
+        emailed = await sendScolariteEmail([email], "IPMD — Dossier accepté & inscription", html);
+      }
+    } catch {
+      // best-effort
+    }
+  }
+
+  // 5. La candidature passe « inscrit » (compte créé).
   await ctx.supabase
     .from("inscription_requests")
     .update({ status: "inscrit" })
@@ -162,8 +227,12 @@ export async function inviteFromCandidature(
 
   revalidatePath("/espace/candidatures");
   revalidatePath("/espace/utilisateurs");
+  revalidatePath("/espace/finance");
   return {
     ok: true,
-    message: `Invitation envoyée à ${email}. Le candidat va définir son mot de passe.`,
+    message:
+      `Invitation envoyée à ${email}.` +
+      (emailed > 0 ? " Lettre d'acceptation + proforma envoyées." : "") +
+      " Le candidat va définir son mot de passe.",
   };
 }

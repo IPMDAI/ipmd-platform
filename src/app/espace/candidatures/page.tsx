@@ -38,7 +38,7 @@ export default async function CandidaturesPage({
   const { supabase, role } = await requireAdmin();
   const isSuper = role === "super_admin";
 
-  const [{ data: rows }, { data: classRows }] = await Promise.all([
+  const [{ data: rows }, { data: classRows }, { data: levelRows }] = await Promise.all([
     supabase
       .from("inscription_requests")
       .select(
@@ -46,8 +46,10 @@ export default async function CandidaturesPage({
       )
       .order("created_at", { ascending: false }),
     supabase.from("classes").select("id, name").order("name"),
+    supabase.from("tuition_levels").select("level").order("sort_order"),
   ]);
   const classes = (classRows ?? []).map((c) => ({ id: c.id, name: c.name }));
+  const levels = (levelRows ?? []).map((l) => ({ level: l.level }));
 
   const all = (rows ?? []).map((c) => ({ ...c, status: c.status ?? "nouveau" }));
 
@@ -180,6 +182,7 @@ export default async function CandidaturesPage({
                       candidatureId={c.id}
                       defaultRole={c.desired_role || roleForUniverse(c.universe)}
                       classes={classes}
+                      levels={levels}
                     />
                   )}
                 </li>

@@ -10,10 +10,12 @@ export function CandidatureInvite({
   candidatureId,
   defaultRole,
   classes,
+  levels = [],
 }: {
   candidatureId: string;
   defaultRole: string;
   classes: { id: string; name: string }[];
+  levels?: { level: string }[];
 }) {
   const bound = inviteFromCandidature.bind(null, candidatureId);
   const [state, action, pending] = useActionState<FormResult | null, FormData>(
@@ -40,6 +42,21 @@ export function CandidatureInvite({
             {ROLE_OPTIONS.map((r) => (
               <option key={r.value} value={r.value}>
                 {r.label}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="text-xs font-semibold text-black/55">
+          Niveau accepté (frais)
+          <select
+            name="level"
+            defaultValue=""
+            className={`${inputBase} mt-1 py-1.5 text-sm`}
+          >
+            <option value="">—</option>
+            {levels.map((l) => (
+              <option key={l.level} value={l.level}>
+                {l.level}
               </option>
             ))}
           </select>
