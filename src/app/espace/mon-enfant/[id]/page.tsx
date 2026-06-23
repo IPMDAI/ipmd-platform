@@ -166,6 +166,12 @@ export default async function EnfantDetailPage({
               📄 Voir le bulletin
             </Link>
             <Link
+              href={`/espace/releve-notes/${id}`}
+              className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-semibold text-ipmd-black ring-1 ring-black/10 transition-colors hover:ring-ipmd-red/40"
+            >
+              📄 Relevé de notes
+            </Link>
+            <Link
               href={`/espace/documents?student=${id}`}
               className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-semibold text-ipmd-black ring-1 ring-black/10 transition-colors hover:ring-ipmd-red/40"
             >
