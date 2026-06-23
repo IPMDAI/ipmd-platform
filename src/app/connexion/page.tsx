@@ -65,6 +65,14 @@ export default function ConnexionPage() {
                 {loginState.message}
               </p>
             )}
+            <p className="text-center text-sm">
+              <Link
+                href="/mot-de-passe-oublie"
+                className="font-semibold text-ipmd-red hover:underline"
+              >
+                Mot de passe oublié ?
+              </Link>
+            </p>
           </form>
 
           <p className="mt-6 text-center text-sm text-black/55">

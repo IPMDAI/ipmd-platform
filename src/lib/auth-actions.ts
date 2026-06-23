@@ -81,6 +81,34 @@ export async function signIn(
   redirect("/espace");
 }
 
+/** Envoi d'un email de réinitialisation de mot de passe. */
+export async function requestPasswordReset(
+  _prev: FormResult | null,
+  formData: FormData
+): Promise<FormResult> {
+  const supabase = await createClient();
+  if (!supabase) {
+    return { ok: false, message: "Service indisponible pour le moment." };
+  }
+  const email = field(formData, "email");
+  if (!email) return { ok: false, message: "Merci d'indiquer votre email." };
+
+  const site = (process.env.NEXT_PUBLIC_SITE_URL ?? "https://ipmd.pro").replace(
+    /\/$/,
+    ""
+  );
+  await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: `${site}/definir-mot-de-passe`,
+  });
+
+  // Réponse générique : on ne révèle pas si l'email existe ou non.
+  return {
+    ok: true,
+    message:
+      "Si un compte existe avec cet email, un lien de réinitialisation vient d'être envoyé. Vérifiez votre boîte mail (et les spams).",
+  };
+}
+
 /** Déconnexion. */
 export async function signOut() {
   const supabase = await createClient();
