@@ -26,7 +26,11 @@ export async function updateMyProfile(
 
   const { error } = await supabase
     .from("profiles")
-    .update({ full_name: fullName })
+    .update({
+      full_name: fullName,
+      birth_date: str(formData, "birth_date") || null,
+      birth_place: str(formData, "birth_place") || null,
+    })
     .eq("id", user.id);
   if (error) return { ok: false, message: error.message };
 

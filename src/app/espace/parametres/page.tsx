@@ -14,7 +14,7 @@ export default async function ParametresPage() {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("full_name, email, role")
+    .select("full_name, email, role, birth_date, birth_place")
     .eq("id", userId)
     .single();
 
@@ -42,6 +42,8 @@ export default async function ParametresPage() {
               fullName={profile?.full_name ?? ""}
               email={profile?.email ?? ""}
               roleLabel={roleLabels[role] ?? role}
+              birthDate={profile?.birth_date ?? null}
+              birthPlace={profile?.birth_place ?? null}
             />
           </div>
         </div>

@@ -23,10 +23,14 @@ export function ProfileSettings({
   fullName,
   email,
   roleLabel,
+  birthDate,
+  birthPlace,
 }: {
   fullName: string;
   email: string;
   roleLabel: string;
+  birthDate?: string | null;
+  birthPlace?: string | null;
 }) {
   const [nameState, nameAction, namePending] = useActionState<
     FormResult | null,
@@ -74,6 +78,30 @@ export function ProfileSettings({
             className={inputBase}
           />
         </Field>
+
+        <div className="grid gap-3 sm:grid-cols-2">
+          <Field label="Date de naissance" htmlFor="p-birth">
+            <input
+              id="p-birth"
+              name="birth_date"
+              type="date"
+              defaultValue={birthDate ?? ""}
+              className={inputBase}
+            />
+          </Field>
+          <Field label="Lieu de naissance" htmlFor="p-birthplace">
+            <input
+              id="p-birthplace"
+              name="birth_place"
+              defaultValue={birthPlace ?? ""}
+              placeholder="Ex. Cocody (Côte d'Ivoire)"
+              className={inputBase}
+            />
+          </Field>
+        </div>
+        <p className="text-xs text-black/45">
+          Utilisés sur ton bulletin et tes documents officiels.
+        </p>
 
         <ActionButton type="submit" disabled={namePending}>
           {namePending ? "Enregistrement…" : "Enregistrer"}
