@@ -201,8 +201,9 @@ export default async function EspacePage() {
           )}
 
           {/* Pilotage intelligent (admins) : conflits + synthèse IA */}
-          {isAdmin && (
+          {isStaff && (
             <div className="mt-8 grid gap-5 lg:grid-cols-2">
+              {isAdmin && (
               <div className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-black/5">
                 <div className="flex items-center justify-between gap-3">
                   <div className="flex items-center gap-2">
@@ -250,6 +251,7 @@ export default async function EspacePage() {
                   </ul>
                 )}
               </div>
+              )}
 
               <DailyBriefing />
             </div>
