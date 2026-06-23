@@ -152,6 +152,8 @@ export interface ContactMessage {
 export interface FormResult {
   ok: boolean;
   message: string;
+  /** Code optionnel pour distinguer certains cas (ex. « duplicate »). */
+  code?: string;
 }
 
 // ──────────────────────────────────────────────────────────────

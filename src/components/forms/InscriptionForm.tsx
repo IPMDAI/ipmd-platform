@@ -17,6 +17,7 @@ export function InscriptionForm() {
   );
 
   return (
+    <>
     <form action={formAction} className="space-y-5">
       <div className="grid gap-5 sm:grid-cols-2">
         <Field label="Nom et prénom" htmlFor="fullName" required>
@@ -91,6 +92,27 @@ export function InscriptionForm() {
         />
       </Field>
 
+      <div className="grid gap-5 sm:grid-cols-2">
+        <Field label="Dernière formation suivie" htmlFor="lastEducation">
+          <input
+            id="lastEducation"
+            name="lastEducation"
+            type="text"
+            placeholder="Ex. Licence 2 informatique"
+            className={inputBase}
+          />
+        </Field>
+        <Field label="Dernier diplôme obtenu" htmlFor="lastDiploma">
+          <input
+            id="lastDiploma"
+            name="lastDiploma"
+            type="text"
+            placeholder="Ex. Baccalauréat, BTS…"
+            className={inputBase}
+          />
+        </Field>
+      </div>
+
       <Field label="Message (optionnel)" htmlFor="message">
         <textarea
           id="message"
@@ -105,11 +127,11 @@ export function InscriptionForm() {
         <ActionButton type="submit" size="lg" disabled={pending}>
           {pending ? "Envoi en cours…" : "Envoyer ma demande"}
         </ActionButton>
-        {state && (
+        {state && !state.ok && (
           <p
             role="status"
             className={`text-sm font-medium ${
-              state.ok ? "text-green-600" : "text-ipmd-red"
+              state.code === "duplicate" ? "text-amber-600" : "text-ipmd-red"
             }`}
           >
             {state.message}
@@ -117,5 +139,26 @@ export function InscriptionForm() {
         )}
       </div>
     </form>
+
+    {state?.ok && (
+      <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 p-4">
+        <div className="max-w-md rounded-2xl bg-white p-7 text-center shadow-2xl">
+          <div className="text-4xl">🎉</div>
+          <h3 className="mt-3 text-xl font-extrabold text-ipmd-black">
+            Demande reçue !
+          </h3>
+          <p className="mt-2 text-sm leading-relaxed text-black/70">
+            {state.message}
+          </p>
+          <a
+            href="/"
+            className="mt-6 inline-block rounded-full bg-ipmd-red px-6 py-2.5 text-sm font-semibold text-white transition-opacity hover:opacity-90"
+          >
+            Retour à l&apos;accueil
+          </a>
+        </div>
+      </div>
+    )}
+    </>
   );
 }

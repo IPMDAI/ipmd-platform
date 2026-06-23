@@ -43,6 +43,8 @@ export async function submitInscription(
       )
         ? getString(formData, "profile")
         : null,
+    last_education: getString(formData, "lastEducation") || null,
+    last_diploma: getString(formData, "lastDiploma") || null,
     message: getString(formData, "message") || null,
   };
 
@@ -64,6 +66,20 @@ export async function submitInscription(
   const supabase = await createClient();
   if (!supabase) {
     return { ok: false, message: "Service indisponible. Réessayez plus tard." };
+  }
+
+  // Anti-doublon : une demande non traitée existe déjà pour cet email/téléphone ?
+  const { data: pending } = await supabase.rpc("has_pending_inscription", {
+    p_email: payload.email,
+    p_phone: payload.phone,
+  });
+  if (pending === true) {
+    return {
+      ok: false,
+      code: "duplicate",
+      message:
+        "Votre demande d'inscription a déjà été enregistrée. Elle est actuellement en cours d'étude. Vous recevrez une réponse dans un délai de 24 heures.",
+    };
   }
 
   const { error } = await supabase.from("inscription_requests").insert(payload);
@@ -94,7 +110,8 @@ export async function submitInscription(
 
   return {
     ok: true,
-    message: "Votre demande a bien été envoyée. Nous vous recontactons vite !",
+    message:
+      "Félicitations, votre demande d'inscription a bien été reçue. Votre dossier sera analysé par notre équipe et vous recevrez une réponse dans un délai de 24 heures.",
   };
 }
 
