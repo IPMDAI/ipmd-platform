@@ -46,13 +46,18 @@ export function PhoneField({
   const [code, setCode] = useState("+225");
   const [number, setNumber] = useState("");
 
+  // Indicatif : on n'utilise PAS inputBase (qui force w-full) pour laisser
+  // de la place au champ numéro à côté.
+  const selectClass =
+    "w-[104px] shrink-0 rounded-xl border border-black/10 bg-white px-2 py-3 text-sm text-ipmd-black shadow-sm focus:border-ipmd-red focus:outline-none focus:ring-2 focus:ring-ipmd-red/20";
+
   return (
     <div className="flex gap-2">
       <select
         value={code}
         onChange={(e) => setCode(e.target.value)}
         aria-label="Indicatif pays"
-        className={`${inputBase} w-24 shrink-0`}
+        className={selectClass}
       >
         {COUNTRY_CODES.map((c) => (
           <option key={c.code} value={c.code} title={c.name}>
