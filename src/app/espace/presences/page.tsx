@@ -8,10 +8,11 @@ export const metadata: Metadata = {
 };
 
 function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString("fr-FR", {
+  return new Date(iso + "T00:00:00Z").toLocaleDateString("fr-FR", {
     day: "2-digit",
     month: "short",
     year: "numeric",
+    timeZone: "UTC",
   });
 }
 
@@ -24,50 +25,46 @@ function rateClass(rate: number): string {
 export default async function PresencesPage() {
   const { supabase } = await requireAdmin();
 
-  const [{ data: att }, { data: lessons }, { data: courses }] = await Promise.all([
-    supabase.from("attendance").select("lesson_id, student_id, present"),
-    supabase.from("course_lessons").select("id, course_id, lesson_date, theme"),
-    supabase.from("courses").select("id, title"),
+  // Nouveau système : appel par séance datée.
+  const [{ data: att }, { data: sessions }] = await Promise.all([
+    supabase.from("session_attendance").select("session_id, student_id, present"),
+    supabase.from("course_sessions").select("id, subject, session_date"),
   ]);
 
   const marks = att ?? [];
-  const lessonById = new Map(
-    (lessons ?? []).map((l) => [l.id, l])
-  );
-  const courseTitle = new Map((courses ?? []).map((c) => [c.id, c.title]));
+  const sessionById = new Map((sessions ?? []).map((s) => [s.id, s]));
 
   const total = marks.length;
   const present = marks.filter((m) => m.present).length;
   const absent = total - present;
   const globalRate = total > 0 ? Math.round((present / total) * 100) : null;
 
-  // Stats par cours.
-  type CourseStat = { id: string; title: string; lessons: number; marks: number; present: number };
-  const byCourse = new Map<string, CourseStat>();
-  const lessonsPerCourse = new Map<string, Set<string>>();
-  for (const l of lessons ?? []) {
-    const set = lessonsPerCourse.get(l.course_id) ?? new Set<string>();
-    set.add(l.id);
-    lessonsPerCourse.set(l.course_id, set);
+  // Stats par module (subject).
+  type ModuleStat = { subject: string; sessions: number; marks: number; present: number };
+  const sessionsPerModule = new Map<string, Set<string>>();
+  for (const s of sessions ?? []) {
+    const set = sessionsPerModule.get(s.subject) ?? new Set<string>();
+    set.add(s.id);
+    sessionsPerModule.set(s.subject, set);
   }
+  const byModule = new Map<string, ModuleStat>();
   for (const m of marks) {
-    const lesson = lessonById.get(m.lesson_id);
-    if (!lesson) continue;
-    const cid = lesson.course_id;
+    const sess = sessionById.get(m.session_id);
+    if (!sess) continue;
+    const key = sess.subject;
     const cur =
-      byCourse.get(cid) ??
+      byModule.get(key) ??
       {
-        id: cid,
-        title: courseTitle.get(cid) ?? "Cours",
-        lessons: lessonsPerCourse.get(cid)?.size ?? 0,
+        subject: key,
+        sessions: sessionsPerModule.get(key)?.size ?? 0,
         marks: 0,
         present: 0,
       };
     cur.marks += 1;
     if (m.present) cur.present += 1;
-    byCourse.set(cid, cur);
+    byModule.set(key, cur);
   }
-  const courseStats = [...byCourse.values()].sort((a, b) => b.marks - a.marks);
+  const moduleStats = [...byModule.values()].sort((a, b) => b.marks - a.marks);
 
   // Absences récentes.
   const absences = marks.filter((m) => !m.present);
@@ -83,11 +80,11 @@ export default async function PresencesPage() {
   }
   const recentAbsences = absences
     .map((a) => {
-      const lesson = lessonById.get(a.lesson_id);
+      const sess = sessionById.get(a.session_id);
       return {
         student: studentName.get(a.student_id) ?? "—",
-        course: lesson ? courseTitle.get(lesson.course_id) ?? "Cours" : "Cours",
-        date: lesson?.lesson_date ?? "",
+        module: sess?.subject ?? "Module",
+        date: sess?.session_date ?? "",
       };
     })
     .filter((a) => a.date)
@@ -119,13 +116,13 @@ export default async function PresencesPage() {
             Présences
           </h1>
           <p className="mt-1 text-sm text-black/55">
-            Suivi de l&apos;assiduité, toutes séances confondues.
+            Suivi de l&apos;assiduité — appel par séance.
           </p>
 
           {total === 0 ? (
             <p className="mt-8 rounded-2xl bg-white p-6 text-sm text-black/55 shadow-sm ring-1 ring-black/5">
-              Aucune présence enregistrée. Les enseignants saisissent les
-              présences depuis leurs séances de cours.
+              Aucune présence enregistrée. Les enseignants font l&apos;appel
+              depuis chaque séance (Mes séances → une séance → Faire l&apos;appel).
             </p>
           ) : (
             <>
@@ -135,35 +132,35 @@ export default async function PresencesPage() {
                   globalRate !== null ? `${globalRate}%` : "—",
                   globalRate !== null ? rateClass(globalRate) : undefined
                 )}
-                {stat("Séances", String(lessons?.length ?? 0))}
+                {stat("Séances", String(sessions?.length ?? 0))}
                 {stat("Présences", String(present), "text-green-700")}
                 {stat("Absences", String(absent), "text-ipmd-red")}
               </div>
 
-              {/* Par cours */}
+              {/* Par module */}
               <h2 className="mt-10 text-lg font-bold text-ipmd-black">
-                Assiduité par cours
+                Assiduité par module
               </h2>
               <div className="mt-3 overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-black/5">
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b border-black/5 text-left text-xs uppercase tracking-wider text-black/40">
-                      <th className="px-4 py-3 font-semibold">Cours</th>
+                      <th className="px-4 py-3 font-semibold">Module</th>
                       <th className="px-4 py-3 text-center font-semibold">Séances</th>
                       <th className="px-4 py-3 text-center font-semibold">Pointages</th>
                       <th className="px-4 py-3 text-right font-semibold">Taux</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {courseStats.map((c) => {
+                    {moduleStats.map((c) => {
                       const rate = c.marks > 0 ? Math.round((c.present / c.marks) * 100) : 0;
                       return (
-                        <tr key={c.id} className="border-t border-black/5">
+                        <tr key={c.subject} className="border-t border-black/5">
                           <td className="px-4 py-3 font-medium text-ipmd-black">
-                            {c.title}
+                            {c.subject}
                           </td>
                           <td className="px-4 py-3 text-center text-black/60">
-                            {c.lessons}
+                            {c.sessions}
                           </td>
                           <td className="px-4 py-3 text-center text-black/60">
                             {c.marks}
@@ -194,7 +191,7 @@ export default async function PresencesPage() {
                           <p className="truncate font-medium text-ipmd-black">
                             {a.student}
                           </p>
-                          <p className="truncate text-black/50">{a.course}</p>
+                          <p className="truncate text-black/50">{a.module}</p>
                         </div>
                         <span className="shrink-0 text-xs text-black/45">
                           {formatDate(a.date)}

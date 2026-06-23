@@ -103,27 +103,25 @@ export default async function EnfantDetailPage({
     byDay.set(s.day_of_week, arr);
   }
 
-  // Présence de l'enfant.
+  // Présence de l'enfant (appel par séance datée).
   const { data: attRows } = await supabase
-    .from("attendance")
-    .select("lesson_id, present")
+    .from("session_attendance")
+    .select("session_id, present")
     .eq("student_id", id);
-  const lessonInfo = new Map<string, { date: string; courseTitle: string }>();
-  if (courseIds.length > 0) {
-    const { data: lessonRows } = await supabase
-      .from("course_lessons")
-      .select("id, course_id, lesson_date")
-      .in("course_id", courseIds);
-    for (const l of lessonRows ?? [])
-      lessonInfo.set(l.id, {
-        date: l.lesson_date,
-        courseTitle: courseTitle.get(l.course_id) ?? "Cours",
-      });
+  const sessionInfo = new Map<string, { date: string; courseTitle: string }>();
+  const attSessionIds = (attRows ?? []).map((a) => a.session_id);
+  if (attSessionIds.length > 0) {
+    const { data: sessRows } = await supabase
+      .from("course_sessions")
+      .select("id, session_date, subject")
+      .in("id", attSessionIds);
+    for (const s of sessRows ?? [])
+      sessionInfo.set(s.id, { date: s.session_date, courseTitle: s.subject });
   }
   const presentCount = (attRows ?? []).filter((a) => a.present).length;
   const absences = (attRows ?? [])
     .filter((a) => !a.present)
-    .map((a) => lessonInfo.get(a.lesson_id))
+    .map((a) => sessionInfo.get(a.session_id))
     .filter(Boolean) as { date: string; courseTitle: string }[];
 
   // Scolarité / paiements de l'enfant.
