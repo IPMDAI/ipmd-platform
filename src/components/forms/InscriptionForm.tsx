@@ -36,7 +36,7 @@ const diplomas = [
 const diplomaUniverses = universes.filter((u) => u.kind === "diplome");
 
 const fileInput =
-  "block w-full text-sm text-black/60 file:mr-3 file:rounded-full file:border-0 file:bg-ipmd-light file:px-3 file:py-1.5 file:text-sm file:font-semibold file:text-ipmd-black";
+  "block w-full cursor-pointer rounded-xl border border-dashed border-black/25 bg-white px-3 py-3 text-sm text-black/55 shadow-sm transition-colors hover:border-ipmd-red/50 file:mr-3 file:cursor-pointer file:rounded-full file:border-0 file:bg-ipmd-red file:px-3 file:py-1.5 file:text-sm file:font-semibold file:text-white";
 
 export function InscriptionForm() {
   const [state, formAction, pending] = useActionState<FormResult | null, FormData>(
