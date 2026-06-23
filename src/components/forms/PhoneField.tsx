@@ -4,34 +4,35 @@ import { useState } from "react";
 import { inputBase } from "@/components/forms/FormField";
 
 /** Indicatifs pays (étudiants de divers horizons). Côte d'Ivoire par défaut. */
-const COUNTRY_CODES: { code: string; label: string }[] = [
-  { code: "+225", label: "🇨🇮 Côte d'Ivoire +225" },
-  { code: "+226", label: "🇧🇫 Burkina Faso +226" },
-  { code: "+223", label: "🇲🇱 Mali +223" },
-  { code: "+221", label: "🇸🇳 Sénégal +221" },
-  { code: "+228", label: "🇹🇬 Togo +228" },
-  { code: "+229", label: "🇧🇯 Bénin +229" },
-  { code: "+227", label: "🇳🇪 Niger +227" },
-  { code: "+224", label: "🇬🇳 Guinée +224" },
-  { code: "+233", label: "🇬🇭 Ghana +233" },
-  { code: "+234", label: "🇳🇬 Nigeria +234" },
-  { code: "+237", label: "🇨🇲 Cameroun +237" },
-  { code: "+241", label: "🇬🇦 Gabon +241" },
-  { code: "+242", label: "🇨🇬 Congo +242" },
-  { code: "+243", label: "🇨🇩 RD Congo +243" },
-  { code: "+212", label: "🇲🇦 Maroc +212" },
-  { code: "+216", label: "🇹🇳 Tunisie +216" },
-  { code: "+213", label: "🇩🇿 Algérie +213" },
-  { code: "+33", label: "🇫🇷 France +33" },
-  { code: "+32", label: "🇧🇪 Belgique +32" },
-  { code: "+41", label: "🇨🇭 Suisse +41" },
-  { code: "+1", label: "🇺🇸 USA / Canada +1" },
-  { code: "+44", label: "🇬🇧 Royaume-Uni +44" },
+const COUNTRY_CODES: { code: string; flag: string; name: string }[] = [
+  { code: "+225", flag: "🇨🇮", name: "Côte d'Ivoire" },
+  { code: "+226", flag: "🇧🇫", name: "Burkina Faso" },
+  { code: "+223", flag: "🇲🇱", name: "Mali" },
+  { code: "+221", flag: "🇸🇳", name: "Sénégal" },
+  { code: "+228", flag: "🇹🇬", name: "Togo" },
+  { code: "+229", flag: "🇧🇯", name: "Bénin" },
+  { code: "+227", flag: "🇳🇪", name: "Niger" },
+  { code: "+224", flag: "🇬🇳", name: "Guinée" },
+  { code: "+233", flag: "🇬🇭", name: "Ghana" },
+  { code: "+234", flag: "🇳🇬", name: "Nigeria" },
+  { code: "+237", flag: "🇨🇲", name: "Cameroun" },
+  { code: "+241", flag: "🇬🇦", name: "Gabon" },
+  { code: "+242", flag: "🇨🇬", name: "Congo" },
+  { code: "+243", flag: "🇨🇩", name: "RD Congo" },
+  { code: "+212", flag: "🇲🇦", name: "Maroc" },
+  { code: "+216", flag: "🇹🇳", name: "Tunisie" },
+  { code: "+213", flag: "🇩🇿", name: "Algérie" },
+  { code: "+33", flag: "🇫🇷", name: "France" },
+  { code: "+32", flag: "🇧🇪", name: "Belgique" },
+  { code: "+41", flag: "🇨🇭", name: "Suisse" },
+  { code: "+1", flag: "🇺🇸", name: "USA / Canada" },
+  { code: "+44", flag: "🇬🇧", name: "Royaume-Uni" },
 ];
 
 /**
- * Champ téléphone : sélecteur d'indicatif pays + numéro (chiffres uniquement).
+ * Champ téléphone : sélecteur d'indicatif (court) + numéro saisissable.
  * Le numéro complet (« +225 07 00 00 00 00 ») est soumis via un input caché.
+ * Si le numéro est vide, la valeur soumise est vide (utile pour un champ facultatif).
  */
 export function PhoneField({
   id,
@@ -51,11 +52,11 @@ export function PhoneField({
         value={code}
         onChange={(e) => setCode(e.target.value)}
         aria-label="Indicatif pays"
-        className={`${inputBase} w-auto shrink-0`}
+        className={`${inputBase} w-24 shrink-0`}
       >
         {COUNTRY_CODES.map((c) => (
-          <option key={c.code} value={c.code}>
-            {c.label}
+          <option key={c.code} value={c.code} title={c.name}>
+            {c.flag} {c.code}
           </option>
         ))}
       </select>
@@ -68,10 +69,14 @@ export function PhoneField({
         value={number}
         onChange={(e) => setNumber(e.target.value.replace(/[^\d\s]/g, ""))}
         placeholder="07 00 00 00 00"
-        className={inputBase}
+        className={`${inputBase} min-w-0 flex-1`}
       />
-      {/* Valeur réellement soumise : indicatif + numéro */}
-      <input type="hidden" name={name} value={`${code} ${number.trim()}`} />
+      {/* Valeur réellement soumise : indicatif + numéro (vide si pas de numéro). */}
+      <input
+        type="hidden"
+        name={name}
+        value={number.trim() ? `${code} ${number.trim()}` : ""}
+      />
     </div>
   );
 }

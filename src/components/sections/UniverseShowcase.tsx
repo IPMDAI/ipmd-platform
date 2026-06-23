@@ -40,7 +40,9 @@ export function UniverseShowcase({ universeId }: { universeId: UniverseId }) {
           ))}
         </div>
         <div className="mt-8 flex flex-wrap gap-4">
-          <Button href="/admission">Demander une inscription</Button>
+          <Button href={isDiploma ? "/admission" : `/inscription-bootcamp?u=${universe.id}`}>
+            Demander une inscription
+          </Button>
           {universe.subdomain && (
             <span className="inline-flex items-center rounded-full border border-white/20 px-4 py-2 text-sm text-white/60">
               Bientôt&nbsp;: {universe.subdomain}
@@ -104,6 +106,10 @@ export function UniverseShowcase({ universeId }: { universeId: UniverseId }) {
       <CtaBanner
         title="Prêt à rejoindre IPMD ?"
         description="Déposez votre demande d'inscription : notre équipe vous recontacte rapidement pour construire votre parcours."
+        primary={{
+          label: "Demander une inscription",
+          href: isDiploma ? "/admission" : `/inscription-bootcamp?u=${universe.id}`,
+        }}
       />
     </>
   );

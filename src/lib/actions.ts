@@ -31,10 +31,14 @@ export async function submitInscription(
   _prev: FormResult | null,
   formData: FormData
 ): Promise<FormResult> {
+  const fullName =
+    `${getString(formData, "lastName")} ${getString(formData, "firstName")}`.trim() ||
+    getString(formData, "fullName");
   const payload = {
-    full_name: getString(formData, "fullName"),
+    full_name: fullName,
     email: getString(formData, "email"),
     phone: getString(formData, "phone"),
+    whatsapp: getString(formData, "whatsapp") || null,
     universe: getString(formData, "universe") as UniverseId,
     program_interest: getString(formData, "programInterest"),
     entry_level: getString(formData, "entryLevel") || null,

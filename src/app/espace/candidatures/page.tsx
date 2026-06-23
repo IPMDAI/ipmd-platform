@@ -43,7 +43,7 @@ export default async function CandidaturesPage({
     supabase
       .from("inscription_requests")
       .select(
-        "id, full_name, email, phone, universe, program_interest, entry_level, last_education, last_diploma, message, created_at, status, desired_role, doc_diploma, doc_bulletins, doc_id, doc_attestation"
+        "id, full_name, email, phone, whatsapp, universe, program_interest, entry_level, last_education, last_diploma, message, created_at, status, desired_role, doc_diploma, doc_bulletins, doc_id, doc_attestation"
       )
       .order("created_at", { ascending: false }),
     supabase.from("classes").select("id, name").order("name"),
@@ -184,6 +184,16 @@ export default async function CandidaturesPage({
                     >
                       📞 {c.phone}
                     </a>
+                    {c.whatsapp && (
+                      <a
+                        href={`https://wa.me/${c.whatsapp.replace(/[^\d]/g, "")}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="font-medium text-green-600 hover:underline"
+                      >
+                        🟢 WhatsApp
+                      </a>
+                    )}
                   </div>
 
                   {c.message && (
