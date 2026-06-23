@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireUser } from "@/lib/require-user";
 import { Container } from "@/components/ui/Container";
+import { StudentAttendance } from "@/components/espace/StudentAttendance";
 import { DAY_OPTIONS, DAY_LABELS, formatTime } from "@/lib/schedule";
 import { averageOn20, averageValue, mention } from "@/lib/grades";
 import { formatFCFA } from "@/lib/finance";
@@ -172,6 +173,10 @@ export default async function EnfantDetailPage({
             >
               🪪 Documents officiels
             </Link>
+          </div>
+
+          <div className="mt-6">
+            <StudentAttendance studentId={id} />
           </div>
 
           {/* Résumé : l'essentiel d'un coup d'œil */}
