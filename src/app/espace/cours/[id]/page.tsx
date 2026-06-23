@@ -133,10 +133,10 @@ export default async function CourseDetailPage({
               🖊️ Saisir les notes
             </Link>
             <Link
-              href={`/espace/cours/${course.id}/seances`}
+              href="/espace/mes-seances"
               className="inline-flex items-center gap-2 rounded-full bg-ipmd-black px-4 py-2 text-sm font-semibold text-white transition-opacity hover:opacity-90"
             >
-              📋 Séances & présence
+              📋 Mes séances & appel
             </Link>
             <Link
               href={`/espace/cours/${course.id}/examens`}

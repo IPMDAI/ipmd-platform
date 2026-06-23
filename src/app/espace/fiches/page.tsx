@@ -2,47 +2,68 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { requireAdmin } from "@/lib/require-admin";
 import { Container } from "@/components/ui/Container";
-import { FichesList, type FicheRow } from "@/components/espace/FichesList";
 
 export const metadata: Metadata = {
   title: "Fiches pédagogiques",
 };
 
+function frDate(iso: string): string {
+  return new Date(iso + "T00:00:00Z").toLocaleDateString("fr-FR", {
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    timeZone: "UTC",
+  });
+}
+
 export default async function FichesPage() {
   const { supabase } = await requireAdmin();
 
-  const [{ data: lessons }, { data: courses }, { data: att }] = await Promise.all([
-    supabase
-      .from("course_lessons")
-      .select("id, course_id, lesson_date, theme, resources")
-      .order("lesson_date", { ascending: false }),
-    supabase.from("courses").select("id, title"),
-    supabase.from("attendance").select("lesson_id, present"),
-  ]);
+  const { data: reports } = await supabase
+    .from("session_reports")
+    .select(
+      "id, session_id, content, supports, validated, present_count, absent_count"
+    );
 
-  const courseTitle = new Map((courses ?? []).map((c) => [c.id, c.title]));
-
-  // Présence par séance.
-  const stats = new Map<string, { present: number; total: number }>();
-  for (const a of att ?? []) {
-    const s = stats.get(a.lesson_id) ?? { present: 0, total: 0 };
-    s.total += 1;
-    if (a.present) s.present += 1;
-    stats.set(a.lesson_id, s);
+  const sessionIds = (reports ?? []).map((r) => r.session_id);
+  const sMap = new Map<
+    string,
+    { subject: string; session_date: string; class_id: string; teacher_name: string | null }
+  >();
+  if (sessionIds.length > 0) {
+    const { data: sessions } = await supabase
+      .from("course_sessions")
+      .select("id, subject, session_date, class_id, teacher_name")
+      .in("id", sessionIds);
+    for (const s of sessions ?? [])
+      sMap.set(s.id, {
+        subject: s.subject,
+        session_date: s.session_date,
+        class_id: s.class_id,
+        teacher_name: s.teacher_name,
+      });
   }
 
-  const fiches: FicheRow[] = (lessons ?? []).map((l) => {
-    const s = stats.get(l.id) ?? { present: 0, total: 0 };
-    return {
-      id: l.id,
-      course: courseTitle.get(l.course_id) ?? "Cours",
-      date: l.lesson_date,
-      theme: l.theme,
-      resources: l.resources,
-      present: s.present,
-      total: s.total,
-    };
-  });
+  const classIds = [...new Set([...sMap.values()].map((s) => s.class_id))];
+  const className = new Map<string, string>();
+  if (classIds.length > 0) {
+    const { data: classes } = await supabase
+      .from("classes")
+      .select("id, name")
+      .in("id", classIds);
+    for (const c of classes ?? []) className.set(c.id, c.name);
+  }
+
+  const rows = (reports ?? [])
+    .map((r) => {
+      const s = sMap.get(r.session_id);
+      return s ? { ...r, ...s } : null;
+    })
+    .filter((r): r is NonNullable<typeof r> => r !== null)
+    .sort((a, b) => (a.session_date < b.session_date ? 1 : -1));
+
+  const toValidate = rows.filter((r) => !r.validated).length;
 
   return (
     <section className="min-h-[70vh] bg-ipmd-light">
@@ -58,17 +79,58 @@ export default async function FichesPage() {
             Fiches pédagogiques
           </h1>
           <p className="mt-1 text-sm text-black/55">
-            Séances réalisées : thème, ressources distribuées et assiduité.
+            Fiches de séance remplies par les enseignants
+            {toValidate > 0 ? ` · ${toValidate} à valider` : " · toutes validées"}.
           </p>
 
           <div className="mt-8">
-            {fiches.length === 0 ? (
+            {rows.length === 0 ? (
               <p className="rounded-2xl bg-white p-6 text-sm text-black/55 shadow-sm ring-1 ring-black/5">
-                Aucune séance enregistrée. Les enseignants créent les fiches
-                depuis leurs cours.
+                Aucune fiche remplie. Les enseignants remplissent la fiche depuis
+                chaque séance (Mes séances → une séance).
               </p>
             ) : (
-              <FichesList fiches={fiches} />
+              <ul className="space-y-3">
+                {rows.map((r) => (
+                  <li key={r.id}>
+                    <Link
+                      href={`/espace/seance/${r.session_id}`}
+                      className="block rounded-2xl bg-white p-5 shadow-sm ring-1 ring-black/5 transition-all hover:-translate-y-0.5 hover:shadow-md hover:ring-ipmd-red/30"
+                    >
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <div className="min-w-0">
+                          <p className="text-sm font-semibold text-ipmd-black">
+                            {r.subject}
+                            <span className="ml-2 font-normal text-black/45">
+                              {className.get(r.class_id) ?? "Classe"}
+                            </span>
+                          </p>
+                          <p className="text-xs capitalize text-black/50">
+                            {frDate(r.session_date)}
+                            {r.teacher_name ? ` · ${r.teacher_name}` : ""}
+                          </p>
+                        </div>
+                        {r.validated ? (
+                          <span className="shrink-0 rounded-full bg-green-50 px-2.5 py-1 text-[11px] font-bold text-green-700">
+                            Validée
+                          </span>
+                        ) : (
+                          <span className="shrink-0 rounded-full bg-amber-50 px-2.5 py-1 text-[11px] font-bold text-amber-700">
+                            À valider
+                          </span>
+                        )}
+                      </div>
+                      <p className="mt-2 line-clamp-2 text-xs text-black/55">
+                        {r.content || "Pas de contenu saisi."}
+                      </p>
+                      <p className="mt-2 text-[11px] font-semibold text-black/45">
+                        {r.present_count ?? 0} présent(s) · {r.absent_count ?? 0} absent(s)
+                        {r.supports ? " · supports fournis" : ""}
+                      </p>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
             )}
           </div>
         </div>
