@@ -23,7 +23,7 @@ export default async function MesPaiementsPage() {
     await Promise.all([
       supabase
         .from("student_finance")
-        .select("total_due")
+        .select("total_due, access_state, status")
         .eq("student_id", userId)
         .maybeSingle(),
       supabase
@@ -41,6 +41,17 @@ export default async function MesPaiementsPage() {
   const payments = paymentRows ?? [];
   const totalPaid = payments.reduce((a, p) => a + Number(p.amount), 0);
   const balance = totalDue - totalPaid;
+
+  const access = finance?.access_state ?? "actif";
+  const fStatus = finance?.status ?? "";
+  const alertMsg =
+    access === "bloque"
+      ? "Ton accès est temporairement bloqué pour régularisation de ta scolarité. Contacte la scolarité (scolarite@ipmd.pro)."
+      : access === "pause"
+        ? "Ton accès est en pause. Merci de régulariser ta situation auprès de la scolarité."
+        : fStatus === "avertissement" || fStatus === "non_a_jour"
+          ? "Ta scolarité n'est pas à jour. Merci de régulariser pour éviter une suspension d'accès."
+          : null;
 
   const today = new Date().toISOString().slice(0, 10);
   const { rows: schedule, next } = computeSchedule(
@@ -83,6 +94,19 @@ export default async function MesPaiementsPage() {
               📑 Mon relevé de paiement
             </Link>
           </div>
+
+          {alertMsg && (
+            <div
+              className={`mt-4 flex items-start gap-3 rounded-2xl p-4 text-sm font-medium ring-1 ${
+                access === "bloque"
+                  ? "bg-ipmd-red/10 text-ipmd-red ring-ipmd-red/20"
+                  : "bg-amber-50 text-amber-800 ring-amber-200"
+              }`}
+            >
+              <span className="text-lg leading-none">⚠️</span>
+              <span>{alertMsg}</span>
+            </div>
+          )}
 
           {/* Résumé */}
           <div className="mt-6 grid gap-4 sm:grid-cols-3">
