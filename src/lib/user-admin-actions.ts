@@ -188,6 +188,8 @@ export async function inviteFromCandidature(
         level: level || null,
         academic_year: settings?.academic_year ?? null,
         total_due: totalDue,
+        // Accès en pause tant que les frais d'inscription ne sont pas réglés.
+        access_state: "pause",
         updated_at: new Date().toISOString(),
       },
       { onConflict: "student_id" }

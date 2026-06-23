@@ -178,21 +178,32 @@ export async function addPayment(
     .single();
   if (error) return { ok: false, message: error.message };
 
-  // Reçu par email (best-effort, ne bloque jamais).
+  // Situation financière + auto-activation de l'accès + reçu (best-effort).
   let emailed = 0;
+  let activated = false;
   try {
+    const [{ data: fin2 }, { data: pays2 }] = await Promise.all([
+      ctx.supabase
+        .from("student_finance")
+        .select("registration_fee, tuition_due, discount_rate, level, access_state")
+        .eq("student_id", studentId)
+        .maybeSingle(),
+      ctx.supabase.from("payments").select("amount, kind").eq("student_id", studentId),
+    ]);
+    const fin = computeFinance(fin2, pays2 ?? []);
+
+    // Inscription soldée → on débloque l'accès plateforme automatiquement.
+    if (fin.registrationSettled && fin2?.access_state && fin2.access_state !== "actif") {
+      await ctx.supabase
+        .from("student_finance")
+        .update({ access_state: "actif", updated_at: new Date().toISOString() })
+        .eq("student_id", studentId);
+      activated = true;
+    }
+
     if (canSendEmail) {
       const { name, emails } = await recipientsFor(ctx.supabase, studentId);
       if (emails.length > 0) {
-        const [{ data: fin2 }, { data: pays2 }] = await Promise.all([
-          ctx.supabase
-            .from("student_finance")
-            .select("registration_fee, tuition_due, discount_rate, level")
-            .eq("student_id", studentId)
-            .maybeSingle(),
-          ctx.supabase.from("payments").select("amount, kind").eq("student_id", studentId),
-        ]);
-        const fin = computeFinance(fin2, pays2 ?? []);
         const rows = buildRows([
           ["Étudiant", name],
           ["Nature", kind === "inscription" ? "Frais d'inscription" : "Frais de scolarité"],
@@ -202,9 +213,13 @@ export async function addPayment(
           ["Reste à payer", fin.balance <= 0 ? "Soldé" : formatFCFA(fin.balance)],
         ]);
         const link = inserted?.id ? `${SITE_URL}/espace/recu/${inserted.id}` : SITE_URL;
+        const activatedNote = activated
+          ? `<p style="margin-top:12px;color:#16a34a;font-weight:600">✅ Votre accès à la plateforme est désormais activé.</p>`
+          : "";
         const html = emailDocument(
           "Reçu de paiement",
           `<table style="width:100%;border-collapse:collapse;font-size:14px">${rows}</table>
+           ${activatedNote}
            <p style="margin-top:16px"><a href="${link}" style="display:inline-block;background:#e01228;color:#fff;text-decoration:none;padding:10px 18px;border-radius:9999px;font-weight:600">Voir / imprimer le reçu officiel</a></p>
            <p style="color:#9ca3af;font-size:12px;margin-top:8px">Pour toute question : scolarite@ipmd.pro</p>`
         );
@@ -219,7 +234,10 @@ export async function addPayment(
   revalidatePath("/espace/finance");
   return {
     ok: true,
-    message: emailed > 0 ? `Paiement enregistré — reçu envoyé (${emailed}).` : "Paiement enregistré.",
+    message:
+      "Paiement enregistré." +
+      (activated ? " Accès activé." : "") +
+      (emailed > 0 ? ` Reçu envoyé (${emailed}).` : ""),
   };
 }
 

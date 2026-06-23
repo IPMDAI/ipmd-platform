@@ -122,6 +122,23 @@ export default async function EspacePage() {
     });
   }
 
+  // Gate d'activation : l'étudiant doit régler son inscription pour débloquer l'accès.
+  let accessGate: string | null = null;
+  if (showTutor) {
+    const { data: sf } = await supabase
+      .from("student_finance")
+      .select("access_state")
+      .eq("student_id", user.id)
+      .maybeSingle();
+    if (sf?.access_state === "bloque") {
+      accessGate =
+        "Ton accès est bloqué en attendant la régularisation de ta scolarité. Contacte la scolarité (scolarite@ipmd.pro).";
+    } else if (sf?.access_state === "pause") {
+      accessGate =
+        "Ton inscription n'est pas encore activée. Règle tes frais d'inscription (300 000 FCFA) et transmets ta preuve de paiement à la scolarité pour débloquer ton accès.";
+    }
+  }
+
   return (
     <section className="min-h-[70vh] bg-ipmd-light">
       <Container className="py-12 sm:py-16">
@@ -150,6 +167,22 @@ export default async function EspacePage() {
 
           {/* Annonces de l'administration (tous rôles) */}
           <AnnouncementsPanel role={role} userId={user.id} />
+
+          {/* Gate d'activation (étudiant non encore activé) */}
+          {accessGate && (
+            <div className="mt-6 flex items-start gap-3 rounded-2xl bg-amber-50 p-5 text-sm font-medium text-amber-900 ring-1 ring-amber-200">
+              <span className="text-xl leading-none">⏳</span>
+              <div>
+                <p>{accessGate}</p>
+                <Link
+                  href="/espace/mes-paiements"
+                  className="mt-1 inline-block font-semibold text-ipmd-red hover:underline"
+                >
+                  Voir ma scolarité &amp; ma facture proforma →
+                </Link>
+              </div>
+            </div>
+          )}
 
           {/* À traiter (staff) : ce qui attend une action, en tête */}
           {(pending || pedaPending) && (
