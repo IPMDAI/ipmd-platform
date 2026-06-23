@@ -1,56 +1,91 @@
 "use client";
 
-import { useActionState, useEffect, useRef } from "react";
-import { setStudentDue, addPayment, addSchedule } from "@/lib/finance-actions";
+import { useActionState, useEffect, useRef, useState } from "react";
+import {
+  setStudentFinance,
+  setStudentAccess,
+  addPayment,
+  addSchedule,
+} from "@/lib/finance-actions";
 import { Field, inputBase } from "@/components/forms/FormField";
 import { ActionButton } from "@/components/ui/Button";
-import { PAYMENT_METHODS } from "@/lib/finance";
+import {
+  PAYMENT_METHODS,
+  PAYMENT_KINDS,
+  ACCESS_STATES,
+  FINANCIAL_STATUS,
+} from "@/lib/finance";
 import type { FormResult } from "@/types";
 
 function Feedback({ state }: { state: FormResult | null }) {
   if (!state) return null;
   return (
-    <p
-      className={`text-sm font-medium ${
-        state.ok ? "text-green-600" : "text-ipmd-red"
-      }`}
-    >
+    <p className={`text-sm font-medium ${state.ok ? "text-green-600" : "text-ipmd-red"}`}>
       {state.message}
     </p>
   );
 }
 
-export function SetDueForm({
+export function SetFinanceForm({
   studentId,
-  current,
+  registrationFee,
+  tuitionDue,
+  level,
+  discountApplied,
+  levels,
 }: {
   studentId: string;
-  current: number;
+  registrationFee: number;
+  tuitionDue: number;
+  level: string | null;
+  discountApplied: boolean;
+  levels: { level: string; amount: number }[];
 }) {
-  const bound = setStudentDue.bind(null, studentId);
-  const [state, action, pending] = useActionState<FormResult | null, FormData>(
-    bound,
-    null
-  );
+  const bound = setStudentFinance.bind(null, studentId);
+  const [state, action, pending] = useActionState<FormResult | null, FormData>(bound, null);
+  const [tuition, setTuition] = useState(tuitionDue || 0);
 
   return (
-    <form
-      action={action}
-      className="space-y-3 rounded-2xl bg-white p-6 shadow-sm ring-1 ring-black/5"
-    >
-      <h2 className="text-lg font-bold text-ipmd-black">Frais de scolarité</h2>
-      <Field label="Montant total dû (FCFA)" htmlFor="d-due" required>
-        <input
-          id="d-due"
-          name="total_due"
-          type="number"
-          min="0"
-          step="1000"
-          defaultValue={current || ""}
-          placeholder="800000"
+    <form action={action} className="space-y-3 rounded-2xl bg-white p-6 shadow-sm ring-1 ring-black/5">
+      <h2 className="text-lg font-bold text-ipmd-black">Frais</h2>
+      <Field label="Niveau / programme" htmlFor="f-level">
+        <select
+          id="f-level"
+          name="level"
+          defaultValue={level ?? ""}
+          onChange={(e) => {
+            const m = levels.find((l) => l.level === e.target.value);
+            if (m) setTuition(m.amount);
+          }}
           className={inputBase}
-        />
+        >
+          <option value="">—</option>
+          {levels.map((l) => (
+            <option key={l.level} value={l.level}>
+              {l.level}
+            </option>
+          ))}
+        </select>
       </Field>
+      <div className="grid grid-cols-2 gap-3">
+        <Field label="Frais d'inscription (FCFA)" htmlFor="f-reg">
+          <input id="f-reg" name="registration_fee" type="number" defaultValue={registrationFee} className={inputBase} />
+        </Field>
+        <Field label="Scolarité (FCFA)" htmlFor="f-tuition">
+          <input
+            id="f-tuition"
+            name="tuition_due"
+            type="number"
+            value={tuition}
+            onChange={(e) => setTuition(Number(e.target.value))}
+            className={inputBase}
+          />
+        </Field>
+      </div>
+      <label className="flex items-center gap-2 text-sm font-medium text-black/70">
+        <input type="checkbox" name="lump_sum" defaultChecked={discountApplied} className="h-4 w-4 rounded border-black/20" />
+        Paiement unique → réduction de 15% sur la scolarité
+      </label>
       <ActionButton type="submit" disabled={pending}>
         {pending ? "…" : "Enregistrer les frais"}
       </ActionButton>
@@ -61,34 +96,29 @@ export function SetDueForm({
 
 export function AddPaymentForm({ studentId }: { studentId: string }) {
   const bound = addPayment.bind(null, studentId);
-  const [state, action, pending] = useActionState<FormResult | null, FormData>(
-    bound,
-    null
-  );
+  const [state, action, pending] = useActionState<FormResult | null, FormData>(bound, null);
   const ref = useRef<HTMLFormElement>(null);
   useEffect(() => {
     if (state?.ok) ref.current?.reset();
   }, [state]);
 
   return (
-    <form
-      ref={ref}
-      action={action}
-      className="space-y-3 rounded-2xl bg-white p-6 shadow-sm ring-1 ring-black/5"
-    >
+    <form ref={ref} action={action} className="space-y-3 rounded-2xl bg-white p-6 shadow-sm ring-1 ring-black/5">
       <h2 className="text-lg font-bold text-ipmd-black">Nouveau paiement</h2>
-      <Field label="Montant (FCFA)" htmlFor="p-amount" required>
-        <input
-          id="p-amount"
-          name="amount"
-          type="number"
-          min="1"
-          step="1000"
-          required
-          placeholder="200000"
-          className={inputBase}
-        />
-      </Field>
+      <div className="grid grid-cols-2 gap-3">
+        <Field label="Nature" htmlFor="p-kind">
+          <select id="p-kind" name="kind" defaultValue="scolarite" className={inputBase}>
+            {PAYMENT_KINDS.map((k) => (
+              <option key={k.value} value={k.value}>
+                {k.label}
+              </option>
+            ))}
+          </select>
+        </Field>
+        <Field label="Montant (FCFA)" htmlFor="p-amount" required>
+          <input id="p-amount" name="amount" type="number" min="1" required placeholder="200000" className={inputBase} />
+        </Field>
+      </div>
       <div className="grid grid-cols-2 gap-3">
         <Field label="Moyen" htmlFor="p-method">
           <select id="p-method" name="method" defaultValue="" className={inputBase}>
@@ -104,13 +134,16 @@ export function AddPaymentForm({ studentId }: { studentId: string }) {
           <input id="p-date" name="paid_at" type="date" className={inputBase} />
         </Field>
       </div>
-      <Field label="Libellé (optionnel)" htmlFor="p-label">
-        <input
-          id="p-label"
-          name="label"
-          placeholder="Ex. Tranche 1"
-          className={inputBase}
-        />
+      <div className="grid grid-cols-2 gap-3">
+        <Field label="Référence" htmlFor="p-ref">
+          <input id="p-ref" name="reference" placeholder="N° transaction / chèque" className={inputBase} />
+        </Field>
+        <Field label="Libellé" htmlFor="p-label">
+          <input id="p-label" name="label" placeholder="Ex. Tranche 1" className={inputBase} />
+        </Field>
+      </div>
+      <Field label="Observation (optionnel)" htmlFor="p-obs">
+        <input id="p-obs" name="observation" className={inputBase} />
       </Field>
       <ActionButton type="submit" disabled={pending}>
         {pending ? "…" : "Enregistrer le paiement"}
@@ -122,47 +155,74 @@ export function AddPaymentForm({ studentId }: { studentId: string }) {
 
 export function AddScheduleForm({ studentId }: { studentId: string }) {
   const bound = addSchedule.bind(null, studentId);
-  const [state, action, pending] = useActionState<FormResult | null, FormData>(
-    bound,
-    null
-  );
+  const [state, action, pending] = useActionState<FormResult | null, FormData>(bound, null);
   const ref = useRef<HTMLFormElement>(null);
   useEffect(() => {
     if (state?.ok) ref.current?.reset();
   }, [state]);
 
   return (
-    <form
-      ref={ref}
-      action={action}
-      className="space-y-3 rounded-2xl bg-white p-6 shadow-sm ring-1 ring-black/5"
-    >
+    <form ref={ref} action={action} className="space-y-3 rounded-2xl bg-white p-6 shadow-sm ring-1 ring-black/5">
       <h2 className="text-lg font-bold text-ipmd-black">Nouvelle échéance</h2>
       <Field label="Montant (FCFA)" htmlFor="s-amount" required>
-        <input
-          id="s-amount"
-          name="amount"
-          type="number"
-          min="1"
-          step="1000"
-          required
-          placeholder="200000"
-          className={inputBase}
-        />
+        <input id="s-amount" name="amount" type="number" min="1" required placeholder="200000" className={inputBase} />
       </Field>
       <Field label="Date d'échéance" htmlFor="s-date" required>
         <input id="s-date" name="due_date" type="date" required className={inputBase} />
       </Field>
       <Field label="Libellé (optionnel)" htmlFor="s-label">
-        <input
-          id="s-label"
-          name="label"
-          placeholder="Ex. Tranche 2"
-          className={inputBase}
-        />
+        <input id="s-label" name="label" placeholder="Ex. Tranche 2" className={inputBase} />
       </Field>
       <ActionButton type="submit" disabled={pending}>
         {pending ? "…" : "Ajouter l'échéance"}
+      </ActionButton>
+      <Feedback state={state} />
+    </form>
+  );
+}
+
+export function AccessForm({
+  studentId,
+  status,
+  accessState,
+  negotiated,
+}: {
+  studentId: string;
+  status: string | null;
+  accessState: string;
+  negotiated: boolean;
+}) {
+  const bound = setStudentAccess.bind(null, studentId);
+  const [state, action, pending] = useActionState<FormResult | null, FormData>(bound, null);
+
+  return (
+    <form action={action} className="space-y-3 rounded-2xl bg-white p-6 shadow-sm ring-1 ring-black/5">
+      <h2 className="text-lg font-bold text-ipmd-black">Statut & accès</h2>
+      <Field label="Statut financier (manuel / négocié)" htmlFor="a-status">
+        <select id="a-status" name="status" defaultValue={status ?? ""} className={inputBase}>
+          <option value="">Automatique</option>
+          {Object.entries(FINANCIAL_STATUS).map(([k, v]) => (
+            <option key={k} value={k}>
+              {v.label}
+            </option>
+          ))}
+        </select>
+      </Field>
+      <Field label="Accès plateforme" htmlFor="a-access">
+        <select id="a-access" name="access_state" defaultValue={accessState} className={inputBase}>
+          {Object.entries(ACCESS_STATES).map(([k, v]) => (
+            <option key={k} value={k}>
+              {v.label}
+            </option>
+          ))}
+        </select>
+      </Field>
+      <label className="flex items-center gap-2 text-sm font-medium text-black/70">
+        <input type="checkbox" name="negotiated" defaultChecked={negotiated} className="h-4 w-4 rounded border-black/20" />
+        Échéancier négocié
+      </label>
+      <ActionButton type="submit" disabled={pending}>
+        {pending ? "…" : "Mettre à jour"}
       </ActionButton>
       <Feedback state={state} />
     </form>

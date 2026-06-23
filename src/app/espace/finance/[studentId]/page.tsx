@@ -1,25 +1,37 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { notFound } from "next/navigation";
-import { requireAdmin } from "@/lib/require-admin";
+import { notFound, redirect } from "next/navigation";
+import { requireUser } from "@/lib/require-user";
 import { Container } from "@/components/ui/Container";
 import {
-  SetDueForm,
+  SetFinanceForm,
   AddPaymentForm,
   AddScheduleForm,
+  AccessForm,
 } from "@/components/espace/finance-forms";
 import { deletePayment, deleteSchedule } from "@/lib/finance-actions";
-import { formatFCFA, computeSchedule, SCHED_STATUS } from "@/lib/finance";
+import {
+  formatFCFA,
+  computeSchedule,
+  computeFinance,
+  deriveFinancialStatus,
+  SCHED_STATUS,
+  FINANCIAL_STATUS,
+  ACCESS_STATES,
+} from "@/lib/finance";
 
 export const metadata: Metadata = {
   title: "Finance — étudiant",
 };
 
+const STAFF = ["admin", "super_admin", "scolarite"];
+
 function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString("fr-FR", {
+  return new Date(iso + "T00:00:00Z").toLocaleDateString("fr-FR", {
     day: "2-digit",
     month: "long",
     year: "numeric",
+    timeZone: "UTC",
   });
 }
 
@@ -29,44 +41,63 @@ export default async function StudentFinancePage({
   params: Promise<{ studentId: string }>;
 }) {
   const { studentId } = await params;
-  const { supabase } = await requireAdmin();
+  const { supabase, userId } = await requireUser();
+  const { data: me } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", userId)
+    .single();
+  if (!STAFF.includes(me?.role ?? "")) redirect("/espace");
 
   const { data: student } = await supabase
     .from("profiles")
-    .select("id, full_name, email, role")
+    .select("id, full_name, email")
     .eq("id", studentId)
     .single();
   if (!student) notFound();
 
-  const [{ data: finance }, { data: paymentRows }, { data: scheduleRows }] =
+  const [{ data: finance }, { data: paymentRows }, { data: scheduleRows }, { data: levels }] =
     await Promise.all([
       supabase
         .from("student_finance")
-        .select("total_due")
+        .select(
+          "registration_fee, tuition_due, discount_rate, level, status, access_state, negotiated"
+        )
         .eq("student_id", studentId)
         .maybeSingle(),
       supabase
         .from("payments")
-        .select("id, amount, method, label, paid_at")
+        .select("id, amount, method, label, kind, reference, observation, paid_at")
         .eq("student_id", studentId)
         .order("paid_at", { ascending: false }),
       supabase
         .from("payment_schedules")
         .select("id, label, amount, due_date")
         .eq("student_id", studentId),
+      supabase.from("tuition_levels").select("level, amount").order("sort_order"),
     ]);
 
-  const totalDue = Number(finance?.total_due ?? 0);
   const payments = paymentRows ?? [];
-  const totalPaid = payments.reduce((a, p) => a + Number(p.amount), 0);
-  const balance = totalDue - totalPaid;
+  const fin = computeFinance(finance, payments);
+  const derivedStatus = finance?.status || deriveFinancialStatus(fin);
+  const accessState = finance?.access_state || "actif";
+  const statusInfo = FINANCIAL_STATUS[derivedStatus] ?? {
+    label: derivedStatus,
+    cls: "bg-black/5 text-black/60",
+  };
+  const scolaritySettled = fin.tuitionSettled || (fin.balance <= 0 && fin.totalDue > 0);
 
   const today = new Date().toISOString().slice(0, 10);
-  const { rows: schedule } = computeSchedule(
-    scheduleRows ?? [],
-    totalPaid,
-    today
-  );
+  const { rows: schedule } = computeSchedule(scheduleRows ?? [], fin.totalPaid, today);
+
+  const droits = [
+    { label: "Polo", ok: fin.registrationSettled },
+    { label: "Tee-shirt", ok: fin.registrationSettled },
+    { label: "Accès plateforme", ok: fin.registrationSettled },
+    { label: "Carte étudiant", ok: fin.registrationSettled },
+    { label: "Attestation d'inscription", ok: fin.registrationSettled },
+    { label: "Certificat d'inscription", ok: scolaritySettled, lockNote: "scolarité soldée" },
+  ];
 
   return (
     <section className="min-h-[70vh] bg-ipmd-light">
@@ -78,52 +109,75 @@ export default async function StudentFinancePage({
           >
             ← Finance
           </Link>
-          <h1 className="mt-3 text-2xl font-extrabold tracking-tight text-ipmd-black">
-            {student.full_name || student.email}
-          </h1>
+          <div className="mt-3 flex flex-wrap items-center gap-3">
+            <h1 className="text-2xl font-extrabold tracking-tight text-ipmd-black">
+              {student.full_name || student.email}
+            </h1>
+            <span className={`rounded-full px-2.5 py-1 text-[11px] font-bold ${statusInfo.cls}`}>
+              {statusInfo.label}
+            </span>
+            <span className={`rounded-full px-2.5 py-1 text-[11px] font-bold ${ACCESS_STATES[accessState]?.cls ?? ""}`}>
+              {ACCESS_STATES[accessState]?.label ?? accessState}
+            </span>
+            {finance?.level && (
+              <span className="rounded-full bg-ipmd-light px-2.5 py-1 text-[11px] font-bold text-black/60">
+                {finance.level}
+              </span>
+            )}
+          </div>
 
           {/* Résumé */}
           <div className="mt-6 grid gap-4 sm:grid-cols-3">
             <div className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-black/5">
-              <p className="text-xs font-semibold uppercase text-black/40">Dû</p>
-              <p className="mt-1 text-lg font-extrabold text-ipmd-black">
-                {formatFCFA(totalDue)}
+              <p className="text-xs font-semibold uppercase text-black/40">Total dû</p>
+              <p className="mt-1 text-lg font-extrabold text-ipmd-black">{formatFCFA(fin.totalDue)}</p>
+              <p className="mt-1 text-[11px] text-black/45">
+                Inscription {formatFCFA(fin.registrationFee)} · Scolarité {formatFCFA(fin.tuitionNet)}
+                {fin.discountRate > 0 ? ` (−${Math.round(fin.discountRate * 100)}%)` : ""}
               </p>
             </div>
             <div className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-black/5">
-              <p className="text-xs font-semibold uppercase text-black/40">
-                Payé
-              </p>
-              <p className="mt-1 text-lg font-extrabold text-green-600">
-                {formatFCFA(totalPaid)}
+              <p className="text-xs font-semibold uppercase text-black/40">Payé</p>
+              <p className="mt-1 text-lg font-extrabold text-green-600">{formatFCFA(fin.totalPaid)}</p>
+              <p className="mt-1 text-[11px] text-black/45">
+                Inscription {formatFCFA(fin.paidInscription)} · Scolarité {formatFCFA(fin.paidScolarite)}
               </p>
             </div>
             <div className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-black/5">
-              <p className="text-xs font-semibold uppercase text-black/40">
-                Solde
+              <p className="text-xs font-semibold uppercase text-black/40">Reste à payer</p>
+              <p className={`mt-1 text-lg font-extrabold ${fin.balance <= 0 ? "text-green-600" : "text-ipmd-red"}`}>
+                {fin.balance <= 0 ? "Soldé ✓" : formatFCFA(fin.balance)}
               </p>
-              <p
-                className={`mt-1 text-lg font-extrabold ${
-                  balance <= 0 ? "text-green-600" : "text-ipmd-red"
-                }`}
-              >
-                {balance <= 0 ? "À jour" : formatFCFA(balance)}
-              </p>
+            </div>
+          </div>
+
+          {/* Droits acquis */}
+          <div className="mt-6 rounded-2xl bg-white p-5 shadow-sm ring-1 ring-black/5">
+            <h2 className="mb-3 text-sm font-bold uppercase tracking-wider text-black/40">
+              Droits & documents
+            </h2>
+            <div className="flex flex-wrap gap-2">
+              {droits.map((d) => (
+                <span
+                  key={d.label}
+                  className={`rounded-full px-3 py-1.5 text-xs font-semibold ${
+                    d.ok ? "bg-green-50 text-green-700" : "bg-black/5 text-black/40"
+                  }`}
+                  title={!d.ok && d.lockNote ? `Disponible quand : ${d.lockNote}` : undefined}
+                >
+                  {d.ok ? "✅" : "🔒"} {d.label}
+                </span>
+              ))}
             </div>
           </div>
 
           {/* Échéancier */}
           {schedule.length > 0 && (
             <div className="mt-8">
-              <h2 className="mb-4 text-lg font-bold text-ipmd-black">
-                Échéancier
-              </h2>
+              <h2 className="mb-4 text-lg font-bold text-ipmd-black">Échéancier</h2>
               <ul className="divide-y divide-black/5 overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-black/5">
                 {schedule.map((s) => (
-                  <li
-                    key={s.id}
-                    className="flex items-center justify-between gap-3 p-4"
-                  >
+                  <li key={s.id} className="flex items-center justify-between gap-3 p-4">
                     <div className="min-w-0">
                       <p className="font-semibold text-ipmd-black">
                         {formatFCFA(s.amount)}
@@ -131,21 +185,14 @@ export default async function StudentFinancePage({
                           {s.label || "Échéance"}
                         </span>
                       </p>
-                      <p className="text-xs text-black/50">
-                        Échéance : {formatDate(s.due_date)}
-                      </p>
+                      <p className="text-xs text-black/50">Échéance : {formatDate(s.due_date)}</p>
                     </div>
                     <div className="flex shrink-0 items-center gap-2">
-                      <span
-                        className={`rounded-full px-2.5 py-1 text-xs font-bold ${SCHED_STATUS[s.status].cls}`}
-                      >
+                      <span className={`rounded-full px-2.5 py-1 text-xs font-bold ${SCHED_STATUS[s.status].cls}`}>
                         {SCHED_STATUS[s.status].label}
                       </span>
                       <form action={deleteSchedule.bind(null, studentId, s.id)}>
-                        <button
-                          type="submit"
-                          className="rounded-lg px-2 py-1.5 text-xs font-semibold text-ipmd-red transition-colors hover:bg-ipmd-red/10"
-                        >
+                        <button type="submit" className="rounded-lg px-2 py-1.5 text-xs font-semibold text-ipmd-red transition-colors hover:bg-ipmd-red/10">
                           Suppr.
                         </button>
                       </form>
@@ -159,9 +206,7 @@ export default async function StudentFinancePage({
           <div className="mt-8 grid gap-8 lg:grid-cols-[1fr_22rem]">
             {/* Historique des paiements */}
             <div className="order-2 lg:order-1">
-              <h2 className="mb-4 text-lg font-bold text-ipmd-black">
-                Paiements
-              </h2>
+              <h2 className="mb-4 text-lg font-bold text-ipmd-black">Paiements</h2>
               {payments.length === 0 ? (
                 <p className="rounded-2xl bg-white p-6 text-sm text-black/55 shadow-sm ring-1 ring-black/5">
                   Aucun paiement enregistré.
@@ -169,28 +214,43 @@ export default async function StudentFinancePage({
               ) : (
                 <ul className="divide-y divide-black/5 overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-black/5">
                   {payments.map((p) => (
-                    <li
-                      key={p.id}
-                      className="flex items-center justify-between gap-3 p-4"
-                    >
+                    <li key={p.id} className="flex items-center justify-between gap-3 p-4">
                       <div className="min-w-0">
                         <p className="font-semibold text-ipmd-black">
                           {formatFCFA(p.amount)}
+                          <span
+                            className={`ml-2 rounded-full px-2 py-0.5 text-[10px] font-bold ${
+                              p.kind === "inscription"
+                                ? "bg-blue-50 text-blue-700"
+                                : "bg-ipmd-light text-black/55"
+                            }`}
+                          >
+                            {p.kind === "inscription" ? "Inscription" : "Scolarité"}
+                          </span>
                         </p>
                         <p className="truncate text-xs text-black/50">
                           {formatDate(p.paid_at)}
                           {p.method && ` · ${p.method}`}
+                          {p.reference && ` · réf. ${p.reference}`}
                           {p.label && ` · ${p.label}`}
                         </p>
+                        {p.observation && (
+                          <p className="truncate text-[11px] italic text-black/40">{p.observation}</p>
+                        )}
                       </div>
-                      <form action={deletePayment.bind(null, studentId, p.id)}>
-                        <button
-                          type="submit"
-                          className="shrink-0 rounded-lg px-3 py-1.5 text-xs font-semibold text-ipmd-red transition-colors hover:bg-ipmd-red/10"
+                      <div className="flex shrink-0 items-center gap-2">
+                        <Link
+                          href={`/espace/recu?student=${studentId}&payment=${p.id}`}
+                          className="rounded-lg px-2 py-1.5 text-xs font-semibold text-ipmd-black transition-colors hover:bg-black/5"
                         >
-                          Suppr.
-                        </button>
-                      </form>
+                          Reçu
+                        </Link>
+                        <form action={deletePayment.bind(null, studentId, p.id)}>
+                          <button type="submit" className="rounded-lg px-3 py-1.5 text-xs font-semibold text-ipmd-red transition-colors hover:bg-ipmd-red/10">
+                            Suppr.
+                          </button>
+                        </form>
+                      </div>
                     </li>
                   ))}
                 </ul>
@@ -199,8 +259,21 @@ export default async function StudentFinancePage({
 
             {/* Formulaires */}
             <div className="order-1 space-y-6 lg:order-2">
-              <SetDueForm studentId={studentId} current={totalDue} />
+              <SetFinanceForm
+                studentId={studentId}
+                registrationFee={fin.registrationFee || 300000}
+                tuitionDue={fin.tuitionDue}
+                level={finance?.level ?? null}
+                discountApplied={fin.discountRate > 0}
+                levels={(levels ?? []).map((l) => ({ level: l.level, amount: Number(l.amount) }))}
+              />
               <AddPaymentForm studentId={studentId} />
+              <AccessForm
+                studentId={studentId}
+                status={finance?.status ?? null}
+                accessState={accessState}
+                negotiated={finance?.negotiated ?? false}
+              />
               <AddScheduleForm studentId={studentId} />
             </div>
           </div>

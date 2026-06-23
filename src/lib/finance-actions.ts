@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import type { FormResult } from "@/types";
 
-async function getAdmin() {
+async function getStaff() {
   const supabase = await createClient();
   if (!supabase) return null;
   const {
@@ -16,8 +16,8 @@ async function getAdmin() {
     .select("role")
     .eq("id", user.id)
     .single();
-  if (me?.role !== "super_admin" && me?.role !== "admin") return null;
-  return { supabase };
+  if (!["admin", "super_admin", "scolarite"].includes(me?.role ?? "")) return null;
+  return { supabase, userId: user.id };
 }
 
 function str(formData: FormData, key: string): string {
@@ -29,26 +29,46 @@ function num(raw: string): number {
   return Number.parseFloat(raw.replace(/\s/g, "").replace(",", "."));
 }
 
-/** Définit les frais de scolarité dûs par un étudiant. */
-export async function setStudentDue(
+/** Définit les frais (inscription + scolarité par niveau + réduction paiement unique). */
+export async function setStudentFinance(
   studentId: string,
   _prev: FormResult | null,
   formData: FormData
 ): Promise<FormResult> {
-  const ctx = await getAdmin();
-  if (!ctx) return { ok: false, message: "Action réservée à l'administration." };
+  const ctx = await getStaff();
+  if (!ctx) return { ok: false, message: "Action réservée à la Scolarité." };
 
-  const totalDue = num(str(formData, "total_due") || "0");
-  if (Number.isNaN(totalDue) || totalDue < 0) {
+  const registrationFee = num(str(formData, "registration_fee") || "0");
+  const tuitionDue = num(str(formData, "tuition_due") || "0");
+  if (Number.isNaN(registrationFee) || Number.isNaN(tuitionDue)) {
     return { ok: false, message: "Montant invalide." };
   }
 
-  const { error } = await ctx.supabase
-    .from("student_finance")
-    .upsert(
-      { student_id: studentId, total_due: totalDue },
-      { onConflict: "student_id" }
-    );
+  let discountRate = 0;
+  if (formData.get("lump_sum") === "on") {
+    const { data: s } = await ctx.supabase
+      .from("finance_settings")
+      .select("lump_sum_discount")
+      .eq("id", 1)
+      .maybeSingle();
+    discountRate = Number(s?.lump_sum_discount ?? 0.15);
+  }
+
+  const tuitionNet = Math.round(tuitionDue * (1 - discountRate));
+  const totalDue = registrationFee + tuitionNet;
+
+  const { error } = await ctx.supabase.from("student_finance").upsert(
+    {
+      student_id: studentId,
+      registration_fee: registrationFee,
+      tuition_due: tuitionDue,
+      discount_rate: discountRate,
+      level: str(formData, "level") || null,
+      total_due: totalDue,
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: "student_id" }
+  );
   if (error) return { ok: false, message: error.message };
 
   revalidatePath(`/espace/finance/${studentId}`);
@@ -56,25 +76,55 @@ export async function setStudentDue(
   return { ok: true, message: "Frais enregistrés." };
 }
 
-/** Enregistre un paiement pour un étudiant. */
+/** Met à jour le statut financier et l'état d'accès plateforme. */
+export async function setStudentAccess(
+  studentId: string,
+  _prev: FormResult | null,
+  formData: FormData
+): Promise<FormResult> {
+  const ctx = await getStaff();
+  if (!ctx) return { ok: false, message: "Action réservée à la Scolarité." };
+
+  const { error } = await ctx.supabase.from("student_finance").upsert(
+    {
+      student_id: studentId,
+      status: str(formData, "status") || null,
+      access_state: str(formData, "access_state") || "actif",
+      negotiated: formData.get("negotiated") === "on",
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: "student_id" }
+  );
+  if (error) return { ok: false, message: error.message };
+
+  revalidatePath(`/espace/finance/${studentId}`);
+  return { ok: true, message: "Statut / accès mis à jour." };
+}
+
+/** Enregistre un paiement (inscription ou scolarité) avec référence et traçabilité. */
 export async function addPayment(
   studentId: string,
   _prev: FormResult | null,
   formData: FormData
 ): Promise<FormResult> {
-  const ctx = await getAdmin();
-  if (!ctx) return { ok: false, message: "Action réservée à l'administration." };
+  const ctx = await getStaff();
+  if (!ctx) return { ok: false, message: "Action réservée à la Scolarité." };
 
   const amount = num(str(formData, "amount"));
   if (Number.isNaN(amount) || amount <= 0) {
     return { ok: false, message: "Montant du paiement invalide." };
   }
+  const kind = str(formData, "kind") === "inscription" ? "inscription" : "scolarite";
 
   const { error } = await ctx.supabase.from("payments").insert({
     student_id: studentId,
     amount,
+    kind,
     method: str(formData, "method") || null,
+    reference: str(formData, "reference") || null,
     label: str(formData, "label") || null,
+    observation: str(formData, "observation") || null,
+    recorded_by: ctx.userId,
     paid_at: str(formData, "paid_at") || undefined,
   });
   if (error) return { ok: false, message: error.message };
@@ -90,8 +140,8 @@ export async function addSchedule(
   _prev: FormResult | null,
   formData: FormData
 ): Promise<FormResult> {
-  const ctx = await getAdmin();
-  if (!ctx) return { ok: false, message: "Action réservée à l'administration." };
+  const ctx = await getStaff();
+  if (!ctx) return { ok: false, message: "Action réservée à la Scolarité." };
 
   const amount = num(str(formData, "amount"));
   if (Number.isNaN(amount) || amount <= 0) {
@@ -118,7 +168,7 @@ export async function deleteSchedule(
   scheduleId: string,
   _formData?: FormData
 ): Promise<void> {
-  const ctx = await getAdmin();
+  const ctx = await getStaff();
   if (!ctx) return;
   await ctx.supabase.from("payment_schedules").delete().eq("id", scheduleId);
   revalidatePath(`/espace/finance/${studentId}`);
@@ -130,7 +180,7 @@ export async function deletePayment(
   paymentId: string,
   _formData?: FormData
 ): Promise<void> {
-  const ctx = await getAdmin();
+  const ctx = await getStaff();
   if (!ctx) return;
   await ctx.supabase.from("payments").delete().eq("id", paymentId);
   revalidatePath(`/espace/finance/${studentId}`);
