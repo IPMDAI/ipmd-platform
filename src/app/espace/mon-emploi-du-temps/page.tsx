@@ -8,6 +8,7 @@ import {
 } from "@/components/espace/WeeklyTimetable";
 import { weekDates, weekLabel } from "@/lib/holidays";
 import { StudentSessions } from "@/components/espace/StudentSessions";
+import { StudentAttendance } from "@/components/espace/StudentAttendance";
 
 export const metadata: Metadata = {
   title: "Mon emploi du temps",
@@ -118,6 +119,7 @@ export default async function MonEmploiDuTempsPage() {
               {member?.class_id && (
                 <StudentSessions classId={member.class_id} />
               )}
+              <StudentAttendance studentId={userId} />
               <div>
                 <h2 className="mb-3 text-sm font-bold uppercase tracking-wider text-black/40">
                   Grille hebdomadaire type
