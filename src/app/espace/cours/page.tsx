@@ -8,13 +8,6 @@ export const metadata: Metadata = {
   title: "Mes cours",
 };
 
-function frDate(iso: string): string {
-  return new Date(iso).toLocaleDateString("fr-FR", {
-    day: "2-digit",
-    month: "short",
-  });
-}
-
 export default async function CoursPage() {
   const { supabase, userId } = await requireTeacher();
 
@@ -27,34 +20,18 @@ export default async function CoursPage() {
   const ids = courses.map((c) => c.id);
 
   const students = new Map<string, number>();
-  const lessonsCount = new Map<string, number>();
-  const nextLesson = new Map<string, string>();
   const devoirs = new Map<string, number>();
 
   if (ids.length > 0) {
-    const today = new Date().toISOString().slice(0, 10);
-    const [{ data: enr }, { data: lessons }, { data: assigns }] =
-      await Promise.all([
-        supabase.from("enrollments").select("course_id").in("course_id", ids),
-        supabase
-          .from("course_lessons")
-          .select("course_id, lesson_date")
-          .in("course_id", ids),
-        supabase.from("assignments").select("course_id").in("course_id", ids),
-      ]);
+    const [{ data: enr }, { data: assigns }] = await Promise.all([
+      supabase.from("enrollments").select("course_id").in("course_id", ids),
+      supabase.from("assignments").select("course_id").in("course_id", ids),
+    ]);
 
     for (const e of enr ?? [])
       students.set(e.course_id, (students.get(e.course_id) ?? 0) + 1);
     for (const a of assigns ?? [])
       devoirs.set(a.course_id, (devoirs.get(a.course_id) ?? 0) + 1);
-    for (const l of lessons ?? []) {
-      lessonsCount.set(l.course_id, (lessonsCount.get(l.course_id) ?? 0) + 1);
-      if (l.lesson_date >= today) {
-        const cur = nextLesson.get(l.course_id);
-        if (!cur || l.lesson_date < cur)
-          nextLesson.set(l.course_id, l.lesson_date);
-      }
-    }
   }
 
   return (
@@ -105,18 +82,9 @@ export default async function CoursPage() {
                             👥 {students.get(c.id) ?? 0} étudiant(s)
                           </span>
                           <span className="rounded-full bg-ipmd-light px-2.5 py-1 text-black/60">
-                            🗓️ {lessonsCount.get(c.id) ?? 0} séance(s)
-                          </span>
-                          <span className="rounded-full bg-ipmd-light px-2.5 py-1 text-black/60">
                             📝 {devoirs.get(c.id) ?? 0} devoir(s)
                           </span>
                         </div>
-
-                        {nextLesson.get(c.id) && (
-                          <p className="mt-3 text-xs font-medium text-ipmd-black">
-                            ⏭️ Prochaine séance : {frDate(nextLesson.get(c.id)!)}
-                          </p>
-                        )}
 
                         <span className="mt-3 inline-block text-xs font-semibold text-ipmd-red">
                           Gérer le cours →
