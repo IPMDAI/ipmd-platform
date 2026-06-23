@@ -80,6 +80,30 @@ export default async function EspacePage() {
     };
   }
 
+  // Panneau « à traiter » pédagogique : fiches à valider + séances sans fiche.
+  let pedaPending: { fichesAValider: number; seancesSansFiche: number } | null = null;
+  const isStaff = isAdmin || role === "pedagogie";
+  if (isStaff) {
+    const today = new Date().toISOString().slice(0, 10);
+    const [reps, pastSessions] = await Promise.all([
+      supabase.from("session_reports").select("session_id, validated, content"),
+      supabase
+        .from("course_sessions")
+        .select("id, status")
+        .lt("session_date", today),
+    ]);
+    const reports = reps.data ?? [];
+    const reportedSessionIds = new Set(reports.map((r) => r.session_id));
+    const fichesAValider = reports.filter(
+      (r) => !r.validated && r.content && String(r.content).trim() !== ""
+    ).length;
+    const ignoreStatuses = ["annulee", "ferie", "reportee", "remplacee"];
+    const seancesSansFiche = (pastSessions.data ?? []).filter(
+      (s) => !ignoreStatuses.includes(s.status) && !reportedSessionIds.has(s.id)
+    ).length;
+    pedaPending = { fichesAValider, seancesSansFiche };
+  }
+
   // Détection automatique des conflits de planning (admins).
   let conflicts: Conflict[] = [];
   if (isAdmin) {
@@ -127,18 +151,28 @@ export default async function EspacePage() {
           {/* Annonces de l'administration (tous rôles) */}
           <AnnouncementsPanel role={role} userId={user.id} />
 
-          {/* À traiter (admins) : ce qui attend une action, en tête */}
-          {pending && (
+          {/* À traiter (staff) : ce qui attend une action, en tête */}
+          {(pending || pedaPending) && (
             <div className="mt-8">
               <h2 className="mb-3 text-xs font-bold uppercase tracking-wider text-black/40">
                 À traiter
               </h2>
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                 {[
-                  { href: "/espace/candidatures", icon: "📥", label: "Nouvelles candidatures", value: pending.candidatures, alert: pending.candidatures > 0 },
-                  { href: "/espace/messages", icon: "✉️", label: "Messages de contact", value: pending.messages, alert: false },
-                  { href: "/espace/classes", icon: "🏫", label: "Filières à valider", value: pending.filieres, alert: pending.filieres > 0 },
-                  { href: "/espace/classes", icon: "📦", label: "Modules à valider", value: pending.modules, alert: pending.modules > 0 },
+                  ...(pending
+                    ? [
+                        { href: "/espace/candidatures", icon: "📥", label: "Nouvelles candidatures", value: pending.candidatures, alert: pending.candidatures > 0 },
+                        { href: "/espace/messages", icon: "✉️", label: "Messages de contact", value: pending.messages, alert: false },
+                        { href: "/espace/classes", icon: "🏫", label: "Filières à valider", value: pending.filieres, alert: pending.filieres > 0 },
+                        { href: "/espace/classes", icon: "📦", label: "Modules à valider", value: pending.modules, alert: pending.modules > 0 },
+                      ]
+                    : []),
+                  ...(pedaPending
+                    ? [
+                        { href: "/espace/fiches", icon: "🗂️", label: "Fiches à valider", value: pedaPending.fichesAValider, alert: pedaPending.fichesAValider > 0 },
+                        { href: "/espace/seances", icon: "📅", label: "Séances sans fiche", value: pedaPending.seancesSansFiche, alert: pedaPending.seancesSansFiche > 0 },
+                      ]
+                    : []),
                 ].map((c) => (
                   <Link
                     key={c.label}
