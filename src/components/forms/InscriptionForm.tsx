@@ -113,6 +113,27 @@ export function InscriptionForm() {
         </Field>
       </div>
 
+      <fieldset className="rounded-2xl border border-black/10 p-4">
+        <legend className="px-2 text-xs font-bold uppercase tracking-wider text-ipmd-red">
+          Pièces à joindre (PDF ou image)
+        </legend>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field label="Dernier diplôme" htmlFor="docDiploma">
+            <input id="docDiploma" name="docDiploma" type="file" accept=".pdf,.jpg,.jpeg,.png" className="block w-full text-sm text-black/60 file:mr-3 file:rounded-full file:border-0 file:bg-ipmd-light file:px-3 file:py-1.5 file:text-sm file:font-semibold file:text-ipmd-black" />
+          </Field>
+          <Field label="Bulletins / relevés de notes" htmlFor="docBulletins">
+            <input id="docBulletins" name="docBulletins" type="file" accept=".pdf,.jpg,.jpeg,.png" className="block w-full text-sm text-black/60 file:mr-3 file:rounded-full file:border-0 file:bg-ipmd-light file:px-3 file:py-1.5 file:text-sm file:font-semibold file:text-ipmd-black" />
+          </Field>
+          <Field label="Pièce d'identité / passeport / titre de séjour" htmlFor="docId">
+            <input id="docId" name="docId" type="file" accept=".pdf,.jpg,.jpeg,.png" className="block w-full text-sm text-black/60 file:mr-3 file:rounded-full file:border-0 file:bg-ipmd-light file:px-3 file:py-1.5 file:text-sm file:font-semibold file:text-ipmd-black" />
+          </Field>
+          <Field label="Attestation de scolarité (si nécessaire)" htmlFor="docAttestation">
+            <input id="docAttestation" name="docAttestation" type="file" accept=".pdf,.jpg,.jpeg,.png" className="block w-full text-sm text-black/60 file:mr-3 file:rounded-full file:border-0 file:bg-ipmd-light file:px-3 file:py-1.5 file:text-sm file:font-semibold file:text-ipmd-black" />
+          </Field>
+        </div>
+        <p className="mt-2 text-xs text-black/45">Formats acceptés : PDF, JPG, PNG · 8 Mo max par fichier.</p>
+      </fieldset>
+
       <Field label="Message (optionnel)" htmlFor="message">
         <textarea
           id="message"

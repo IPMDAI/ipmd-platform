@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { requireAdmin } from "@/lib/require-admin";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { universes } from "@/data/universes";
 import { Container } from "@/components/ui/Container";
 import { CandidatureActions } from "@/components/espace/CandidatureActions";
@@ -42,7 +43,7 @@ export default async function CandidaturesPage({
     supabase
       .from("inscription_requests")
       .select(
-        "id, full_name, email, phone, universe, program_interest, entry_level, message, created_at, status, desired_role"
+        "id, full_name, email, phone, universe, program_interest, entry_level, last_education, last_diploma, message, created_at, status, desired_role, doc_diploma, doc_bulletins, doc_id, doc_attestation"
       )
       .order("created_at", { ascending: false }),
     supabase.from("classes").select("id, name").order("name"),
@@ -59,6 +60,22 @@ export default async function CandidaturesPage({
 
   const active = statut && CANDIDATURE_LABEL[statut] ? statut : "";
   const candidatures = active ? all.filter((c) => c.status === active) : all;
+
+  // URLs signées pour les pièces jointes (lecture admin du bucket privé).
+  const docUrls = new Map<string, string>();
+  const admin = createAdminClient();
+  if (admin) {
+    const paths = candidatures
+      .flatMap((c) => [c.doc_diploma, c.doc_bulletins, c.doc_id, c.doc_attestation])
+      .filter(Boolean) as string[];
+    if (paths.length > 0) {
+      const { data: signed } = await admin.storage
+        .from("candidature-docs")
+        .createSignedUrls(paths, 3600);
+      for (const s of signed ?? [])
+        if (s.path && s.signedUrl) docUrls.set(s.path, s.signedUrl);
+    }
+  }
 
   const tab = (key: string, label: string, count: number) => {
     const on = active === key || (!active && key === "");
@@ -173,6 +190,31 @@ export default async function CandidaturesPage({
                     <p className="mt-3 whitespace-pre-line rounded-xl bg-ipmd-light px-4 py-3 text-sm leading-relaxed text-black/70">
                       {c.message}
                     </p>
+                  )}
+
+                  {(c.doc_diploma || c.doc_bulletins || c.doc_id || c.doc_attestation) && (
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {(
+                        [
+                          ["Diplôme", c.doc_diploma],
+                          ["Bulletins", c.doc_bulletins],
+                          ["Pièce d'identité", c.doc_id],
+                          ["Attestation", c.doc_attestation],
+                        ] as [string, string | null][]
+                      )
+                        .filter(([, p]) => p)
+                        .map(([label, p]) => (
+                          <a
+                            key={label}
+                            href={docUrls.get(p as string) ?? "#"}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="rounded-full bg-ipmd-light px-3 py-1.5 text-xs font-semibold text-ipmd-black ring-1 ring-black/10 transition-colors hover:ring-ipmd-red/40"
+                          >
+                            📎 {label}
+                          </a>
+                        ))}
+                    </div>
                   )}
 
                   <CandidatureActions id={c.id} status={c.status} />

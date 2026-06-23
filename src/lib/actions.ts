@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import {
   buildRows,
@@ -82,12 +83,44 @@ export async function submitInscription(
     };
   }
 
-  const { error } = await supabase.from("inscription_requests").insert(payload);
-  if (error) {
+  const { data: created, error } = await supabase
+    .from("inscription_requests")
+    .insert(payload)
+    .select("id")
+    .single();
+  if (error || !created) {
     return {
       ok: false,
       message: "Une erreur est survenue. Merci de réessayer.",
     };
+  }
+
+  // Pièces jointes : upload via service-role vers le bucket privé (best-effort).
+  const admin = createAdminClient();
+  if (admin) {
+    const fileFields = [
+      { field: "docDiploma", key: "diplome", col: "doc_diploma" },
+      { field: "docBulletins", key: "bulletins", col: "doc_bulletins" },
+      { field: "docId", key: "piece-identite", col: "doc_id" },
+      { field: "docAttestation", key: "attestation", col: "doc_attestation" },
+    ];
+    const docs: Record<string, string> = {};
+    for (const { field, key, col } of fileFields) {
+      const f = formData.get(field);
+      if (f instanceof File && f.size > 0 && f.size <= 8 * 1024 * 1024) {
+        const ext = (f.name.split(".").pop() || "bin")
+          .toLowerCase()
+          .replace(/[^a-z0-9]/g, "");
+        const path = `${created.id}/${key}.${ext}`;
+        const { error: upErr } = await admin.storage
+          .from("candidature-docs")
+          .upload(path, f, { upsert: true, contentType: f.type || undefined });
+        if (!upErr) docs[col] = path;
+      }
+    }
+    if (Object.keys(docs).length > 0) {
+      await admin.from("inscription_requests").update(docs).eq("id", created.id);
+    }
   }
 
   // Notification email (best-effort, ne bloque pas la réponse).
