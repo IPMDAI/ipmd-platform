@@ -4,42 +4,75 @@ import { createClient } from "@/lib/supabase/server";
 type Todo = { icon: string; text: string; href: string; tone: "info" | "alert" };
 
 function frDate(iso: string): string {
-  return new Date(iso).toLocaleDateString("fr-FR", {
+  return new Date(iso + "T00:00:00Z").toLocaleDateString("fr-FR", {
     day: "2-digit",
     month: "long",
+    timeZone: "UTC",
   });
 }
 
-/** Panneau « À faire » de l'enseignant : signaux dérivés de ses cours. */
+/** Panneau « À faire » de l'enseignant : signaux dérivés de ses cours et séances. */
 export async function TeacherTodo({ userId }: { userId: string }) {
   const supabase = await createClient();
   if (!supabase) return null;
+
+  const today = new Date().toISOString().slice(0, 10);
+  const in7 = new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10);
 
   const { data: courses } = await supabase
     .from("courses")
     .select("id, title")
     .eq("teacher_id", userId);
   const courseIds = (courses ?? []).map((c) => c.id);
-  if (courseIds.length === 0) return null;
   const courseTitle = new Map((courses ?? []).map((c) => [c.id, c.title]));
 
-  const today = new Date().toISOString().slice(0, 10);
-  const in7 = new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10);
+  // Séances passées de l'enseignant + fiches déjà remplies.
+  const { data: pastSessions } = await supabase
+    .from("course_sessions")
+    .select("id, subject, session_date, status")
+    .eq("teacher_id", userId)
+    .lt("session_date", today)
+    .order("session_date", { ascending: false });
+  const filled = new Set<string>();
+  const pastIds = (pastSessions ?? []).map((s) => s.id);
+  if (pastIds.length > 0) {
+    const { data: reps } = await supabase
+      .from("session_reports")
+      .select("session_id, content")
+      .in("session_id", pastIds);
+    for (const r of reps ?? [])
+      if (r.content && String(r.content).trim() !== "") filled.add(r.session_id);
+  }
 
-  const [{ data: assigns }, { data: enr }] = await Promise.all([
-    supabase
-      .from("assignments")
-      .select("title, course_id, due_date")
-      .in("course_id", courseIds),
-    supabase.from("enrollments").select("course_id").in("course_id", courseIds),
-  ]);
-
-  const enrolled = new Set((enr ?? []).map((e) => e.course_id));
+  const [assignsRes, enrRes] =
+    courseIds.length > 0
+      ? await Promise.all([
+          supabase
+            .from("assignments")
+            .select("title, course_id, due_date")
+            .in("course_id", courseIds),
+          supabase.from("enrollments").select("course_id").in("course_id", courseIds),
+        ])
+      : [{ data: [] }, { data: [] }];
+  const assigns = assignsRes.data ?? [];
+  const enrolled = new Set((enrRes.data ?? []).map((e) => e.course_id));
 
   const todos: Todo[] = [];
 
+  // Séances passées sans fiche remplie → fiche/appel à compléter (priorité).
+  const ignore = ["annulee", "ferie", "reportee", "remplacee"];
+  for (const s of pastSessions ?? []) {
+    if (ignore.includes(s.status) || filled.has(s.id)) continue;
+    todos.push({
+      icon: "🗂️",
+      text: `Fiche à compléter : ${s.subject} (séance du ${frDate(s.session_date)})`,
+      href: `/espace/seance/${s.id}`,
+      tone: "alert",
+    });
+  }
+
   // Devoirs dont l'échéance est passée → à évaluer.
-  for (const a of assigns ?? []) {
+  for (const a of assigns) {
     if (a.due_date && a.due_date < today) {
       todos.push({
         icon: "📝",
@@ -50,7 +83,7 @@ export async function TeacherTodo({ userId }: { userId: string }) {
     }
   }
   // Devoirs à venir (7 jours).
-  for (const a of assigns ?? []) {
+  for (const a of assigns) {
     if (a.due_date && a.due_date >= today && a.due_date <= in7) {
       todos.push({
         icon: "⏳",
