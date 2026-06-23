@@ -58,7 +58,7 @@ export default async function FinancePage({
       supabase
         .from("student_finance")
         .select("student_id, registration_fee, tuition_due, discount_rate, level, status, access_state"),
-      supabase.from("payments").select("student_id, amount, method, kind"),
+      supabase.from("payments").select("student_id, amount, method, kind, paid_at"),
       supabase.from("payment_schedules").select("student_id, amount, due_date"),
     ]);
 
@@ -145,6 +145,25 @@ export default async function FinancePage({
   }
   const methods = [...byMethod.entries()].sort((a, b) => b[1] - a[1]);
 
+  // Évolution des encaissements (12 derniers mois)
+  const now = new Date();
+  const months: { key: string; label: string; total: number }[] = [];
+  for (let i = 11; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    months.push({
+      key: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`,
+      label: d.toLocaleDateString("fr-FR", { month: "short" }),
+      total: 0,
+    });
+  }
+  const mIdx = new Map(months.map((m, i) => [m.key, i]));
+  for (const p of payments ?? []) {
+    const i = mIdx.get(String(p.paid_at).slice(0, 7));
+    if (i != null) months[i].total += Number(p.amount);
+  }
+  const maxMonth = Math.max(1, ...months.map((m) => m.total));
+  const monthlyTotal = months.reduce((a, m) => a + m.total, 0);
+
   const shown = active === "tous" ? rows : rows.filter((r) => r.category === active);
 
   const kpi = (label: string, value: string, cls = "text-ipmd-black") => (
@@ -206,6 +225,33 @@ export default async function FinancePage({
                   <span key={m} className="rounded-full bg-ipmd-light px-3 py-1.5 text-xs font-semibold text-black/70">
                     {m} · <span className="text-ipmd-black">{formatFCFA(v)}</span>
                   </span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Évolution des encaissements */}
+          {monthlyTotal > 0 && (
+            <div className="mt-4 rounded-2xl bg-white p-5 shadow-sm ring-1 ring-black/5">
+              <p className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-black/40">
+                Encaissements — 12 derniers mois
+              </p>
+              <div className="flex h-32 items-end gap-1.5">
+                {months.map((m) => (
+                  <div key={m.key} className="flex h-full flex-1 flex-col items-center justify-end gap-1">
+                    <span className="text-[8px] font-semibold text-black/40">
+                      {m.total > 0 ? Math.round(m.total / 1000) + "k" : ""}
+                    </span>
+                    <div
+                      className="w-full rounded-t bg-ipmd-red/80"
+                      style={{
+                        height: `${Math.round((m.total / maxMonth) * 100)}%`,
+                        minHeight: m.total > 0 ? "3px" : "0",
+                      }}
+                      title={`${m.label} : ${formatFCFA(m.total)}`}
+                    />
+                    <span className="text-[9px] capitalize text-black/40">{m.label}</span>
+                  </div>
                 ))}
               </div>
             </div>
