@@ -1,8 +1,9 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { submitInscription } from "@/lib/actions";
 import { universes } from "@/data/universes";
+import { programs } from "@/data/programs";
 import { ActionButton } from "@/components/ui/Button";
 import { Field, inputBase } from "./FormField";
 import { PhoneField } from "./PhoneField";
@@ -10,18 +11,14 @@ import type { FormResult } from "@/types";
 
 const entryLevels = ["Bac", "Bac+1", "Bac+2", "Bac+3", "Bac+4", "Bac+5"];
 
-const filieres = [
-  "Marketing digital",
-  "Communication digitale",
-  "Graphisme & Design",
-  "E-commerce & commerce international",
-  "Développement d'applications",
-  "Informatique & intelligence artificielle",
-  "Management de projet digital",
-  "Comptabilité & finance digitale",
-  "Finance digitale",
-  "Autre",
-];
+// Filières proposées selon l'univers (dérivées des programmes réels).
+const filieresByUniverse: Record<string, string[]> = {};
+for (const p of programs) {
+  (filieresByUniverse[p.universe] ||= []);
+  if (!filieresByUniverse[p.universe].includes(p.title))
+    filieresByUniverse[p.universe].push(p.title);
+}
+const allFilieres = [...new Set(programs.map((p) => p.title))];
 
 const diplomas = [
   "Baccalauréat",
@@ -46,6 +43,9 @@ export function InscriptionForm() {
     submitInscription,
     null
   );
+  const [universe, setUniverse] = useState("");
+  const filiereOptions =
+    universe && filieresByUniverse[universe] ? filieresByUniverse[universe] : allFilieres;
 
   return (
     <>
@@ -85,7 +85,14 @@ export function InscriptionForm() {
 
         <div className="grid gap-5 sm:grid-cols-2">
           <Field label="Univers visé" htmlFor="universe" required>
-            <select id="universe" name="universe" required defaultValue="" className={inputBase}>
+            <select
+              id="universe"
+              name="universe"
+              required
+              value={universe}
+              onChange={(e) => setUniverse(e.target.value)}
+              className={inputBase}
+            >
               <option value="">— Sélectionner —</option>
               {diplomaUniverses.map((u) => (
                 <option key={u.id} value={u.id}>
@@ -108,13 +115,21 @@ export function InscriptionForm() {
 
         <div className="grid gap-5 sm:grid-cols-2">
           <Field label="Filière / formation souhaitée" htmlFor="programInterest" required>
-            <select id="programInterest" name="programInterest" required defaultValue="" className={inputBase}>
+            <select
+              key={universe}
+              id="programInterest"
+              name="programInterest"
+              required
+              defaultValue=""
+              className={inputBase}
+            >
               <option value="">— Sélectionner —</option>
-              {filieres.map((f) => (
+              {filiereOptions.map((f) => (
                 <option key={f} value={f}>
                   {f}
                 </option>
               ))}
+              <option value="Autre">Autre</option>
             </select>
           </Field>
           <Field label="Dernier diplôme obtenu" htmlFor="lastDiploma">
