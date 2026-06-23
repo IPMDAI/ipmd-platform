@@ -17,6 +17,7 @@ const TYPE_LABELS: Record<string, string> = {
   recu: "Reçu de paiement",
   contrat: "Contrat de vacataire",
   bulletin: "Bulletin de notes",
+  "releve-notes": "Relevé de notes",
 };
 
 export default async function VerifierPage({
@@ -82,9 +83,10 @@ export default async function VerifierPage({
                     }
                   />
                 )}
-                {payload.t === "bulletin" && payload.a != null && (
-                  <Row label="Moyenne générale" value={`${payload.a}/20`} />
-                )}
+                {(payload.t === "bulletin" || payload.t === "releve-notes") &&
+                  payload.a != null && (
+                    <Row label="Moyenne générale" value={`${payload.a}/20`} />
+                  )}
                 {payload.t === "recu" && (
                   <>
                     <Row
