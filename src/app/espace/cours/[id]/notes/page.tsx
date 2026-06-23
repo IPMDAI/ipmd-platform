@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { requireTeacher } from "@/lib/require-teacher";
 import { Container } from "@/components/ui/Container";
 import { AddGradeForm } from "@/components/espace/AddGradeForm";
+import { BatchGradeForm } from "@/components/espace/BatchGradeForm";
 import { removeGrade } from "@/lib/teaching-actions";
 
 export const metadata: Metadata = {
@@ -73,6 +74,17 @@ export default async function CourseNotesPage({
             <strong>2 notes de classe</strong> + <strong>1 examen</strong> par
             étudiant ({nbClasse} de classe · {nbExamen} examen saisies).
           </p>
+
+          {students.length > 0 && (
+            <details className="mt-6 group">
+              <summary className="cursor-pointer rounded-2xl bg-ipmd-black px-5 py-3 text-sm font-semibold text-white">
+                ⚡ Saisie groupée — noter toute la classe en une fois
+              </summary>
+              <div className="mt-3">
+                <BatchGradeForm courseId={id} students={students} />
+              </div>
+            </details>
+          )}
 
           <div className="mt-8 grid gap-8 lg:grid-cols-[1fr_22rem]">
             {/* Liste des notes */}

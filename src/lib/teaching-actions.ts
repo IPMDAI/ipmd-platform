@@ -231,6 +231,75 @@ export async function addGrade(
   return { ok: true, message: "Note enregistrée." };
 }
 
+/** Saisie groupée : une même évaluation notée pour plusieurs étudiants. */
+export async function addGradesBatch(
+  courseId: string,
+  _prev: FormResult | null,
+  formData: FormData
+): Promise<FormResult> {
+  const ctx = await getTeacher();
+  if (!ctx) return { ok: false, message: "Action réservée aux enseignants." };
+
+  const { data: course } = await ctx.supabase
+    .from("courses")
+    .select("id, teacher_id")
+    .eq("id", courseId)
+    .single();
+  if (!course || course.teacher_id !== ctx.userId) {
+    return { ok: false, message: "Cours introuvable." };
+  }
+
+  const title = str(formData, "title");
+  if (!title) return { ok: false, message: "Le titre de l'évaluation est requis." };
+
+  const maxScore = Number.parseFloat((str(formData, "max_score") || "20").replace(",", "."));
+  if (Number.isNaN(maxScore) || maxScore <= 0) {
+    return { ok: false, message: "Barème invalide." };
+  }
+  const type = str(formData, "type") === "examen" ? "examen" : "classe";
+  const coefRaw = str(formData, "coefficient").replace(",", ".");
+  const coef = coefRaw ? Number.parseFloat(coefRaw) : 1;
+  const semester = str(formData, "semester") || null;
+
+  const rows: Record<string, unknown>[] = [];
+  let skipped = 0;
+  for (const [key, val] of formData.entries()) {
+    if (!key.startsWith("score_")) continue;
+    const raw = typeof val === "string" ? val.trim() : "";
+    if (!raw) continue; // étudiant non noté → ignoré
+    const score = Number.parseFloat(raw.replace(",", "."));
+    if (Number.isNaN(score) || score < 0 || score > maxScore) {
+      skipped += 1;
+      continue;
+    }
+    rows.push({
+      course_id: courseId,
+      student_id: key.slice("score_".length),
+      title,
+      score,
+      max_score: maxScore,
+      type,
+      coefficient: !Number.isNaN(coef) && coef > 0 ? coef : 1,
+      semester,
+      comment: null,
+    });
+  }
+
+  if (rows.length === 0) {
+    return { ok: false, message: "Aucune note valide saisie." };
+  }
+  const { error } = await ctx.supabase.from("grades").insert(rows);
+  if (error) return { ok: false, message: error.message };
+
+  revalidatePath(`/espace/cours/${courseId}/notes`);
+  return {
+    ok: true,
+    message:
+      `${rows.length} note(s) enregistrée(s).` +
+      (skipped > 0 ? ` ${skipped} ignorée(s) (note invalide).` : ""),
+  };
+}
+
 /** Supprime une note (action de formulaire simple). */
 export async function removeGrade(
   courseId: string,
