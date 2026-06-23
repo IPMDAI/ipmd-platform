@@ -69,6 +69,20 @@ export default async function MesPaiementsPage() {
             </Link>
             .
           </p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <Link
+              href={`/espace/proforma/${userId}`}
+              className="inline-flex items-center gap-2 rounded-full bg-ipmd-black px-4 py-2 text-sm font-semibold text-white transition-opacity hover:opacity-90"
+            >
+              🧾 Ma facture proforma
+            </Link>
+            <Link
+              href={`/espace/releve/${userId}`}
+              className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-semibold text-ipmd-black ring-1 ring-black/10 transition-colors hover:ring-ipmd-red/40"
+            >
+              📑 Mon relevé de paiement
+            </Link>
+          </div>
 
           {/* Résumé */}
           <div className="mt-6 grid gap-4 sm:grid-cols-3">

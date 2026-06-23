@@ -7,6 +7,7 @@ import { PrintButton } from "@/components/espace/PrintButton";
 import { PaymentReceipt } from "@/components/espace/documents/PaymentReceipt";
 import { matricule, academicYear } from "@/lib/documents";
 import { signDoc, verifyUrl } from "@/lib/doc-verify";
+import { computeFinance } from "@/lib/finance";
 
 export const metadata: Metadata = {
   title: "Reçu de paiement",
@@ -23,18 +24,30 @@ export default async function RecuPage({
   // RLS : le paiement n'est lisible que par l'étudiant, son parent ou un admin.
   const { data: payment } = await supabase
     .from("payments")
-    .select("id, student_id, amount, method, label, paid_at")
+    .select("id, student_id, amount, method, label, paid_at, kind, reference")
     .eq("id", paymentId)
     .single();
   if (!payment) notFound();
 
-  const { data: student } = await supabase
-    .from("profiles")
-    .select("full_name, email")
-    .eq("id", payment.student_id)
-    .single();
+  const [{ data: student }, { data: finance }, { data: allPayments }] = await Promise.all([
+    supabase
+      .from("profiles")
+      .select("full_name, email")
+      .eq("id", payment.student_id)
+      .single(),
+    supabase
+      .from("student_finance")
+      .select("registration_fee, tuition_due, discount_rate, level")
+      .eq("student_id", payment.student_id)
+      .maybeSingle(),
+    supabase
+      .from("payments")
+      .select("amount, kind")
+      .eq("student_id", payment.student_id),
+  ]);
   const name = student?.full_name || student?.email || "—";
   const mat = matricule(payment.student_id);
+  const fin = computeFinance(finance, allPayments ?? []);
 
   const dateStr = new Date(payment.paid_at).toLocaleDateString("fr-FR", {
     day: "2-digit",
@@ -72,6 +85,12 @@ export default async function RecuPage({
               studentName={name}
               matricule={mat}
               verifyHref={verifyHref}
+              level={finance?.level ?? null}
+              recap={{
+                totalDue: fin.totalDue,
+                totalPaid: fin.totalPaid,
+                balance: fin.balance,
+              }}
             />
           </div>
         </div>

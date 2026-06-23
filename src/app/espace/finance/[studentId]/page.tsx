@@ -126,6 +126,21 @@ export default async function StudentFinancePage({
             )}
           </div>
 
+          <div className="mt-3 flex flex-wrap gap-2">
+            <Link
+              href={`/espace/proforma/${studentId}`}
+              className="inline-flex items-center gap-2 rounded-full bg-ipmd-black px-4 py-2 text-sm font-semibold text-white transition-opacity hover:opacity-90"
+            >
+              🧾 Facture proforma
+            </Link>
+            <Link
+              href={`/espace/releve/${studentId}`}
+              className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-semibold text-ipmd-black ring-1 ring-black/10 transition-colors hover:ring-ipmd-red/40"
+            >
+              📑 Relevé de paiement
+            </Link>
+          </div>
+
           {/* Résumé */}
           <div className="mt-6 grid gap-4 sm:grid-cols-3">
             <div className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-black/5">
@@ -240,7 +255,7 @@ export default async function StudentFinancePage({
                       </div>
                       <div className="flex shrink-0 items-center gap-2">
                         <Link
-                          href={`/espace/recu?student=${studentId}&payment=${p.id}`}
+                          href={`/espace/recu/${p.id}`}
                           className="rounded-lg px-2 py-1.5 text-xs font-semibold text-ipmd-black transition-colors hover:bg-black/5"
                         >
                           Reçu

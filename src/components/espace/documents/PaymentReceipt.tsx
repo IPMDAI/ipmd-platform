@@ -9,6 +9,8 @@ type Payment = {
   method: string | null;
   label: string | null;
   paid_at: string;
+  kind?: string | null;
+  reference?: string | null;
 };
 
 function frDate(iso: string): string {
@@ -25,12 +27,18 @@ export function PaymentReceipt({
   studentName,
   matricule,
   verifyHref,
+  level,
+  recap,
 }: {
   payment: Payment;
   studentName: string;
   matricule: string;
   verifyHref: string;
+  level?: string | null;
+  recap?: { totalDue: number; totalPaid: number; balance: number };
 }) {
+  const kindLabel =
+    payment.kind === "inscription" ? "Frais d'inscription" : "Frais de scolarité";
   return (
     <div className="relative overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-black/5 print:rounded-none print:shadow-none print:ring-0">
       <div className="h-2 w-full bg-gradient-to-r from-ipmd-black via-ipmd-red to-ipmd-black" />
@@ -85,17 +93,34 @@ export function PaymentReceipt({
             <table className="w-full text-sm">
               <tbody>
                 <tr className="border-b border-black/5">
-                  <td className="px-4 py-3 text-black/55">Objet</td>
+                  <td className="px-4 py-3 text-black/55">Nature</td>
                   <td className="px-4 py-3 text-right font-semibold text-ipmd-black">
-                    {payment.label || "Frais de scolarité"}
+                    {kindLabel}
+                    {payment.label ? ` · ${payment.label}` : ""}
                   </td>
                 </tr>
+                {level && (
+                  <tr className="border-b border-black/5">
+                    <td className="px-4 py-3 text-black/55">Niveau / formation</td>
+                    <td className="px-4 py-3 text-right font-semibold text-ipmd-black">
+                      {level}
+                    </td>
+                  </tr>
+                )}
                 <tr className="border-b border-black/5">
                   <td className="px-4 py-3 text-black/55">Mode de paiement</td>
                   <td className="px-4 py-3 text-right font-semibold text-ipmd-black">
                     {payment.method || "—"}
                   </td>
                 </tr>
+                {payment.reference && (
+                  <tr className="border-b border-black/5">
+                    <td className="px-4 py-3 text-black/55">Référence</td>
+                    <td className="px-4 py-3 text-right font-semibold text-ipmd-black">
+                      {payment.reference}
+                    </td>
+                  </tr>
+                )}
                 <tr className="border-b border-black/5">
                   <td className="px-4 py-3 text-black/55">Date</td>
                   <td className="px-4 py-3 text-right font-semibold text-ipmd-black">
@@ -105,6 +130,25 @@ export function PaymentReceipt({
               </tbody>
             </table>
           </div>
+
+          {recap && (
+            <div className="grid grid-cols-3 gap-2 text-center">
+              <div className="rounded-xl bg-ipmd-light px-2 py-3">
+                <p className="text-[10px] font-semibold uppercase text-black/45">Total dû</p>
+                <p className="text-sm font-bold text-ipmd-black">{formatFCFA(recap.totalDue)}</p>
+              </div>
+              <div className="rounded-xl bg-ipmd-light px-2 py-3">
+                <p className="text-[10px] font-semibold uppercase text-black/45">Déjà payé</p>
+                <p className="text-sm font-bold text-green-700">{formatFCFA(recap.totalPaid)}</p>
+              </div>
+              <div className="rounded-xl bg-ipmd-light px-2 py-3">
+                <p className="text-[10px] font-semibold uppercase text-black/45">Reste</p>
+                <p className="text-sm font-bold text-ipmd-red">
+                  {recap.balance <= 0 ? "Soldé" : formatFCFA(recap.balance)}
+                </p>
+              </div>
+            </div>
+          )}
 
           <div className="flex items-center justify-between rounded-xl bg-ipmd-black px-5 py-4 text-white">
             <span className="text-sm font-semibold uppercase tracking-wide text-white/70">
