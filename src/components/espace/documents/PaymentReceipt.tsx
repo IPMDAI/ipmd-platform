@@ -2,6 +2,7 @@ import Image from "next/image";
 import { formatFCFA } from "@/lib/finance";
 import { longDate } from "@/lib/documents";
 import { QrCode } from "@/components/espace/documents/QrCode";
+import { Cachet } from "@/components/espace/documents/Cachet";
 
 type Payment = {
   id: string;
@@ -177,7 +178,10 @@ export function PaymentReceipt({
           <div className="text-center">
             <p className="text-sm text-black/60">Fait à Abidjan,</p>
             <p className="text-sm font-medium text-ipmd-black">le {longDate()}</p>
-            <p className="mt-6 text-sm font-bold text-ipmd-black">
+            <div className="mt-2 flex h-14 items-center justify-center">
+              <Cachet size={72} />
+            </div>
+            <p className="text-sm font-bold text-ipmd-black">
               Le Service de la Scolarité
             </p>
           </div>

@@ -1,6 +1,7 @@
 import Image from "next/image";
 import { longDate, type Dossier } from "@/lib/documents";
 import { QrCode } from "@/components/espace/documents/QrCode";
+import { Cachet } from "@/components/espace/documents/Cachet";
 
 type Kind = "scolarite" | "certificat" | "reussite";
 
@@ -143,8 +144,8 @@ export function DocumentLetter({
             <p className="text-sm font-medium text-ipmd-black">
               le {longDate()}
             </p>
-            <div className="mt-6 flex h-16 w-44 items-center justify-center rounded-lg border border-dashed border-black/20 text-[11px] text-black/40">
-              Cachet &amp; signature
+            <div className="mt-4 flex h-16 w-44 items-center justify-center">
+              <Cachet size={72} />
             </div>
             <p className="mt-2 text-sm font-bold text-ipmd-black">
               La Direction

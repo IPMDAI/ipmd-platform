@@ -1,5 +1,6 @@
 import Image from "next/image";
 import { QrCode } from "@/components/espace/documents/QrCode";
+import { Cachet } from "@/components/espace/documents/Cachet";
 
 export type ContractData = {
   name: string;
@@ -215,7 +216,9 @@ export function TeacherContract({ data }: { data: ContractData }) {
         </div>
         <div className="text-center text-[12px]">
           <p className="font-bold text-ipmd-black">L&apos;ADMINISTRATEUR GÉNÉRAL</p>
-          <div className="mt-6 h-12 w-44" />
+          <div className="mx-auto mt-2 flex h-14 w-44 items-center justify-center">
+            <Cachet size={80} />
+          </div>
           <p className="font-semibold text-ipmd-black">POODA ETTIEN AUBIN</p>
         </div>
       </div>
