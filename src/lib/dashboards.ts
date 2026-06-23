@@ -153,6 +153,10 @@ const ADMIN_TILES = {
   planning: { title: "Planning", icon: "🗓️", status: "ready", href: "/espace/planning", description: "Emploi du temps par classe." },
   recrutement: { title: "Recrutement profs", icon: "🧑‍🏫", status: "ready", href: "/espace/recrutement", description: "Candidatures enseignants + tri IA." },
   enseignants: { title: "Enseignants", icon: "👨‍🏫", status: "ready", href: "/espace/enseignants", description: "Fiches : fonction, dossier, statut." },
+  seances: { title: "Séances", icon: "📅", status: "ready", href: "/espace/seances", description: "Emploi du temps daté, statuts, rattrapages." },
+  jours_feries: { title: "Jours fériés", icon: "📆", status: "ready", href: "/espace/jours-feries", description: "Calendrier des jours fériés." },
+  presences: { title: "Présences", icon: "✅", status: "ready", href: "/espace/presences", description: "Appel et suivi des absences." },
+  fiches: { title: "Fiches pédagogiques", icon: "🗂️", status: "ready", href: "/espace/fiches", description: "Fiches de séance à valider." },
   finance: { title: "Finance", icon: "💰", status: "ready", href: "/espace/finance", description: "Frais, paiements et soldes." },
   bulletins: { title: "Bulletins", icon: "📄", status: "ready", href: "/espace/bulletins", description: "Bulletins de notes des étudiants." },
   documents: { title: "Documents officiels", icon: "🪪", status: "ready", href: "/espace/documents", description: "Attestations, certificats, cartes étudiant." },
@@ -166,7 +170,17 @@ export const dashboardSections: Record<string, DashSection[]> = {
   super_admin: [
     {
       title: "Pédagogie & planning",
-      tiles: [ADMIN_TILES.classes, ADMIN_TILES.salles, ADMIN_TILES.planning, ADMIN_TILES.recrutement, ADMIN_TILES.enseignants],
+      tiles: [
+        ADMIN_TILES.classes,
+        ADMIN_TILES.salles,
+        ADMIN_TILES.planning,
+        ADMIN_TILES.seances,
+        ADMIN_TILES.jours_feries,
+        ADMIN_TILES.presences,
+        ADMIN_TILES.fiches,
+        ADMIN_TILES.recrutement,
+        ADMIN_TILES.enseignants,
+      ],
     },
     {
       title: "Scolarité & finance",
@@ -188,7 +202,17 @@ export const dashboardSections: Record<string, DashSection[]> = {
   admin: [
     {
       title: "Pédagogie & planning",
-      tiles: [ADMIN_TILES.classes, ADMIN_TILES.salles, ADMIN_TILES.planning, ADMIN_TILES.recrutement, ADMIN_TILES.enseignants],
+      tiles: [
+        ADMIN_TILES.classes,
+        ADMIN_TILES.salles,
+        ADMIN_TILES.planning,
+        ADMIN_TILES.seances,
+        ADMIN_TILES.jours_feries,
+        ADMIN_TILES.presences,
+        ADMIN_TILES.fiches,
+        ADMIN_TILES.recrutement,
+        ADMIN_TILES.enseignants,
+      ],
     },
     {
       title: "Scolarité & finance",
