@@ -51,9 +51,17 @@ export default async function FinancePage() {
           >
             ← Retour à l&apos;espace
           </Link>
-          <h1 className="mt-3 text-2xl font-extrabold tracking-tight text-ipmd-black">
-            Finance
-          </h1>
+          <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+            <h1 className="text-2xl font-extrabold tracking-tight text-ipmd-black">
+              Finance
+            </h1>
+            <Link
+              href="/espace/finance/parametres"
+              className="inline-flex items-center gap-2 rounded-full bg-ipmd-light px-4 py-2 text-sm font-semibold text-ipmd-black ring-1 ring-black/10 transition-colors hover:ring-ipmd-red/40"
+            >
+              ⚙️ Paramètres financiers
+            </Link>
+          </div>
           <p className="mt-1 text-sm text-black/55">
             Total encaissé :{" "}
             <span className="font-bold text-green-600">
