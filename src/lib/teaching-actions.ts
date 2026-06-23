@@ -161,6 +161,49 @@ export async function enrollStudent(
   return { ok: true, message: "Étudiant inscrit." };
 }
 
+/** Inscrit tous les étudiants d'une classe à un cours, en une fois. */
+export async function enrollClass(
+  courseId: string,
+  _prev: FormResult | null,
+  formData: FormData
+): Promise<FormResult> {
+  const ctx = await getTeacher();
+  if (!ctx) return { ok: false, message: "Action réservée aux enseignants." };
+
+  const { data: course } = await ctx.supabase
+    .from("courses")
+    .select("id, teacher_id")
+    .eq("id", courseId)
+    .single();
+  if (!course || course.teacher_id !== ctx.userId) {
+    return { ok: false, message: "Cours introuvable." };
+  }
+
+  const classId = str(formData, "class_id");
+  if (!classId) return { ok: false, message: "Sélectionnez une classe." };
+
+  const [{ data: members }, { data: existing }] = await Promise.all([
+    ctx.supabase.from("class_members").select("student_id").eq("class_id", classId),
+    ctx.supabase.from("enrollments").select("student_id").eq("course_id", courseId),
+  ]);
+  const ids = (members ?? []).map((m) => m.student_id);
+  if (ids.length === 0) {
+    return { ok: false, message: "Cette classe n'a aucun étudiant affecté." };
+  }
+  const have = new Set((existing ?? []).map((e) => e.student_id));
+  const rows = ids
+    .filter((id) => !have.has(id))
+    .map((id) => ({ course_id: courseId, student_id: id }));
+  if (rows.length === 0) {
+    return { ok: true, message: "Tous les étudiants de cette classe sont déjà inscrits." };
+  }
+  const { error } = await ctx.supabase.from("enrollments").insert(rows);
+  if (error) return { ok: false, message: error.message };
+
+  revalidatePath(`/espace/cours/${courseId}`);
+  return { ok: true, message: `${rows.length} étudiant(s) inscrit(s) depuis la classe.` };
+}
+
 /** Retire une inscription (action de formulaire simple). */
 export async function removeEnrollment(
   courseId: string,

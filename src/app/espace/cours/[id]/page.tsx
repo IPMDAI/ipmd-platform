@@ -6,6 +6,7 @@ import { Container } from "@/components/ui/Container";
 import { NewAssignmentForm } from "@/components/espace/NewAssignmentForm";
 import { NewSessionForm } from "@/components/espace/NewSessionForm";
 import { EnrollStudentForm } from "@/components/espace/EnrollStudentForm";
+import { EnrollClassForm } from "@/components/espace/EnrollClassForm";
 import { CourseMetaForm } from "@/components/espace/CourseMetaForm";
 import { removeEnrollment } from "@/lib/teaching-actions";
 import { DAY_LABELS, formatTime } from "@/lib/schedule";
@@ -101,6 +102,12 @@ export default async function CourseDetailPage({
   const availableStudents = (allStudents ?? []).filter(
     (s) => !enrolledSet.has(s.id)
   );
+
+  const { data: classRows } = await supabase
+    .from("classes")
+    .select("id, name")
+    .order("name");
+  const classes = (classRows ?? []).map((c) => ({ id: c.id, name: c.name }));
 
   return (
     <section className="min-h-[70vh] bg-ipmd-light">
@@ -211,11 +218,12 @@ export default async function CourseDetailPage({
               )}
             </div>
 
-            <div className="order-1 lg:order-2">
+            <div className="order-1 space-y-4 lg:order-2">
               <EnrollStudentForm
                 courseId={course.id}
                 students={availableStudents}
               />
+              <EnrollClassForm courseId={course.id} classes={classes} />
             </div>
           </div>
 
