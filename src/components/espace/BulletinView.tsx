@@ -92,6 +92,21 @@ export async function BulletinView({
   const attRate =
     attTotal > 0 ? Math.round(((attTotal - attAbsent) / attTotal) * 100) : null;
 
+  // Rang dans la classe (fonction sécurisée : ne renvoie que le rang).
+  const { data: rankRows } = await supabase.rpc("student_rank", {
+    p_student: studentId,
+    p_semester: active ?? "",
+  });
+  const rankRow = Array.isArray(rankRows) ? rankRows[0] : null;
+  const rank =
+    rankRow && rankRow.rank != null
+      ? {
+          rank: rankRow.rank as number,
+          total: rankRow.total as number,
+          classAvg: rankRow.class_avg as number | null,
+        }
+      : null;
+
   const tab = (label: string, href: string, on: boolean) => (
     <Link
       href={href}
@@ -228,6 +243,20 @@ export async function BulletinView({
                 </div>
               ))}
             </div>
+
+            {rank && (
+              <div className="mt-4 flex items-center justify-between rounded-xl bg-ipmd-red/5 px-5 py-3 text-sm ring-1 ring-ipmd-red/15">
+                <span className="font-semibold text-black/60">
+                  Rang dans la classe
+                </span>
+                <span className="font-bold text-ipmd-black">
+                  {rank.rank === 1 ? "1er" : `${rank.rank}e`} / {rank.total}
+                  {rank.classAvg != null
+                    ? ` · moyenne de classe ${rank.classAvg}/20`
+                    : ""}
+                </span>
+              </div>
+            )}
 
             {attRate !== null && (
               <div className="mt-4 flex items-center justify-between rounded-xl bg-ipmd-light px-5 py-3 text-sm">
