@@ -133,17 +133,41 @@ export async function inviteFromCandidature(
   const admin = createAdminClient();
   if (!admin) return { ok: false, message: "Service indisponible." };
 
-  // 1. Invitation (crée le compte + envoie l'email « définir mot de passe »).
-  const { data: invited, error } = await admin.auth.admin.inviteUserByEmail(
+  // 1. Crée le compte (sans mot de passe) — ou récupère-le s'il existe déjà.
+  let newId: string | undefined;
+  const { data: createdUser, error: createErr } = await admin.auth.admin.createUser({
     email,
-    {
-      data: { full_name: fullName },
-      redirectTo: `${SITE_URL}/definir-mot-de-passe`,
-    }
-  );
-  if (error) return { ok: false, message: error.message };
-  const newId = invited.user?.id;
-  if (!newId) return { ok: false, message: "Le compte n'a pas pu être créé." };
+    email_confirm: true,
+    user_metadata: { full_name: fullName },
+  });
+  if (createErr) {
+    // Probablement déjà créé : on retrouve son id via le profil.
+    const { data: existing } = await ctx.supabase
+      .from("profiles")
+      .select("id")
+      .eq("email", email)
+      .maybeSingle();
+    newId = existing?.id;
+  } else {
+    newId = createdUser.user?.id;
+  }
+  if (!newId) {
+    return {
+      ok: false,
+      message: `Le compte n'a pas pu être créé${createErr ? " : " + createErr.message : ""}.`,
+    };
+  }
+
+  // 2. Lien « définir mon mot de passe » (envoyé via Resend, pas par Supabase).
+  let actionLink = `${SITE_URL}/mot-de-passe-oublie`;
+  const { data: linkData } = await admin.auth.admin.generateLink({
+    type: "recovery",
+    email,
+    options: { redirectTo: `${SITE_URL}/definir-mot-de-passe` },
+  });
+  if (linkData?.properties?.action_link) {
+    actionLink = linkData.properties.action_link;
+  }
 
   // 2. Rôle + nom + univers (via le client Super Admin, autorisé par la garde).
   await ctx.supabase
@@ -161,10 +185,13 @@ export async function inviteFromCandidature(
       );
   }
 
-  // 4. Frais pré-remplis selon le niveau accepté + facture proforma.
+  // 4. Frais pré-remplis (étudiants) + email d'acceptation avec lien mot de passe.
   const level = str(formData, "level");
+  const isStudent = role === "etudiant";
   let emailed = 0;
-  if (role === "etudiant") {
+  let proformaBlock = "";
+
+  if (isStudent) {
     const [{ data: settings }, lvlRes] = await Promise.all([
       ctx.supabase
         .from("finance_settings")
@@ -195,30 +222,34 @@ export async function inviteFromCandidature(
       { onConflict: "student_id" }
     );
 
-    // Email : lettre d'acceptation + facture proforma (best-effort).
-    try {
-      if (canSendEmail) {
-        const rows = buildRows([
-          ["Formation", cand.program_interest || "—"],
-          ["Niveau accepté", level || cand.entry_level || "—"],
-          ["Frais d'inscription", formatFCFA(registrationFee)],
-          ["Frais de scolarité", formatFCFA(tuitionDue)],
-          ["Total à régler", formatFCFA(totalDue)],
-        ]);
-        const html = emailDocument(
-          "Votre dossier est accepté 🎉",
-          `<p style="margin:0 0 12px">Bonjour ${fullName || ""},</p>
-           <p style="margin:0 0 12px">Félicitations, votre dossier de candidature à l'IPMD a été <strong>accepté</strong>. Voici votre facture proforma :</p>
-           <table style="width:100%;border-collapse:collapse;font-size:14px">${rows}</table>
-           <p style="margin:16px 0 0">Veuillez procéder à votre <strong>inscription définitive</strong> en réglant les frais d'inscription de <strong>${formatFCFA(registrationFee)}</strong> via Wave, versement / virement BACI ou AFG, ou chèque. Après le paiement, transmettez votre preuve de paiement au service de la scolarité pour validation.</p>
-           <p style="margin:12px 0 0">Un email pour définir votre mot de passe vous a également été envoyé.</p>
-           <p style="color:#9ca3af;font-size:12px;margin-top:12px">scolarite@ipmd.pro · ipmd.pro</p>`
-        );
-        emailed = await sendScolariteEmail([email], "IPMD — Dossier accepté & inscription", html);
-      }
-    } catch {
-      // best-effort
+    const rows = buildRows([
+      ["Formation", cand.program_interest || "—"],
+      ["Niveau accepté", level || cand.entry_level || "—"],
+      ["Frais d'inscription", formatFCFA(registrationFee)],
+      ["Frais de scolarité", formatFCFA(tuitionDue)],
+      ["Total à régler", formatFCFA(totalDue)],
+    ]);
+    proformaBlock = `<p style="margin:0 0 12px">Voici votre facture proforma :</p>
+       <table style="width:100%;border-collapse:collapse;font-size:14px">${rows}</table>
+       <p style="margin:16px 0 0">Veuillez procéder à votre <strong>inscription définitive</strong> en réglant les frais d'inscription de <strong>${formatFCFA(registrationFee)}</strong> via Wave, versement / virement BACI ou AFG, ou chèque. Après le paiement, transmettez votre preuve de paiement au service de la scolarité pour validation.</p>`;
+  }
+
+  // Email unique (Resend) : acceptation + proforma (étudiants) + lien mot de passe.
+  try {
+    if (canSendEmail) {
+      const html = emailDocument(
+        "Votre dossier est accepté 🎉",
+        `<p style="margin:0 0 12px">Bonjour ${fullName || ""},</p>
+         <p style="margin:0 0 12px">Félicitations, votre dossier de candidature à l'IPMD a été <strong>accepté</strong>.</p>
+         ${proformaBlock}
+         <p style="margin:18px 0 0"><a href="${actionLink}" style="display:inline-block;background:#e01228;color:#fff;text-decoration:none;padding:12px 22px;border-radius:9999px;font-weight:600">🔑 Définir mon mot de passe & accéder à mon espace</a></p>
+         <p style="color:#9ca3af;font-size:12px;margin-top:10px">Ce lien est personnel. S'il a expiré, utilise « Mot de passe oublié » sur ${SITE_URL}/connexion.</p>
+         <p style="color:#9ca3af;font-size:12px;margin-top:12px">scolarite@ipmd.pro · ipmd.pro</p>`
+      );
+      emailed = await sendScolariteEmail([email], "IPMD — Dossier accepté & inscription", html);
     }
+  } catch {
+    // best-effort
   }
 
   // 5. La candidature passe « inscrit » (compte créé).
@@ -233,8 +264,9 @@ export async function inviteFromCandidature(
   return {
     ok: true,
     message:
-      `Invitation envoyée à ${email}.` +
-      (emailed > 0 ? " Lettre d'acceptation + proforma envoyées." : "") +
-      " Le candidat va définir son mot de passe.",
+      `Compte créé pour ${email}.` +
+      (emailed > 0
+        ? " Email d'acceptation + lien « définir mot de passe » envoyé."
+        : " (Email non envoyé — vérifie la config Resend.)"),
   };
 }
