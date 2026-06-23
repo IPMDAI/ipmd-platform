@@ -1,7 +1,8 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useState, type FormEvent } from "react";
 import { submitInscription } from "@/lib/actions";
+import { createClient } from "@/lib/supabase/client";
 import { universes } from "@/data/universes";
 import { programs } from "@/data/programs";
 import { ActionButton } from "@/components/ui/Button";
@@ -9,6 +10,24 @@ import { Field, inputBase } from "./FormField";
 import { PhoneField } from "./PhoneField";
 import { MultiFileField } from "./MultiFileField";
 import type { FormResult } from "@/types";
+
+const MAX_FILE = 8 * 1024 * 1024;
+
+/** Uploade un fichier vers Storage (navigateur). Renvoie le chemin ou null. */
+async function uploadDoc(
+  supabase: NonNullable<ReturnType<typeof createClient>>,
+  folder: string,
+  key: string,
+  file: File | undefined | null
+): Promise<string | null> {
+  if (!file || file.size === 0 || file.size > MAX_FILE) return null;
+  const ext = (file.name.split(".").pop() || "bin").toLowerCase().replace(/[^a-z0-9]/g, "");
+  const path = `${folder}/${key}.${ext}`;
+  const { error } = await supabase.storage
+    .from("candidature-docs")
+    .upload(path, file, { upsert: true });
+  return error ? null : path;
+}
 
 const entryLevels = ["Bac", "Bac+1", "Bac+2", "Bac+3", "Bac+4", "Bac+5"];
 
@@ -40,17 +59,72 @@ const fileInput =
   "block w-full cursor-pointer rounded-xl border border-dashed border-black/25 bg-white px-3 py-3 text-sm text-black/55 shadow-sm transition-colors hover:border-ipmd-red/50 file:mr-3 file:cursor-pointer file:rounded-full file:border-0 file:bg-ipmd-red file:px-3 file:py-1.5 file:text-sm file:font-semibold file:text-white";
 
 export function InscriptionForm() {
-  const [state, formAction, pending] = useActionState<FormResult | null, FormData>(
-    submitInscription,
-    null
-  );
+  const [state, setState] = useState<FormResult | null>(null);
+  const [pending, setPending] = useState(false);
   const [universe, setUniverse] = useState("");
   const filiereOptions =
     universe && filieresByUniverse[universe] ? filieresByUniverse[universe] : allFilieres;
 
+  async function handleSubmit(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const form = e.currentTarget;
+    setState(null);
+    setPending(true);
+    try {
+      const fd = new FormData(form);
+      // Ne pas envoyer les fichiers via l'action (limite de taille) :
+      // on les uploade d'abord vers Storage, puis on transmet leurs chemins.
+      fd.delete("docDiploma");
+      fd.delete("docBulletins");
+      fd.delete("docId");
+      fd.delete("docAttestation");
+
+      const supabase = createClient();
+      if (supabase) {
+        const folder = crypto.randomUUID();
+        const q = (sel: string) =>
+          (form.querySelector(sel) as HTMLInputElement | null)?.files?.[0] ?? null;
+        const [dip, idf, att] = await Promise.all([
+          uploadDoc(supabase, folder, "diplome", q("#docDiploma")),
+          uploadDoc(supabase, folder, "piece-identite", q("#docId")),
+          uploadDoc(supabase, folder, "attestation", q("#docAttestation")),
+        ]);
+        if (dip) fd.set("docDiplomaPath", dip);
+        if (idf) fd.set("docIdPath", idf);
+        if (att) fd.set("docAttestationPath", att);
+
+        const bulletinInputs = form.querySelectorAll<HTMLInputElement>(
+          'input[name="docBulletins"]'
+        );
+        const bulletinPaths: string[] = [];
+        let i = 0;
+        for (const inp of Array.from(bulletinInputs)) {
+          const f = inp.files?.[0];
+          if (f && f.size > 0) {
+            i += 1;
+            const p = await uploadDoc(supabase, folder, `bulletins-${i}`, f);
+            if (p) bulletinPaths.push(p);
+          }
+        }
+        if (bulletinPaths.length > 0) fd.set("docBulletinsPaths", bulletinPaths.join(","));
+      }
+
+      const res = await submitInscription(null, fd);
+      setState(res);
+      if (res.ok) form.reset();
+    } catch {
+      setState({
+        ok: false,
+        message: "Erreur lors de l'envoi des pièces. Vérifie leur taille (8 Mo max) et réessaie.",
+      });
+    } finally {
+      setPending(false);
+    }
+  }
+
   return (
     <>
-      <form action={formAction} className="space-y-5">
+      <form onSubmit={handleSubmit} className="space-y-5">
         <div className="grid gap-5 sm:grid-cols-2">
           <Field label="Nom" htmlFor="lastName" required>
             <input id="lastName" name="lastName" type="text" required autoComplete="family-name" placeholder="Votre nom" className={inputBase} />

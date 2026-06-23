@@ -1,7 +1,6 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
-import { createAdminClient } from "@/lib/supabase/admin";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import {
   buildRows,
@@ -51,6 +50,11 @@ export async function submitInscription(
     last_education: getString(formData, "lastEducation") || null,
     last_diploma: getString(formData, "lastDiploma") || null,
     message: getString(formData, "message") || null,
+    // Pièces : chemins déjà uploadés côté navigateur (Storage direct).
+    doc_diploma: getString(formData, "docDiplomaPath") || null,
+    doc_bulletins: getString(formData, "docBulletinsPaths") || null,
+    doc_id: getString(formData, "docIdPath") || null,
+    doc_attestation: getString(formData, "docAttestationPath") || null,
   };
 
   if (!payload.full_name || !payload.email || !payload.phone) {
@@ -87,71 +91,11 @@ export async function submitInscription(
     };
   }
 
-  // Insertion. L'utilisateur anonyme ne peut pas relire la ligne (RLS),
-  // donc on récupère l'id via le client service-role quand il est disponible
-  // (nécessaire pour rattacher les pièces jointes). Sinon insertion simple.
-  const admin = createAdminClient();
-  let newId: string | null = null;
-
-  if (admin) {
-    const { data: created, error } = await admin
-      .from("inscription_requests")
-      .insert(payload)
-      .select("id")
-      .single();
-    if (error || !created) {
-      return { ok: false, message: "Une erreur est survenue. Merci de réessayer." };
-    }
-    newId = created.id;
-  } else {
-    const { error } = await supabase.from("inscription_requests").insert(payload);
-    if (error) {
-      return { ok: false, message: "Une erreur est survenue. Merci de réessayer." };
-    }
-  }
-
-  // Pièces jointes : upload via service-role vers le bucket privé (best-effort).
-  if (admin && newId) {
-    const MAX = 8 * 1024 * 1024;
-    const docs: Record<string, string> = {};
-    const ext = (f: File) =>
-      (f.name.split(".").pop() || "bin").toLowerCase().replace(/[^a-z0-9]/g, "");
-    const put = async (path: string, f: File) => {
-      const { error: upErr } = await admin.storage
-        .from("candidature-docs")
-        .upload(path, f, { upsert: true, contentType: f.type || undefined });
-      return !upErr;
-    };
-
-    // Fichiers uniques.
-    const single = [
-      { field: "docDiploma", key: "diplome", col: "doc_diploma" },
-      { field: "docId", key: "piece-identite", col: "doc_id" },
-      { field: "docAttestation", key: "attestation", col: "doc_attestation" },
-    ];
-    for (const { field, key, col } of single) {
-      const f = formData.get(field);
-      if (f instanceof File && f.size > 0 && f.size <= MAX) {
-        const path = `${newId}/${key}.${ext(f)}`;
-        if (await put(path, f)) docs[col] = path;
-      }
-    }
-
-    // Bulletins : plusieurs fichiers possibles.
-    const bulletins = formData
-      .getAll("docBulletins")
-      .filter((f): f is File => f instanceof File && f.size > 0 && f.size <= MAX);
-    const bulletinPaths: string[] = [];
-    for (let i = 0; i < bulletins.length; i++) {
-      const f = bulletins[i];
-      const path = `${newId}/bulletins-${i + 1}.${ext(f)}`;
-      if (await put(path, f)) bulletinPaths.push(path);
-    }
-    if (bulletinPaths.length > 0) docs.doc_bulletins = bulletinPaths.join(",");
-
-    if (Object.keys(docs).length > 0) {
-      await admin.from("inscription_requests").update(docs).eq("id", newId);
-    }
+  // Insertion (les pièces sont déjà uploadées côté navigateur ; on ne stocke
+  // que leurs chemins → corps léger, pas de relecture RLS nécessaire).
+  const { error } = await supabase.from("inscription_requests").insert(payload);
+  if (error) {
+    return { ok: false, message: "Une erreur est survenue. Merci de réessayer." };
   }
 
   // Notification email (best-effort, ne bloque pas la réponse).
