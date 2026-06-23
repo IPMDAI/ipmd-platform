@@ -6,6 +6,7 @@ import {
   setStudentAccess,
   addPayment,
   addSchedule,
+  emailProforma,
 } from "@/lib/finance-actions";
 import { Field, inputBase } from "@/components/forms/FormField";
 import { ActionButton } from "@/components/ui/Button";
@@ -177,6 +178,27 @@ export function AddScheduleForm({ studentId }: { studentId: string }) {
         {pending ? "…" : "Ajouter l'échéance"}
       </ActionButton>
       <Feedback state={state} />
+    </form>
+  );
+}
+
+export function EmailProformaButton({ studentId }: { studentId: string }) {
+  const bound = emailProforma.bind(null, studentId);
+  const [state, action, pending] = useActionState<FormResult | null, FormData>(bound, null);
+  return (
+    <form action={action} className="inline-flex flex-col">
+      <button
+        type="submit"
+        disabled={pending}
+        className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-semibold text-ipmd-black ring-1 ring-black/10 transition-colors hover:ring-ipmd-red/40 disabled:opacity-50"
+      >
+        {pending ? "Envoi…" : "📧 Envoyer la proforma"}
+      </button>
+      {state && (
+        <span className={`mt-1 text-xs font-medium ${state.ok ? "text-green-600" : "text-ipmd-red"}`}>
+          {state.message}
+        </span>
+      )}
     </form>
   );
 }

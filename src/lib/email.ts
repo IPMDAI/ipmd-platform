@@ -114,6 +114,48 @@ export async function sendEmailTo(
   return results.filter((r) => r.status === "fulfilled").length;
 }
 
+/** Expéditeur Scolarité (domaine vérifié send.ipmd.pro ; réponses vers la boîte réelle). */
+const RESEND_FROM_SCOLARITE =
+  process.env.RESEND_FROM_SCOLARITE ?? "IPMD Scolarité <scolarite@send.ipmd.pro>";
+const SCOLARITE_REPLY_TO =
+  process.env.RESEND_REPLY_SCOLARITE ?? "scolarite@ipmd.pro";
+
+/**
+ * Envoie un email au nom de la Scolarité (reçus, proforma, relances).
+ * Best-effort : ne lève jamais. Renvoie le nombre d'envois réussis.
+ */
+export async function sendScolariteEmail(
+  recipients: string[],
+  subject: string,
+  html: string
+): Promise<number> {
+  if (!canSendEmail) return 0;
+  const valid = [...new Set(recipients.filter((e) => e && e.includes("@")))];
+
+  const results = await Promise.allSettled(
+    valid.map((to) =>
+      fetch("https://api.resend.com/emails", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${RESEND_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          from: RESEND_FROM_SCOLARITE,
+          to: [to],
+          subject,
+          html,
+          reply_to: SCOLARITE_REPLY_TO,
+        }),
+      }).then((r) => {
+        if (!r.ok) throw new Error(String(r.status));
+      })
+    )
+  );
+
+  return results.filter((r) => r.status === "fulfilled").length;
+}
+
 /** Envoie un email de notification. Ne lève jamais d'exception. */
 export async function sendNotification(
   subject: string,

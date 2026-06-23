@@ -8,6 +8,7 @@ import {
   AddPaymentForm,
   AddScheduleForm,
   AccessForm,
+  EmailProformaButton,
 } from "@/components/espace/finance-forms";
 import { deletePayment, deleteSchedule } from "@/lib/finance-actions";
 import {
@@ -139,6 +140,7 @@ export default async function StudentFinancePage({
             >
               📑 Relevé de paiement
             </Link>
+            <EmailProformaButton studentId={studentId} />
           </div>
 
           {/* Résumé */}
