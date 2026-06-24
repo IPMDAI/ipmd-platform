@@ -16,7 +16,7 @@ export default async function EtudiantsPage() {
 
   const { data: students } = await supabase
     .from("profiles")
-    .select("id, full_name, email, phone, whatsapp, personal_email, school_email")
+    .select("id, full_name, email, avatar_url, phone, whatsapp, personal_email, school_email")
     .eq("role", "etudiant")
     .order("full_name");
   const list = students ?? [];
@@ -64,6 +64,7 @@ export default async function EtudiantsPage() {
       id: s.id,
       name: s.full_name || "—",
       email: s.email,
+      avatarUrl: s.avatar_url ?? null,
       className: cls?.name ?? null,
       filiereName: cls?.filiere_id ? filiereName.get(cls.filiere_id) ?? null : null,
       contacts: {

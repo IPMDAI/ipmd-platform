@@ -2,16 +2,28 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { ContactEditForm, type Contacts } from "@/components/espace/ContactEditForm";
 
 export type StudentRow = {
   id: string;
   name: string;
   email: string;
+  avatarUrl: string | null;
   className: string | null;
   filiereName: string | null;
   contacts: Contacts;
 };
+
+function initialsOf(name: string): string {
+  return name
+    .split(/\s+/)
+    .map((w) => w[0])
+    .filter(Boolean)
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
+}
 
 function normalize(s: string): string {
   return s
@@ -57,7 +69,15 @@ export function StudentDirectory({ students }: { students: StudentRow[] }) {
           {results.map((s) => (
             <li key={s.id} className="p-4">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <div className="min-w-0">
+                <div className="flex min-w-0 items-center gap-3">
+                  <span className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full bg-ipmd-light ring-1 ring-black/10">
+                    {s.avatarUrl ? (
+                      <Image src={s.avatarUrl} alt={s.name} width={44} height={44} className="h-full w-full object-cover" unoptimized />
+                    ) : (
+                      <span className="text-xs font-bold text-black/35">{initialsOf(s.name) || "👤"}</span>
+                    )}
+                  </span>
+                  <div className="min-w-0">
                   <p className="truncate font-semibold text-ipmd-black">
                     {s.name}
                   </p>
@@ -74,6 +94,7 @@ export function StudentDirectory({ students }: { students: StudentRow[] }) {
                       </span>
                     )}
                   </p>
+                  </div>
                 </div>
                 <div className="flex shrink-0 flex-wrap gap-2">
                   <Link
