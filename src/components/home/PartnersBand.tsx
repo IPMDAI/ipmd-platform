@@ -2,7 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { Container } from "@/components/ui/Container";
-import type { Partner } from "@/lib/partners";
+import { PARTNER_CATEGORIES, type Partner } from "@/lib/partners";
 
 /** Bandeau « Ils nous font confiance » — logos des partenaires actifs (accueil). */
 export async function PartnersBand() {
@@ -30,17 +30,30 @@ export async function PartnersBand() {
           </p>
         </div>
 
-        <div className="mt-10 flex flex-wrap items-center justify-center gap-x-10 gap-y-6">
-          {partners.map((p) => {
-            const content = p.logo_url ? (
-              <Image src={p.logo_url} alt={p.name} width={130} height={56} className="max-h-12 w-auto object-contain opacity-80 transition-opacity hover:opacity-100" unoptimized />
-            ) : (
-              <span className="text-sm font-semibold text-black/55 transition-colors hover:text-ipmd-black">{p.name}</span>
-            );
-            return p.website ? (
-              <a key={p.id} href={p.website} target="_blank" rel="noopener noreferrer" title={p.name} className="flex h-12 items-center">{content}</a>
-            ) : (
-              <span key={p.id} title={p.name} className="flex h-12 items-center">{content}</span>
+        <div className="mt-10 space-y-8">
+          {PARTNER_CATEGORIES.map((cat) => {
+            const list = partners.filter((p) => p.category === cat.value);
+            if (list.length === 0) return null;
+            return (
+              <div key={cat.value}>
+                <p className="mb-4 text-center text-xs font-bold uppercase tracking-[0.14em] text-black/35">
+                  {cat.icon} {cat.label}
+                </p>
+                <div className="flex flex-wrap items-center justify-center gap-x-10 gap-y-5">
+                  {list.map((p) => {
+                    const content = p.logo_url ? (
+                      <Image src={p.logo_url} alt={p.name} width={130} height={56} className="max-h-12 w-auto object-contain opacity-80 transition-opacity hover:opacity-100" unoptimized />
+                    ) : (
+                      <span className="text-sm font-semibold text-black/60 transition-colors hover:text-ipmd-black">{p.name}</span>
+                    );
+                    return p.website ? (
+                      <a key={p.id} href={p.website} target="_blank" rel="noopener noreferrer" title={p.name} className="flex h-12 items-center">{content}</a>
+                    ) : (
+                      <span key={p.id} title={p.name} className="flex h-12 items-center">{content}</span>
+                    );
+                  })}
+                </div>
+              </div>
             );
           })}
         </div>
