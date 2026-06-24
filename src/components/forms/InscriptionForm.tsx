@@ -229,7 +229,7 @@ export function InscriptionForm() {
           </legend>
           <p className="mb-3 text-xs text-black/50">
             Le <strong>dernier diplôme</strong> et la <strong>pièce d&apos;identité</strong> sont
-            requis. Pour les bulletins, clique sur « + Ajouter » pour en joindre plusieurs.
+            requis. Pour les bulletins ou relevés de notes, cliquez sur « + Ajouter » pour en joindre plusieurs.
           </p>
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label="Dernier diplôme" htmlFor="docDiploma" required>
@@ -259,7 +259,7 @@ export function InscriptionForm() {
 
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
           <ActionButton type="submit" size="lg" disabled={pending}>
-            {pending ? "Envoi en cours…" : "Envoyer ma demande"}
+            {pending ? "Envoi en cours…" : "Envoyer ma demande d'admission"}
           </ActionButton>
           {state && !state.ok && (
             <p

@@ -23,7 +23,7 @@ const steps = [
   {
     n: "3",
     title: "Dossier & admission",
-    desc: "Constitution du dossier et confirmation de votre place.",
+    desc: "Constitution du dossier et confirmation de votre admission.",
   },
   {
     n: "4",
@@ -37,8 +37,8 @@ export default function AdmissionPage() {
     <>
       <PageHero
         eyebrow="Admission"
-        title="Demande d'inscription"
-        description="Rejoignez IPMD en quelques étapes simples. Remplissez le formulaire, notre équipe vous recontacte rapidement."
+        title="Demande d'admission"
+        description="Rejoignez l'IPMD en quelques étapes simples. Remplissez le formulaire, notre équipe vous recontactera rapidement."
       />
 
       <Section variant="white">
@@ -66,7 +66,7 @@ export default function AdmissionPage() {
           {/* Formulaire */}
           <div className="rounded-3xl bg-ipmd-light p-7 shadow-sm ring-1 ring-black/5 sm:p-9">
             <h2 className="text-xl font-extrabold tracking-tight text-ipmd-black">
-              Formulaire de demande
+              Formulaire de demande d'admission
             </h2>
             <p className="mt-1 text-sm text-black/60">
               Les champs marqués d'un <span className="text-ipmd-red">*</span>{" "}
