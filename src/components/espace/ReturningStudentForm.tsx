@@ -1,31 +1,57 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { createReturningStudent } from "@/lib/user-admin-actions";
 import { Field, inputBase } from "@/components/forms/FormField";
 import { ActionButton } from "@/components/ui/Button";
+import { formatFCFA } from "@/lib/finance";
 import type { FormResult } from "@/types";
 
-type ClassOpt = { id: string; name: string; intake: string | null };
+type ClassOpt = { id: string; name: string; intake: string | null; tuition: number | null };
 
 export function ReturningStudentForm({
   classes,
   levels,
+  levelTuition,
+  registrationFee,
 }: {
   classes: ClassOpt[];
   levels: string[];
+  levelTuition: Record<string, number>;
+  registrationFee: number;
 }) {
   const [state, action, pending] = useActionState<FormResult | null, FormData>(
     createReturningStudent,
     null
   );
 
+  const [level, setLevel] = useState("");
+  const [classId, setClassId] = useState("");
+  const [discountPct, setDiscountPct] = useState(0);
+  const [paid, setPaid] = useState(0);
+
+  // Récap live (tarif de la classe prioritaire, sinon tarif du niveau).
+  const cls = classes.find((c) => c.id === classId) ?? null;
+  const tuitionBrut = cls?.tuition != null ? cls.tuition : levelTuition[level] ?? 0;
+  const rate = Math.min(100, Math.max(0, discountPct)) / 100;
+  const reduction = Math.round(tuitionBrut * rate);
+  const tuitionNet = tuitionBrut - reduction;
+  const totalDue = registrationFee + tuitionNet;
+  const reste = totalDue - paid;
+  const inscriptionSettled = registrationFee > 0 ? Math.min(paid, registrationFee) >= registrationFee : true;
+
+  const Line = ({ label, value, strong, cls: c }: { label: string; value: string; strong?: boolean; cls?: string }) => (
+    <div className="flex items-center justify-between gap-2 py-0.5">
+      <span className="text-black/55">{label}</span>
+      <span className={`${strong ? "font-bold" : "font-medium"} ${c ?? "text-ipmd-black"}`}>{value}</span>
+    </div>
+  );
+
   return (
     <form action={action} className="space-y-4 rounded-2xl bg-white p-6 shadow-sm ring-1 ring-black/5">
       <h2 className="text-lg font-bold text-ipmd-black">Reprendre un étudiant</h2>
       <p className="text-xs text-black/50">
-        Crée le compte, l&apos;affecte à une cohorte, fixe ses frais et enregistre ce qu&apos;il a
-        <strong> déjà payé</strong> — en une fois.
+        Compte + cohorte + frais + <strong>report antérieur</strong> en une fois.
       </p>
 
       <div className="grid grid-cols-2 gap-3">
@@ -39,7 +65,7 @@ export function ReturningStudentForm({
 
       <div className="grid grid-cols-2 gap-3">
         <Field label="Niveau" htmlFor="rs-level">
-          <select id="rs-level" name="level" defaultValue="" className={inputBase}>
+          <select id="rs-level" name="level" value={level} onChange={(e) => setLevel(e.target.value)} className={inputBase}>
             <option value="">—</option>
             {levels.map((l) => (
               <option key={l} value={l}>{l}</option>
@@ -51,29 +77,70 @@ export function ReturningStudentForm({
         </Field>
       </div>
 
-      <Field label="Classe / cohorte (optionnel)" htmlFor="rs-class">
-        <select id="rs-class" name="class_id" defaultValue="" className={inputBase}>
+      <Field label="Classe / cohorte (optionnel — son tarif prime sur le niveau)" htmlFor="rs-class">
+        <select id="rs-class" name="class_id" value={classId} onChange={(e) => setClassId(e.target.value)} className={inputBase}>
           <option value="">— Aucune —</option>
           {classes.map((c) => (
             <option key={c.id} value={c.id}>
-              {c.name}{c.intake ? ` · ${c.intake}` : ""}
+              {c.name}{c.intake ? ` · ${c.intake}` : ""}{c.tuition != null ? ` · tarif ${c.tuition.toLocaleString("fr-FR")}` : ""}
             </option>
           ))}
         </select>
       </Field>
 
-      <Field label="Montant déjà payé (report antérieur, FCFA)" htmlFor="rs-paid">
-        <input id="rs-paid" name="paid_amount" type="number" min="0" defaultValue="0" className={inputBase} />
-      </Field>
+      <div className="grid grid-cols-2 gap-3">
+        <Field label="Réduction scolarité (%)" htmlFor="rs-disc">
+          <input
+            id="rs-disc"
+            name="discount_pct"
+            type="number"
+            min="0"
+            max="100"
+            value={discountPct || ""}
+            onChange={(e) => setDiscountPct(Number(e.target.value))}
+            placeholder="0"
+            className={inputBase}
+          />
+        </Field>
+        <Field label="Report antérieur — déjà payé (FCFA)" htmlFor="rs-paid">
+          <input
+            id="rs-paid"
+            name="paid_amount"
+            type="number"
+            min="0"
+            value={paid || ""}
+            onChange={(e) => setPaid(Number(e.target.value))}
+            placeholder="0"
+            className={inputBase}
+          />
+        </Field>
+      </div>
 
-      <label className="flex items-center gap-2 text-sm font-medium text-black/70">
-        <input type="checkbox" name="lump_sum" className="h-4 w-4 rounded border-black/20" />
-        Réduction 15% (paiement unique de la scolarité)
-      </label>
-      <label className="flex items-center gap-2 text-sm font-medium text-black/70">
-        <input type="checkbox" name="send_email" defaultChecked className="h-4 w-4 rounded border-black/20" />
-        📧 Envoyer le lien « définir mot de passe » + sa situation
-      </label>
+      {/* Récapitulatif live */}
+      <div className="rounded-xl bg-ipmd-light px-4 py-3 text-xs">
+        <p className="mb-1 text-[10px] font-bold uppercase tracking-wider text-black/40">Récapitulatif</p>
+        <Line label="Frais d'inscription" value={formatFCFA(registrationFee)} />
+        <Line label="Frais de scolarité (brut)" value={formatFCFA(tuitionBrut)} />
+        <Line label={`Réduction (${discountPct || 0}% scolarité)`} value={`−${formatFCFA(reduction)}`} cls="text-amber-600" />
+        <Line label="Total dû (après réduction)" value={formatFCFA(totalDue)} strong />
+        <Line label="Montant déjà payé (report)" value={formatFCFA(paid)} cls="text-green-700" />
+        <Line label="Reste à payer" value={reste <= 0 ? "Soldé" : formatFCFA(reste)} strong cls={reste <= 0 ? "text-green-600" : "text-ipmd-red"} />
+        <div className="mt-1.5 flex flex-wrap gap-1.5 border-t border-black/10 pt-1.5">
+          <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${inscriptionSettled ? "bg-blue-50 text-blue-700" : "bg-ipmd-red/10 text-ipmd-red"}`}>
+            {inscriptionSettled ? "Inscription soldée" : "Inscription non soldée"}
+          </span>
+          <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${inscriptionSettled ? "bg-green-50 text-green-700" : "bg-amber-50 text-amber-700"}`}>
+            {inscriptionSettled ? "Accès actif" : "Accès en pause"}
+          </span>
+        </div>
+      </div>
+
+      <Field label="Action" htmlFor="rs-mode">
+        <select id="rs-mode" name="send_mode" defaultValue="create_only" className={inputBase}>
+          <option value="create_only">Créer le dossier seulement (sans email)</option>
+          <option value="create_send">Créer le dossier et envoyer l&apos;email</option>
+        </select>
+      </Field>
 
       <ActionButton type="submit" disabled={pending}>
         {pending ? "Reprise…" : "Reprendre l'étudiant"}

@@ -14,12 +14,22 @@ export default async function ReprisePage() {
   const { data: me } = await supabase.from("profiles").select("role").eq("id", userId).single();
   if (me?.role !== "super_admin") redirect("/espace");
 
-  const [{ data: classRows }, { data: levelRows }] = await Promise.all([
-    supabase.from("classes").select("id, name, intake").order("name"),
-    supabase.from("tuition_levels").select("level").order("sort_order"),
+  const [{ data: classRows }, { data: levelRows }, { data: settings }] = await Promise.all([
+    supabase.from("classes").select("id, name, intake, tuition_amount").order("name"),
+    supabase.from("tuition_levels").select("level, amount").order("sort_order"),
+    supabase.from("finance_settings").select("registration_fee").eq("id", 1).maybeSingle(),
   ]);
-  const classes = (classRows ?? []).map((c) => ({ id: c.id, name: c.name, intake: c.intake }));
+  const classes = (classRows ?? []).map((c) => ({
+    id: c.id,
+    name: c.name,
+    intake: c.intake,
+    tuition: c.tuition_amount != null ? Number(c.tuition_amount) : null,
+  }));
   const levels = (levelRows ?? []).map((l) => l.level as string);
+  const levelTuition: Record<string, number> = Object.fromEntries(
+    (levelRows ?? []).map((l) => [l.level as string, Number(l.amount ?? 0)])
+  );
+  const registrationFee = Number(settings?.registration_fee ?? 300000);
 
   return (
     <section className="min-h-[70vh] bg-ipmd-light">
@@ -37,7 +47,12 @@ export default async function ReprisePage() {
           </p>
 
           <div className="mt-8 grid gap-6 lg:grid-cols-2">
-            <ReturningStudentForm classes={classes} levels={levels.length ? levels : DEFAULT_LEVELS} />
+            <ReturningStudentForm
+              classes={classes}
+              levels={levels.length ? levels : DEFAULT_LEVELS}
+              levelTuition={levelTuition}
+              registrationFee={registrationFee}
+            />
 
             <div className="space-y-4">
               <CreateUserForm />

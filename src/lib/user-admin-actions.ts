@@ -298,9 +298,9 @@ export async function createReturningStudent(
   const level = str(formData, "level");
   const program = str(formData, "program");
   const classId = str(formData, "class_id");
-  const lumpSum = formData.get("lump_sum") === "on";
+  const discountPct = Math.min(100, Math.max(0, Number(str(formData, "discount_pct") || "0")));
   const paidAmount = Math.max(0, Number(str(formData, "paid_amount") || "0"));
-  const sendEmail = formData.get("send_email") === "on";
+  const sendEmail = str(formData, "send_mode") === "create_send";
   if (!email.includes("@")) return { ok: false, message: "Email invalide." };
   if (!fullName) return { ok: false, message: "Nom et prénom requis." };
 
@@ -348,13 +348,14 @@ export async function createReturningStudent(
       ? ctx.supabase.from("tuition_levels").select("amount").eq("level", level).maybeSingle()
       : Promise.resolve({ data: null }),
     classId
-      ? ctx.supabase.from("classes").select("tuition_amount").eq("id", classId).maybeSingle()
+      ? ctx.supabase.from("classes").select("name, tuition_amount").eq("id", classId).maybeSingle()
       : Promise.resolve({ data: null }),
   ]);
   const registrationFee = Number(settings?.registration_fee ?? 300000);
   const classTuition = classRes?.data?.tuition_amount;
+  const className = classRes?.data?.name ?? null;
   const tuitionDue = classTuition != null ? Number(classTuition) : Number(lvlRes?.data?.amount ?? 0);
-  const discountRate = lumpSum ? 0.15 : 0;
+  const discountRate = discountPct / 100; // réduction sur la scolarité uniquement
   const tuitionNet = Math.round(tuitionDue * (1 - discountRate));
   const totalDue = registrationFee + tuitionNet;
 
@@ -416,10 +417,11 @@ export async function createReturningStudent(
 
     const balance = totalDue - paidAmount;
     const rows = buildRows([
-      ["Formation", program || "—"],
+      ["Classe / cohorte", className || "—"],
       ["Niveau", level || "—"],
-      ["Total à payer", formatFCFA(totalDue)],
-      ["Déjà payé (report)", formatFCFA(paidAmount)],
+      ["Formation", program || "—"],
+      ["Total dû", formatFCFA(totalDue)],
+      ["Déjà payé (report antérieur)", formatFCFA(paidAmount)],
       ["Reste à payer", balance <= 0 ? "Soldé" : formatFCFA(balance)],
     ]);
     const html = emailDocument(
