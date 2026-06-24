@@ -19,8 +19,7 @@ export const universes: Universe[] = [
     subdomain: "campus.ipmd.pro",
     href: "/campus",
     icon: "🎓",
-    image:
-      "https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=800&q=80&auto=format&fit=crop",
+    image: "/campus.png",
   },
   {
     id: "ultrajobs",
