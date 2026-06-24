@@ -59,8 +59,13 @@ export function AdmissionsChat() {
   const recogRef = useRef<{ stop: () => void } | null>(null);
   const voiceRef = useRef<SpeechSynthesisVoice | null>(null);
   const voiceOutRef = useRef(false); // miroir de voiceOut (évite les closures périmées)
+  const [handsFree, setHandsFree] = useState(false); // mode conversation vocale continue
+  const handsFreeRef = useRef(false);
+  const openRef = useRef(false);
+  const micAvailableRef = useRef(false); // micro utilisable (pas dans le formulaire d'identification)
 
   useEffect(() => { voiceOutRef.current = voiceOut; }, [voiceOut]);
+  useEffect(() => { handsFreeRef.current = handsFree; }, [handsFree]);
 
   // Le champ de saisie s'agrandit avec le texte (jusqu'à ~5 lignes).
   // La barre de défilement n'apparaît qu'au-delà de la hauteur max (sinon flèches ▲▼ parasites).
@@ -88,8 +93,8 @@ export function AdmissionsChat() {
     }
   }, []);
 
-  // 🎙️ Dicter sa question (parole → texte dans le champ).
-  const toggleMic = () => {
+  // 🎙️ Démarre l'écoute du micro (réutilisé pour le mode mains-libres).
+  const startListening = () => {
     const w = window as unknown as { SpeechRecognition?: new () => never; webkitSpeechRecognition?: new () => never };
     const SR = (w.SpeechRecognition || w.webkitSpeechRecognition) as
       | (new () => {
@@ -100,7 +105,6 @@ export function AdmissionsChat() {
         })
       | undefined;
     if (!SR) return;
-    if (listening) { recogRef.current?.stop(); return; }
     // Parler = mode vocal : on active la voix d'Awa pour un vrai échange oral.
     setVoiceOut(true);
     voiceOutRef.current = true;
@@ -122,7 +126,15 @@ export function AdmissionsChat() {
     r.onerror = () => setListening(false);
     recogRef.current = r;
     setListening(true);
-    r.start();
+    try { r.start(); } catch {}
+  };
+
+  // Bouton micro : démarre / arrête le mode vocal mains-libres.
+  const toggleMic = () => {
+    if (listening) { setHandsFree(false); recogRef.current?.stop(); return; }
+    setHandsFree(true);
+    handsFreeRef.current = true;
+    startListening();
   };
 
   // 🔊 Lecture vocale de la réponse d'Awa (si activée).
@@ -135,20 +147,50 @@ export function AdmissionsChat() {
       u.rate = 1.02;
       u.pitch = 1.08; // voix un peu plus douce / féminine
       if (voiceRef.current) u.voice = voiceRef.current;
+      u.onend = () => {
+        // Mode mains-libres : on rouvre le micro pour enchaîner la conversation.
+        if (handsFreeRef.current && openRef.current && micAvailableRef.current) {
+          setTimeout(() => { if (handsFreeRef.current) startListening(); }, 250);
+        }
+      };
       window.speechSynthesis.speak(u);
     } catch {}
   };
 
   const toggleVoiceOut = () => {
     setVoiceOut((v) => {
-      if (v && typeof window !== "undefined" && window.speechSynthesis) window.speechSynthesis.cancel();
-      return !v;
+      const next = !v;
+      if (!next) {
+        // On coupe la voix → on quitte aussi le mode mains-libres.
+        setHandsFree(false);
+        handsFreeRef.current = false;
+        recogRef.current?.stop();
+        if (typeof window !== "undefined" && window.speechSynthesis) window.speechSynthesis.cancel();
+      }
+      return next;
     });
   };
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [messages, open, lead]);
+
+  // Fermeture du chat → on stoppe micro, voix et mode mains-libres.
+  useEffect(() => {
+    openRef.current = open;
+    if (!open) {
+      setHandsFree(false);
+      handsFreeRef.current = false;
+      recogRef.current?.stop();
+      if (typeof window !== "undefined" && window.speechSynthesis) window.speechSynthesis.cancel();
+    }
+  }, [open]);
+
+  // Micro indisponible quand le formulaire d'identification remplace la saisie.
+  useEffect(() => {
+    const asked = messages.filter((m) => m.role === "user").length;
+    micAvailableRef.current = voiceIn && !(!lead && asked >= FREE_QUESTIONS && !gateDismissed);
+  }, [messages, voiceIn, lead, gateDismissed]);
 
   if (pathname?.startsWith("/espace")) return null;
 
@@ -326,6 +368,12 @@ export function AdmissionsChat() {
               <a href="https://wa.me/2250775758888" target="_blank" rel="noopener noreferrer" className="rounded-full bg-[#25D366]/10 px-2.5 py-1 font-semibold text-[#128C7E]">WhatsApp</a>
               <Link href="/demande-info" className="rounded-full bg-ipmd-light px-2.5 py-1 font-semibold text-ipmd-black hover:bg-black/5">✉️ Demande d&apos;info</Link>
             </div>
+            {handsFree && (
+              <div className="mb-2 flex items-center gap-2 rounded-lg bg-ipmd-red/10 px-2.5 py-1.5 text-[11px] font-semibold text-ipmd-red">
+                <span className="h-2 w-2 animate-pulse rounded-full bg-ipmd-red" />
+                🎧 Conversation vocale — {listening ? "parlez, je vous écoute…" : "Awa va vous réécouter après sa réponse"}
+              </div>
+            )}
             <form onSubmit={(e) => { e.preventDefault(); send(); }} className="flex items-end gap-2">
               <textarea
                 ref={taRef}
@@ -340,10 +388,10 @@ export function AdmissionsChat() {
                 <button
                   type="button"
                   onClick={toggleMic}
-                  disabled={busy}
-                  aria-label={listening ? "Arrêter la dictée" : "Dicter votre question"}
-                  title={listening ? "Arrêter" : "Parler au lieu d'écrire"}
-                  className={`shrink-0 rounded-xl px-3 py-2 text-base ring-1 transition-colors disabled:opacity-40 ${listening ? "animate-pulse bg-ipmd-red text-white ring-ipmd-red" : "bg-white text-ipmd-red ring-ipmd-red/30 hover:bg-ipmd-red/10"}`}
+                  disabled={busy && !handsFree}
+                  aria-label={handsFree ? "Arrêter le mode vocal" : "Parler à Awa"}
+                  title={handsFree ? "Mode vocal mains-libres actif — cliquez pour arrêter" : "Parler au lieu d'écrire (mode mains-libres)"}
+                  className={`shrink-0 rounded-xl px-3 py-2 text-base ring-1 transition-colors disabled:opacity-40 ${listening ? "animate-pulse bg-ipmd-red text-white ring-ipmd-red" : handsFree ? "bg-ipmd-red text-white ring-ipmd-red" : "bg-white text-ipmd-red ring-ipmd-red/30 hover:bg-ipmd-red/10"}`}
                 >
                   🎙️
                 </button>
