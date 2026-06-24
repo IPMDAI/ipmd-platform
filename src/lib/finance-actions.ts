@@ -362,3 +362,102 @@ export async function setPaymentStatus(
   revalidatePath("/espace/finance/paiements");
   revalidatePath("/espace/finance");
 }
+
+/** Envoie le reçu d'un paiement par email à un destinataire (étudiant ou parent) + journalise. */
+export async function sendReceiptEmail(
+  paymentId: string,
+  target: string
+): Promise<FormResult> {
+  const ctx = await getStaff();
+  if (!ctx) return { ok: false, message: "Réservé à l'administration." };
+  if (!canSendEmail) return { ok: false, message: "Service email non configuré." };
+
+  const { data: payment } = await ctx.supabase
+    .from("payments")
+    .select("id, student_id, amount, kind")
+    .eq("id", paymentId)
+    .single();
+  if (!payment) return { ok: false, message: "Paiement introuvable." };
+
+  let email = "";
+  let label = "";
+  if (target === "student") {
+    const { data: s } = await ctx.supabase
+      .from("profiles")
+      .select("full_name, email")
+      .eq("id", payment.student_id)
+      .single();
+    email = s?.email ?? "";
+    label = "Étudiant";
+  } else {
+    const { data: p } = await ctx.supabase
+      .from("profiles")
+      .select("full_name, email")
+      .eq("id", target)
+      .single();
+    email = p?.email ?? "";
+    label = `Parent : ${p?.full_name || p?.email || "—"}`;
+  }
+  if (!email) return { ok: false, message: "Ce destinataire n'a pas d'email." };
+
+  const [{ data: fin2 }, { data: pays2 }, { data: stu }] = await Promise.all([
+    ctx.supabase
+      .from("student_finance")
+      .select("registration_fee, tuition_due, discount_rate")
+      .eq("student_id", payment.student_id)
+      .maybeSingle(),
+    ctx.supabase.from("payments").select("amount, kind").eq("student_id", payment.student_id),
+    ctx.supabase.from("profiles").select("full_name, email").eq("id", payment.student_id).single(),
+  ]);
+  const fin = computeFinance(fin2, pays2 ?? []);
+  const rows = buildRows([
+    ["Étudiant", stu?.full_name || stu?.email || "—"],
+    ["Nature", payment.kind === "inscription" ? "Frais d'inscription" : "Frais de scolarité"],
+    ["Montant payé", formatFCFA(payment.amount)],
+    ["Total dû", formatFCFA(fin.totalDue)],
+    ["Déjà payé", formatFCFA(fin.totalPaid)],
+    ["Reste à payer", fin.balance <= 0 ? "Soldé" : formatFCFA(fin.balance)],
+  ]);
+  const link = `${SITE_URL}/espace/recu/${paymentId}`;
+  const html = emailDocument(
+    "Reçu de paiement",
+    `<table style="width:100%;border-collapse:collapse;font-size:14px">${rows}</table>
+     <p style="margin-top:16px"><a href="${link}" style="display:inline-block;background:#e01228;color:#fff;text-decoration:none;padding:10px 18px;border-radius:9999px;font-weight:600">Voir / imprimer le reçu officiel</a></p>
+     <p style="color:#9ca3af;font-size:12px;margin-top:8px">Pour toute question : scolarite@ipmd.pro</p>`
+  );
+  const sent = await sendScolariteEmail([email], "IPMD — Reçu de paiement", html);
+  if (sent > 0) {
+    await ctx.supabase.from("receipt_sends").insert({
+      payment_id: paymentId,
+      recipient: label,
+      channel: "email",
+      sent_by: ctx.userId,
+    });
+  }
+  revalidatePath(`/espace/finance/${payment.student_id}`);
+  return sent > 0
+    ? { ok: true, message: `Reçu envoyé à ${label} (${email}).` }
+    : { ok: false, message: "Échec de l'envoi de l'email." };
+}
+
+/** Journalise un partage manuel du reçu (ex. WhatsApp) sans envoyer d'email. */
+export async function logReceiptShare(
+  paymentId: string,
+  channel: string,
+  recipient: string
+): Promise<void> {
+  const ctx = await getStaff();
+  if (!ctx) return;
+  const { data: payment } = await ctx.supabase
+    .from("payments")
+    .select("student_id")
+    .eq("id", paymentId)
+    .single();
+  await ctx.supabase.from("receipt_sends").insert({
+    payment_id: paymentId,
+    recipient,
+    channel,
+    sent_by: ctx.userId,
+  });
+  if (payment) revalidatePath(`/espace/finance/${payment.student_id}`);
+}

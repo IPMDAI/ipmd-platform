@@ -11,6 +11,7 @@ import {
   EmailProformaButton,
 } from "@/components/espace/finance-forms";
 import { deletePayment, deleteSchedule } from "@/lib/finance-actions";
+import { ReceiptSendPanel } from "@/components/espace/ReceiptSendPanel";
 import {
   formatFCFA,
   computeSchedule,
@@ -79,6 +80,41 @@ export default async function StudentFinancePage({
     ]);
 
   const payments = paymentRows ?? [];
+
+  // Destinataires (étudiant + parents liés) + historique des envois de reçus.
+  const paymentIds = payments.map((p) => p.id);
+  const [{ data: parentLinks }, { data: sends }] = await Promise.all([
+    supabase.from("parent_links").select("parent_id").eq("student_id", studentId),
+    paymentIds.length
+      ? supabase
+          .from("receipt_sends")
+          .select("payment_id, recipient, channel, sent_at")
+          .in("payment_id", paymentIds)
+          .order("sent_at", { ascending: true })
+      : Promise.resolve({ data: [] as { payment_id: string; recipient: string; channel: string; sent_at: string }[] }),
+  ]);
+  const parentIds = (parentLinks ?? []).map((l) => l.parent_id);
+  let parents: { id: string; full_name: string | null; email: string | null }[] = [];
+  if (parentIds.length > 0) {
+    const { data: pp } = await supabase.from("profiles").select("id, full_name, email").in("id", parentIds);
+    parents = pp ?? [];
+  }
+  const recipients = [
+    { target: "student", label: "Étudiant", email: student.email ?? null },
+    ...parents.map((p) => ({
+      target: p.id,
+      label: `Parent : ${p.full_name || p.email || "—"}`,
+      email: p.email ?? null,
+    })),
+  ];
+  const sendsByPayment = new Map<string, { recipient: string; channel: string; sent_at: string }[]>();
+  for (const s of sends ?? []) {
+    const arr = sendsByPayment.get(s.payment_id) ?? [];
+    arr.push(s);
+    sendsByPayment.set(s.payment_id, arr);
+  }
+  const SITE = process.env.NEXT_PUBLIC_SITE_URL ?? "https://ipmd.pro";
+
   const fin = computeFinance(finance, payments);
   const derivedStatus = finance?.status || deriveFinancialStatus(fin);
   const accessState = finance?.access_state || "actif";
@@ -231,7 +267,8 @@ export default async function StudentFinancePage({
               ) : (
                 <ul className="divide-y divide-black/5 overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-black/5">
                   {payments.map((p) => (
-                    <li key={p.id} className="flex items-center justify-between gap-3 p-4">
+                    <li key={p.id} className="p-4">
+                      <div className="flex items-center justify-between gap-3">
                       <div className="min-w-0">
                         <p className="font-semibold text-ipmd-black">
                           {formatFCFA(p.amount)}
@@ -268,6 +305,13 @@ export default async function StudentFinancePage({
                           </button>
                         </form>
                       </div>
+                      </div>
+                      <ReceiptSendPanel
+                        paymentId={p.id}
+                        recipients={recipients}
+                        receiptUrl={`${SITE}/espace/recu/${p.id}`}
+                        history={sendsByPayment.get(p.id) ?? []}
+                      />
                     </li>
                   ))}
                 </ul>
