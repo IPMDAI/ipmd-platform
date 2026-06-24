@@ -5,7 +5,7 @@ import { submitProspect } from "@/lib/prospect-actions";
 import { Field, inputBase } from "@/components/forms/FormField";
 import { PhoneField } from "@/components/forms/PhoneField";
 import { ActionButton } from "@/components/ui/Button";
-import { NIVEAUX } from "@/lib/referentiel";
+import { NIVEAUX, IPMD_FILIERES } from "@/lib/referentiel";
 import { PROSPECT_FORMATS } from "@/lib/prospect";
 import type { FormResult } from "@/types";
 
@@ -48,7 +48,18 @@ export function DemandeInfoForm() {
       </Field>
       <div className="grid gap-4 sm:grid-cols-2">
         <Field label="Programme qui vous intéresse" htmlFor="di-prog">
-          <input id="di-prog" name="program_interest" placeholder="Ex. Master Communication digitale" className={inputBase} />
+          <input
+            id="di-prog"
+            name="program_interest"
+            list="di-programmes"
+            placeholder="Choisir une filière ou écrire…"
+            className={inputBase}
+          />
+          <datalist id="di-programmes">
+            {IPMD_FILIERES.map((f) => (
+              <option key={f} value={f} />
+            ))}
+          </datalist>
         </Field>
         <Field label="Niveau visé" htmlFor="di-level">
           <select id="di-level" name="level_interest" defaultValue="" className={inputBase}>
