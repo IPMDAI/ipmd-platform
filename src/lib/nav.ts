@@ -86,6 +86,7 @@ const LEARNER_NAV: NavGroup[] = [
     items: [
       { label: "Mes documents", href: "/espace/documents", icon: "🪪" },
       { label: "Ma scolarité", href: "/espace/mes-paiements", icon: "💳" },
+      { label: "Règlement intérieur", href: "/espace/reglement", icon: "📜" },
     ],
   },
 ];
