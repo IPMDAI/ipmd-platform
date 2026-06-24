@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const CONTACTS = [
@@ -48,12 +49,26 @@ export function WhatsAppFloat() {
         </div>
       )}
 
+      {/* Bouton « Demande d'info » — à côté du flottant WhatsApp */}
+      <Link
+        href="/demande-info"
+        aria-label="Demande d'information"
+        title="Demande d'information"
+        className="flex h-12 items-center gap-2 rounded-full bg-ipmd-red px-4 text-sm font-semibold text-white shadow-xl ring-1 ring-black/10 transition-transform hover:scale-105 active:scale-95"
+      >
+        <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2">
+          <path d="M4 6h16v12H4z" strokeLinejoin="round" />
+          <path d="M4 7l8 6 8-6" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+        Demande d&apos;info
+      </Link>
+
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
         aria-label="Contacter l'IPMD sur WhatsApp"
         aria-expanded={open}
-        className="flex h-14 w-14 items-center justify-center rounded-full bg-[#25D366] text-white shadow-xl ring-1 ring-black/10 transition-transform hover:scale-105 active:scale-95"
+        className="flex h-14 w-14 items-center justify-center self-end rounded-full bg-[#25D366] text-white shadow-xl ring-1 ring-black/10 transition-transform hover:scale-105 active:scale-95"
       >
         {open ? (
           <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
