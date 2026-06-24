@@ -26,6 +26,15 @@ export const metadata: Metadata = {
   title: "Classes & filières",
 };
 
+function frDate(iso: string): string {
+  return new Date(iso + "T00:00:00Z").toLocaleDateString("fr-FR", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    timeZone: "UTC",
+  });
+}
+
 export default async function ClassesPage() {
   const { supabase, role } = await requireAdmin();
   const isSuper = role === "super_admin";
@@ -40,7 +49,7 @@ export default async function ClassesPage() {
     supabase.from("filieres").select("id, name, status").order("name"),
     supabase
       .from("classes")
-      .select("id, name, level, academic_year, filiere_id, intake, class_type, partner_name, payment_regime, tuition_amount")
+      .select("id, name, level, academic_year, filiere_id, intake, class_type, partner_name, start_date, end_date, payment_regime, tuition_amount")
       .order("name"),
     supabase
       .from("profiles")
@@ -180,11 +189,16 @@ export default async function ClassesPage() {
                       key={c.id}
                       className="flex items-center justify-between gap-3 p-4"
                     >
-                      <div className="min-w-0">
-                        <p className="truncate font-semibold text-ipmd-black">
-                          {c.name}
-                        </p>
-                        <p className="truncate text-xs text-black/50">
+                      <div className="min-w-0 flex-1 space-y-0.5">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <p className="font-semibold text-ipmd-black">{c.name}</p>
+                          {c.class_type && (
+                            <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${classTypeBadge(c.class_type)}`}>
+                              {CLASS_TYPE_LABEL[c.class_type] ?? c.class_type}
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-xs text-black/55">
                           {[
                             c.filiere_id ? filiereName.get(c.filiere_id) : null,
                             c.level,
@@ -193,29 +207,30 @@ export default async function ClassesPage() {
                             .filter(Boolean)
                             .join(" · ") || "—"}
                         </p>
-                        <div className="mt-1 flex flex-wrap gap-1">
-                          {c.class_type && (
-                            <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${classTypeBadge(c.class_type)}`}>
-                              {CLASS_TYPE_LABEL[c.class_type] ?? c.class_type}
-                              {c.class_type === "partenaire" && c.partner_name ? ` · ${c.partner_name}` : ""}
-                            </span>
-                          )}
-                          {c.intake && (
-                            <span className="rounded-full bg-ipmd-black/5 px-2 py-0.5 text-[10px] font-semibold text-ipmd-black">
-                              🎓 {c.intake}
-                            </span>
-                          )}
-                          {c.payment_regime && (
-                            <span className="rounded-full bg-ipmd-light px-2 py-0.5 text-[10px] font-semibold text-black/55">
-                              💳 {PAYMENT_REGIME_LABEL[c.payment_regime] ?? c.payment_regime}
-                            </span>
-                          )}
-                          {c.tuition_amount != null && (
-                            <span className="rounded-full bg-ipmd-red/10 px-2 py-0.5 text-[10px] font-semibold text-ipmd-red">
-                              Tarif {Number(c.tuition_amount).toLocaleString("fr-FR")} F
-                            </span>
-                          )}
-                        </div>
+                        {(c.intake || c.start_date || c.end_date) && (
+                          <p className="text-xs text-black/55">
+                            {c.intake ? `Rentrée : ${c.intake}` : ""}
+                            {c.intake && (c.start_date || c.end_date) ? " · " : ""}
+                            {c.start_date ? `Début ${frDate(c.start_date)}` : ""}
+                            {c.end_date ? ` → Fin ${frDate(c.end_date)}` : ""}
+                          </p>
+                        )}
+                        {c.class_type === "partenaire" && c.partner_name && (
+                          <p className="text-xs font-medium text-purple-700">
+                            Partenaire : {c.partner_name}
+                          </p>
+                        )}
+                        {(c.payment_regime || c.tuition_amount != null) && (
+                          <p className="text-xs text-black/55">
+                            {c.payment_regime
+                              ? `Paiement : ${PAYMENT_REGIME_LABEL[c.payment_regime] ?? c.payment_regime}`
+                              : ""}
+                            {c.payment_regime && c.tuition_amount != null ? " · " : ""}
+                            {c.tuition_amount != null
+                              ? `Tarif : ${Number(c.tuition_amount).toLocaleString("fr-FR")} FCFA`
+                              : ""}
+                          </p>
+                        )}
                       </div>
                       <form action={deleteClasse.bind(null, c.id)}>
                         <button
