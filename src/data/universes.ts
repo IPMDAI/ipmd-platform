@@ -51,8 +51,7 @@ export const universes: Universe[] = [
     subdomain: "pro.ipmd.pro",
     href: "/professionnel",
     icon: "💼",
-    image:
-      "https://images.unsplash.com/photo-1521791136064-7986c2920216?w=800&q=80&auto=format&fit=crop",
+    image: "/IPMD_Pro.png",
   },
   {
     id: "ultraboost",
@@ -99,8 +98,7 @@ export const universes: Universe[] = [
     subdomain: "ultraexecutive.ipmd.pro",
     href: "/ultraexecutive",
     icon: "👑",
-    image:
-      "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800&q=80&auto=format&fit=crop",
+    image: "/UltraExecutive.png",
   },
 ];
 
