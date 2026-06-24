@@ -111,7 +111,7 @@ export function Header({ isAuthenticated = false }: { isAuthenticated?: boolean 
                 Connexion
               </Link>
               <Button href="/admission" size="md">
-                Demander une inscription
+                Demander une admission
               </Button>
             </>
           )}
@@ -196,7 +196,7 @@ export function Header({ isAuthenticated = false }: { isAuthenticated?: boolean 
                     Connexion
                   </Link>
                   <Button href="/admission" className="w-full">
-                    Demander une inscription
+                    Demander une admission
                   </Button>
                 </>
               )}

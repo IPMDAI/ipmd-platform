@@ -128,7 +128,7 @@ export function AboutSection({
           <div className="mt-8 flex flex-wrap gap-3">
             <Button href="/formations">Découvrir nos formations</Button>
             <Button href="/admission" variant="outline">
-              Demander une inscription
+              Demander une admission
             </Button>
           </div>
         </div>

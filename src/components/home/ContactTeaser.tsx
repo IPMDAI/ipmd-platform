@@ -51,7 +51,7 @@ export function ContactTeaser() {
           <div className="mt-7 flex flex-col gap-3 sm:flex-row">
             <Button href="/contact">Nous contacter</Button>
             <Button href="/admission" variant="outline">
-              Demander une inscription
+              Demander une admission
             </Button>
           </div>
         </div>

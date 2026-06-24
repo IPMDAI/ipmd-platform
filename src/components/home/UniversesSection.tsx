@@ -16,7 +16,7 @@ export function UniversesSection() {
       <SectionHeading
         eyebrow="Nos 6 univers"
         title="Une formation pour chaque ambition"
-        description="Du bachelier au dirigeant, IPMD structure ses parcours en 6 univers complémentaires — diplômes et certificats."
+        description="Du bachelier au dirigeant, IPMD structure ses parcours en 6 univers complémentaires : diplômes, certificats et bootcamps spécialisés."
       />
 
       <div className="mt-14 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">

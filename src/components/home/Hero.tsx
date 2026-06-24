@@ -84,7 +84,7 @@ export function Hero() {
               variant="outline"
               className="border-white/40 text-white hover:bg-white hover:text-ipmd-black"
             >
-              Demander une inscription
+              Demander une admission
             </Button>
           </div>
 

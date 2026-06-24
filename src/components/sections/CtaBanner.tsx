@@ -12,7 +12,7 @@ interface CtaBannerProps {
 export function CtaBanner({
   title,
   description,
-  primary = { label: "Demander une inscription", href: "/admission" },
+  primary = { label: "Demander une admission", href: "/admission" },
   secondary = { label: "Nous contacter", href: "/contact" },
 }: CtaBannerProps) {
   return (

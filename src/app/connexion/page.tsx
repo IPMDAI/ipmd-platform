@@ -81,7 +81,7 @@ export default function ConnexionPage() {
               href="/admission"
               className="font-semibold text-ipmd-red hover:underline"
             >
-              Demander une inscription
+              Demander une admission
             </Link>
           </p>
         </div>

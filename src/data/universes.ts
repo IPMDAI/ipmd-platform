@@ -27,7 +27,7 @@ export const universes: Universe[] = [
     name: "UltraJobs",
     tagline: "Bootcamps jeunes à l'ère de l'IA",
     description:
-      "Le département d'IPMD dédié aux bootcamps certifiants, intensifs et 100% pratiques pour les jeunes de 18 à 30 ans : apprendre vite, maîtriser les outils digitaux et l'IA, et obtenir un certificat valorisable pour l'emploi, le freelance ou un projet.",
+      "Bootcamps certifiants, intensifs et 100 % pratiques pour les jeunes de 18 à 30 ans : apprendre vite, maîtriser les outils digitaux et l'IA, puis obtenir un certificat valorisable pour l'emploi, le freelance ou un projet.",
     kind: "certificat",
     audience:
       "Jeunes 18-30 ans, étudiants, chercheurs d'emploi, jeunes entrepreneurs, reconversion rapide",
@@ -42,9 +42,9 @@ export const universes: Universe[] = [
   {
     id: "professionnel",
     name: "IPMD Pro",
-    tagline: "Diplômes — pour les actifs",
+    tagline: "Diplômes — formation continue",
     description:
-      "Formations diplômantes pour les personnes en activité qui veulent monter en compétence sans quitter leur poste. Adaptées aux salariés, cadres, entrepreneurs et professionnels en reconversion.",
+      "Formations diplômantes pour les personnes en activité qui souhaitent monter en compétence sans interrompre leur parcours professionnel. Programmes adaptés aux salariés, cadres, entrepreneurs et professionnels en reconversion.",
     kind: "diplome",
     audience: "Professionnels, salariés, cadres, entrepreneurs",
     target: "Salariés & Professionnels",
@@ -76,7 +76,7 @@ export const universes: Universe[] = [
     name: "IPMD Executive",
     tagline: "Diplômes exécutifs",
     description:
-      "Formations exécutives pour les dirigeants, managers, entrepreneurs et décideurs qui pilotent la transformation digitale, l'IA, la stratégie et la gouvernance numérique.",
+      "Formations exécutives destinées aux dirigeants, managers, entrepreneurs et décideurs qui pilotent la transformation digitale, l'IA, la stratégie et la gouvernance numérique.",
     kind: "diplome",
     audience: "Dirigeants, managers, entrepreneurs, décideurs",
     target: "Dirigeants & Managers",

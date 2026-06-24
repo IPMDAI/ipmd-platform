@@ -27,8 +27,8 @@ export function AiSection() {
             Un tuteur IA pour chaque profil
           </h2>
           <p className="mt-4 text-lg text-white/70">
-            IPMD prépare une IA éducative qui accompagne chaque acteur de
-            l'institut — apprentissage, pédagogie, pilotage et administration.
+            IPMD prépare une IA éducative qui accompagnera chaque acteur de
+            l'institut : apprentissage, pédagogie, pilotage et administration.
           </p>
         </div>
 

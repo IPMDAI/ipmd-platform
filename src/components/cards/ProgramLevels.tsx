@@ -55,7 +55,7 @@ export function ProgramLevels({ programTitle, detail }: ProgramLevelsProps) {
         onClick={() => setSelection({ type: "admission" })}
         className="mt-3 inline-flex items-center gap-2 rounded-full bg-ipmd-black px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-ipmd-red"
       >
-        <span aria-hidden>📝</span> Demande de candidature
+        <span aria-hidden>📝</span> Demander une admission
       </button>
 
       {/* Pop-up : programme d'un niveau */}
