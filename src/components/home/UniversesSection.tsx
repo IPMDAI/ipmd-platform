@@ -17,6 +17,7 @@ export function UniversesSection() {
         eyebrow="Nos 6 univers"
         title="80 % de pratique, l'IA au cœur de nos formations."
         description="Du bachelier au dirigeant, des formations et bootcamps pratiques à l'ère de l'IA*"
+        titleClassName="lg:whitespace-nowrap"
       />
 
       <div className="mt-14 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">

@@ -51,7 +51,7 @@ export const universes: Universe[] = [
     subdomain: "pro.ipmd.pro",
     href: "/professionnel",
     icon: "💼",
-    image: "/IPMD_Pro.png",
+    image: "/IPMD-Pro.png",
   },
   {
     id: "ultraboost",

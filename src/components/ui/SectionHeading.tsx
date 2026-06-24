@@ -6,6 +6,7 @@ interface SectionHeadingProps {
   description?: ReactNode;
   align?: "left" | "center";
   tone?: "light" | "dark";
+  titleClassName?: string;
 }
 
 /** En-tête de section homogène : sur-titre, titre, description. */
@@ -15,6 +16,7 @@ export function SectionHeading({
   description,
   align = "center",
   tone = "light",
+  titleClassName = "",
 }: SectionHeadingProps) {
   const alignment = align === "center" ? "text-center mx-auto" : "text-left";
   const descColor = tone === "dark" ? "text-white/70" : "text-black/60";
@@ -26,7 +28,7 @@ export function SectionHeading({
           {eyebrow}
         </p>
       )}
-      <h2 className="text-3xl font-extrabold tracking-tight sm:text-4xl">
+      <h2 className={`text-3xl font-extrabold tracking-tight sm:text-4xl ${titleClassName}`}>
         {title}
       </h2>
       {description && (
