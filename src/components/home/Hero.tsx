@@ -2,8 +2,8 @@ import { Container } from "@/components/ui/Container";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 
-/** Vidéo YouTube jouée en fond du hero (muette, en boucle). */
-const HERO_VIDEO_ID = "azB3Irjscyg";
+/** Vidéo de présentation IPMD jouée en fond du hero (muette, en boucle). */
+const HERO_VIDEO_SRC = "/IPMD_Video.mp4";
 
 /** Bande d'identité IPMD (titre, slogan, CTA, statistiques) sur fond vidéo. */
 export function Hero() {
@@ -14,17 +14,14 @@ export function Hero() {
         className="pointer-events-none absolute inset-0 overflow-hidden"
         aria-hidden
       >
-        <iframe
-          title="Vidéo de présentation IPMD"
-          src={`https://www.youtube-nocookie.com/embed/${HERO_VIDEO_ID}?autoplay=1&mute=1&loop=1&playlist=${HERO_VIDEO_ID}&controls=0&showinfo=0&modestbranding=1&rel=0&playsinline=1&disablekb=1`}
-          allow="autoplay; encrypted-media"
-          className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
-          style={{
-            width: "100vw",
-            height: "56.25vw",
-            minHeight: "100%",
-            minWidth: "177.78vh",
-          }}
+        <video
+          className="absolute inset-0 h-full w-full object-cover"
+          src={HERO_VIDEO_SRC}
+          autoPlay
+          muted
+          loop
+          playsInline
+          preload="auto"
         />
       </div>
 
