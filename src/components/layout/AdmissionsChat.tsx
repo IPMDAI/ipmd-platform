@@ -118,9 +118,9 @@ export function AdmissionsChat() {
         type="button"
         onClick={() => setOpen((v) => !v)}
         aria-label="Discuter avec l'assistant d'admission"
-        className="flex h-14 items-center gap-2 rounded-full bg-ipmd-black px-5 text-sm font-semibold text-white shadow-xl ring-1 ring-black/10 transition-transform hover:scale-105 active:scale-95"
+        className="flex h-14 w-14 items-center justify-center gap-2 rounded-full bg-ipmd-black text-sm font-semibold text-white shadow-xl ring-1 ring-black/10 transition-transform hover:scale-105 active:scale-95 sm:w-auto sm:px-5"
       >
-        {open ? "✕" : <><span className="text-lg">💬</span> Poser une question</>}
+        {open ? "✕" : <><span className="text-lg">💬</span><span className="hidden sm:inline">Poser une question</span></>}
       </button>
     </div>
   );

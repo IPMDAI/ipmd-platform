@@ -54,13 +54,13 @@ export function WhatsAppFloat() {
         href="/demande-info"
         aria-label="Demande d'information"
         title="Demande d'information"
-        className="flex h-12 items-center gap-2 rounded-full bg-ipmd-red px-4 text-sm font-semibold text-white shadow-xl ring-1 ring-black/10 transition-transform hover:scale-105 active:scale-95"
+        className="flex h-12 w-12 items-center justify-center gap-2 rounded-full bg-ipmd-red text-sm font-semibold text-white shadow-xl ring-1 ring-black/10 transition-transform hover:scale-105 active:scale-95 sm:w-auto sm:px-4"
       >
-        <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2">
+        <svg viewBox="0 0 24 24" className="h-5 w-5 shrink-0" fill="none" stroke="currentColor" strokeWidth="2">
           <path d="M4 6h16v12H4z" strokeLinejoin="round" />
           <path d="M4 7l8 6 8-6" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
-        Demande d&apos;info
+        <span className="hidden sm:inline">Demande d&apos;info</span>
       </Link>
 
       <button
