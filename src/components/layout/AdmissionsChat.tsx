@@ -58,6 +58,9 @@ export function AdmissionsChat() {
   const taRef = useRef<HTMLTextAreaElement>(null);
   const recogRef = useRef<{ stop: () => void } | null>(null);
   const voiceRef = useRef<SpeechSynthesisVoice | null>(null);
+  const voiceOutRef = useRef(false); // miroir de voiceOut (évite les closures périmées)
+
+  useEffect(() => { voiceOutRef.current = voiceOut; }, [voiceOut]);
 
   // Le champ de saisie s'agrandit avec le texte (jusqu'à ~5 lignes).
   // La barre de défilement n'apparaît qu'au-delà de la hauteur max (sinon flèches ▲▼ parasites).
@@ -98,16 +101,24 @@ export function AdmissionsChat() {
       | undefined;
     if (!SR) return;
     if (listening) { recogRef.current?.stop(); return; }
+    // Parler = mode vocal : on active la voix d'Awa pour un vrai échange oral.
+    setVoiceOut(true);
+    voiceOutRef.current = true;
     const r = new SR();
     r.lang = "fr-FR";
     r.interimResults = true;
     r.continuous = false;
+    let transcript = "";
     r.onresult = (e) => {
-      let t = "";
-      for (let i = 0; i < e.results.length; i++) t += e.results[i][0].transcript;
-      setInput(t);
+      transcript = "";
+      for (let i = 0; i < e.results.length; i++) transcript += e.results[i][0].transcript;
+      setInput(transcript);
     };
-    r.onend = () => setListening(false);
+    r.onend = () => {
+      setListening(false);
+      const t = transcript.trim();
+      if (t) { setInput(""); void send(t); } // envoi automatique de ce qui a été dit
+    };
     r.onerror = () => setListening(false);
     recogRef.current = r;
     setListening(true);
@@ -116,7 +127,7 @@ export function AdmissionsChat() {
 
   // 🔊 Lecture vocale de la réponse d'Awa (si activée).
   const speakOut = (text: string) => {
-    if (!voiceOut || typeof window === "undefined" || !window.speechSynthesis) return;
+    if (!voiceOutRef.current || typeof window === "undefined" || !window.speechSynthesis) return;
     try {
       window.speechSynthesis.cancel();
       const u = new SpeechSynthesisUtterance(text.replace(/[*_#>`]/g, ""));
