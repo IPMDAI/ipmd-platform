@@ -16,7 +16,14 @@ export const mainNav: NavItem[] = [
     ],
   },
   { label: "Scolarité", href: "/scolarite" },
-  { label: "Admission", href: "/admission" },
+  {
+    label: "Admission",
+    href: "/admission",
+    children: [
+      { label: "Demande d'information", href: "/demande-info" },
+      { label: "Candidature / Inscription", href: "/admission" },
+    ],
+  },
   { label: "À propos", href: "/a-propos" },
   { label: "Contact", href: "/contact" },
 ];
@@ -34,6 +41,7 @@ export const footerNav = {
   institut: [
     { label: "À propos", href: "/a-propos" },
     { label: "Scolarité & financement", href: "/scolarite" },
+    { label: "Demande d'information", href: "/demande-info" },
     { label: "Admission / Inscription", href: "/admission" },
     { label: "Toutes les formations", href: "/formations" },
     { label: "Enseigner à l'IPMD", href: "/recrutement" },
