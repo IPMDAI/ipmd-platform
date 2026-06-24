@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { PhoneField } from "@/components/forms/PhoneField";
 import { captureChatLead } from "@/lib/prospect-actions";
@@ -13,7 +12,8 @@ const LEAD_KEY = "ipmd_chat_lead";
 const GREETING =
   "Bonjour 👋 Je suis l'assistant d'admission de l'IPMD. Posez-moi vos questions sur nos formations, les frais, les cours du soir, l'admission ou une réorientation !";
 
-// Plafond anti-abus : nombre max de questions par visiteur (par session).
+// Questions gratuites avant identification, puis plafond anti-abus.
+const FREE_QUESTIONS = 2;
 const MAX_QUESTIONS = 15;
 
 export function AdmissionsChat() {
@@ -59,7 +59,7 @@ export function AdmissionsChat() {
     if (!res.ok) { setCapErr(res.message || "Une erreur est survenue."); return; }
     try { localStorage.setItem(LEAD_KEY, prenom); } catch {}
     setLead(prenom);
-    setMessages([{ role: "assistant", content: `Bonjour ${prenom} 👋 Ravi de vous accueillir ! Posez-moi vos questions sur nos formations, les frais, les cours du soir, l'admission ou une réorientation.` }]);
+    setMessages((m) => [...m, { role: "assistant", content: `Merci ${prenom} ! 🙌 Je continue à répondre à vos questions.` }]);
   };
 
   const send = async () => {
@@ -123,6 +123,8 @@ export function AdmissionsChat() {
     }
   };
 
+  const askedCount = messages.filter((m) => m.role === "user").length;
+
   return (
     <div className="fixed bottom-5 left-5 z-50 flex flex-col items-start gap-3 print:hidden">
       {open && (
@@ -135,40 +137,6 @@ export function AdmissionsChat() {
             <button onClick={() => setOpen(false)} aria-label="Fermer" className="rounded-lg p-1 text-white/70 hover:bg-white/10">✕</button>
           </div>
 
-          {!lead ? (
-            <form onSubmit={onCapture} className="flex-1 space-y-3 overflow-y-auto p-4">
-              <p className="text-sm font-semibold text-ipmd-black">Avant de discuter, dites-nous qui vous êtes 👇</p>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-xs font-semibold text-black/60">Prénom *</label>
-                  <input name="prenom" required placeholder="Votre prénom" className="mt-1 w-full rounded-xl border border-black/10 px-3 py-2 text-sm focus:border-ipmd-red focus:outline-none" />
-                </div>
-                <div>
-                  <label className="text-xs font-semibold text-black/60">Nom *</label>
-                  <input name="nom" required placeholder="Votre nom" className="mt-1 w-full rounded-xl border border-black/10 px-3 py-2 text-sm focus:border-ipmd-red focus:outline-none" />
-                </div>
-              </div>
-              <div>
-                <label className="text-xs font-semibold text-black/60">Moyen de contact *</label>
-                <div className="mt-1 mb-2 grid grid-cols-2 gap-2">
-                  <button type="button" onClick={() => setMode("tel")} className={`rounded-xl px-3 py-2 text-sm font-semibold ${mode === "tel" ? "bg-ipmd-black text-white" : "bg-ipmd-light text-black/60"}`}>📱 Téléphone</button>
-                  <button type="button" onClick={() => setMode("email")} className={`rounded-xl px-3 py-2 text-sm font-semibold ${mode === "email" ? "bg-ipmd-black text-white" : "bg-ipmd-light text-black/60"}`}>📧 Email</button>
-                </div>
-                {mode === "tel" ? (
-                  <PhoneField id="chat-phone" name="phone" />
-                ) : (
-                  <input name="email" type="email" placeholder="vous@email.com" className="w-full rounded-xl border border-black/10 px-3 py-2 text-sm focus:border-ipmd-red focus:outline-none" />
-                )}
-                <p className="mt-1 text-[11px] text-black/45">Choisissez votre pays puis saisissez votre numéro — l'indicatif est ajouté automatiquement.</p>
-              </div>
-              {capErr && <p className="text-xs font-medium text-ipmd-red">{capErr}</p>}
-              <button type="submit" disabled={capBusy} className="w-full rounded-xl bg-ipmd-red px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-50">
-                {capBusy ? "…" : "Commencer la discussion 💬"}
-              </button>
-              <p className="text-center text-[10px] text-black/35">Vos coordonnées permettent un suivi par l'équipe des admissions.</p>
-            </form>
-          ) : (
-          <>
           <div ref={scrollRef} className="flex-1 space-y-3 overflow-y-auto bg-ipmd-light/40 p-3">
             {messages.map((m, i) => (
               <div key={i} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
@@ -179,9 +147,31 @@ export function AdmissionsChat() {
             ))}
           </div>
 
+          {!lead && askedCount >= FREE_QUESTIONS ? (
+            <form onSubmit={onCapture} className="max-h-[58%] space-y-2.5 overflow-y-auto border-t border-black/5 bg-white px-3 py-3">
+              <p className="text-xs font-bold text-ipmd-black">Pour continuer, dites-nous qui vous êtes 👇</p>
+              <div className="grid grid-cols-2 gap-2">
+                <input name="prenom" required placeholder="Prénom *" className="w-full rounded-xl border border-black/10 px-3 py-2 text-sm focus:border-ipmd-red focus:outline-none" />
+                <input name="nom" required placeholder="Nom *" className="w-full rounded-xl border border-black/10 px-3 py-2 text-sm focus:border-ipmd-red focus:outline-none" />
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <button type="button" onClick={() => setMode("tel")} className={`rounded-xl px-2 py-1.5 text-xs font-semibold ${mode === "tel" ? "bg-ipmd-black text-white" : "bg-ipmd-light text-black/60"}`}>📱 Téléphone</button>
+                <button type="button" onClick={() => setMode("email")} className={`rounded-xl px-2 py-1.5 text-xs font-semibold ${mode === "email" ? "bg-ipmd-black text-white" : "bg-ipmd-light text-black/60"}`}>📧 Email</button>
+              </div>
+              {mode === "tel" ? (
+                <PhoneField id="chat-phone" name="phone" />
+              ) : (
+                <input name="email" type="email" placeholder="vous@email.com" className="w-full rounded-xl border border-black/10 px-3 py-2 text-sm focus:border-ipmd-red focus:outline-none" />
+              )}
+              {capErr && <p className="text-xs font-medium text-ipmd-red">{capErr}</p>}
+              <button type="submit" disabled={capBusy} className="w-full rounded-xl bg-ipmd-red px-4 py-2 text-sm font-semibold text-white disabled:opacity-50">
+                {capBusy ? "…" : "Continuer la discussion 💬"}
+              </button>
+              <p className="text-center text-[10px] text-black/35">Vos coordonnées permettent un suivi par l'équipe des admissions.</p>
+            </form>
+          ) : (
           <div className="border-t border-black/5 bg-white px-3 py-2">
             <div className="mb-2 flex gap-2 text-[11px]">
-              <Link href="/demande-info" className="rounded-full bg-ipmd-light px-2.5 py-1 font-semibold text-ipmd-black hover:bg-black/5">📝 Laisser mes coordonnées</Link>
               <a href="https://wa.me/2250775758888" target="_blank" rel="noopener noreferrer" className="rounded-full bg-[#25D366]/10 px-2.5 py-1 font-semibold text-[#128C7E]">WhatsApp</a>
             </div>
             <form onSubmit={(e) => { e.preventDefault(); send(); }} className="flex items-end gap-2">
@@ -199,7 +189,6 @@ export function AdmissionsChat() {
             </form>
             <p className="mt-1 text-center text-[9px] text-black/35">Assistant IA — les frais/dates exacts sont à confirmer auprès des admissions.</p>
           </div>
-          </>
           )}
         </div>
       )}
