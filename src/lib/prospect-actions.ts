@@ -61,6 +61,33 @@ export async function submitProspect(
   return { ok: true, message: "Merci ! Votre demande a bien été reçue. L'équipe des admissions vous recontactera très vite." };
 }
 
+/** Capture d'un prospect depuis le chat IA (identification avant de discuter). */
+export async function captureChatLead(data: {
+  fullName: string;
+  email?: string;
+  phone?: string;
+}): Promise<{ ok: boolean; message?: string }> {
+  const supabase = await createClient();
+  if (!supabase) return { ok: false, message: "Service indisponible." };
+  const fullName = (data.fullName || "").trim();
+  const email = (data.email || "").trim();
+  const phone = (data.phone || "").trim();
+  if (!fullName || (!email && !phone)) {
+    return { ok: false, message: "Nom et un moyen de contact requis." };
+  }
+  const { error } = await supabase.from("prospects").insert({
+    full_name: fullName,
+    email: email || null,
+    phone: phone || null,
+    whatsapp: phone || null,
+    source: "chat",
+    status: "nouveau",
+    message: "Contact capturé via le chat IA du site.",
+  });
+  if (error) return { ok: false, message: error.message };
+  return { ok: true };
+}
+
 /** Ajout manuel d'un prospect (admission). */
 export async function addProspect(
   _prev: FormResult | null,

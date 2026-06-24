@@ -3,8 +3,12 @@
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { PhoneField } from "@/components/forms/PhoneField";
+import { captureChatLead } from "@/lib/prospect-actions";
 
 type Msg = { role: "user" | "assistant"; content: string };
+
+const LEAD_KEY = "ipmd_chat_lead";
 
 const GREETING =
   "Bonjour 👋 Je suis l'assistant d'admission de l'IPMD. Posez-moi vos questions sur nos formations, les frais, les cours du soir, l'admission ou une réorientation !";
@@ -18,13 +22,45 @@ export function AdmissionsChat() {
   const [messages, setMessages] = useState<Msg[]>([{ role: "assistant", content: GREETING }]);
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
+  const [lead, setLead] = useState<string | null>(null); // nom du prospect identifié
+  const [mode, setMode] = useState<"tel" | "email">("tel");
+  const [capBusy, setCapBusy] = useState(false);
+  const [capErr, setCapErr] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    try {
+      const v = localStorage.getItem(LEAD_KEY);
+      if (v) setLead(v);
+    } catch {}
+  }, []);
+
+  useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
-  }, [messages, open]);
+  }, [messages, open, lead]);
 
   if (pathname?.startsWith("/espace")) return null;
+
+  const onCapture = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setCapErr(null);
+    const fd = new FormData(e.currentTarget);
+    const prenom = (fd.get("prenom") as string)?.trim() || "";
+    const nom = (fd.get("nom") as string)?.trim() || "";
+    const phone = (fd.get("phone") as string)?.trim() || "";
+    const email = (fd.get("email") as string)?.trim() || "";
+    if (!prenom || !nom) { setCapErr("Renseignez votre prénom et votre nom."); return; }
+    if (mode === "tel" && !phone) { setCapErr("Renseignez votre numéro."); return; }
+    if (mode === "email" && !email) { setCapErr("Renseignez votre email."); return; }
+    const fullName = `${nom.toUpperCase()} ${prenom}`;
+    setCapBusy(true);
+    const res = await captureChatLead({ fullName, phone: mode === "tel" ? phone : "", email: mode === "email" ? email : "" });
+    setCapBusy(false);
+    if (!res.ok) { setCapErr(res.message || "Une erreur est survenue."); return; }
+    try { localStorage.setItem(LEAD_KEY, prenom); } catch {}
+    setLead(prenom);
+    setMessages([{ role: "assistant", content: `Bonjour ${prenom} 👋 Ravi de vous accueillir ! Posez-moi vos questions sur nos formations, les frais, les cours du soir, l'admission ou une réorientation.` }]);
+  };
 
   const send = async () => {
     const text = input.trim();
@@ -99,6 +135,40 @@ export function AdmissionsChat() {
             <button onClick={() => setOpen(false)} aria-label="Fermer" className="rounded-lg p-1 text-white/70 hover:bg-white/10">✕</button>
           </div>
 
+          {!lead ? (
+            <form onSubmit={onCapture} className="flex-1 space-y-3 overflow-y-auto p-4">
+              <p className="text-sm font-semibold text-ipmd-black">Avant de discuter, dites-nous qui vous êtes 👇</p>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-semibold text-black/60">Prénom *</label>
+                  <input name="prenom" required placeholder="Votre prénom" className="mt-1 w-full rounded-xl border border-black/10 px-3 py-2 text-sm focus:border-ipmd-red focus:outline-none" />
+                </div>
+                <div>
+                  <label className="text-xs font-semibold text-black/60">Nom *</label>
+                  <input name="nom" required placeholder="Votre nom" className="mt-1 w-full rounded-xl border border-black/10 px-3 py-2 text-sm focus:border-ipmd-red focus:outline-none" />
+                </div>
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-black/60">Moyen de contact *</label>
+                <div className="mt-1 mb-2 grid grid-cols-2 gap-2">
+                  <button type="button" onClick={() => setMode("tel")} className={`rounded-xl px-3 py-2 text-sm font-semibold ${mode === "tel" ? "bg-ipmd-black text-white" : "bg-ipmd-light text-black/60"}`}>📱 Téléphone</button>
+                  <button type="button" onClick={() => setMode("email")} className={`rounded-xl px-3 py-2 text-sm font-semibold ${mode === "email" ? "bg-ipmd-black text-white" : "bg-ipmd-light text-black/60"}`}>📧 Email</button>
+                </div>
+                {mode === "tel" ? (
+                  <PhoneField id="chat-phone" name="phone" />
+                ) : (
+                  <input name="email" type="email" placeholder="vous@email.com" className="w-full rounded-xl border border-black/10 px-3 py-2 text-sm focus:border-ipmd-red focus:outline-none" />
+                )}
+                <p className="mt-1 text-[11px] text-black/45">Choisissez votre pays puis saisissez votre numéro — l'indicatif est ajouté automatiquement.</p>
+              </div>
+              {capErr && <p className="text-xs font-medium text-ipmd-red">{capErr}</p>}
+              <button type="submit" disabled={capBusy} className="w-full rounded-xl bg-ipmd-red px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-50">
+                {capBusy ? "…" : "Commencer la discussion 💬"}
+              </button>
+              <p className="text-center text-[10px] text-black/35">Vos coordonnées permettent un suivi par l'équipe des admissions.</p>
+            </form>
+          ) : (
+          <>
           <div ref={scrollRef} className="flex-1 space-y-3 overflow-y-auto bg-ipmd-light/40 p-3">
             {messages.map((m, i) => (
               <div key={i} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
@@ -129,6 +199,8 @@ export function AdmissionsChat() {
             </form>
             <p className="mt-1 text-center text-[9px] text-black/35">Assistant IA — les frais/dates exacts sont à confirmer auprès des admissions.</p>
           </div>
+          </>
+          )}
         </div>
       )}
 
