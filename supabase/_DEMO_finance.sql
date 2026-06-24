@@ -54,20 +54,20 @@ insert into public.classes (id, name, level, academic_year, intake, class_type, 
 -- ── 4. Dossiers financiers (réduction sur scolarité uniquement) ─
 -- total_due = inscription 300000 + scolarité après réduction.
 insert into public.student_finance
-  (student_id, registration_fee, tuition_due, discount_rate, level, academic_year, access_state, negotiated, total_due, payer_note) values
-  ('d0000000-0000-4000-8000-000000000001',300000,1850000,0,    'Licence 1','2025-2026','actif',false,2150000,'Bon payeur'),
-  ('d0000000-0000-4000-8000-000000000002',300000,1850000,0.15, 'Licence 1','2025-2026','actif',false,1872500,'Paiement régulier'),
-  ('d0000000-0000-4000-8000-000000000003',300000,1850000,0,    'Licence 1','2025-2026','pause',false,2150000,'À relancer'),
-  ('d0000000-0000-4000-8000-000000000004',300000,1850000,0,    'Licence 1','2025-2026','pause',false,2150000,'Paiement en attente de preuve'),
-  ('d0000000-0000-4000-8000-000000000005',300000,1500000,0,    'Licence 1','2025-2026','actif',false,1800000,'Avance à vérifier'),
-  ('d0000000-0000-4000-8000-000000000006',300000,1500000,0,    'Licence 1','2025-2026','actif',true, 1800000,'Échéancier négocié'),
-  ('d0000000-0000-4000-8000-000000000007',300000,1500000,0.15, 'Licence 1','2025-2026','actif',true, 1575000,'Paiement irrégulier'),
-  ('d0000000-0000-4000-8000-000000000008',300000,1200000,0,    'Licence 2','2025-2026','actif',false,1500000,'Bon payeur'),
-  ('d0000000-0000-4000-8000-000000000009',300000,1200000,0,    'Licence 2','2025-2026','pause',true, 1500000,'Cas sensible'),
-  ('d0000000-0000-4000-8000-000000000010',300000,1200000,0,    'Licence 2','2025-2026','pause',false,1500000,'À relancer')
+  (student_id, registration_fee, tuition_due, discount_rate, level, program, academic_year, access_state, negotiated, total_due, payer_note) values
+  ('d0000000-0000-4000-8000-000000000001',300000,1850000,0,    'Licence 1','Communication digitale','2025-2026','actif',false,2150000,'Bon payeur'),
+  ('d0000000-0000-4000-8000-000000000002',300000,1850000,0.15, 'Licence 1','Communication digitale','2025-2026','actif',false,1872500,'Paiement régulier'),
+  ('d0000000-0000-4000-8000-000000000003',300000,1850000,0,    'Licence 1','Communication digitale','2025-2026','pause',false,2150000,'À relancer'),
+  ('d0000000-0000-4000-8000-000000000004',300000,1850000,0,    'Licence 1','Communication digitale','2025-2026','pause',false,2150000,'Paiement en attente de preuve'),
+  ('d0000000-0000-4000-8000-000000000005',300000,1500000,0,    'Licence 1','Marketing digital','2025-2026','actif',false,1800000,'Avance à vérifier'),
+  ('d0000000-0000-4000-8000-000000000006',300000,1500000,0,    'Licence 1','Marketing digital','2025-2026','actif',true, 1800000,'Échéancier négocié'),
+  ('d0000000-0000-4000-8000-000000000007',300000,1500000,0.15, 'Licence 1','Marketing digital','2025-2026','actif',true, 1575000,'Paiement irrégulier'),
+  ('d0000000-0000-4000-8000-000000000008',300000,1200000,0,    'Licence 2','Développement web & mobile','2025-2026','actif',false,1500000,'Bon payeur'),
+  ('d0000000-0000-4000-8000-000000000009',300000,1200000,0,    'Licence 2','Développement web & mobile','2025-2026','pause',true, 1500000,'Cas sensible'),
+  ('d0000000-0000-4000-8000-000000000010',300000,1200000,0,    'Licence 2','Développement web & mobile','2025-2026','pause',false,1500000,'À relancer')
 on conflict (student_id) do update set
   registration_fee = excluded.registration_fee, tuition_due = excluded.tuition_due,
-  discount_rate = excluded.discount_rate, level = excluded.level,
+  discount_rate = excluded.discount_rate, level = excluded.level, program = excluded.program,
   academic_year = excluded.academic_year, access_state = excluded.access_state,
   negotiated = excluded.negotiated, total_due = excluded.total_due, payer_note = excluded.payer_note;
 

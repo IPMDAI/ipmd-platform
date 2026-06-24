@@ -84,9 +84,14 @@ export function SetFinanceForm({
           />
         </Field>
       </div>
-      <label className="flex items-center gap-2 text-sm font-medium text-black/70">
-        <input type="checkbox" name="lump_sum" defaultChecked={discountApplied} className="h-4 w-4 rounded border-black/20" />
-        Paiement unique → réduction de 15% sur la scolarité
+      <label className="flex items-start gap-2 rounded-lg bg-amber-50 px-3 py-2 text-sm font-medium text-amber-800">
+        <input type="checkbox" name="lump_sum" defaultChecked={discountApplied} className="mt-0.5 h-4 w-4 rounded border-black/20" />
+        <span>
+          Appliquer la <strong>réduction de 15%</strong> (paiement unique) — sur la scolarité uniquement.
+          <span className="block text-[11px] font-normal text-amber-700/80">
+            C&apos;est ici qu&apos;on applique la réduction, pas dans « Nouveau paiement ».
+          </span>
+        </span>
       </label>
       <label className="flex items-center gap-2 text-sm font-medium text-black/70">
         <input type="checkbox" name="send_proforma" defaultChecked className="h-4 w-4 rounded border-black/20" />
@@ -126,8 +131,8 @@ export function AddPaymentForm({ studentId }: { studentId: string }) {
         </Field>
       </div>
       <div className="grid grid-cols-2 gap-3">
-        <Field label="Moyen" htmlFor="p-method">
-          <select id="p-method" name="method" defaultValue="" className={inputBase}>
+        <Field label="Moyen" htmlFor="p-method" required>
+          <select id="p-method" name="method" defaultValue="" required className={inputBase}>
             <option value="">—</option>
             {PAYMENT_METHODS.map((m) => (
               <option key={m} value={m}>
@@ -136,8 +141,8 @@ export function AddPaymentForm({ studentId }: { studentId: string }) {
             ))}
           </select>
         </Field>
-        <Field label="Date" htmlFor="p-date">
-          <input id="p-date" name="paid_at" type="date" className={inputBase} />
+        <Field label="Date" htmlFor="p-date" required>
+          <input id="p-date" name="paid_at" type="date" required className={inputBase} />
         </Field>
       </div>
       <div className="grid grid-cols-2 gap-3">

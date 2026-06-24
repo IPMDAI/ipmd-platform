@@ -30,14 +30,15 @@ export default async function RelevePage({
   params: Promise<{ studentId: string }>;
 }) {
   const { studentId } = await params;
-  const { supabase } = await requireUser();
+  const { supabase, userId } = await requireUser();
 
-  const [{ data: student }, { data: finance }, { data: paymentRows }] =
+  const [{ data: me }, { data: student }, { data: finance }, { data: paymentRows }] =
     await Promise.all([
+      supabase.from("profiles").select("role").eq("id", userId).single(),
       supabase.from("profiles").select("full_name, email").eq("id", studentId).single(),
       supabase
         .from("student_finance")
-        .select("registration_fee, tuition_due, discount_rate, level, academic_year, status")
+        .select("registration_fee, tuition_due, discount_rate, level, program, academic_year, status")
         .eq("student_id", studentId)
         .maybeSingle(),
       supabase
@@ -59,8 +60,11 @@ export default async function RelevePage({
       <Container className="py-12 sm:py-16">
         <div className="mx-auto max-w-3xl">
           <div className="flex items-center justify-between gap-3 print:hidden">
-            <Link href="/espace/finance" className="text-sm font-semibold text-black/50 hover:text-ipmd-red">
-              ← Finance
+            <Link
+              href={["admin", "super_admin", "scolarite"].includes(me?.role ?? "") ? `/espace/finance/${studentId}` : "/espace/mes-paiements"}
+              className="text-sm font-semibold text-black/50 hover:text-ipmd-red"
+            >
+              ← Retour au dossier
             </Link>
             <PrintButton />
           </div>
@@ -86,6 +90,7 @@ export default async function RelevePage({
               <p>
                 Étudiant : <span className="font-bold text-ipmd-black">{name}</span>{" "}
                 <span className="text-black/45">({matricule(studentId)})</span>
+                {finance?.program ? ` · ${finance.program}` : ""}
                 {finance?.level ? ` · ${finance.level}` : ""}
               </p>
               <span className={`rounded-full px-2.5 py-1 text-[11px] font-bold ${statusInfo.cls}`}>

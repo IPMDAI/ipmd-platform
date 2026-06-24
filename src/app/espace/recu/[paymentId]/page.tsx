@@ -19,7 +19,7 @@ export default async function RecuPage({
   params: Promise<{ paymentId: string }>;
 }) {
   const { paymentId } = await params;
-  const { supabase } = await requireUser();
+  const { supabase, userId } = await requireUser();
 
   // RLS : le paiement n'est lisible que par l'étudiant, son parent ou un admin.
   const { data: payment } = await supabase
@@ -29,7 +29,8 @@ export default async function RecuPage({
     .single();
   if (!payment) notFound();
 
-  const [{ data: student }, { data: finance }, { data: allPayments }] = await Promise.all([
+  const [{ data: me }, { data: student }, { data: finance }, { data: allPayments }] = await Promise.all([
+    supabase.from("profiles").select("role").eq("id", userId).single(),
     supabase
       .from("profiles")
       .select("full_name, email")
@@ -37,7 +38,7 @@ export default async function RecuPage({
       .single(),
     supabase
       .from("student_finance")
-      .select("registration_fee, tuition_due, discount_rate, level")
+      .select("registration_fee, tuition_due, discount_rate, level, program")
       .eq("student_id", payment.student_id)
       .maybeSingle(),
     supabase
@@ -45,6 +46,12 @@ export default async function RecuPage({
       .select("amount, kind")
       .eq("student_id", payment.student_id),
   ]);
+  const isStaff = ["admin", "super_admin", "scolarite"].includes(me?.role ?? "");
+  const backHref = isStaff ? `/espace/finance/${payment.student_id}` : "/espace/mes-paiements";
+  const backLabel = isStaff ? "← Retour au dossier" : "← Ma scolarité";
+  const formation = finance?.program
+    ? `${finance.program}${finance.level ? ` · ${finance.level}` : ""}`
+    : finance?.level ?? null;
   const name = student?.full_name || student?.email || "—";
   const mat = matricule(payment.student_id);
   const fin = computeFinance(finance, allPayments ?? []);
@@ -71,10 +78,10 @@ export default async function RecuPage({
         <div className="mx-auto max-w-2xl">
           <div className="flex items-center justify-between gap-3 print:hidden">
             <Link
-              href="/espace/mes-paiements"
+              href={backHref}
               className="text-sm font-semibold text-black/50 transition-colors hover:text-ipmd-red"
             >
-              ← Ma scolarité
+              {backLabel}
             </Link>
             <PrintButton />
           </div>
@@ -85,7 +92,7 @@ export default async function RecuPage({
               studentName={name}
               matricule={mat}
               verifyHref={verifyHref}
-              level={finance?.level ?? null}
+              level={formation}
               recap={{
                 totalDue: fin.totalDue,
                 totalPaid: fin.totalPaid,

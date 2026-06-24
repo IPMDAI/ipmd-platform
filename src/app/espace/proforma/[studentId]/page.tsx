@@ -25,10 +25,11 @@ export default async function ProformaPage({
   params: Promise<{ studentId: string }>;
 }) {
   const { studentId } = await params;
-  const { supabase } = await requireUser();
+  const { supabase, userId } = await requireUser();
 
-  const [{ data: student }, { data: finance }, { data: schedules }] =
+  const [{ data: me }, { data: student }, { data: finance }, { data: schedules }] =
     await Promise.all([
+      supabase.from("profiles").select("role").eq("id", userId).single(),
       supabase.from("profiles").select("full_name, email").eq("id", studentId).single(),
       supabase
         .from("student_finance")
@@ -52,8 +53,11 @@ export default async function ProformaPage({
       <Container className="py-12 sm:py-16">
         <div className="mx-auto max-w-3xl">
           <div className="flex items-center justify-between gap-3 print:hidden">
-            <Link href="/espace/finance" className="text-sm font-semibold text-black/50 hover:text-ipmd-red">
-              ← Finance
+            <Link
+              href={["admin", "super_admin", "scolarite"].includes(me?.role ?? "") ? `/espace/finance/${studentId}` : "/espace/mes-paiements"}
+              className="text-sm font-semibold text-black/50 hover:text-ipmd-red"
+            >
+              ← Retour au dossier
             </Link>
             <PrintButton />
           </div>
