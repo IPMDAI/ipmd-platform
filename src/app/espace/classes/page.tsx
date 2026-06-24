@@ -8,7 +8,13 @@ import {
 } from "@/components/espace/referentiel-forms";
 import { ClassAssigner } from "@/components/espace/ClassAssigner";
 import { StatusSelect } from "@/components/espace/StatusSelect";
-import { statusBadgeClass, STATUS_LABEL } from "@/lib/academic";
+import {
+  statusBadgeClass,
+  STATUS_LABEL,
+  classTypeBadge,
+  CLASS_TYPE_LABEL,
+  PAYMENT_REGIME_LABEL,
+} from "@/lib/academic";
 import {
   deleteFiliere,
   deleteClasse,
@@ -34,7 +40,7 @@ export default async function ClassesPage() {
     supabase.from("filieres").select("id, name, status").order("name"),
     supabase
       .from("classes")
-      .select("id, name, level, academic_year, filiere_id")
+      .select("id, name, level, academic_year, filiere_id, intake, class_type, partner_name, payment_regime, tuition_amount")
       .order("name"),
     supabase
       .from("profiles")
@@ -187,6 +193,29 @@ export default async function ClassesPage() {
                             .filter(Boolean)
                             .join(" · ") || "—"}
                         </p>
+                        <div className="mt-1 flex flex-wrap gap-1">
+                          {c.class_type && (
+                            <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${classTypeBadge(c.class_type)}`}>
+                              {CLASS_TYPE_LABEL[c.class_type] ?? c.class_type}
+                              {c.class_type === "partenaire" && c.partner_name ? ` · ${c.partner_name}` : ""}
+                            </span>
+                          )}
+                          {c.intake && (
+                            <span className="rounded-full bg-ipmd-black/5 px-2 py-0.5 text-[10px] font-semibold text-ipmd-black">
+                              🎓 {c.intake}
+                            </span>
+                          )}
+                          {c.payment_regime && (
+                            <span className="rounded-full bg-ipmd-light px-2 py-0.5 text-[10px] font-semibold text-black/55">
+                              💳 {PAYMENT_REGIME_LABEL[c.payment_regime] ?? c.payment_regime}
+                            </span>
+                          )}
+                          {c.tuition_amount != null && (
+                            <span className="rounded-full bg-ipmd-red/10 px-2 py-0.5 text-[10px] font-semibold text-ipmd-red">
+                              Tarif {Number(c.tuition_amount).toLocaleString("fr-FR")} F
+                            </span>
+                          )}
+                        </div>
                       </div>
                       <form action={deleteClasse.bind(null, c.id)}>
                         <button

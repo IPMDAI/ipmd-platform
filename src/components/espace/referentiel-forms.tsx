@@ -9,6 +9,7 @@ import {
 import { Field, inputBase } from "@/components/forms/FormField";
 import { ActionButton } from "@/components/ui/Button";
 import { NIVEAUX } from "@/lib/referentiel";
+import { CLASS_TYPES, PAYMENT_REGIMES } from "@/lib/academic";
 import type { FormResult } from "@/types";
 
 function Feedback({ state }: { state: FormResult | null }) {
@@ -118,6 +119,49 @@ export function NewClasseForm({
           />
         </Field>
       </div>
+
+      <div className="grid grid-cols-2 gap-3">
+        <Field label="Rentrée / session" htmlFor="c-intake">
+          <input id="c-intake" name="intake" placeholder="Ex. Octobre 2025" className={inputBase} />
+        </Field>
+        <Field label="Type de classe" htmlFor="c-type">
+          <select id="c-type" name="class_type" defaultValue="" className={inputBase}>
+            <option value="">—</option>
+            {CLASS_TYPES.map((t) => (
+              <option key={t.value} value={t.value}>
+                {t.label}
+              </option>
+            ))}
+          </select>
+        </Field>
+      </div>
+      <Field label="Nom du partenaire (si partenaire académique)" htmlFor="c-partner">
+        <input id="c-partner" name="partner_name" placeholder="Ex. Académie X" className={inputBase} />
+      </Field>
+      <div className="grid grid-cols-2 gap-3">
+        <Field label="Date de début" htmlFor="c-start">
+          <input id="c-start" name="start_date" type="date" className={inputBase} />
+        </Field>
+        <Field label="Date de fin prévue" htmlFor="c-end">
+          <input id="c-end" name="end_date" type="date" className={inputBase} />
+        </Field>
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        <Field label="Régime de paiement" htmlFor="c-regime">
+          <select id="c-regime" name="payment_regime" defaultValue="" className={inputBase}>
+            <option value="">—</option>
+            {PAYMENT_REGIMES.map((r) => (
+              <option key={r.value} value={r.value}>
+                {r.label}
+              </option>
+            ))}
+          </select>
+        </Field>
+        <Field label="Tarif spécifique (FCFA, optionnel)" htmlFor="c-tuition">
+          <input id="c-tuition" name="tuition_amount" type="number" min="0" placeholder="sinon tarif du niveau" className={inputBase} />
+        </Field>
+      </div>
+
       <ActionButton type="submit" disabled={pending}>
         {pending ? "…" : "Ajouter la classe"}
       </ActionButton>

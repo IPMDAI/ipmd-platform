@@ -67,11 +67,20 @@ export async function createClasse(
   if (!ctx) return { ok: false, message: "Action réservée à l'administration." };
   const name = str(formData, "name");
   if (!name) return { ok: false, message: "Le nom de la classe est requis." };
+  const tuitionRaw = str(formData, "tuition_amount").replace(",", ".");
+  const tuition = tuitionRaw ? Number.parseFloat(tuitionRaw) : null;
   const { error } = await ctx.supabase.from("classes").insert({
     name,
     filiere_id: str(formData, "filiere_id") || null,
     level: str(formData, "level") || null,
     academic_year: str(formData, "academic_year") || null,
+    intake: str(formData, "intake") || null,
+    class_type: str(formData, "class_type") || null,
+    partner_name: str(formData, "partner_name") || null,
+    start_date: str(formData, "start_date") || null,
+    end_date: str(formData, "end_date") || null,
+    payment_regime: str(formData, "payment_regime") || null,
+    tuition_amount: tuition != null && !Number.isNaN(tuition) ? tuition : null,
   });
   if (error) return { ok: false, message: error.message };
   revalidatePath("/espace/classes");
