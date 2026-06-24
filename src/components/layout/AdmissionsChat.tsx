@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { AssistantAvatar } from "./AssistantAvatar";
 import { PhoneField } from "@/components/forms/PhoneField";
 import { captureChatLead } from "@/lib/prospect-actions";
 
@@ -11,7 +12,7 @@ type Msg = { role: "user" | "assistant"; content: string };
 const LEAD_KEY = "ipmd_chat_lead";
 
 const GREETING =
-  "Bonjour 👋 Je suis l'assistant d'admission de l'IPMD. Posez-moi vos questions sur nos formations, les frais, les cours du soir, l'admission ou une réorientation !";
+  "Bonjour 👋 Je suis Awa, votre assistante d'admission à l'IPMD. Posez-moi vos questions sur nos formations, les frais, les cours du soir, l'admission ou une réorientation !";
 
 // Questions gratuites avant identification, puis plafond anti-abus.
 const FREE_QUESTIONS = 3;
@@ -132,9 +133,15 @@ export function AdmissionsChat() {
       {open && (
         <div className="flex h-[60vh] max-h-[520px] w-[88vw] max-w-sm flex-col overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-black/10">
           <div className="flex items-center justify-between bg-ipmd-black px-4 py-3 text-white">
-            <div>
-              <p className="text-sm font-bold">Assistant Admission ✨</p>
-              <p className="text-[11px] text-white/70">Réponses instantanées · IPMD</p>
+            <div className="flex items-center gap-2.5">
+              <span className="relative">
+                <AssistantAvatar className="h-10 w-10 rounded-full ring-2 ring-white/20" />
+                <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full bg-green-400 ring-2 ring-ipmd-black" />
+              </span>
+              <div>
+                <p className="text-sm font-bold">Awa · Assistante Admission ✨</p>
+                <p className="text-[11px] text-white/70">En ligne · Réponses instantanées</p>
+              </div>
             </div>
             <button onClick={() => setOpen(false)} aria-label="Fermer" className="rounded-lg p-1 text-white/70 hover:bg-white/10">✕</button>
           </div>
@@ -206,10 +213,10 @@ export function AdmissionsChat() {
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        aria-label="Discuter avec l'assistant d'admission"
-        className="flex h-14 w-14 items-center justify-center gap-2 rounded-full bg-ipmd-black text-sm font-semibold text-white shadow-xl ring-1 ring-black/10 transition-transform hover:scale-105 active:scale-95 sm:w-auto sm:px-5"
+        aria-label="Discuter avec l'assistante d'admission"
+        className="flex h-14 w-14 items-center justify-center gap-2 rounded-full bg-ipmd-black p-0 text-sm font-semibold text-white shadow-xl ring-1 ring-black/10 transition-transform hover:scale-105 active:scale-95 sm:w-auto sm:pr-5"
       >
-        {open ? "✕" : <><span className="text-lg">💬</span><span className="hidden sm:inline">Poser une question</span></>}
+        {open ? <span className="text-base">✕</span> : <><AssistantAvatar className="h-14 w-14 rounded-full" /><span className="hidden sm:inline">Poser une question</span></>}
       </button>
     </div>
   );
