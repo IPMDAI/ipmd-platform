@@ -8,6 +8,8 @@ import {
   addProspectNote,
   convertProspectToCandidature,
   deleteProspect,
+  draftProspectReply,
+  sendProspectCustomEmail,
 } from "@/lib/prospect-actions";
 import { PROSPECT_STATUS, PROSPECT_STATUS_LIST, FORMAT_LABEL } from "@/lib/prospect";
 import { Field, inputBase } from "@/components/forms/FormField";
@@ -32,6 +34,7 @@ export type Prospect = {
 export function ProspectRow({ p }: { p: Prospect }) {
   const [pending, start] = useTransition();
   const [msg, setMsg] = useState<string | null>(null);
+  const [draft, setDraft] = useState<string | null>(null);
   const [noteState, noteAction] = useActionState<FormResult | null, FormData>(
     addProspectNote.bind(null, p.id),
     null
@@ -98,6 +101,21 @@ export function ProspectRow({ p }: { p: Prospect }) {
           </a>
         ) : null}
 
+        {/* Réponse IA (brouillon à valider) */}
+        <button
+          type="button"
+          disabled={pending}
+          onClick={() => start(async () => {
+            setMsg(null);
+            const r = await draftProspectReply(p.id);
+            if (r.ok && r.draft) setDraft(r.draft);
+            else setMsg(r.message ?? "Erreur IA.");
+          })}
+          className="rounded-full bg-purple-600 px-3 py-1 text-xs font-semibold text-white disabled:opacity-40"
+        >
+          ✨ Réponse IA
+        </button>
+
         {/* Conversion */}
         <button
           type="button"
@@ -118,6 +136,38 @@ export function ProspectRow({ p }: { p: Prospect }) {
       </div>
 
       {msg && <p className="mt-2 text-xs font-medium text-green-700">{msg}</p>}
+
+      {draft !== null && (
+        <div className="mt-3 rounded-xl bg-purple-50 p-3 ring-1 ring-purple-200">
+          <p className="mb-1.5 text-xs font-bold text-purple-700">
+            ✨ Brouillon IA — relis et modifie avant d&apos;envoyer (les <span className="font-mono">[…]</span> sont à compléter)
+          </p>
+          <textarea
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            rows={12}
+            className="w-full rounded-lg border border-purple-200 bg-white p-3 text-xs text-ipmd-black focus:outline-none focus:ring-2 focus:ring-purple-300"
+          />
+          <div className="mt-2 flex items-center gap-2">
+            <button
+              type="button"
+              disabled={pending || !p.email || !draft.trim()}
+              onClick={() => start(async () => {
+                const r = await sendProspectCustomEmail(p.id, draft);
+                setMsg(r.message);
+                if (r.ok) setDraft(null);
+              })}
+              className="rounded-full bg-ipmd-red px-4 py-1.5 text-xs font-semibold text-white disabled:opacity-40"
+            >
+              {pending ? "…" : "✉️ Envoyer cet email"}
+            </button>
+            <button type="button" onClick={() => setDraft(null)} className="rounded-full px-3 py-1.5 text-xs font-semibold text-black/50 hover:bg-black/5">
+              Annuler
+            </button>
+            {!p.email && <span className="text-[11px] text-ipmd-red">Pas d&apos;email pour ce prospect</span>}
+          </div>
+        </div>
+      )}
 
       <details className="mt-2 text-xs">
         <summary className="cursor-pointer font-semibold text-black/55">Ajouter une note de suivi</summary>

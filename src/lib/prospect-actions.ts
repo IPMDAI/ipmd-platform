@@ -1,5 +1,6 @@
 "use server";
 
+import Anthropic from "@anthropic-ai/sdk";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { formatFCFA } from "@/lib/finance";
@@ -179,6 +180,89 @@ export async function convertProspectToCandidature(prospectId: string): Promise<
   revalidatePath("/espace/marketing");
   revalidatePath("/espace/candidatures");
   return { ok: true, message: "Candidature créée. Retrouvez-la dans Candidatures." };
+}
+
+/** Génère (IA) un brouillon de réponse personnalisé, à relire/modifier avant envoi. */
+export async function draftProspectReply(
+  prospectId: string
+): Promise<{ ok: boolean; draft?: string; message?: string }> {
+  const ctx = await getStaff();
+  if (!ctx) return { ok: false, message: "Réservé à l'administration." };
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) return { ok: false, message: "IA non configurée (clé ANTHROPIC_API_KEY manquante)." };
+
+  const { data: p } = await ctx.supabase.from("prospects").select("*").eq("id", prospectId).single();
+  if (!p) return { ok: false, message: "Prospect introuvable." };
+
+  const { data: settings } = await ctx.supabase.from("finance_settings").select("registration_fee").eq("id", 1).maybeSingle();
+  const reg = Number(settings?.registration_fee ?? 300000);
+  let tuition: number | null = null;
+  if (p.level_interest) {
+    const { data: lvl } = await ctx.supabase.from("tuition_levels").select("amount").eq("level", p.level_interest).maybeSingle();
+    if (lvl?.amount != null) tuition = Number(lvl.amount);
+  }
+
+  const facts = {
+    prospect: p.full_name,
+    programme: p.program_interest || "non précisé",
+    niveau: p.level_interest || "non précisé",
+    format: p.format ? FORMAT_LABEL[p.format] ?? p.format : "non précisé",
+    message_du_prospect: p.message || "",
+    frais_inscription_fcfa: reg,
+    frais_scolarite_fcfa: tuition,
+    site_admission: `${SITE}/admission`,
+    whatsapp_admissions: "+225 07 75 75 88 88",
+  };
+
+  try {
+    const client = new Anthropic({ apiKey });
+    const m = await client.messages.create({
+      model: "claude-opus-4-8",
+      max_tokens: 900,
+      system:
+        "Tu es le Service des Admissions de l'IPMD (Institut Polytechnique des Métiers du Digital & IA, Abidjan). Rédige en français un email de réponse chaleureux, professionnel et concis à un prospect, en répondant précisément à ses questions. Règles STRICTES : n'utilise QUE les chiffres fournis dans le JSON pour les frais ; pour toute information non fournie (date limite de dépôt, lien plaquette, volume horaire précis, modalités exactes de sélection), insère un placeholder clair entre crochets comme [date limite à préciser] — n'invente JAMAIS de chiffre, de date ou de fait. Mentionne que les frais d'inscription donnent accès à la plateforme/carte/attestation, qu'un échéancier et une réduction de 15% (paiement unique) sont possibles. Termine par l'invitation à candidater sur le site et le contact WhatsApp. Signe « Le Service des Admissions — IPMD ». Renvoie UNIQUEMENT le corps de l'email (sans objet, sans préambule).",
+      messages: [
+        {
+          role: "user",
+          content: `Données (JSON) :\n${JSON.stringify(facts, null, 2)}\nRédige la réponse email.`,
+        },
+      ],
+    });
+    const draft = m.content
+      .filter((b): b is Anthropic.TextBlock => b.type === "text")
+      .map((b) => b.text)
+      .join("")
+      .trim();
+    return { ok: true, draft };
+  } catch (e) {
+    return { ok: false, message: e instanceof Error ? e.message : "Erreur IA." };
+  }
+}
+
+/** Envoie un email rédigé/validé par l'admin au prospect. */
+export async function sendProspectCustomEmail(
+  prospectId: string,
+  body: string
+): Promise<FormResult> {
+  const ctx = await getStaff();
+  if (!ctx) return { ok: false, message: "Réservé à l'administration." };
+  if (!canSendEmail) return { ok: false, message: "Service email non configuré." };
+  const { data: p } = await ctx.supabase.from("prospects").select("full_name, email, status").eq("id", prospectId).single();
+  if (!p?.email) return { ok: false, message: "Ce prospect n'a pas d'email." };
+
+  const htmlBody = body
+    .trim()
+    .split(/\n{2,}/)
+    .map((para) => `<p>${para.replace(/\n/g, "<br>").replace(/</g, "&lt;").replace(/&lt;br>/g, "<br>")}</p>`)
+    .join("");
+  const html = emailDocument("IPMD — Service des Admissions", htmlBody);
+  const sent = await sendScolariteEmail([p.email], "IPMD — Votre demande d'information", html);
+  if (sent > 0) {
+    await ctx.supabase.from("prospects").update({ status: p.status === "nouveau" ? "contacte" : p.status, last_contacted_at: new Date().toISOString() }).eq("id", prospectId);
+    await logEvent(ctx, prospectId, "email", "Réponse personnalisée envoyée");
+  }
+  revalidatePath("/espace/marketing");
+  return sent > 0 ? { ok: true, message: `Email envoyé à ${p.email}.` } : { ok: false, message: "Échec de l'envoi." };
 }
 
 /** Supprime un prospect. */
