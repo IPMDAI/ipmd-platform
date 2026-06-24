@@ -68,6 +68,7 @@ export const PAYMENT_REGIMES = [
   { value: "professionnel", label: "Paiement professionnel" },
   { value: "partenaire", label: "Paiement partenaire" },
   { value: "special", label: "Échéancier spécial" },
+  { value: "prise_en_charge", label: "Prise en charge" },
 ] as const;
 
 export const PAYMENT_REGIME_LABEL: Record<string, string> = Object.fromEntries(

@@ -246,7 +246,7 @@ export function AccessForm({
           ))}
         </select>
       </Field>
-      <Field label="Profil payeur / suivi" htmlFor="a-payer">
+      <Field label="Appréciation / Commentaire finance" htmlFor="a-payer">
         <input
           id="a-payer"
           name="payer_note"

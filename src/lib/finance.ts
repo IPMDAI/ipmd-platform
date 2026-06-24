@@ -40,6 +40,7 @@ export const FINANCIAL_STATUS: Record<string, { label: string; cls: string }> = 
   partielle: { label: "Scolarité partielle", cls: "bg-amber-50 text-amber-700" },
   non_a_jour: { label: "Non à jour", cls: "bg-ipmd-red/10 text-ipmd-red" },
   solde: { label: "Soldé", cls: "bg-green-600 text-white" },
+  solde_avance: { label: "Soldé (avance)", cls: "bg-emerald-600 text-white" },
   negociation: { label: "En négociation", cls: "bg-purple-50 text-purple-700" },
   avertissement: { label: "En avertissement", cls: "bg-orange-50 text-orange-700" },
 };
@@ -150,14 +151,14 @@ export function computeSchedule(
   return { rows, next };
 }
 
-/** Profils payeur / commentaires de suivi (qualification de l'étudiant). */
+/** Appréciation / commentaire finance (qualification du suivi de l'étudiant). */
 export const PAYER_NOTES = [
   "Bon payeur",
-  "Payeur moyen",
-  "Mauvais payeur",
-  "Fiable",
   "À relancer",
+  "Paiement régulier",
+  "Paiement irrégulier",
   "Échéancier négocié",
   "Cas sensible",
   "Paiement en attente de preuve",
+  "Avance à vérifier",
 ];
