@@ -74,3 +74,15 @@ export const PAYMENT_REGIMES = [
 export const PAYMENT_REGIME_LABEL: Record<string, string> = Object.fromEntries(
   PAYMENT_REGIMES.map((r) => [r.value, r.label])
 );
+
+/** Rôle d'un parent vis-à-vis de l'élève. */
+export const PARENT_RELATIONSHIPS = [
+  { value: "pere", label: "Père" },
+  { value: "mere", label: "Mère" },
+  { value: "tuteur", label: "Tuteur" },
+  { value: "autre", label: "Autre" },
+] as const;
+
+export const PARENT_RELATIONSHIP_LABEL: Record<string, string> = Object.fromEntries(
+  PARENT_RELATIONSHIPS.map((r) => [r.value, r.label])
+);

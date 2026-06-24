@@ -12,6 +12,7 @@ import {
 } from "@/components/espace/finance-forms";
 import { deletePayment, deleteSchedule } from "@/lib/finance-actions";
 import { ReceiptSendPanel } from "@/components/espace/ReceiptSendPanel";
+import { PARENT_RELATIONSHIP_LABEL } from "@/lib/academic";
 import {
   formatFCFA,
   computeSchedule,
@@ -84,7 +85,7 @@ export default async function StudentFinancePage({
   // Destinataires (étudiant + parents liés) + historique des envois de reçus.
   const paymentIds = payments.map((p) => p.id);
   const [{ data: parentLinks }, { data: sends }] = await Promise.all([
-    supabase.from("parent_links").select("parent_id").eq("student_id", studentId),
+    supabase.from("parent_links").select("parent_id, relationship").eq("student_id", studentId),
     paymentIds.length
       ? supabase
           .from("receipt_sends")
@@ -94,6 +95,7 @@ export default async function StudentFinancePage({
       : Promise.resolve({ data: [] as { payment_id: string; recipient: string; channel: string; sent_at: string }[] }),
   ]);
   const parentIds = (parentLinks ?? []).map((l) => l.parent_id);
+  const relOf = new Map((parentLinks ?? []).map((l) => [l.parent_id, l.relationship]));
   let parents: { id: string; full_name: string | null; email: string | null }[] = [];
   if (parentIds.length > 0) {
     const { data: pp } = await supabase.from("profiles").select("id, full_name, email").in("id", parentIds);
@@ -101,11 +103,15 @@ export default async function StudentFinancePage({
   }
   const recipients = [
     { target: "student", label: "Étudiant", email: student.email ?? null },
-    ...parents.map((p) => ({
-      target: p.id,
-      label: `Parent : ${p.full_name || p.email || "—"}`,
-      email: p.email ?? null,
-    })),
+    ...parents.map((p) => {
+      const rel = relOf.get(p.id);
+      const roleLabel = rel ? PARENT_RELATIONSHIP_LABEL[rel] ?? "Parent" : "Parent";
+      return {
+        target: p.id,
+        label: `${roleLabel} : ${p.full_name || p.email || "—"}`,
+        email: p.email ?? null,
+      };
+    }),
   ];
   const sendsByPayment = new Map<string, { recipient: string; channel: string; sent_at: string }[]>();
   for (const s of sends ?? []) {

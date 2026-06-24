@@ -4,6 +4,7 @@ import { requireAdmin } from "@/lib/require-admin";
 import { Container } from "@/components/ui/Container";
 import { LinkParentForm } from "@/components/espace/LinkParentForm";
 import { unlinkParentChild } from "@/lib/admin-actions";
+import { PARENT_RELATIONSHIP_LABEL } from "@/lib/academic";
 
 export const metadata: Metadata = {
   title: "Parents & élèves",
@@ -26,7 +27,7 @@ export default async function ParentsPage() {
         .order("full_name"),
       supabase
         .from("parent_links")
-        .select("id, parent_id, student_id")
+        .select("id, parent_id, student_id, relationship")
         .order("created_at", { ascending: false }),
     ]);
 
@@ -81,6 +82,11 @@ export default async function ParentsPage() {
                         <span className="font-semibold text-ipmd-black">
                           {nameMap.get(l.parent_id) ?? "—"}
                         </span>
+                        {l.relationship && (
+                          <span className="ml-1.5 rounded-full bg-ipmd-light px-2 py-0.5 text-[10px] font-bold text-black/55">
+                            {PARENT_RELATIONSHIP_LABEL[l.relationship] ?? l.relationship}
+                          </span>
+                        )}
                         <span className="text-black/40"> → </span>
                         <span className="font-semibold text-ipmd-black">
                           {nameMap.get(l.student_id) ?? "—"}

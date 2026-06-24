@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 import { linkParentChild } from "@/lib/admin-actions";
+import { PARENT_RELATIONSHIPS } from "@/lib/academic";
 import { Field, inputBase } from "@/components/forms/FormField";
 import { ActionButton } from "@/components/ui/Button";
 import type { FormResult } from "@/types";
@@ -70,6 +71,17 @@ export function LinkParentForm({
               {students.map((s) => (
                 <option key={s.id} value={s.id}>
                   {s.full_name || s.email} ({s.email})
+                </option>
+              ))}
+            </select>
+          </Field>
+
+          <Field label="Rôle" htmlFor="relationship">
+            <select id="relationship" name="relationship" defaultValue="" className={inputBase}>
+              <option value="">— Parent (non précisé) —</option>
+              {PARENT_RELATIONSHIPS.map((r) => (
+                <option key={r.value} value={r.value}>
+                  {r.label}
                 </option>
               ))}
             </select>

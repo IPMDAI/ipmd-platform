@@ -390,13 +390,19 @@ export async function sendReceiptEmail(
     email = s?.email ?? "";
     label = "Étudiant";
   } else {
-    const { data: p } = await ctx.supabase
-      .from("profiles")
-      .select("full_name, email")
-      .eq("id", target)
-      .single();
+    const [{ data: p }, { data: link }] = await Promise.all([
+      ctx.supabase.from("profiles").select("full_name, email").eq("id", target).single(),
+      ctx.supabase
+        .from("parent_links")
+        .select("relationship")
+        .eq("parent_id", target)
+        .eq("student_id", payment.student_id)
+        .maybeSingle(),
+    ]);
     email = p?.email ?? "";
-    label = `Parent : ${p?.full_name || p?.email || "—"}`;
+    const roleMap: Record<string, string> = { pere: "Père", mere: "Mère", tuteur: "Tuteur", autre: "Parent" };
+    const role = link?.relationship ? roleMap[link.relationship] ?? "Parent" : "Parent";
+    label = `${role} : ${p?.full_name || p?.email || "—"}`;
   }
   if (!email) return { ok: false, message: "Ce destinataire n'a pas d'email." };
 

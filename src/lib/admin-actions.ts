@@ -83,9 +83,12 @@ export async function linkParentChild(
     return { ok: false, message: "Sélectionnez un parent et un enfant." };
   }
 
+  const relRaw = formData.get("relationship");
+  const relationship = typeof relRaw === "string" && relRaw ? relRaw : null;
+
   const { error } = await ctx.supabase
     .from("parent_links")
-    .insert({ parent_id: parentId, student_id: studentId });
+    .insert({ parent_id: parentId, student_id: studentId, relationship });
 
   if (error) {
     if (error.code === "23505") {
