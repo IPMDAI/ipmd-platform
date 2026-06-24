@@ -328,10 +328,17 @@ export async function createReturningStudent(
     return { ok: false, message: `Compte impossible${createErr ? " : " + createErr.message : ""}.` };
   }
 
-  // 2. Rôle étudiant + nom.
+  // 2. Rôle étudiant + nom + coordonnées.
   await ctx.supabase
     .from("profiles")
-    .update({ role: "etudiant", full_name: fullName })
+    .update({
+      role: "etudiant",
+      full_name: fullName,
+      phone: str(formData, "phone") || null,
+      whatsapp: str(formData, "whatsapp") || null,
+      personal_email: str(formData, "personal_email") || null,
+      school_email: str(formData, "school_email") || null,
+    })
     .eq("id", newId);
 
   // 3. Affectation à une classe (optionnelle).

@@ -58,8 +58,25 @@ export function ReturningStudentForm({
         <Field label="Nom & prénom" htmlFor="rs-name" required>
           <input id="rs-name" name="full_name" required placeholder="Aya Brou" className={inputBase} />
         </Field>
-        <Field label="Email" htmlFor="rs-email" required>
+        <Field label="Email de connexion (compte)" htmlFor="rs-email" required>
           <input id="rs-email" name="email" type="email" required placeholder="aya@email.com" className={inputBase} />
+        </Field>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3">
+        <Field label="Téléphone" htmlFor="rs-phone">
+          <input id="rs-phone" name="phone" placeholder="+225 0700000000" className={inputBase} />
+        </Field>
+        <Field label="WhatsApp" htmlFor="rs-wa">
+          <input id="rs-wa" name="whatsapp" placeholder="+225 0700000000" className={inputBase} />
+        </Field>
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        <Field label="Email personnel" htmlFor="rs-pe">
+          <input id="rs-pe" name="personal_email" type="email" placeholder="perso@email.com" className={inputBase} />
+        </Field>
+        <Field label="Email IPMD attribué" htmlFor="rs-se">
+          <input id="rs-se" name="school_email" type="email" placeholder="prenom.nom@ipmd.pro" className={inputBase} />
         </Field>
       </div>
 

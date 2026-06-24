@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
+import { ContactEditForm, type Contacts } from "@/components/espace/ContactEditForm";
 
 export type StudentRow = {
   id: string;
@@ -9,6 +10,7 @@ export type StudentRow = {
   email: string;
   className: string | null;
   filiereName: string | null;
+  contacts: Contacts;
 };
 
 function normalize(s: string): string {
@@ -26,7 +28,7 @@ export function StudentDirectory({ students }: { students: StudentRow[] }) {
     if (!q) return students;
     return students.filter((s) =>
       normalize(
-        `${s.name} ${s.email} ${s.className ?? ""} ${s.filiereName ?? ""}`
+        `${s.name} ${s.email} ${s.className ?? ""} ${s.filiereName ?? ""} ${s.contacts.phone ?? ""} ${s.contacts.whatsapp ?? ""} ${s.contacts.personal_email ?? ""} ${s.contacts.school_email ?? ""}`
       ).includes(q)
     );
   }, [students, query]);
@@ -53,42 +55,42 @@ export function StudentDirectory({ students }: { students: StudentRow[] }) {
       ) : (
         <ul className="mt-5 divide-y divide-black/5 overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-black/5">
           {results.map((s) => (
-            <li
-              key={s.id}
-              className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between"
-            >
-              <div className="min-w-0">
-                <p className="truncate font-semibold text-ipmd-black">
-                  {s.name}
-                </p>
-                <p className="truncate text-sm text-black/50">{s.email}</p>
-                <p className="mt-0.5 text-xs text-black/45">
-                  {s.className || s.filiereName ? (
-                    <>
-                      {s.filiereName ? `${s.filiereName} · ` : ""}
-                      {s.className ?? "—"}
-                    </>
-                  ) : (
-                    <span className="text-ipmd-red/70">
-                      Aucune classe affectée
-                    </span>
-                  )}
-                </p>
+            <li key={s.id} className="p-4">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="min-w-0">
+                  <p className="truncate font-semibold text-ipmd-black">
+                    {s.name}
+                  </p>
+                  <p className="truncate text-sm text-black/50">{s.email}</p>
+                  <p className="mt-0.5 text-xs text-black/45">
+                    {s.className || s.filiereName ? (
+                      <>
+                        {s.filiereName ? `${s.filiereName} · ` : ""}
+                        {s.className ?? "—"}
+                      </>
+                    ) : (
+                      <span className="text-ipmd-red/70">
+                        Aucune classe affectée
+                      </span>
+                    )}
+                  </p>
+                </div>
+                <div className="flex shrink-0 flex-wrap gap-2">
+                  <Link
+                    href={`/espace/bulletin/${s.id}`}
+                    className="rounded-full bg-ipmd-light px-3 py-1.5 text-xs font-semibold text-ipmd-black transition-colors hover:bg-black/5"
+                  >
+                    📄 Bulletin
+                  </Link>
+                  <Link
+                    href={`/espace/documents?student=${s.id}`}
+                    className="rounded-full bg-ipmd-light px-3 py-1.5 text-xs font-semibold text-ipmd-black transition-colors hover:bg-black/5"
+                  >
+                    🪪 Documents
+                  </Link>
+                </div>
               </div>
-              <div className="flex shrink-0 flex-wrap gap-2">
-                <Link
-                  href={`/espace/bulletin/${s.id}`}
-                  className="rounded-full bg-ipmd-light px-3 py-1.5 text-xs font-semibold text-ipmd-black transition-colors hover:bg-black/5"
-                >
-                  📄 Bulletin
-                </Link>
-                <Link
-                  href={`/espace/documents?student=${s.id}`}
-                  className="rounded-full bg-ipmd-light px-3 py-1.5 text-xs font-semibold text-ipmd-black transition-colors hover:bg-black/5"
-                >
-                  🪪 Documents
-                </Link>
-              </div>
+              <ContactEditForm userId={s.id} contacts={s.contacts} />
             </li>
           ))}
         </ul>

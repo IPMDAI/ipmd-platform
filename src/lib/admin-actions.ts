@@ -101,6 +101,33 @@ export async function linkParentChild(
   return { ok: true, message: "Lien créé." };
 }
 
+/** Met à jour les coordonnées d'un profil (étudiant ou enseignant). */
+export async function setProfileContacts(
+  userId: string,
+  _prev: FormResult | null,
+  formData: FormData
+): Promise<FormResult> {
+  const ctx = await getAdmin();
+  if (!ctx) return { ok: false, message: "Action réservée à l'administration." };
+  const val = (k: string) => {
+    const v = formData.get(k);
+    return typeof v === "string" && v.trim() ? v.trim() : null;
+  };
+  const { error } = await ctx.supabase
+    .from("profiles")
+    .update({
+      phone: val("phone"),
+      whatsapp: val("whatsapp"),
+      personal_email: val("personal_email"),
+      school_email: val("school_email"),
+    })
+    .eq("id", userId);
+  if (error) return { ok: false, message: error.message };
+  revalidatePath("/espace/etudiants");
+  revalidatePath("/espace/enseignants");
+  return { ok: true, message: "Coordonnées enregistrées." };
+}
+
 /** Supprime un lien parent ↔ enfant (action de formulaire simple). */
 export async function unlinkParentChild(
   linkId: string,

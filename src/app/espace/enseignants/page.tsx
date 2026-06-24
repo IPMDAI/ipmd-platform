@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { requireUser } from "@/lib/require-user";
 import { Container } from "@/components/ui/Container";
 import { TeacherProfileForm } from "@/components/espace/TeacherProfileForm";
+import { ContactEditForm } from "@/components/espace/ContactEditForm";
 import { TEACHER_STATUS_LABEL, teacherStatusClass } from "@/lib/teacher";
 
 export const metadata: Metadata = {
@@ -25,7 +26,7 @@ export default async function EnseignantsPage() {
     await Promise.all([
       supabase
         .from("profiles")
-        .select("id, full_name, email")
+        .select("id, full_name, email, phone, whatsapp, personal_email, school_email")
         .eq("role", "enseignant")
         .order("full_name"),
       supabase.from("teacher_profiles").select("*"),
@@ -154,6 +155,16 @@ export default async function EnseignantsPage() {
                           📄 Générer le contrat de vacataire
                         </Link>
                       </div>
+
+                      <ContactEditForm
+                        userId={t.id}
+                        contacts={{
+                          phone: t.phone ?? null,
+                          whatsapp: t.whatsapp ?? null,
+                          personal_email: t.personal_email ?? null,
+                          school_email: t.school_email ?? null,
+                        }}
+                      />
 
                       <TeacherProfileForm teacherId={t.id} sheet={sheet} />
                     </details>
