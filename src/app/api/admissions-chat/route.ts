@@ -1,8 +1,27 @@
 import Anthropic from "@anthropic-ai/sdk";
 import type { NextRequest } from "next/server";
-import { ADMISSIONS_CHAT_MODEL, buildAdmissionsSystem } from "@/lib/admissions-chat";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { ADMISSIONS_CHAT_MODEL, buildAdmissionsSystem, type ChatFees } from "@/lib/admissions-chat";
 
 export const runtime = "nodejs";
+
+/** Grille tarifaire réelle (lecture via service-role, endpoint public). */
+async function loadFees(): Promise<ChatFees | undefined> {
+  try {
+    const admin = createAdminClient();
+    if (!admin) return undefined;
+    const [{ data: settings }, { data: levels }] = await Promise.all([
+      admin.from("finance_settings").select("registration_fee").eq("id", 1).maybeSingle(),
+      admin.from("tuition_levels").select("level, amount").order("sort_order"),
+    ]);
+    return {
+      registration: Number(settings?.registration_fee ?? 300000),
+      levels: (levels ?? []).map((l) => ({ level: l.level as string, amount: Number(l.amount ?? 0) })),
+    };
+  } catch {
+    return undefined;
+  }
+}
 
 type ChatMessage = { role: "user" | "assistant"; content: string };
 
@@ -40,6 +59,7 @@ export async function POST(req: NextRequest) {
     return Response.json({ error: "Message manquant." }, { status: 400 });
   }
 
+  const fees = await loadFees();
   const client = new Anthropic({ apiKey });
   const encoder = new TextEncoder();
   const stream = new ReadableStream({
@@ -48,7 +68,14 @@ export async function POST(req: NextRequest) {
         const claude = client.messages.stream({
           model: ADMISSIONS_CHAT_MODEL,
           max_tokens: 1024,
-          system: buildAdmissionsSystem(),
+          // Système mis en cache (réutilisé d'un message à l'autre → entrée moins chère).
+          system: [
+            {
+              type: "text",
+              text: buildAdmissionsSystem(fees),
+              cache_control: { type: "ephemeral" },
+            },
+          ],
           messages,
         });
         for await (const event of claude) {

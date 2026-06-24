@@ -9,6 +9,9 @@ type Msg = { role: "user" | "assistant"; content: string };
 const GREETING =
   "Bonjour 👋 Je suis l'assistant d'admission de l'IPMD. Posez-moi vos questions sur nos formations, les frais, les cours du soir, l'admission ou une réorientation !";
 
+// Plafond anti-abus : nombre max de questions par visiteur (par session).
+const MAX_QUESTIONS = 15;
+
 export function AdmissionsChat() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
@@ -26,6 +29,21 @@ export function AdmissionsChat() {
   const send = async () => {
     const text = input.trim();
     if (!text || busy) return;
+    // Limite par visiteur : au-delà, on invite à laisser ses coordonnées.
+    const asked = messages.filter((m) => m.role === "user").length;
+    if (asked >= MAX_QUESTIONS) {
+      setMessages((m) => [
+        ...m,
+        { role: "user", content: text },
+        {
+          role: "assistant",
+          content:
+            "Merci pour toutes ces questions ! 😊 Pour un suivi personnalisé, laissez vos coordonnées sur ipmd.pro/demande-info ou écrivez-nous sur WhatsApp +225 07 75 75 88 88 — un conseiller vous répondra.",
+        },
+      ]);
+      setInput("");
+      return;
+    }
     setInput("");
     const next: Msg[] = [...messages, { role: "user", content: text }];
     setMessages([...next, { role: "assistant", content: "" }]);
