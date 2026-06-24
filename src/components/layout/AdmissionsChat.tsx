@@ -41,11 +41,13 @@ export function AdmissionsChat() {
   const taRef = useRef<HTMLTextAreaElement>(null);
 
   // Le champ de saisie s'agrandit avec le texte (jusqu'à ~5 lignes).
+  // La barre de défilement n'apparaît qu'au-delà de la hauteur max (sinon flèches ▲▼ parasites).
   useEffect(() => {
     const el = taRef.current;
     if (!el) return;
     el.style.height = "auto";
     el.style.height = `${Math.min(el.scrollHeight, 120)}px`;
+    el.style.overflowY = el.scrollHeight > 120 ? "auto" : "hidden";
   }, [input, open]);
 
   useEffect(() => {
@@ -232,7 +234,7 @@ export function AdmissionsChat() {
                 onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } }}
                 rows={1}
                 placeholder="Votre question…"
-                className="max-h-[120px] min-h-[40px] flex-1 resize-none overflow-y-auto rounded-xl border border-black/10 px-3 py-2 text-sm leading-relaxed text-ipmd-black focus:border-ipmd-red focus:outline-none"
+                className="max-h-[120px] min-h-[40px] flex-1 resize-none overflow-hidden rounded-xl border border-black/10 px-3 py-2 text-sm leading-relaxed text-ipmd-black focus:border-ipmd-red focus:outline-none"
               />
               <button type="submit" disabled={busy || !input.trim()} className="shrink-0 rounded-xl bg-ipmd-red px-3 py-2 text-sm font-semibold text-white disabled:opacity-40">
                 ➤
