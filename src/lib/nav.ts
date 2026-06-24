@@ -49,6 +49,7 @@ const ADMIN_NAV: NavGroup[] = [
     items: [
       { label: "Annonces", href: "/espace/annonces", icon: "📢" },
       { label: "Modération", href: "/espace/moderation", icon: "🛡️" },
+      { label: "Marketing / Prospects", href: "/espace/marketing", icon: "📣" },
       { label: "Utilisateurs", href: "/espace/utilisateurs", icon: "🔑" },
       { label: "Reprise des anciens", href: "/espace/reprise", icon: "♻️" },
       { label: "Parents & élèves", href: "/espace/parents", icon: "👨‍👩‍👧" },
