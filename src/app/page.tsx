@@ -1,6 +1,5 @@
 import { Hero } from "@/components/home/Hero";
 import { UniversesSection } from "@/components/home/UniversesSection";
-import { PopularPrograms } from "@/components/home/PopularPrograms";
 import { AiSection } from "@/components/home/AiSection";
 import { WhyIpmd } from "@/components/home/WhyIpmd";
 import { PartnersBand } from "@/components/home/PartnersBand";
@@ -12,7 +11,6 @@ export default function HomePage() {
     <>
       <Hero />
       <UniversesSection />
-      <PopularPrograms />
       <AiSection />
       <WhyIpmd />
       <PartnersBand />
