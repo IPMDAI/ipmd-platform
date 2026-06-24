@@ -18,6 +18,14 @@ const GREETING =
 const FREE_QUESTIONS = 3;
 const MAX_QUESTIONS = 15;
 
+// Questions cliquables proposées au visiteur (pour « faire parler » l'assistante sans taper).
+const SUGGESTIONS = [
+  "Quelles formations proposez-vous ?",
+  "Y a-t-il des cours du soir ?",
+  "Comment se passe l'admission ?",
+  "Puis-je me réorienter vers le digital ?",
+];
+
 export function AdmissionsChat() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
@@ -30,6 +38,15 @@ export function AdmissionsChat() {
   const [capBusy, setCapBusy] = useState(false);
   const [capErr, setCapErr] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const taRef = useRef<HTMLTextAreaElement>(null);
+
+  // Le champ de saisie s'agrandit avec le texte (jusqu'à ~5 lignes).
+  useEffect(() => {
+    const el = taRef.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = `${Math.min(el.scrollHeight, 120)}px`;
+  }, [input, open]);
 
   useEffect(() => {
     try {
@@ -65,8 +82,8 @@ export function AdmissionsChat() {
     setMessages((m) => [...m, { role: "assistant", content: `Merci ${prenom} ! 🙌 Je continue à répondre à vos questions.` }]);
   };
 
-  const send = async () => {
-    const text = input.trim();
+  const send = async (override?: string) => {
+    const text = (override ?? input).trim();
     if (!text || busy) return;
     // Limite par visiteur : au-delà, on invite à laisser ses coordonnées.
     const asked = messages.filter((m) => m.role === "user").length;
@@ -154,6 +171,22 @@ export function AdmissionsChat() {
                 </div>
               </div>
             ))}
+
+            {/* Questions suggérées — cliquables, pour démarrer sans taper. */}
+            {askedCount === 0 && !busy && (
+              <div className="flex flex-wrap gap-2 pt-1">
+                {SUGGESTIONS.map((q) => (
+                  <button
+                    key={q}
+                    type="button"
+                    onClick={() => send(q)}
+                    className="rounded-full border border-ipmd-red/30 bg-white px-3 py-1.5 text-left text-[12px] font-medium text-ipmd-red shadow-sm transition-colors hover:bg-ipmd-red hover:text-white"
+                  >
+                    {q}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           {!lead && askedCount >= FREE_QUESTIONS && !gateDismissed ? (
@@ -193,12 +226,13 @@ export function AdmissionsChat() {
             </div>
             <form onSubmit={(e) => { e.preventDefault(); send(); }} className="flex items-end gap-2">
               <textarea
+                ref={taRef}
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } }}
                 rows={1}
                 placeholder="Votre question…"
-                className="max-h-24 flex-1 resize-none rounded-xl border border-black/10 px-3 py-2 text-sm text-ipmd-black focus:border-ipmd-red focus:outline-none"
+                className="max-h-[120px] min-h-[40px] flex-1 resize-none overflow-y-auto rounded-xl border border-black/10 px-3 py-2 text-sm leading-relaxed text-ipmd-black focus:border-ipmd-red focus:outline-none"
               />
               <button type="submit" disabled={busy || !input.trim()} className="shrink-0 rounded-xl bg-ipmd-red px-3 py-2 text-sm font-semibold text-white disabled:opacity-40">
                 ➤
