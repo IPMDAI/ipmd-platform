@@ -60,8 +60,7 @@ export function Hero() {
             style={{ animationDelay: "100ms" }}
           >
             La question n&apos;est plus de savoir si l&apos;IA est une
-            opportunité ou non. Il faut désormais l&apos;accélérer dans tous les
-            domaines.
+            opportunité ou non. Il faut l&apos;accélérer dans tous les domaines.
           </p>
 
           <p
