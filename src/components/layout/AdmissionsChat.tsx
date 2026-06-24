@@ -25,6 +25,19 @@ const FEMALE_VOICE_HINTS = [
   "google français", "eloise", "élise", "elise",
 ];
 
+// Nettoie le texte pour la lecture vocale : retire emojis, markdown et symboles
+// (sinon la voix dit « visage souriant », « flèche vers la droite »…).
+function cleanForSpeech(text: string): string {
+  return text
+    .replace(/\p{Extended_Pictographic}/gu, "")           // emojis (😊 👋 🎓 …)
+    .replace(/[\u{1F1E6}-\u{1F1FF}]/gu, "")               // drapeaux
+    .replace(/[‍️⃣]/g, "")                 // jointeurs / sélecteurs de variante
+    .replace(/[←-⇿⬀-⯿☀-⛿]/g, "") // flèches & symboles divers
+    .replace(/[*_#`~>•|]/g, "")                           // markdown / puces
+    .replace(/\s{2,}/g, " ")
+    .trim();
+}
+
 function pickFrenchFemaleVoice(voices: SpeechSynthesisVoice[]): SpeechSynthesisVoice | null {
   const fr = voices.filter((v) => v.lang.toLowerCase().startsWith("fr"));
   if (fr.length === 0) return null;
@@ -142,7 +155,9 @@ export function AdmissionsChat() {
     if (!voiceOutRef.current || typeof window === "undefined" || !window.speechSynthesis) return;
     try {
       window.speechSynthesis.cancel();
-      const u = new SpeechSynthesisUtterance(text.replace(/[*_#>`]/g, ""));
+      const spoken = cleanForSpeech(text);
+      if (!spoken) return;
+      const u = new SpeechSynthesisUtterance(spoken);
       u.lang = "fr-FR";
       u.rate = 1.02;
       u.pitch = 1.08; // voix un peu plus douce / féminine
