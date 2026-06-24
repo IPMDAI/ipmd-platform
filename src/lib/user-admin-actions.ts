@@ -192,7 +192,7 @@ export async function inviteFromCandidature(
   let proformaBlock = "";
 
   if (isStudent) {
-    const [{ data: settings }, lvlRes] = await Promise.all([
+    const [{ data: settings }, lvlRes, classRes] = await Promise.all([
       ctx.supabase
         .from("finance_settings")
         .select("registration_fee, academic_year")
@@ -201,9 +201,15 @@ export async function inviteFromCandidature(
       level
         ? ctx.supabase.from("tuition_levels").select("amount").eq("level", level).maybeSingle()
         : Promise.resolve({ data: null }),
+      classId
+        ? ctx.supabase.from("classes").select("tuition_amount").eq("id", classId).maybeSingle()
+        : Promise.resolve({ data: null }),
     ]);
     const registrationFee = Number(settings?.registration_fee ?? 300000);
-    const tuitionDue = Number(lvlRes?.data?.amount ?? 0);
+    // Tarif de la classe (Pro/Partenaire) prioritaire s'il est défini, sinon tarif du niveau.
+    const classTuition = classRes?.data?.tuition_amount;
+    const tuitionDue =
+      classTuition != null ? Number(classTuition) : Number(lvlRes?.data?.amount ?? 0);
     const totalDue = registrationFee + tuitionDue;
 
     await ctx.supabase.from("student_finance").upsert(
