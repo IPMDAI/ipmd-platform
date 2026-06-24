@@ -10,8 +10,10 @@ import {
   deleteProspect,
   draftProspectReply,
   sendProspectCustomEmail,
+  updateProspect,
 } from "@/lib/prospect-actions";
-import { PROSPECT_STATUS, PROSPECT_STATUS_LIST, FORMAT_LABEL } from "@/lib/prospect";
+import { NIVEAUX } from "@/lib/referentiel";
+import { PROSPECT_STATUS, PROSPECT_STATUS_LIST, PROSPECT_FORMATS, FORMAT_LABEL } from "@/lib/prospect";
 import { Field, inputBase } from "@/components/forms/FormField";
 import type { FormResult } from "@/types";
 
@@ -37,6 +39,10 @@ export function ProspectRow({ p }: { p: Prospect }) {
   const [draft, setDraft] = useState<string | null>(null);
   const [noteState, noteAction] = useActionState<FormResult | null, FormData>(
     addProspectNote.bind(null, p.id),
+    null
+  );
+  const [editState, editAction] = useActionState<FormResult | null, FormData>(
+    updateProspect.bind(null, p.id),
     null
   );
 
@@ -168,6 +174,29 @@ export function ProspectRow({ p }: { p: Prospect }) {
           </div>
         </div>
       )}
+
+      <details className="mt-2 text-xs">
+        <summary className="cursor-pointer font-semibold text-black/55">✏️ Modifier la fiche (email, tél, programme…)</summary>
+        <form action={editAction} className="mt-2 grid grid-cols-2 gap-2">
+          <input name="full_name" defaultValue={p.full_name} placeholder="Nom & prénom" className={inputBase} />
+          <input name="email" type="email" defaultValue={p.email ?? ""} placeholder="Email" className={inputBase} />
+          <input name="phone" defaultValue={p.phone ?? ""} placeholder="Téléphone" className={inputBase} />
+          <input name="whatsapp" defaultValue={p.whatsapp ?? ""} placeholder="WhatsApp" className={inputBase} />
+          <input name="program_interest" defaultValue={p.program_interest ?? ""} placeholder="Programme" className={inputBase} />
+          <select name="level_interest" defaultValue={p.level_interest ?? ""} className={inputBase}>
+            <option value="">Niveau —</option>
+            {NIVEAUX.map((n) => <option key={n} value={n}>{n}</option>)}
+          </select>
+          <select name="format" defaultValue={p.format ?? ""} className={inputBase}>
+            <option value="">Format —</option>
+            {PROSPECT_FORMATS.map((f) => <option key={f.value} value={f.value}>{f.label}</option>)}
+          </select>
+          <div className="col-span-2 flex items-center gap-2">
+            <button type="submit" className="rounded-lg bg-ipmd-black px-3 py-1.5 text-xs font-semibold text-white">Enregistrer</button>
+            {editState && <span className={editState.ok ? "text-green-700" : "text-ipmd-red"}>{editState.message}</span>}
+          </div>
+        </form>
+      </details>
 
       <details className="mt-2 text-xs">
         <summary className="cursor-pointer font-semibold text-black/55">Ajouter une note de suivi</summary>

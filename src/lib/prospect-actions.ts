@@ -94,6 +94,34 @@ export async function setProspectStatus(prospectId: string, status: string): Pro
   revalidatePath("/espace/marketing");
 }
 
+/** Modifie les champs d'une fiche prospect (email, tél, programme…). */
+export async function updateProspect(
+  prospectId: string,
+  _prev: FormResult | null,
+  formData: FormData
+): Promise<FormResult> {
+  const ctx = await getStaff();
+  if (!ctx) return { ok: false, message: "Réservé à l'administration." };
+  const fullName = str(formData, "full_name");
+  if (!fullName) return { ok: false, message: "Le nom est requis." };
+  const { error } = await ctx.supabase
+    .from("prospects")
+    .update({
+      full_name: fullName,
+      email: str(formData, "email") || null,
+      phone: str(formData, "phone") || null,
+      whatsapp: str(formData, "whatsapp") || str(formData, "phone") || null,
+      program_interest: str(formData, "program_interest") || null,
+      level_interest: str(formData, "level_interest") || null,
+      format: str(formData, "format") || null,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", prospectId);
+  if (error) return { ok: false, message: error.message };
+  revalidatePath("/espace/marketing");
+  return { ok: true, message: "Fiche mise à jour." };
+}
+
 /** Ajoute une note de suivi. */
 export async function addProspectNote(prospectId: string, _prev: FormResult | null, formData: FormData): Promise<FormResult> {
   const ctx = await getStaff();
