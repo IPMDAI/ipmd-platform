@@ -143,6 +143,7 @@ const ADMIN_TILES = {
   users: { title: "Gestion des utilisateurs", icon: "🔑", status: "ready", href: "/espace/utilisateurs", description: "Attribuer les rôles aux comptes." },
   reprise: { title: "Reprise des anciens", icon: "♻️", status: "ready", href: "/espace/reprise", description: "Anciens étudiants & profs sans compte." },
   marketing: { title: "Marketing / Prospects", icon: "📣", status: "ready", href: "/espace/marketing", description: "Demandes d'info & pipeline d'admission." },
+  partenaires: { title: "Partenaires", icon: "🤝", status: "ready", href: "/espace/partenaires", description: "Académiques, entreprises, associations." },
   candidatures: { title: "Candidatures", icon: "📥", status: "ready", href: "/espace/candidatures", description: "Demandes d'inscription reçues." },
   messages: { title: "Messages de contact", icon: "✉️", status: "ready", href: "/espace/messages", description: "Messages envoyés via le site." },
   annonces: { title: "Annonces", icon: "📢", status: "ready", href: "/espace/annonces", description: "Communiquer avec étudiants et parents." },
@@ -198,7 +199,7 @@ export const dashboardSections: Record<string, DashSection[]> = {
     },
     {
       title: "Relations & accès",
-      tiles: [ADMIN_TILES.annonces, ADMIN_TILES.messagerie, ADMIN_TILES.moderation, ADMIN_TILES.marketing, ADMIN_TILES.users, ADMIN_TILES.reprise, ADMIN_TILES.candidatures, ADMIN_TILES.messages, ADMIN_TILES.parents],
+      tiles: [ADMIN_TILES.annonces, ADMIN_TILES.messagerie, ADMIN_TILES.moderation, ADMIN_TILES.marketing, ADMIN_TILES.partenaires, ADMIN_TILES.users, ADMIN_TILES.reprise, ADMIN_TILES.candidatures, ADMIN_TILES.messages, ADMIN_TILES.parents],
     },
   ],
   admin: [
@@ -230,7 +231,7 @@ export const dashboardSections: Record<string, DashSection[]> = {
     },
     {
       title: "Relations",
-      tiles: [ADMIN_TILES.annonces, ADMIN_TILES.messagerie, ADMIN_TILES.moderation, ADMIN_TILES.marketing, ADMIN_TILES.candidatures, ADMIN_TILES.messages, ADMIN_TILES.parents],
+      tiles: [ADMIN_TILES.annonces, ADMIN_TILES.messagerie, ADMIN_TILES.moderation, ADMIN_TILES.marketing, ADMIN_TILES.partenaires, ADMIN_TILES.candidatures, ADMIN_TILES.messages, ADMIN_TILES.parents],
     },
   ],
 };
