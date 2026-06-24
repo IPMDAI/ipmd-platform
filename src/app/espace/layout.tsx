@@ -21,7 +21,7 @@ export default async function EspaceLayout({
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("full_name, email, role")
+    .select("full_name, email, role, avatar_url")
     .eq("id", user.id)
     .single();
 
@@ -68,6 +68,7 @@ export default async function EspaceLayout({
         badges={badges}
         roleLabel={roleLabels[role] ?? role}
         userName={userName}
+        avatarUrl={profile?.avatar_url ?? null}
       />
       <main className="min-w-0 flex-1">{children}</main>
       <CommandPalette items={flatItems} />

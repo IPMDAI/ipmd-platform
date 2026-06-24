@@ -14,7 +14,7 @@ export default async function ParametresPage() {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("full_name, email, role, birth_date, birth_place")
+    .select("full_name, email, role, birth_date, birth_place, avatar_url")
     .eq("id", userId)
     .single();
 
@@ -39,11 +39,13 @@ export default async function ParametresPage() {
 
           <div className="mt-8">
             <ProfileSettings
+              userId={userId}
               fullName={profile?.full_name ?? ""}
               email={profile?.email ?? ""}
               roleLabel={roleLabels[role] ?? role}
               birthDate={profile?.birth_date ?? null}
               birthPlace={profile?.birth_place ?? null}
+              avatarUrl={profile?.avatar_url ?? null}
             />
           </div>
         </div>

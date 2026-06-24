@@ -2,9 +2,20 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import type { NavGroup } from "@/lib/nav";
 import { signOut } from "@/lib/auth-actions";
+
+function initialsOf(name: string): string {
+  return name
+    .split(/\s+/)
+    .map((w) => w[0])
+    .filter(Boolean)
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
+}
 
 function isActive(pathname: string, href: string): boolean {
   if (href === "/espace") return pathname === "/espace";
@@ -16,11 +27,13 @@ export function Sidebar({
   badges = {},
   roleLabel,
   userName,
+  avatarUrl,
 }: {
   groups: NavGroup[];
   badges?: Record<string, { count: number; alert: boolean }>;
   roleLabel: string;
   userName: string;
+  avatarUrl?: string | null;
 }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
@@ -29,12 +42,28 @@ export function Sidebar({
     <nav className="flex h-full flex-col">
       {/* Identité */}
       <div className="border-b border-white/10 px-4 py-4">
-        <p className="text-xs font-bold uppercase tracking-wider text-ipmd-red-light">
-          {roleLabel}
-        </p>
-        <p className="mt-0.5 truncate text-sm font-semibold text-white">
-          {userName}
-        </p>
+        <div className="flex items-center gap-3">
+          <Link
+            href="/espace/parametres"
+            onClick={() => setOpen(false)}
+            className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full bg-white/10 ring-1 ring-white/20 transition-transform hover:scale-105"
+            title="Modifier ma photo"
+          >
+            {avatarUrl ? (
+              <Image src={avatarUrl} alt={userName} width={44} height={44} className="h-full w-full object-cover" unoptimized />
+            ) : (
+              <span className="text-sm font-bold text-white/70">{initialsOf(userName) || "👤"}</span>
+            )}
+          </Link>
+          <div className="min-w-0">
+            <p className="text-xs font-bold uppercase tracking-wider text-ipmd-red-light">
+              {roleLabel}
+            </p>
+            <p className="mt-0.5 truncate text-sm font-semibold text-white">
+              {userName}
+            </p>
+          </div>
+        </div>
         <button
           type="button"
           onClick={() =>

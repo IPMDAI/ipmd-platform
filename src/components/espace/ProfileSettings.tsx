@@ -4,6 +4,7 @@ import { useActionState } from "react";
 import { updateMyProfile, changeMyPassword } from "@/lib/profile-actions";
 import { Field, inputBase } from "@/components/forms/FormField";
 import { ActionButton } from "@/components/ui/Button";
+import { AvatarUpload } from "@/components/espace/AvatarUpload";
 import type { FormResult } from "@/types";
 
 function Result({ state }: { state: FormResult | null }) {
@@ -20,17 +21,21 @@ function Result({ state }: { state: FormResult | null }) {
 }
 
 export function ProfileSettings({
+  userId,
   fullName,
   email,
   roleLabel,
   birthDate,
   birthPlace,
+  avatarUrl,
 }: {
+  userId: string;
   fullName: string;
   email: string;
   roleLabel: string;
   birthDate?: string | null;
   birthPlace?: string | null;
+  avatarUrl?: string | null;
 }) {
   const [nameState, nameAction, namePending] = useActionState<
     FormResult | null,
@@ -43,6 +48,12 @@ export function ProfileSettings({
 
   return (
     <div className="space-y-6">
+      {/* Photo de profil */}
+      <div className="space-y-4 rounded-2xl bg-white p-6 shadow-sm ring-1 ring-black/5">
+        <h2 className="text-lg font-bold text-ipmd-black">Photo de profil</h2>
+        <AvatarUpload userId={userId} initialUrl={avatarUrl ?? null} name={fullName || email} />
+      </div>
+
       {/* Identité */}
       <form
         action={nameAction}

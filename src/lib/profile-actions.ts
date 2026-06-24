@@ -39,6 +39,26 @@ export async function updateMyProfile(
   return { ok: true, message: "Profil mis à jour." };
 }
 
+/** Enregistre l'URL de la photo de profil (déjà téléversée dans le bucket avatars). */
+export async function setMyAvatar(avatarUrl: string | null): Promise<FormResult> {
+  const supabase = await createClient();
+  if (!supabase) return { ok: false, message: "Service indisponible." };
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false, message: "Veuillez vous connecter." };
+
+  const { error } = await supabase
+    .from("profiles")
+    .update({ avatar_url: avatarUrl || null })
+    .eq("id", user.id);
+  if (error) return { ok: false, message: error.message };
+
+  revalidatePath("/espace/parametres");
+  revalidatePath("/espace");
+  return { ok: true, message: avatarUrl ? "Photo mise à jour." : "Photo retirée." };
+}
+
 /** Change le mot de passe de l'utilisateur connecté. */
 export async function changeMyPassword(
   _prev: FormResult | null,
