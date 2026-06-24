@@ -22,6 +22,16 @@ export default async function EtudiantsPage() {
   const list = students ?? [];
   const ids = list.map((s) => s.id);
 
+  // Année scolaire de chaque étudiant (dossier financier).
+  const yearOf = new Map<string, string>();
+  if (ids.length > 0) {
+    const { data: fins } = await supabase
+      .from("student_finance")
+      .select("student_id, academic_year")
+      .in("student_id", ids);
+    for (const f of fins ?? []) if (f.academic_year) yearOf.set(f.student_id, f.academic_year);
+  }
+
   // Classe + filière de chaque étudiant.
   const studentClass = new Map<string, string>();
   const classInfo = new Map<string, { name: string; filiere_id: string | null }>();
@@ -67,6 +77,7 @@ export default async function EtudiantsPage() {
       avatarUrl: s.avatar_url ?? null,
       className: cls?.name ?? null,
       filiereName: cls?.filiere_id ? filiereName.get(cls.filiere_id) ?? null : null,
+      academicYear: yearOf.get(s.id) ?? null,
       contacts: {
         phone: s.phone ?? null,
         whatsapp: s.whatsapp ?? null,

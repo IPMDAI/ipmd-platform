@@ -52,6 +52,7 @@ export default async function FinancePage({
     class?: string;
     type?: string;
     regime?: string;
+    year?: string;
   }>;
 }) {
   const sp = await searchParams;
@@ -72,7 +73,7 @@ export default async function FinancePage({
     supabase.from("profiles").select("id, full_name, email, created_at").eq("role", "etudiant").order("full_name"),
     supabase
       .from("student_finance")
-      .select("student_id, registration_fee, tuition_due, discount_rate, level, status, payer_note"),
+      .select("student_id, registration_fee, tuition_due, discount_rate, level, status, payer_note, academic_year"),
     supabase.from("payments").select("student_id, amount, method, kind, status"),
     supabase.from("payment_schedules").select("student_id, amount, due_date"),
     supabase.from("class_members").select("student_id, class_id"),
@@ -112,6 +113,7 @@ export default async function FinancePage({
     typeLabel: string;
     classType: string | null;
     classId: string | null;
+    academicYear: string;
     enrolledAt: string | null;
     registrationFee: number;
     tuitionDue: number;
@@ -167,6 +169,7 @@ export default async function FinancePage({
       classType: ci?.type ?? null,
       typeLabel: ci?.type ? CLASS_TYPE_LABEL[ci.type] ?? ci.type : "—",
       classId: cid,
+      academicYear: f?.academic_year ?? "—",
       enrolledAt: s.created_at ?? null,
       registrationFee: fin.registrationFee,
       tuitionDue: fin.tuitionDue,
@@ -190,6 +193,7 @@ export default async function FinancePage({
 
   // Options de filtres.
   const intakes = [...new Set(rows.map((r) => r.intake).filter((x) => x && x !== "—"))].sort();
+  const years = [...new Set(rows.map((r) => r.academicYear).filter((x) => x && x !== "—"))].sort().reverse();
   const classOptions = [...new Set(rows.filter((r) => r.classId).map((r) => `${r.classId}|${r.className}`))];
   const types = ["initial", "pro", "partenaire"];
 
@@ -206,6 +210,7 @@ export default async function FinancePage({
     }
   };
   let shown = rows;
+  if (sp.year) shown = shown.filter((r) => r.academicYear === sp.year);
   if (sp.intake) shown = shown.filter((r) => r.intake === sp.intake);
   if (sp.class) shown = shown.filter((r) => r.classId === sp.class);
   if (sp.type) shown = shown.filter((r) => r.classType === sp.type);
@@ -298,6 +303,12 @@ export default async function FinancePage({
           {/* Filtres cohorte (form GET) */}
           <form className="mt-4 flex flex-wrap items-center gap-2 print:hidden">
             <span className="text-xs font-semibold uppercase tracking-wider text-black/40">Filtrer :</span>
+            <select name="year" defaultValue={sp.year ?? ""} className={filterSelect}>
+              <option value="">Toutes les années</option>
+              {years.map((y) => (
+                <option key={y} value={y}>{y}</option>
+              ))}
+            </select>
             <select name="intake" defaultValue={sp.intake ?? ""} className={filterSelect}>
               <option value="">Toutes les rentrées</option>
               {intakes.map((i) => (
@@ -332,7 +343,7 @@ export default async function FinancePage({
             <button type="submit" className="rounded-full bg-ipmd-red px-4 py-1.5 text-sm font-semibold text-white">
               Appliquer
             </button>
-            {(sp.intake || sp.class || sp.type || sp.regime || activeStatut) && (
+            {(sp.year || sp.intake || sp.class || sp.type || sp.regime || activeStatut) && (
               <Link href="/espace/finance" className="text-sm font-semibold text-ipmd-red hover:underline">
                 Réinitialiser
               </Link>

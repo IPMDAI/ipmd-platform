@@ -12,6 +12,7 @@ export type StudentRow = {
   avatarUrl: string | null;
   className: string | null;
   filiereName: string | null;
+  academicYear: string | null;
   contacts: Contacts;
 };
 
@@ -34,16 +35,23 @@ function normalize(s: string): string {
 
 export function StudentDirectory({ students }: { students: StudentRow[] }) {
   const [query, setQuery] = useState("");
+  const [year, setYear] = useState("");
+
+  const years = useMemo(
+    () => [...new Set(students.map((s) => s.academicYear).filter(Boolean) as string[])].sort().reverse(),
+    [students]
+  );
 
   const results = useMemo(() => {
     const q = normalize(query.trim());
-    if (!q) return students;
-    return students.filter((s) =>
-      normalize(
+    return students.filter((s) => {
+      if (year && s.academicYear !== year) return false;
+      if (!q) return true;
+      return normalize(
         `${s.name} ${s.email} ${s.className ?? ""} ${s.filiereName ?? ""} ${s.contacts.phone ?? ""} ${s.contacts.whatsapp ?? ""} ${s.contacts.personal_email ?? ""} ${s.contacts.school_email ?? ""}`
-      ).includes(q)
-    );
-  }, [students, query]);
+      ).includes(q);
+    });
+  }, [students, query, year]);
 
   return (
     <div>
@@ -54,10 +62,23 @@ export function StudentDirectory({ students }: { students: StudentRow[] }) {
           placeholder="Rechercher un étudiant, une classe…"
           className="w-full rounded-xl border border-black/10 bg-white px-4 py-2.5 text-sm text-ipmd-black outline-none ring-ipmd-red/20 transition-shadow focus:ring-2 sm:max-w-sm"
         />
-        <span className="text-sm text-black/45">
-          {results.length} / {students.length} étudiant
-          {students.length > 1 ? "s" : ""}
-        </span>
+        <div className="flex items-center gap-2">
+          {years.length > 0 && (
+            <select
+              value={year}
+              onChange={(e) => setYear(e.target.value)}
+              className="rounded-xl border border-black/10 bg-white px-3 py-2.5 text-sm text-ipmd-black"
+            >
+              <option value="">Toutes les années</option>
+              {years.map((y) => (
+                <option key={y} value={y}>{y}</option>
+              ))}
+            </select>
+          )}
+          <span className="text-sm text-black/45">
+            {results.length} / {students.length}
+          </span>
+        </div>
       </div>
 
       {results.length === 0 ? (
