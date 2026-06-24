@@ -2,6 +2,7 @@ import { Hero } from "@/components/home/Hero";
 import { UniversesSection } from "@/components/home/UniversesSection";
 import { AiSection } from "@/components/home/AiSection";
 import { WhyIpmd } from "@/components/home/WhyIpmd";
+import { StudentLife } from "@/components/home/StudentLife";
 import { PartnersBand } from "@/components/home/PartnersBand";
 import { CtaBanner } from "@/components/sections/CtaBanner";
 import { ContactTeaser } from "@/components/home/ContactTeaser";
@@ -13,6 +14,7 @@ export default function HomePage() {
       <UniversesSection />
       <AiSection />
       <WhyIpmd />
+      <StudentLife />
       <PartnersBand />
       <CtaBanner
         title="Lancez votre admission dès aujourd'hui"
