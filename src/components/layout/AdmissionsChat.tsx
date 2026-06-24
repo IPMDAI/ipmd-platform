@@ -37,8 +37,12 @@ export function AdmissionsChat() {
   const [mode, setMode] = useState<"tel" | "email">("tel");
   const [capBusy, setCapBusy] = useState(false);
   const [capErr, setCapErr] = useState<string | null>(null);
+  const [listening, setListening] = useState(false); // micro en écoute
+  const [voiceOut, setVoiceOut] = useState(false);   // Awa lit ses réponses
+  const [voiceIn, setVoiceIn] = useState(false);     // micro disponible (navigateur)
   const scrollRef = useRef<HTMLDivElement>(null);
   const taRef = useRef<HTMLTextAreaElement>(null);
+  const recogRef = useRef<{ stop: () => void } | null>(null);
 
   // Le champ de saisie s'agrandit avec le texte (jusqu'à ~5 lignes).
   // La barre de défilement n'apparaît qu'au-delà de la hauteur max (sinon flèches ▲▼ parasites).
@@ -55,7 +59,58 @@ export function AdmissionsChat() {
       const v = localStorage.getItem(LEAD_KEY);
       if (v) setLead(v);
     } catch {}
+    // Reconnaissance vocale dispo ? (Chrome, Edge, Android…)
+    const w = window as unknown as { SpeechRecognition?: unknown; webkitSpeechRecognition?: unknown };
+    if (w.SpeechRecognition || w.webkitSpeechRecognition) setVoiceIn(true);
   }, []);
+
+  // 🎙️ Dicter sa question (parole → texte dans le champ).
+  const toggleMic = () => {
+    const w = window as unknown as { SpeechRecognition?: new () => never; webkitSpeechRecognition?: new () => never };
+    const SR = (w.SpeechRecognition || w.webkitSpeechRecognition) as
+      | (new () => {
+          lang: string; interimResults: boolean; continuous: boolean;
+          start: () => void; stop: () => void;
+          onresult: ((e: { results: ArrayLike<ArrayLike<{ transcript: string }>> }) => void) | null;
+          onend: (() => void) | null; onerror: (() => void) | null;
+        })
+      | undefined;
+    if (!SR) return;
+    if (listening) { recogRef.current?.stop(); return; }
+    const r = new SR();
+    r.lang = "fr-FR";
+    r.interimResults = true;
+    r.continuous = false;
+    r.onresult = (e) => {
+      let t = "";
+      for (let i = 0; i < e.results.length; i++) t += e.results[i][0].transcript;
+      setInput(t);
+    };
+    r.onend = () => setListening(false);
+    r.onerror = () => setListening(false);
+    recogRef.current = r;
+    setListening(true);
+    r.start();
+  };
+
+  // 🔊 Lecture vocale de la réponse d'Awa (si activée).
+  const speakOut = (text: string) => {
+    if (!voiceOut || typeof window === "undefined" || !window.speechSynthesis) return;
+    try {
+      window.speechSynthesis.cancel();
+      const u = new SpeechSynthesisUtterance(text.replace(/[*_#>`]/g, ""));
+      u.lang = "fr-FR";
+      u.rate = 1.02;
+      window.speechSynthesis.speak(u);
+    } catch {}
+  };
+
+  const toggleVoiceOut = () => {
+    setVoiceOut((v) => {
+      if (v && typeof window !== "undefined" && window.speechSynthesis) window.speechSynthesis.cancel();
+      return !v;
+    });
+  };
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
@@ -134,6 +189,7 @@ export function AdmissionsChat() {
           return c;
         });
       }
+      if (acc) speakOut(acc); // lecture vocale si activée
     } catch {
       setMessages((m) => {
         const c = [...m];
@@ -162,7 +218,17 @@ export function AdmissionsChat() {
                 <p className="text-[11px] text-white/70">En ligne · Réponses instantanées</p>
               </div>
             </div>
-            <button onClick={() => setOpen(false)} aria-label="Fermer" className="rounded-lg p-1 text-white/70 hover:bg-white/10">✕</button>
+            <div className="flex items-center gap-1">
+              <button
+                onClick={toggleVoiceOut}
+                aria-label={voiceOut ? "Couper la voix d'Awa" : "Activer la voix d'Awa"}
+                title={voiceOut ? "Voix activée — Awa lit ses réponses" : "Activer la voix d'Awa"}
+                className={`rounded-lg p-1.5 text-base hover:bg-white/10 ${voiceOut ? "text-ipmd-red" : "text-white/70"}`}
+              >
+                {voiceOut ? "🔊" : "🔇"}
+              </button>
+              <button onClick={() => setOpen(false)} aria-label="Fermer" className="rounded-lg p-1 text-white/70 hover:bg-white/10">✕</button>
+            </div>
           </div>
 
           <div ref={scrollRef} className="flex-1 space-y-3 overflow-y-auto bg-ipmd-light/40 p-3">
@@ -233,9 +299,21 @@ export function AdmissionsChat() {
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } }}
                 rows={1}
-                placeholder="Votre question…"
+                placeholder={listening ? "🎙️ Parlez…" : "Votre question…"}
                 className="max-h-[120px] min-h-[40px] flex-1 resize-none overflow-hidden rounded-xl border border-black/10 px-3 py-2 text-sm leading-relaxed text-ipmd-black focus:border-ipmd-red focus:outline-none"
               />
+              {voiceIn && (
+                <button
+                  type="button"
+                  onClick={toggleMic}
+                  disabled={busy}
+                  aria-label={listening ? "Arrêter la dictée" : "Dicter votre question"}
+                  title={listening ? "Arrêter" : "Parler au lieu d'écrire"}
+                  className={`shrink-0 rounded-xl px-3 py-2 text-base ring-1 transition-colors disabled:opacity-40 ${listening ? "animate-pulse bg-ipmd-red text-white ring-ipmd-red" : "bg-white text-ipmd-red ring-ipmd-red/30 hover:bg-ipmd-red/10"}`}
+                >
+                  🎙️
+                </button>
+              )}
               <button type="submit" disabled={busy || !input.trim()} className="shrink-0 rounded-xl bg-ipmd-red px-3 py-2 text-sm font-semibold text-white disabled:opacity-40">
                 ➤
               </button>
