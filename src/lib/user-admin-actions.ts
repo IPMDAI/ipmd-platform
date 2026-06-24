@@ -452,3 +452,114 @@ export async function createReturningStudent(
       (sendEmail ? (emailed > 0 ? " Email envoyé." : " (Email non envoyé.)") : ""),
   };
 }
+
+export type ImportStudent = {
+  fullName: string;
+  email: string;
+  phone?: string;
+  level?: string;
+  program?: string;
+  role?: string; // "etudiant" | "professionnel"
+};
+
+/**
+ * Import en masse d'anciens étudiants (depuis un export type Zoho).
+ * Crée/retrouve le compte, applique rôle + coordonnées + niveau/formation,
+ * et ouvre un dossier financier (accès en pause, sans paiement). Pas d'email.
+ * (Super Admin)
+ */
+export async function importReturningStudents(
+  students: ImportStudent[]
+): Promise<{ ok: boolean; message: string; created: number; updated: number; skipped: number; errors: string[] }> {
+  const ctx = await requireSuperAdmin();
+  if (!ctx) return { ok: false, message: "Réservé au Super Admin.", created: 0, updated: 0, skipped: 0, errors: [] };
+  if (!canAdminUsers) {
+    return { ok: false, message: "SUPABASE_SERVICE_ROLE_KEY manquante.", created: 0, updated: 0, skipped: 0, errors: [] };
+  }
+  const admin = createAdminClient();
+  if (!admin) return { ok: false, message: "Service indisponible.", created: 0, updated: 0, skipped: 0, errors: [] };
+
+  const [{ data: settings }, { data: levels }] = await Promise.all([
+    ctx.supabase.from("finance_settings").select("registration_fee, academic_year").eq("id", 1).maybeSingle(),
+    ctx.supabase.from("tuition_levels").select("level, amount"),
+  ]);
+  const registrationFee = Number(settings?.registration_fee ?? 300000);
+  const tuitionByLevel = new Map((levels ?? []).map((l) => [l.level as string, Number(l.amount ?? 0)]));
+
+  let created = 0;
+  let updated = 0;
+  let skipped = 0;
+  const errors: string[] = [];
+
+  for (const s of students) {
+    const email = (s.email || "").trim().toLowerCase();
+    const fullName = (s.fullName || "").trim();
+    if (!email || !email.includes("@") || !fullName) {
+      skipped++;
+      continue;
+    }
+    const role = s.role === "professionnel" ? "professionnel" : "etudiant";
+    try {
+      let newId: string | undefined;
+      const { error: createErr, data: createdUser } = await admin.auth.admin.createUser({
+        email,
+        email_confirm: true,
+        user_metadata: { full_name: fullName },
+      });
+      if (createErr) {
+        const { data: existing } = await ctx.supabase.from("profiles").select("id").eq("email", email).maybeSingle();
+        newId = existing?.id;
+        if (newId) updated++;
+      } else {
+        newId = createdUser.user?.id;
+        if (newId) created++;
+      }
+      if (!newId) {
+        errors.push(`${fullName} (${email}) : compte impossible`);
+        continue;
+      }
+
+      await ctx.supabase
+        .from("profiles")
+        .update({
+          role,
+          full_name: fullName,
+          phone: s.phone || null,
+          whatsapp: s.phone || null,
+          personal_email: email,
+        })
+        .eq("id", newId);
+
+      const level = (s.level || "").trim();
+      const tuitionDue = level ? tuitionByLevel.get(level) ?? 0 : 0;
+      await ctx.supabase.from("student_finance").upsert(
+        {
+          student_id: newId,
+          registration_fee: registrationFee,
+          tuition_due: tuitionDue,
+          discount_rate: 0,
+          level: level || null,
+          program: s.program || null,
+          academic_year: settings?.academic_year ?? null,
+          total_due: registrationFee + tuitionDue,
+          access_state: "pause",
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: "student_id" }
+      );
+    } catch (e) {
+      errors.push(`${fullName} : ${e instanceof Error ? e.message : "erreur"}`);
+    }
+  }
+
+  revalidatePath("/espace/etudiants");
+  revalidatePath("/espace/finance");
+  return {
+    ok: true,
+    message: `${created} créé(s), ${updated} mis à jour, ${skipped} ignoré(s) (sans email).`,
+    created,
+    updated,
+    skipped,
+    errors,
+  };
+}

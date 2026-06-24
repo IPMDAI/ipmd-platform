@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { requireUser } from "@/lib/require-user";
 import { Container } from "@/components/ui/Container";
 import { ReturningStudentForm } from "@/components/espace/ReturningStudentForm";
+import { ImportZohoStudents } from "@/components/espace/ImportZohoStudents";
 import { CreateUserForm } from "@/components/espace/CreateUserForm";
 import { DEFAULT_LEVELS } from "@/lib/finance";
 
@@ -46,7 +47,11 @@ export default async function ReprisePage() {
             soldés). Chaque création envoie un lien « définir mot de passe ».
           </p>
 
-          <div className="mt-8 grid gap-6 lg:grid-cols-2">
+          <div className="mt-8">
+            <ImportZohoStudents />
+          </div>
+
+          <div className="mt-6 grid gap-6 lg:grid-cols-2">
             <ReturningStudentForm
               classes={classes}
               levels={levels.length ? levels : DEFAULT_LEVELS}
