@@ -23,6 +23,7 @@ export function AdmissionsChat() {
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
   const [lead, setLead] = useState<string | null>(null); // nom du prospect identifié
+  const [gateDismissed, setGateDismissed] = useState(false); // a choisi de continuer sans s'identifier
   const [mode, setMode] = useState<"tel" | "email">("tel");
   const [capBusy, setCapBusy] = useState(false);
   const [capErr, setCapErr] = useState<string | null>(null);
@@ -88,7 +89,7 @@ export function AdmissionsChat() {
       const res = await fetch("/api/admissions-chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: next.filter((m) => m.content) }),
+        body: JSON.stringify({ messages: next.filter((m) => m.content), identified: !!lead }),
       });
       if (!res.ok || !res.body) {
         const j = await res.json().catch(() => null);
@@ -147,9 +148,9 @@ export function AdmissionsChat() {
             ))}
           </div>
 
-          {!lead && askedCount >= FREE_QUESTIONS ? (
+          {!lead && askedCount >= FREE_QUESTIONS && !gateDismissed ? (
             <form onSubmit={onCapture} className="max-h-[58%] space-y-2.5 overflow-y-auto border-t border-black/5 bg-white px-3 py-3">
-              <p className="text-xs font-bold text-ipmd-black">Pour continuer, dites-nous qui vous êtes 👇</p>
+              <p className="text-xs font-bold text-ipmd-black">Pour le détail précis (frais exacts, inscription, rentrée, suivi) 👇</p>
               <div className="grid grid-cols-2 gap-2">
                 <input name="prenom" required placeholder="Prénom *" className="w-full rounded-xl border border-black/10 px-3 py-2 text-sm focus:border-ipmd-red focus:outline-none" />
                 <input name="nom" required placeholder="Nom *" className="w-full rounded-xl border border-black/10 px-3 py-2 text-sm focus:border-ipmd-red focus:outline-none" />
@@ -165,13 +166,20 @@ export function AdmissionsChat() {
               )}
               {capErr && <p className="text-xs font-medium text-ipmd-red">{capErr}</p>}
               <button type="submit" disabled={capBusy} className="w-full rounded-xl bg-ipmd-red px-4 py-2 text-sm font-semibold text-white disabled:opacity-50">
-                {capBusy ? "…" : "Continuer la discussion 💬"}
+                {capBusy ? "…" : "Valider et continuer 💬"}
               </button>
-              <p className="text-center text-[10px] text-black/35">Vos coordonnées permettent un suivi par l'équipe des admissions.</p>
+              <button type="button" onClick={() => setGateDismissed(true)} className="w-full text-center text-[11px] font-semibold text-black/45 hover:text-ipmd-red">
+                Continuer sans m'identifier →
+              </button>
             </form>
           ) : (
           <div className="border-t border-black/5 bg-white px-3 py-2">
-            <div className="mb-2 flex gap-2 text-[11px]">
+            <div className="mb-2 flex flex-wrap gap-2 text-[11px]">
+              {!lead && askedCount >= FREE_QUESTIONS && (
+                <button type="button" onClick={() => setGateDismissed(false)} className="rounded-full bg-ipmd-red/10 px-2.5 py-1 font-semibold text-ipmd-red">
+                  📝 M'identifier (infos précises)
+                </button>
+              )}
               <a href="https://wa.me/2250775758888" target="_blank" rel="noopener noreferrer" className="rounded-full bg-[#25D366]/10 px-2.5 py-1 font-semibold text-[#128C7E]">WhatsApp</a>
             </div>
             <form onSubmit={(e) => { e.preventDefault(); send(); }} className="flex items-end gap-2">

@@ -58,6 +58,7 @@ export async function POST(req: NextRequest) {
   if (!messages) {
     return Response.json({ error: "Message manquant." }, { status: 400 });
   }
+  const identified = (body as { identified?: unknown })?.identified === true;
 
   const fees = await loadFees();
   const client = new Anthropic({ apiKey });
@@ -72,7 +73,7 @@ export async function POST(req: NextRequest) {
           system: [
             {
               type: "text",
-              text: buildAdmissionsSystem(fees),
+              text: buildAdmissionsSystem(fees, identified),
               cache_control: { type: "ephemeral" },
             },
           ],
