@@ -71,9 +71,13 @@ export default async function SeanceDetailPage({
 
   const { data: report } = await supabase
     .from("session_reports")
-    .select("content, actual_start, actual_end, supports, observations, present_count, absent_count, validated")
+    .select("content, actual_start, actual_end, supports, homework, observations, present_count, absent_count, validated")
     .eq("session_id", sessionId)
     .maybeSingle();
+
+  // Anti-triche : l'enseignant ne remplit la fiche que le jour du cours.
+  const today = new Date().toISOString().slice(0, 10);
+  const editable = isStaff || session.session_date === today;
 
   const { data: klass } = await supabase
     .from("classes")
@@ -119,7 +123,7 @@ export default async function SeanceDetailPage({
             <h2 className="text-lg font-bold text-ipmd-black">
               Fiche pédagogique
             </h2>
-            <SessionReportForm sessionId={sessionId} report={report ?? {}} />
+            <SessionReportForm sessionId={sessionId} report={report ?? {}} editable={editable} />
           </div>
         </div>
       </Container>

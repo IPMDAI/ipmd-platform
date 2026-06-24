@@ -27,12 +27,31 @@ export async function saveSessionReport(
   } = await supabase.auth.getUser();
   if (!user) return { ok: false, message: "Veuillez vous connecter." };
 
-  const { data: session } = await supabase
-    .from("course_sessions")
-    .select("teacher_id")
-    .eq("id", sessionId)
-    .single();
+  const [{ data: session }, { data: me }, { data: existing }] = await Promise.all([
+    supabase.from("course_sessions").select("teacher_id, session_date").eq("id", sessionId).single(),
+    supabase.from("profiles").select("role").eq("id", user.id).single(),
+    supabase.from("session_reports").select("validated").eq("session_id", sessionId).maybeSingle(),
+  ]);
   if (!session) return { ok: false, message: "Séance introuvable." };
+  if (existing?.validated) {
+    return { ok: false, message: "Fiche déjà validée par la Pédagogie (non modifiable)." };
+  }
+
+  // Anti-triche : un enseignant ne remplit sa fiche QUE le jour du cours.
+  // (La Pédagogie / l'administration peut corriger à tout moment.)
+  const isStaff = ["super_admin", "admin", "pedagogie"].includes(me?.role ?? "");
+  if (!isStaff) {
+    const today = new Date().toISOString().slice(0, 10);
+    if (session.session_date !== today) {
+      return {
+        ok: false,
+        message:
+          session.session_date > today
+            ? "La fiche se remplit uniquement le jour du cours."
+            : "Le jour du cours est passé : la fiche n'est plus modifiable. Contactez la Pédagogie.",
+      };
+    }
+  }
 
   const { error } = await supabase.from("session_reports").upsert(
     {
@@ -42,6 +61,7 @@ export async function saveSessionReport(
       actual_start: str(formData, "actual_start") || null,
       actual_end: str(formData, "actual_end") || null,
       supports: str(formData, "supports") || null,
+      homework: str(formData, "homework") || null,
       observations: str(formData, "observations") || null,
       present_count: intOrNull(str(formData, "present_count")),
       absent_count: intOrNull(str(formData, "absent_count")),

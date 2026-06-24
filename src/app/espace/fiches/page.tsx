@@ -23,7 +23,7 @@ export default async function FichesPage() {
   const { data: reports } = await supabase
     .from("session_reports")
     .select(
-      "id, session_id, content, supports, validated, present_count, absent_count"
+      "id, session_id, content, supports, homework, validated, present_count, absent_count"
     );
 
   const sessionIds = (reports ?? []).map((r) => r.session_id);
@@ -121,11 +121,17 @@ export default async function FichesPage() {
                         )}
                       </div>
                       <p className="mt-2 line-clamp-2 text-xs text-black/55">
-                        {r.content || "Pas de contenu saisi."}
+                        <span className="font-semibold text-black/60">Thèmes :</span>{" "}
+                        {r.content || "Pas de thèmes saisis."}
                       </p>
+                      {r.homework && (
+                        <p className="mt-1 line-clamp-1 text-xs text-black/55">
+                          <span className="font-semibold text-black/60">Travaux :</span> {r.homework}
+                        </p>
+                      )}
                       <p className="mt-2 text-[11px] font-semibold text-black/45">
                         {r.present_count ?? 0} présent(s) · {r.absent_count ?? 0} absent(s)
-                        {r.supports ? " · supports fournis" : ""}
+                        {r.supports ? " · documents distribués" : ""}
                       </p>
                     </Link>
                   </li>
