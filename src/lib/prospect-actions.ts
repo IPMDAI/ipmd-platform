@@ -35,18 +35,25 @@ export async function submitProspect(
   if (!supabase) return { ok: false, message: "Service indisponible." };
   const fullName = str(formData, "full_name");
   const email = str(formData, "email");
-  if (!fullName) return { ok: false, message: "Votre nom est requis." };
-  if (!email && !str(formData, "phone")) return { ok: false, message: "Indiquez un email ou un téléphone." };
+  const phone = str(formData, "phone");
+  const program = str(formData, "program_interest");
+  const level = str(formData, "level_interest");
+  const format = str(formData, "format");
+  const message = str(formData, "message");
+  // Tous les champs sont obligatoires.
+  if (!fullName || !email || !phone || !program || !level || !format || !message) {
+    return { ok: false, message: "Merci de remplir tous les champs du formulaire." };
+  }
 
   const { error } = await supabase.from("prospects").insert({
     full_name: fullName,
-    email: email || null,
-    phone: str(formData, "phone") || null,
-    whatsapp: str(formData, "whatsapp") || str(formData, "phone") || null,
-    program_interest: str(formData, "program_interest") || null,
-    level_interest: str(formData, "level_interest") || null,
-    format: str(formData, "format") || null,
-    message: str(formData, "message") || null,
+    email,
+    phone,
+    whatsapp: str(formData, "whatsapp") || phone,
+    program_interest: program,
+    level_interest: level,
+    format,
+    message,
     source: "site",
     status: "nouveau",
   });

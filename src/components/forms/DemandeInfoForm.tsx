@@ -39,19 +39,20 @@ export function DemandeInfoForm() {
         <Field label="Nom & prénom" htmlFor="di-name" required>
           <input id="di-name" name="full_name" required placeholder="Aude-Lucrèce Kouamé" className={inputBase} />
         </Field>
-        <Field label="Email" htmlFor="di-email">
-          <input id="di-email" name="email" type="email" placeholder="vous@email.com" className={inputBase} />
+        <Field label="Email" htmlFor="di-email" required>
+          <input id="di-email" name="email" type="email" required placeholder="vous@email.com" className={inputBase} />
         </Field>
       </div>
-      <Field label="Téléphone / WhatsApp" htmlFor="di-phone">
-        <PhoneField id="di-phone" name="phone" />
+      <Field label="Téléphone / WhatsApp" htmlFor="di-phone" required>
+        <PhoneField id="di-phone" name="phone" required />
       </Field>
       <div className="grid gap-4 sm:grid-cols-2">
-        <Field label="Programme qui vous intéresse" htmlFor="di-prog">
+        <Field label="Programme qui vous intéresse" htmlFor="di-prog" required>
           <input
             id="di-prog"
             name="program_interest"
             list="di-programmes"
+            required
             placeholder="Choisir une filière ou écrire…"
             className={inputBase}
           />
@@ -61,25 +62,25 @@ export function DemandeInfoForm() {
             ))}
           </datalist>
         </Field>
-        <Field label="Niveau visé" htmlFor="di-level">
-          <select id="di-level" name="level_interest" defaultValue="" className={inputBase}>
-            <option value="">—</option>
+        <Field label="Niveau visé" htmlFor="di-level" required>
+          <select id="di-level" name="level_interest" defaultValue="" required className={inputBase}>
+            <option value="" disabled>—</option>
             {NIVEAUX.map((n) => (
               <option key={n} value={n}>{n}</option>
             ))}
           </select>
         </Field>
       </div>
-      <Field label="Format souhaité" htmlFor="di-format">
-        <select id="di-format" name="format" defaultValue="" className={inputBase}>
-          <option value="">—</option>
+      <Field label="Format souhaité" htmlFor="di-format" required>
+        <select id="di-format" name="format" defaultValue="" required className={inputBase}>
+          <option value="" disabled>—</option>
           {PROSPECT_FORMATS.map((f) => (
             <option key={f.value} value={f.value}>{f.label}</option>
           ))}
         </select>
       </Field>
-      <Field label="Votre message (optionnel)" htmlFor="di-msg">
-        <textarea id="di-msg" name="message" rows={3} placeholder="Votre question, votre parcours…" className={inputBase} />
+      <Field label="Votre message" htmlFor="di-msg" required>
+        <textarea id="di-msg" name="message" rows={3} required placeholder="Votre question, votre parcours…" className={inputBase} />
       </Field>
       <ActionButton type="submit" disabled={pending}>
         {pending ? "Envoi…" : "Envoyer ma demande"}
