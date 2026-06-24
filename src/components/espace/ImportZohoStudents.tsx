@@ -5,11 +5,33 @@ import { importReturningStudents, type ImportStudent } from "@/lib/user-admin-ac
 
 type Row = ImportStudent & { include: boolean; statut: string };
 
+/** Clé de rapprochement par nom : tokens triés, sans accents ni ponctuation. */
+function nameKey(s: string): string {
+  return (s || "")
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9 ]/g, " ")
+    .split(/\s+/)
+    .filter(Boolean)
+    .sort()
+    .join(" ");
+}
+
 export function ImportZohoStudents() {
   const [rows, setRows] = useState<Row[]>([]);
+  const [factures, setFactures] = useState<Map<string, { total: number; paid: number }> | null>(null);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
   const [done, setDone] = useState<string | null>(null);
+
+  const merge = (rs: Row[], fac: Map<string, { total: number; paid: number }> | null): Row[] =>
+    fac
+      ? rs.map((r) => {
+          const f = fac.get(nameKey(r.fullName));
+          return f ? { ...r, totalDue: f.total, paidAmount: f.paid } : r;
+        })
+      : rs;
 
   const onFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -43,10 +65,47 @@ export function ImportZohoStudents() {
           return { fullName, email, phone, level, program, role, statut, include: !!email };
         })
         .filter((r) => r.fullName);
-      setRows(parsed);
+      setRows(merge(parsed, factures));
       if (parsed.length === 0) setMsg("Aucune ligne lisible dans ce fichier.");
     } catch (err) {
       setMsg(err instanceof Error ? err.message : "Lecture impossible.");
+    }
+  };
+
+  const onFactures = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setMsg(null);
+    setDone(null);
+    try {
+      const XLSX = await import("xlsx");
+      const wb = XLSX.read(await file.arrayBuffer(), { type: "array" });
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const data = XLSX.utils.sheet_to_json<Record<string, string>>(ws, { defval: "" });
+      const num = (v: string) => Number(String(v).replace(/[^0-9]/g, "")) || 0;
+      const get = (o: Record<string, string>, ...keys: string[]) => {
+        for (const k of keys) {
+          const hit = Object.keys(o).find((kk) => kk.trim().toLowerCase() === k.toLowerCase());
+          if (hit && String(o[hit]).trim()) return String(o[hit]).trim();
+        }
+        return "";
+      };
+      const map = new Map<string, { total: number; paid: number }>();
+      for (const o of data) {
+        const nm = get(o, "Nom du client", "Customer Name");
+        if (!nm) continue;
+        const total = num(get(o, "Montant de la facture", "Total"));
+        const solde = num(get(o, "Solde", "Balance"));
+        const key = nameKey(nm);
+        const prev = map.get(key) ?? { total: 0, paid: 0 };
+        // Cumule si plusieurs factures pour le même client.
+        map.set(key, { total: prev.total + total, paid: prev.paid + (total - solde) });
+      }
+      setFactures(map);
+      setRows((rs) => merge(rs, map));
+      if (map.size === 0) setMsg("Aucune facture lisible.");
+    } catch (err) {
+      setMsg(err instanceof Error ? err.message : "Lecture des factures impossible.");
     }
   };
 
@@ -60,13 +119,15 @@ export function ImportZohoStudents() {
     setBusy(true);
     setDone(null);
     const res = await importReturningStudents(
-      selected.map(({ fullName, email, phone, level, program, role }) => ({
+      selected.map(({ fullName, email, phone, level, program, role, totalDue, paidAmount }) => ({
         fullName,
         email,
         phone,
         level,
         program,
         role,
+        totalDue,
+        paidAmount,
       }))
     );
     setDone(
@@ -86,10 +147,20 @@ export function ImportZohoStudents() {
         </p>
       </div>
 
-      <label className="inline-block cursor-pointer rounded-full bg-ipmd-black px-4 py-2 text-sm font-semibold text-white hover:opacity-90">
-        📄 Choisir le fichier .xlsx
-        <input type="file" accept=".xlsx,.xls" onChange={onFile} className="hidden" />
-      </label>
+      <div className="flex flex-wrap items-center gap-2">
+        <label className="inline-block cursor-pointer rounded-full bg-ipmd-black px-4 py-2 text-sm font-semibold text-white hover:opacity-90">
+          1) 📄 Contacts (.xlsx)
+          <input type="file" accept=".xlsx,.xls" onChange={onFile} className="hidden" />
+        </label>
+        <label className={`inline-block cursor-pointer rounded-full px-4 py-2 text-sm font-semibold ring-1 ring-black/10 ${factures ? "bg-green-50 text-green-700" : "bg-white text-ipmd-black hover:ring-ipmd-red/40"}`}>
+          2) 💰 Factures (.xlsx){factures ? " ✓" : " (optionnel)"}
+          <input type="file" accept=".xlsx,.xls" onChange={onFactures} className="hidden" />
+        </label>
+      </div>
+      <p className="text-[11px] text-black/45">
+        Charge d&apos;abord <strong>Contacts</strong> (identités), puis <strong>Factures</strong> pour
+        récupérer le <strong>montant dû</strong> et le <strong>déjà payé</strong> (rapprochés par nom).
+      </p>
       {msg && <p className="text-sm font-medium text-ipmd-red">{msg}</p>}
 
       {rows.length > 0 && (
@@ -102,12 +173,16 @@ export function ImportZohoStudents() {
                   <th className="px-2 py-2 font-bold">Nom</th>
                   <th className="px-2 py-2 font-bold">Email</th>
                   <th className="px-2 py-2 font-bold">Niveau</th>
-                  <th className="px-2 py-2 font-bold">Formation</th>
                   <th className="px-2 py-2 font-bold">Rôle</th>
+                  <th className="px-2 py-2 text-right font-bold">Total dû</th>
+                  <th className="px-2 py-2 text-right font-bold">Déjà payé</th>
+                  <th className="px-2 py-2 text-right font-bold">Reste</th>
                 </tr>
               </thead>
               <tbody>
-                {rows.map((r, i) => (
+                {rows.map((r, i) => {
+                  const reste = r.totalDue != null ? r.totalDue - (r.paidAmount ?? 0) : null;
+                  return (
                   <tr key={i} className={`border-t border-black/5 ${!r.email ? "opacity-50" : ""}`}>
                     <td className="px-2 py-1.5">
                       <input type="checkbox" checked={r.include} disabled={!r.email} onChange={() => toggle(i)} className="h-4 w-4" />
@@ -115,10 +190,13 @@ export function ImportZohoStudents() {
                     <td className="px-2 py-1.5 font-medium text-ipmd-black">{r.fullName}</td>
                     <td className="px-2 py-1.5 text-black/60">{r.email || <span className="text-ipmd-red">email manquant</span>}</td>
                     <td className="px-2 py-1.5 text-black/55">{r.level}</td>
-                    <td className="px-2 py-1.5 text-black/55">{r.program}</td>
                     <td className="px-2 py-1.5 text-black/55">{r.role === "professionnel" ? "Pro" : "Étudiant"}</td>
+                    <td className="px-2 py-1.5 text-right text-black/60">{r.totalDue != null ? r.totalDue.toLocaleString("fr-FR") : "—"}</td>
+                    <td className="px-2 py-1.5 text-right text-green-700">{r.paidAmount != null ? r.paidAmount.toLocaleString("fr-FR") : "—"}</td>
+                    <td className={`px-2 py-1.5 text-right font-semibold ${reste != null && reste <= 0 ? "text-green-600" : "text-ipmd-red"}`}>{reste != null ? (reste <= 0 ? "Soldé" : reste.toLocaleString("fr-FR")) : "—"}</td>
                   </tr>
-                ))}
+                  );
+                })}
               </tbody>
             </table>
           </div>
