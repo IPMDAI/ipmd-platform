@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
+import { WhatsAppFloat } from "@/components/layout/WhatsAppFloat";
 import { createClient } from "@/lib/supabase/server";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.ipmd.pro";
@@ -63,6 +64,7 @@ export default async function RootLayout({
         <Header isAuthenticated={isAuthenticated} />
         <main className="flex-1">{children}</main>
         <Footer />
+        <WhatsAppFloat />
       </body>
     </html>
   );
