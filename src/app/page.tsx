@@ -3,6 +3,7 @@ import { UniversesSection } from "@/components/home/UniversesSection";
 import { AiSection } from "@/components/home/AiSection";
 import { WhyIpmd } from "@/components/home/WhyIpmd";
 import { StudentLife } from "@/components/home/StudentLife";
+import { VideosBand } from "@/components/home/VideosBand";
 import { PartnersBand } from "@/components/home/PartnersBand";
 import { CtaBanner } from "@/components/sections/CtaBanner";
 import { ContactTeaser } from "@/components/home/ContactTeaser";
@@ -15,6 +16,7 @@ export default function HomePage() {
       <AiSection />
       <WhyIpmd />
       <StudentLife />
+      <VideosBand />
       <PartnersBand />
       <CtaBanner
         title="Lancez votre admission dès aujourd'hui"
