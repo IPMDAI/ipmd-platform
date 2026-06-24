@@ -13,7 +13,7 @@ const GREETING =
   "Bonjour 👋 Je suis l'assistant d'admission de l'IPMD. Posez-moi vos questions sur nos formations, les frais, les cours du soir, l'admission ou une réorientation !";
 
 // Questions gratuites avant identification, puis plafond anti-abus.
-const FREE_QUESTIONS = 2;
+const FREE_QUESTIONS = 3;
 const MAX_QUESTIONS = 15;
 
 export function AdmissionsChat() {
