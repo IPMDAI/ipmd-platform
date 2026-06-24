@@ -47,8 +47,21 @@ export function ReturningStudentForm({
     </div>
   );
 
+  const onSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    const fd = new FormData(e.currentTarget);
+    const nom = (fd.get("full_name") as string)?.trim() || "cet étudiant";
+    const ok = window.confirm(
+      `Confirmer la reprise de ${nom} ?\n\n` +
+        `Total dû (après réduction) : ${totalDue.toLocaleString("fr-FR")} FCFA\n` +
+        `Report antérieur déjà payé : ${paid.toLocaleString("fr-FR")} FCFA\n` +
+        `Reste à payer : ${(reste <= 0 ? 0 : reste).toLocaleString("fr-FR")} FCFA\n` +
+        `Accès : ${inscriptionSettled ? "actif" : "en pause (inscription non soldée)"}`
+    );
+    if (!ok) e.preventDefault();
+  };
+
   return (
-    <form action={action} className="space-y-4 rounded-2xl bg-white p-6 shadow-sm ring-1 ring-black/5">
+    <form action={action} onSubmit={onSubmit} className="space-y-4 rounded-2xl bg-white p-6 shadow-sm ring-1 ring-black/5">
       <h2 className="text-lg font-bold text-ipmd-black">Reprendre un étudiant</h2>
       <p className="text-xs text-black/50">
         Compte + cohorte + frais + <strong>report antérieur</strong> en une fois.
@@ -118,6 +131,9 @@ export function ReturningStudentForm({
             placeholder="0"
             className={inputBase}
           />
+          <p className="mt-1 text-[11px] text-amber-700">
+            Sur la scolarité uniquement — jamais sur l&apos;inscription.
+          </p>
         </Field>
         <Field label="Report antérieur — déjà payé (FCFA)" htmlFor="rs-paid">
           <input
@@ -138,10 +154,14 @@ export function ReturningStudentForm({
         <p className="mb-1 text-[10px] font-bold uppercase tracking-wider text-black/40">Récapitulatif</p>
         <Line label="Frais d'inscription" value={formatFCFA(registrationFee)} />
         <Line label="Frais de scolarité (brut)" value={formatFCFA(tuitionBrut)} />
-        <Line label={`Réduction (${discountPct || 0}% scolarité)`} value={`−${formatFCFA(reduction)}`} cls="text-amber-600" />
+        <Line label="Réduction scolarité (%)" value={`${discountPct || 0} %`} cls="text-amber-600" />
+        <Line label="Montant de la réduction" value={`−${formatFCFA(reduction)}`} cls="text-amber-600" />
         <Line label="Total dû (après réduction)" value={formatFCFA(totalDue)} strong />
-        <Line label="Montant déjà payé (report)" value={formatFCFA(paid)} cls="text-green-700" />
+        <Line label="Report antérieur déjà payé" value={formatFCFA(paid)} cls="text-green-700" />
         <Line label="Reste à payer" value={reste <= 0 ? "Soldé" : formatFCFA(reste)} strong cls={reste <= 0 ? "text-green-600" : "text-ipmd-red"} />
+        <p className="mt-1.5 text-[10px] italic text-black/40">
+          La réduction s&apos;applique uniquement sur les frais de scolarité, jamais sur les frais d&apos;inscription.
+        </p>
         <div className="mt-1.5 flex flex-wrap gap-1.5 border-t border-black/10 pt-1.5">
           <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${inscriptionSettled ? "bg-blue-50 text-blue-700" : "bg-ipmd-red/10 text-ipmd-red"}`}>
             {inscriptionSettled ? "Inscription soldée" : "Inscription non soldée"}

@@ -56,11 +56,18 @@ export default async function ReprisePage() {
 
             <div className="space-y-4">
               <CreateUserForm />
-              <p className="rounded-2xl bg-white p-4 text-xs text-black/55 shadow-sm ring-1 ring-black/5">
-                💡 Pour un <strong>enseignant</strong> : utilise le formulaire ci-dessus avec le rôle
-                <strong> Enseignant</strong> (un mot de passe est défini, à lui communiquer). Sa fiche
-                (fonction, taux, dossier) se complète ensuite dans <Link href="/espace/enseignants" className="font-semibold text-ipmd-red hover:underline">Enseignants</Link>.
-              </p>
+              <div className="rounded-2xl bg-amber-50 p-4 text-xs text-amber-800 ring-1 ring-amber-200">
+                <p className="font-bold">👨‍🏫 Création d&apos;un enseignant</p>
+                <p className="mt-1">
+                  Utilise le formulaire ci-dessus avec le rôle <strong>Enseignant</strong> (un mot de
+                  passe provisoire est défini, à lui communiquer).
+                </p>
+                <p className="mt-2 font-semibold">
+                  Après création du compte enseignant, complétez sa fiche dans le module{" "}
+                  <Link href="/espace/enseignants" className="underline">Enseignants</Link> :
+                  fonction, matières, classes, taux et statut.
+                </p>
+              </div>
             </div>
           </div>
         </div>
