@@ -35,7 +35,7 @@ export default async function SuiviPedagogiquePage({
   searchParams,
 }: {
   params: Promise<{ teacherId: string }>;
-  searchParams: Promise<{ discipline?: string; niveau?: string }>;
+  searchParams: Promise<{ discipline?: string; niveau?: string; vh?: string }>;
 }) {
   const { teacherId } = await params;
   const sp = await searchParams;
@@ -105,6 +105,11 @@ export default async function SuiviPedagogiquePage({
     };
   });
   const totalHours = Math.round(rows.reduce((a, r) => a + r.hours, 0) * 100) / 100;
+  const plannedHours = sp.vh ? Number(sp.vh) : null;
+  const remaining =
+    plannedHours != null && !Number.isNaN(plannedHours)
+      ? Math.round((plannedHours - totalHours) * 100) / 100
+      : null;
 
   const sel = "rounded-full border border-black/10 bg-white px-3 py-1.5 text-sm text-ipmd-black";
 
@@ -137,10 +142,19 @@ export default async function SuiviPedagogiquePage({
                 <option key={n} value={n}>{n}</option>
               ))}
             </select>
+            <input
+              name="vh"
+              type="number"
+              min="0"
+              step="0.5"
+              defaultValue={sp.vh ?? ""}
+              placeholder="Vol. horaire à effectuer (h)"
+              className="w-52 rounded-full border border-black/10 bg-white px-3 py-1.5 text-sm text-ipmd-black"
+            />
             <button type="submit" className="rounded-full bg-ipmd-red px-4 py-1.5 text-sm font-semibold text-white">
               Appliquer
             </button>
-            {(sp.discipline || sp.niveau) && (
+            {(sp.discipline || sp.niveau || sp.vh) && (
               <Link href={`/espace/suivi-pedagogique/${teacherId}`} className="text-sm font-semibold text-ipmd-red hover:underline">
                 Réinitialiser
               </Link>
@@ -168,7 +182,17 @@ export default async function SuiviPedagogiquePage({
               <p><span className="text-black/50">Intervenant : </span><span className="font-bold text-ipmd-black">{teacher.full_name || teacher.email}</span>{sheet?.function ? <span className="text-black/55"> — {sheet.function}</span> : null}</p>
               <p><span className="text-black/50">Discipline : </span><span className="font-semibold text-ipmd-black">{sp.discipline || "Toutes"}</span></p>
               <p><span className="text-black/50">Niveau d&apos;étude : </span><span className="font-semibold text-ipmd-black">{sp.niveau || "Tous"}</span></p>
-              <p><span className="text-black/50">Volume horaire effectué : </span><span className="font-bold text-ipmd-black">{totalHours} h</span> <span className="text-black/40">({rows.length} séance{rows.length > 1 ? "s" : ""})</span></p>
+              <p><span className="text-black/50">Volume horaire à effectuer : </span><span className="font-bold text-ipmd-black">{plannedHours != null && !Number.isNaN(plannedHours) ? `${plannedHours} h` : "……… h"}</span></p>
+              <p>
+                <span className="text-black/50">Volume horaire effectué : </span>
+                <span className="font-bold text-ipmd-black">{totalHours} h</span>{" "}
+                <span className="text-black/40">({rows.length} séance{rows.length > 1 ? "s" : ""})</span>
+                {remaining != null && (
+                  <span className={`ml-2 font-semibold ${remaining > 0 ? "text-ipmd-red" : "text-green-600"}`}>
+                    · Reste : {remaining > 0 ? `${remaining} h` : "0 (atteint)"}
+                  </span>
+                )}
+              </p>
             </div>
 
             {/* Tableau */}
