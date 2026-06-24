@@ -18,6 +18,20 @@ const GREETING =
 const FREE_QUESTIONS = 3;
 const MAX_QUESTIONS = 15;
 
+// Voix féminines françaises courantes (Windows, macOS, Android, Google…).
+const FEMALE_VOICE_HINTS = [
+  "amelie", "amélie", "audrey", "virginie", "julie", "marie", "léa", "lea", "hortense",
+  "charlotte", "celine", "céline", "sandrine", "aurelie", "aurélie", "female", "femme",
+  "google français", "eloise", "élise", "elise",
+];
+
+function pickFrenchFemaleVoice(voices: SpeechSynthesisVoice[]): SpeechSynthesisVoice | null {
+  const fr = voices.filter((v) => v.lang.toLowerCase().startsWith("fr"));
+  if (fr.length === 0) return null;
+  const female = fr.find((v) => FEMALE_VOICE_HINTS.some((h) => v.name.toLowerCase().includes(h)));
+  return female || fr[0];
+}
+
 // Questions cliquables proposées au visiteur (pour « faire parler » l'assistante sans taper).
 const SUGGESTIONS = [
   "Quelles formations proposez-vous ?",
@@ -43,6 +57,7 @@ export function AdmissionsChat() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const taRef = useRef<HTMLTextAreaElement>(null);
   const recogRef = useRef<{ stop: () => void } | null>(null);
+  const voiceRef = useRef<SpeechSynthesisVoice | null>(null);
 
   // Le champ de saisie s'agrandit avec le texte (jusqu'à ~5 lignes).
   // La barre de défilement n'apparaît qu'au-delà de la hauteur max (sinon flèches ▲▼ parasites).
@@ -62,6 +77,12 @@ export function AdmissionsChat() {
     // Reconnaissance vocale dispo ? (Chrome, Edge, Android…)
     const w = window as unknown as { SpeechRecognition?: unknown; webkitSpeechRecognition?: unknown };
     if (w.SpeechRecognition || w.webkitSpeechRecognition) setVoiceIn(true);
+    // Choisit une voix féminine française pour Awa (les voix se chargent de façon asynchrone).
+    if (typeof window !== "undefined" && window.speechSynthesis) {
+      const load = () => { voiceRef.current = pickFrenchFemaleVoice(window.speechSynthesis.getVoices()); };
+      load();
+      window.speechSynthesis.onvoiceschanged = load;
+    }
   }, []);
 
   // 🎙️ Dicter sa question (parole → texte dans le champ).
@@ -101,6 +122,8 @@ export function AdmissionsChat() {
       const u = new SpeechSynthesisUtterance(text.replace(/[*_#>`]/g, ""));
       u.lang = "fr-FR";
       u.rate = 1.02;
+      u.pitch = 1.08; // voix un peu plus douce / féminine
+      if (voiceRef.current) u.voice = voiceRef.current;
       window.speechSynthesis.speak(u);
     } catch {}
   };
