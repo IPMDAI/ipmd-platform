@@ -59,9 +59,9 @@ export function Hero() {
             className="mx-auto mt-6 max-w-xl animate-fade-up text-lg text-white/75 sm:text-xl"
             style={{ animationDelay: "100ms" }}
           >
-            École supérieure digitale, moderne et orientée intelligence
-            artificielle. Formez-vous aux métiers du digital pour une
-            employabilité réelle.
+            La question n&apos;est plus de savoir si l&apos;IA est une
+            opportunité ou non. Il faut désormais l&apos;accélérer dans tous les
+            domaines.
           </p>
 
           <p
