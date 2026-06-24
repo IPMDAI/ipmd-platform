@@ -54,7 +54,7 @@ export default async function StudentFinancePage({
 
   const { data: student } = await supabase
     .from("profiles")
-    .select("id, full_name, email")
+    .select("id, full_name, email, whatsapp, phone")
     .eq("id", studentId)
     .single();
   if (!student) notFound();
@@ -96,13 +96,27 @@ export default async function StudentFinancePage({
   ]);
   const parentIds = (parentLinks ?? []).map((l) => l.parent_id);
   const relOf = new Map((parentLinks ?? []).map((l) => [l.parent_id, l.relationship]));
-  let parents: { id: string; full_name: string | null; email: string | null }[] = [];
+  let parents: {
+    id: string;
+    full_name: string | null;
+    email: string | null;
+    whatsapp: string | null;
+    phone: string | null;
+  }[] = [];
   if (parentIds.length > 0) {
-    const { data: pp } = await supabase.from("profiles").select("id, full_name, email").in("id", parentIds);
+    const { data: pp } = await supabase
+      .from("profiles")
+      .select("id, full_name, email, whatsapp, phone")
+      .in("id", parentIds);
     parents = pp ?? [];
   }
   const recipients = [
-    { target: "student", label: "Étudiant", email: student.email ?? null },
+    {
+      target: "student",
+      label: "Étudiant",
+      email: student.email ?? null,
+      whatsapp: student.whatsapp || student.phone || null,
+    },
     ...parents.map((p) => {
       const rel = relOf.get(p.id);
       const roleLabel = rel ? PARENT_RELATIONSHIP_LABEL[rel] ?? "Parent" : "Parent";
@@ -110,6 +124,7 @@ export default async function StudentFinancePage({
         target: p.id,
         label: `${roleLabel} : ${p.full_name || p.email || "—"}`,
         email: p.email ?? null,
+        whatsapp: p.whatsapp || p.phone || null,
       };
     }),
   ];

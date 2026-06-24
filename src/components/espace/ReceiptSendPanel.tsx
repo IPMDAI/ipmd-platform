@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import { sendReceiptEmail, logReceiptShare } from "@/lib/finance-actions";
 
-type Recipient = { target: string; label: string; email: string | null };
+type Recipient = { target: string; label: string; email: string | null; whatsapp: string | null };
 type Send = { recipient: string; channel: string; sent_at: string };
 
 function fmt(iso: string): string {
@@ -47,6 +47,11 @@ export function ReceiptSendPanel({
     });
 
   const waText = encodeURIComponent(`Bonjour, voici votre reçu de paiement IPMD : ${receiptUrl}`);
+  // Numéro normalisé (chiffres uniquement) → wa.me/<num> ; sinon sélecteur de contact.
+  const waHref = (num: string | null) => {
+    const digits = (num ?? "").replace(/\D/g, "");
+    return digits ? `https://wa.me/${digits}?text=${waText}` : `https://wa.me/?text=${waText}`;
+  };
   const shareWhatsApp = (label: string) => {
     logReceiptShare(paymentId, "whatsapp", label);
     setMsg(`Partage WhatsApp ouvert pour ${label}.`);
@@ -81,13 +86,14 @@ export function ReceiptSendPanel({
                 ✉️ Email
               </button>
               <a
-                href={`https://wa.me/?text=${waText}`}
+                href={waHref(r.whatsapp)}
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={() => shareWhatsApp(r.label)}
+                title={r.whatsapp ? `WhatsApp ${r.whatsapp}` : "Choisir le contact dans WhatsApp"}
                 className="rounded-md bg-[#25D366] px-2 py-1 text-[11px] font-semibold text-white"
               >
-                WhatsApp
+                WhatsApp{r.whatsapp ? "" : " ?"}
               </a>
             </div>
           </div>
