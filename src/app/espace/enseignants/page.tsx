@@ -154,6 +154,12 @@ export default async function EnseignantsPage() {
                         >
                           📄 Générer le contrat de vacataire
                         </Link>
+                        <Link
+                          href={`/espace/suivi-pedagogique/${t.id}`}
+                          className="ml-2 inline-flex items-center gap-2 rounded-full bg-ipmd-light px-3 py-1.5 text-xs font-semibold text-ipmd-black transition-colors hover:bg-black/5"
+                        >
+                          📋 Suivi pédagogique
+                        </Link>
                       </div>
 
                       <ContactEditForm
