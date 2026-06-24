@@ -276,3 +276,170 @@ export async function inviteFromCandidature(
         : " (Email non envoyé — vérifie la config Resend.)"),
   };
 }
+
+/**
+ * Reprise d'un ancien étudiant : crée (ou retrouve) le compte, l'affecte à une
+ * classe, fixe ses frais (niveau ou tarif de classe + réduction éventuelle),
+ * enregistre le montant DÉJÀ PAYÉ (report antérieur) et envoie le lien
+ * « définir mot de passe ». Tout en un seul formulaire. (Super Admin)
+ */
+export async function createReturningStudent(
+  _prev: FormResult | null,
+  formData: FormData
+): Promise<FormResult> {
+  const ctx = await requireSuperAdmin();
+  if (!ctx) return { ok: false, message: "Action réservée au Super Admin." };
+  if (!canAdminUsers) {
+    return { ok: false, message: "Création non configurée (SUPABASE_SERVICE_ROLE_KEY manquante)." };
+  }
+
+  const email = str(formData, "email").toLowerCase();
+  const fullName = str(formData, "full_name");
+  const level = str(formData, "level");
+  const program = str(formData, "program");
+  const classId = str(formData, "class_id");
+  const lumpSum = formData.get("lump_sum") === "on";
+  const paidAmount = Math.max(0, Number(str(formData, "paid_amount") || "0"));
+  const sendEmail = formData.get("send_email") === "on";
+  if (!email.includes("@")) return { ok: false, message: "Email invalide." };
+  if (!fullName) return { ok: false, message: "Nom et prénom requis." };
+
+  const admin = createAdminClient();
+  if (!admin) return { ok: false, message: "Service indisponible." };
+
+  // 1. Crée le compte (sans mot de passe) — ou le retrouve s'il existe déjà.
+  let newId: string | undefined;
+  const { data: createdUser, error: createErr } = await admin.auth.admin.createUser({
+    email,
+    email_confirm: true,
+    user_metadata: { full_name: fullName },
+  });
+  if (createErr) {
+    const { data: existing } = await ctx.supabase
+      .from("profiles")
+      .select("id")
+      .eq("email", email)
+      .maybeSingle();
+    newId = existing?.id;
+  } else {
+    newId = createdUser.user?.id;
+  }
+  if (!newId) {
+    return { ok: false, message: `Compte impossible${createErr ? " : " + createErr.message : ""}.` };
+  }
+
+  // 2. Rôle étudiant + nom.
+  await ctx.supabase
+    .from("profiles")
+    .update({ role: "etudiant", full_name: fullName })
+    .eq("id", newId);
+
+  // 3. Affectation à une classe (optionnelle).
+  if (classId) {
+    await ctx.supabase
+      .from("class_members")
+      .upsert({ class_id: classId, student_id: newId }, { onConflict: "student_id" });
+  }
+
+  // 4. Frais : tarif de la classe prioritaire, sinon tarif du niveau.
+  const [{ data: settings }, lvlRes, classRes] = await Promise.all([
+    ctx.supabase.from("finance_settings").select("registration_fee, academic_year").eq("id", 1).maybeSingle(),
+    level
+      ? ctx.supabase.from("tuition_levels").select("amount").eq("level", level).maybeSingle()
+      : Promise.resolve({ data: null }),
+    classId
+      ? ctx.supabase.from("classes").select("tuition_amount").eq("id", classId).maybeSingle()
+      : Promise.resolve({ data: null }),
+  ]);
+  const registrationFee = Number(settings?.registration_fee ?? 300000);
+  const classTuition = classRes?.data?.tuition_amount;
+  const tuitionDue = classTuition != null ? Number(classTuition) : Number(lvlRes?.data?.amount ?? 0);
+  const discountRate = lumpSum ? 0.15 : 0;
+  const tuitionNet = Math.round(tuitionDue * (1 - discountRate));
+  const totalDue = registrationFee + tuitionNet;
+
+  // 5. Report déjà payé : on impute d'abord l'inscription, puis la scolarité.
+  const paidInscription = Math.min(paidAmount, registrationFee);
+  const paidScolarite = Math.max(0, paidAmount - registrationFee);
+  const registrationSettled = registrationFee > 0 ? paidInscription >= registrationFee : true;
+
+  await ctx.supabase.from("student_finance").upsert(
+    {
+      student_id: newId,
+      registration_fee: registrationFee,
+      tuition_due: tuitionDue,
+      discount_rate: discountRate,
+      level: level || null,
+      program: program || null,
+      academic_year: settings?.academic_year ?? null,
+      total_due: totalDue,
+      access_state: registrationSettled ? "actif" : "pause",
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: "student_id" }
+  );
+
+  if (paidAmount > 0) {
+    const today = new Date().toISOString().slice(0, 10);
+    const rowsToInsert: Record<string, unknown>[] = [];
+    if (paidInscription > 0)
+      rowsToInsert.push({
+        student_id: newId,
+        amount: paidInscription,
+        method: "Report",
+        kind: "inscription",
+        label: "Report antérieur",
+        paid_at: today,
+      });
+    if (paidScolarite > 0)
+      rowsToInsert.push({
+        student_id: newId,
+        amount: paidScolarite,
+        method: "Report",
+        kind: "scolarite",
+        label: "Report antérieur",
+        paid_at: today,
+      });
+    if (rowsToInsert.length) await ctx.supabase.from("payments").insert(rowsToInsert);
+  }
+
+  // 6. Lien « définir mon mot de passe » + email (Resend).
+  let emailed = 0;
+  if (sendEmail && canSendEmail) {
+    let actionLink = `${SITE_URL}/mot-de-passe-oublie`;
+    const { data: linkData } = await admin.auth.admin.generateLink({
+      type: "recovery",
+      email,
+      options: { redirectTo: `${SITE_URL}/definir-mot-de-passe` },
+    });
+    if (linkData?.properties?.action_link) actionLink = linkData.properties.action_link;
+
+    const balance = totalDue - paidAmount;
+    const rows = buildRows([
+      ["Formation", program || "—"],
+      ["Niveau", level || "—"],
+      ["Total à payer", formatFCFA(totalDue)],
+      ["Déjà payé (report)", formatFCFA(paidAmount)],
+      ["Reste à payer", balance <= 0 ? "Soldé" : formatFCFA(balance)],
+    ]);
+    const html = emailDocument(
+      "Votre espace IPMD",
+      `<p>Bonjour ${fullName},</p>
+       <p>Votre compte étudiant IPMD est prêt. Voici votre situation :</p>
+       <table style="width:100%;border-collapse:collapse;font-size:14px">${rows}</table>
+       <p style="margin-top:16px"><a href="${actionLink}" style="display:inline-block;background:#e01228;color:#fff;text-decoration:none;padding:10px 18px;border-radius:9999px;font-weight:600">Définir mon mot de passe</a></p>
+       <p style="color:#9ca3af;font-size:12px;margin-top:8px">Pour toute question : scolarite@ipmd.pro</p>`
+    );
+    emailed = await sendScolariteEmail([email], "IPMD — Votre espace étudiant", html);
+  }
+
+  revalidatePath("/espace/finance");
+  revalidatePath("/espace/utilisateurs");
+  const balance = totalDue - paidAmount;
+  return {
+    ok: true,
+    message:
+      `Étudiant repris : ${fullName}. Reste à payer ${balance <= 0 ? "0 (soldé)" : formatFCFA(balance)}.` +
+      (sendEmail ? (emailed > 0 ? " Email envoyé." : " (Email non envoyé.)") : ""),
+  };
+}
