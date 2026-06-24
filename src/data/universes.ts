@@ -19,7 +19,7 @@ export const universes: Universe[] = [
     subdomain: "campus.ipmd.pro",
     href: "/campus",
     icon: "🎓",
-    image: "/campus.png",
+    image: "/IPMD_Campus.png",
   },
   {
     id: "ultrajobs",
@@ -66,8 +66,7 @@ export const universes: Universe[] = [
     subdomain: "ultraboost.ipmd.pro",
     href: "/ultraboost",
     icon: "⚡",
-    image:
-      "https://images.unsplash.com/photo-1552581234-26160f608093?w=800&q=80&auto=format&fit=crop",
+    image: "/UltraBoost.png",
   },
   {
     id: "gouvernance",
@@ -82,8 +81,7 @@ export const universes: Universe[] = [
     subdomain: "executive.ipmd.pro",
     href: "/gouvernance",
     icon: "🏛️",
-    image:
-      "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=800&q=80&auto=format&fit=crop",
+    image: "/IPMD_Executive.png",
   },
   {
     id: "ultraexecutive",
