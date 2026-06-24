@@ -462,6 +462,14 @@ export type ImportStudent = {
   role?: string; // "etudiant" | "professionnel"
   totalDue?: number; // depuis la facture (montant total)
   paidAmount?: number; // déjà payé = montant − solde
+  payments?: {
+    amount: number;
+    method?: string;
+    reference?: string;
+    label?: string;
+    date?: string; // ISO yyyy-mm-dd
+    kind?: "inscription" | "scolarite";
+  }[];
 };
 
 /**
@@ -533,15 +541,29 @@ export async function importReturningStudents(
         .eq("id", newId);
 
       const level = (s.level || "").trim();
+      const today = new Date().toISOString().slice(0, 10);
       // Si la facture fournit le montant, il fait foi (= total dû) ; sinon tarif du niveau.
       const hasInvoice = typeof s.totalDue === "number" && s.totalDue > 0;
       const totalDue = hasInvoice
         ? Number(s.totalDue)
         : registrationFee + (level ? tuitionByLevel.get(level) ?? 0 : 0);
       const tuitionDue = Math.max(0, totalDue - registrationFee);
-      const paid = typeof s.paidAmount === "number" ? Math.max(0, s.paidAmount) : 0;
-      const paidInscription = Math.min(paid, registrationFee);
-      const paidScolarite = Math.max(0, paid - registrationFee);
+
+      // Paiements détaillés (vrai journal) si fournis, sinon report global depuis le solde.
+      const detailed = s.payments && s.payments.length ? s.payments : null;
+      let paidInscription = 0;
+      let paidScolarite = 0;
+      if (detailed) {
+        for (const p of detailed) {
+          if (p.kind === "inscription") paidInscription += Number(p.amount) || 0;
+          else paidScolarite += Number(p.amount) || 0;
+        }
+      } else {
+        const paid = typeof s.paidAmount === "number" ? Math.max(0, s.paidAmount) : 0;
+        paidInscription = Math.min(paid, registrationFee);
+        paidScolarite = Math.max(0, paid - registrationFee);
+      }
+      const paidTotal = paidInscription + paidScolarite;
       const registrationSettled = registrationFee > 0 ? paidInscription >= registrationFee : true;
 
       await ctx.supabase.from("student_finance").upsert(
@@ -554,20 +576,31 @@ export async function importReturningStudents(
           program: s.program || null,
           academic_year: settings?.academic_year ?? null,
           total_due: totalDue,
-          access_state: registrationSettled && paid > 0 ? "actif" : "pause",
+          access_state: registrationSettled && paidTotal > 0 ? "actif" : "pause",
           updated_at: new Date().toISOString(),
         },
         { onConflict: "student_id" }
       );
 
-      // Report antérieur déjà payé (idempotent : on remplace l'éventuel report précédent).
-      if (paid > 0) {
-        await ctx.supabase
-          .from("payments")
-          .delete()
-          .eq("student_id", newId)
-          .eq("label", "Report antérieur");
-        const today = new Date().toISOString().slice(0, 10);
+      // Idempotent : on retire les paiements précédemment importés.
+      await ctx.supabase.from("payments").delete().eq("student_id", newId).eq("observation", "Import Zoho");
+      await ctx.supabase.from("payments").delete().eq("student_id", newId).eq("label", "Report antérieur");
+
+      if (detailed) {
+        const toInsert = detailed
+          .filter((p) => Number(p.amount) > 0)
+          .map((p) => ({
+            student_id: newId,
+            amount: Number(p.amount),
+            method: p.method || "Report",
+            kind: p.kind === "inscription" ? "inscription" : "scolarite",
+            reference: p.reference || null,
+            label: p.label || null,
+            paid_at: p.date || today,
+            observation: "Import Zoho",
+          }));
+        if (toInsert.length) await ctx.supabase.from("payments").insert(toInsert);
+      } else if (paidTotal > 0) {
         const toInsert: Record<string, unknown>[] = [];
         if (paidInscription > 0)
           toInsert.push({ student_id: newId, amount: paidInscription, method: "Report", kind: "inscription", label: "Report antérieur", paid_at: today });
