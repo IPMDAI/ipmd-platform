@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { usePathname } from "next/navigation";
-import { DemandeInfoForm } from "@/components/forms/DemandeInfoForm";
 
 const CONTACTS = [
   { label: "Admissions & Inscriptions", display: "+225 07 75 75 88 88", number: "2250775758888" },
@@ -15,30 +14,11 @@ const PREFILL = encodeURIComponent("Bonjour IPMD, je souhaite avoir des informat
 export function WhatsAppFloat() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
-  const [infoOpen, setInfoOpen] = useState(false);
 
   // On n'affiche pas dans l'espace privé (ERP).
   if (pathname?.startsWith("/espace")) return null;
 
   return (
-    <>
-    {/* Modale « Demande d'information » (popup, sans changer de page) */}
-    {infoOpen && (
-      <div className="fixed inset-0 z-[60] flex items-end justify-center bg-black/50 p-0 print:hidden sm:items-center sm:p-4" onClick={() => setInfoOpen(false)}>
-        <div className="relative max-h-[92vh] w-full overflow-y-auto rounded-t-3xl bg-ipmd-light p-5 shadow-2xl sm:max-w-lg sm:rounded-3xl sm:p-7" onClick={(e) => e.stopPropagation()}>
-          <button type="button" onClick={() => setInfoOpen(false)} aria-label="Fermer" className="absolute right-4 top-4 z-10 rounded-full bg-white/80 p-1.5 text-black/60 ring-1 ring-black/10 hover:text-ipmd-red">
-            <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M6 6l12 12M18 6L6 18" /></svg>
-          </button>
-          <p className="text-xs font-bold uppercase tracking-[0.18em] text-ipmd-red">Admissions</p>
-          <h2 className="mt-1 text-2xl font-extrabold tracking-tight text-ipmd-black">Demande d&apos;information</h2>
-          <p className="mt-1 mb-4 text-sm text-black/55">
-            Laissez-nous vos coordonnées, l&apos;équipe des admissions vous recontacte rapidement.
-          </p>
-          <DemandeInfoForm />
-        </div>
-      </div>
-    )}
-
     <div className="fixed bottom-5 right-5 z-50 flex flex-col items-end gap-3 print:hidden">
       {open && (
         <div className="w-72 overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-black/10">
@@ -68,21 +48,6 @@ export function WhatsAppFloat() {
         </div>
       )}
 
-      {/* Bouton « Demande d'info » — ouvre une popup (sans changer de page) */}
-      <button
-        type="button"
-        onClick={() => setInfoOpen(true)}
-        aria-label="Demande d'information"
-        title="Demande d'information"
-        className="flex h-12 w-12 items-center justify-center gap-2 rounded-full bg-ipmd-red text-sm font-semibold text-white shadow-xl ring-1 ring-black/10 transition-transform hover:scale-105 active:scale-95 sm:w-auto sm:px-4"
-      >
-        <svg viewBox="0 0 24 24" className="h-5 w-5 shrink-0" fill="none" stroke="currentColor" strokeWidth="2">
-          <path d="M4 6h16v12H4z" strokeLinejoin="round" />
-          <path d="M4 7l8 6 8-6" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-        <span className="hidden sm:inline">Demande d&apos;info</span>
-      </button>
-
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
@@ -99,7 +64,6 @@ export function WhatsAppFloat() {
         )}
       </button>
     </div>
-    </>
   );
 }
 
