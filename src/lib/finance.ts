@@ -23,7 +23,21 @@ export const DEFAULT_LEVELS = [
 export const PAYMENT_KINDS = [
   { value: "inscription", label: "Frais d'inscription" },
   { value: "scolarite", label: "Frais de scolarité" },
+  { value: "autre", label: "Autre frais" },
 ];
+
+export const KIND_LABEL: Record<string, string> = {
+  inscription: "Inscription",
+  scolarite: "Scolarité",
+  autre: "Autre frais",
+};
+
+/** Statut d'un paiement (journal des paiements). */
+export const PAYMENT_STATUS: Record<string, { label: string; cls: string }> = {
+  paye: { label: "Payé", cls: "bg-green-600 text-white" },
+  en_attente: { label: "En attente de vérification", cls: "bg-amber-50 text-amber-700" },
+  annule: { label: "Annulé", cls: "bg-ipmd-red/10 text-ipmd-red line-through" },
+};
 
 /** États d'accès à la plateforme selon la scolarité. */
 export const ACCESS_STATES: Record<string, { label: string; cls: string }> = {

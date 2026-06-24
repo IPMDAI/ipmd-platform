@@ -73,15 +73,17 @@ export default async function FinancePage({
     supabase
       .from("student_finance")
       .select("student_id, registration_fee, tuition_due, discount_rate, level, status, payer_note"),
-    supabase.from("payments").select("student_id, amount, method, kind"),
+    supabase.from("payments").select("student_id, amount, method, kind, status"),
     supabase.from("payment_schedules").select("student_id, amount, due_date"),
     supabase.from("class_members").select("student_id, class_id"),
     supabase.from("classes").select("id, name, intake, class_type, payment_regime"),
   ]);
 
   const finMap = new Map((finances ?? []).map((f) => [f.student_id, f]));
+  // Seuls les paiements « payé » comptent dans la situation (annulé / en attente exclus).
   const payByStudent = new Map<string, { amount: number; kind: string | null }[]>();
   for (const p of payments ?? []) {
+    if (p.status && p.status !== "paye") continue;
     const arr = payByStudent.get(p.student_id) ?? [];
     arr.push({ amount: Number(p.amount), kind: p.kind });
     payByStudent.set(p.student_id, arr);
@@ -280,8 +282,21 @@ export default async function FinancePage({
             </div>
           </div>
 
+          {/* Onglets de vue */}
+          <div className="mt-5 inline-flex rounded-full bg-white p-1 shadow-sm ring-1 ring-black/5 print:hidden">
+            <span className="rounded-full bg-ipmd-red px-4 py-1.5 text-sm font-semibold text-white">
+              Situation étudiants
+            </span>
+            <Link
+              href="/espace/finance/paiements"
+              className="rounded-full px-4 py-1.5 text-sm font-semibold text-black/55 hover:text-ipmd-red"
+            >
+              Paiements reçus
+            </Link>
+          </div>
+
           {/* Filtres cohorte (form GET) */}
-          <form className="mt-5 flex flex-wrap items-center gap-2 print:hidden">
+          <form className="mt-4 flex flex-wrap items-center gap-2 print:hidden">
             <span className="text-xs font-semibold uppercase tracking-wider text-black/40">Filtrer :</span>
             <select name="intake" defaultValue={sp.intake ?? ""} className={filterSelect}>
               <option value="">Toutes les rentrées</option>

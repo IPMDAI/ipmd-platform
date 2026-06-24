@@ -348,3 +348,17 @@ export async function deletePayment(
   revalidatePath(`/espace/finance/${studentId}`);
   revalidatePath("/espace/finance");
 }
+
+/** Change le statut d'un paiement (payé / en_attente / annulé) depuis le journal. */
+export async function setPaymentStatus(
+  paymentId: string,
+  status: string,
+  _formData?: FormData
+): Promise<void> {
+  const ctx = await getStaff();
+  if (!ctx) return;
+  if (!["paye", "en_attente", "annule"].includes(status)) return;
+  await ctx.supabase.from("payments").update({ status }).eq("id", paymentId);
+  revalidatePath("/espace/finance/paiements");
+  revalidatePath("/espace/finance");
+}
