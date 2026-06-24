@@ -1,6 +1,5 @@
 import Image from "next/image";
 import { formatFCFA } from "@/lib/finance";
-import { longDate } from "@/lib/documents";
 import { QrCode } from "@/components/espace/documents/QrCode";
 import { Cachet } from "@/components/espace/documents/Cachet";
 
@@ -123,7 +122,7 @@ export function PaymentReceipt({
                   </tr>
                 )}
                 <tr className="border-b border-black/5">
-                  <td className="px-4 py-3 text-black/55">Date</td>
+                  <td className="px-4 py-3 text-black/55">Date de paiement</td>
                   <td className="px-4 py-3 text-right font-semibold text-ipmd-black">
                     {frDate(payment.paid_at)}
                   </td>
@@ -135,15 +134,15 @@ export function PaymentReceipt({
           {recap && (
             <div className="grid grid-cols-3 gap-2 text-center">
               <div className="rounded-xl bg-ipmd-light px-2 py-3">
-                <p className="text-[10px] font-semibold uppercase text-black/45">Total dû</p>
+                <p className="text-[10px] font-semibold uppercase text-black/45">Total à payer</p>
                 <p className="text-sm font-bold text-ipmd-black">{formatFCFA(recap.totalDue)}</p>
               </div>
               <div className="rounded-xl bg-ipmd-light px-2 py-3">
-                <p className="text-[10px] font-semibold uppercase text-black/45">Déjà payé</p>
+                <p className="text-[10px] font-semibold uppercase text-black/45">Total payé à ce jour</p>
                 <p className="text-sm font-bold text-green-700">{formatFCFA(recap.totalPaid)}</p>
               </div>
               <div className="rounded-xl bg-ipmd-light px-2 py-3">
-                <p className="text-[10px] font-semibold uppercase text-black/45">Reste</p>
+                <p className="text-[10px] font-semibold uppercase text-black/45">Reste à payer</p>
                 <p className="text-sm font-bold text-ipmd-red">
                   {recap.balance <= 0 ? "Soldé" : formatFCFA(recap.balance)}
                 </p>
@@ -153,7 +152,7 @@ export function PaymentReceipt({
 
           <div className="flex items-center justify-between rounded-xl bg-ipmd-black px-5 py-4 text-white">
             <span className="text-sm font-semibold uppercase tracking-wide text-white/70">
-              Montant payé
+              Montant du présent versement
             </span>
             <span className="text-2xl font-extrabold">
               {formatFCFA(Number(payment.amount))}
@@ -177,7 +176,7 @@ export function PaymentReceipt({
           </div>
           <div className="text-center">
             <p className="text-sm text-black/60">Fait à Abidjan,</p>
-            <p className="text-sm font-medium text-ipmd-black">le {longDate()}</p>
+            <p className="text-sm font-medium text-ipmd-black">le {frDate(payment.paid_at)}</p>
             <div className="mt-2 flex h-14 items-center justify-center">
               <Cachet size={72} />
             </div>
