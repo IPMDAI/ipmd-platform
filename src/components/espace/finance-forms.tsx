@@ -15,6 +15,7 @@ import {
   PAYMENT_KINDS,
   ACCESS_STATES,
   FINANCIAL_STATUS,
+  PAYER_NOTES,
 } from "@/lib/finance";
 import type { FormResult } from "@/types";
 
@@ -212,11 +213,13 @@ export function AccessForm({
   status,
   accessState,
   negotiated,
+  payerNote,
 }: {
   studentId: string;
   status: string | null;
   accessState: string;
   negotiated: boolean;
+  payerNote?: string | null;
 }) {
   const bound = setStudentAccess.bind(null, studentId);
   const [state, action, pending] = useActionState<FormResult | null, FormData>(bound, null);
@@ -242,6 +245,21 @@ export function AccessForm({
             </option>
           ))}
         </select>
+      </Field>
+      <Field label="Profil payeur / suivi" htmlFor="a-payer">
+        <input
+          id="a-payer"
+          name="payer_note"
+          list="payer-notes"
+          defaultValue={payerNote ?? ""}
+          placeholder="Ex. Bon payeur, À relancer…"
+          className={inputBase}
+        />
+        <datalist id="payer-notes">
+          {PAYER_NOTES.map((p) => (
+            <option key={p} value={p} />
+          ))}
+        </datalist>
       </Field>
       <label className="flex items-center gap-2 text-sm font-medium text-black/70">
         <input type="checkbox" name="negotiated" defaultChecked={negotiated} className="h-4 w-4 rounded border-black/20" />

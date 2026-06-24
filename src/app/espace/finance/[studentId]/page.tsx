@@ -62,7 +62,7 @@ export default async function StudentFinancePage({
       supabase
         .from("student_finance")
         .select(
-          "registration_fee, tuition_due, discount_rate, level, status, access_state, negotiated"
+          "registration_fee, tuition_due, discount_rate, level, status, access_state, negotiated, payer_note"
         )
         .eq("student_id", studentId)
         .maybeSingle(),
@@ -290,6 +290,7 @@ export default async function StudentFinancePage({
                 status={finance?.status ?? null}
                 accessState={accessState}
                 negotiated={finance?.negotiated ?? false}
+                payerNote={finance?.payer_note ?? null}
               />
               <AddScheduleForm studentId={studentId} />
             </div>

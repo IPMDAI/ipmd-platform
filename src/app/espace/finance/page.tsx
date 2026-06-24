@@ -11,19 +11,19 @@ import {
   computeSchedule,
   FINANCIAL_STATUS,
 } from "@/lib/finance";
+import { CLASS_TYPE_LABEL } from "@/lib/academic";
 
 export const metadata: Metadata = { title: "Finance" };
 
 const STAFF = ["admin", "super_admin", "scolarite"];
 
-const FILTERS = [
+const STATUS_FILTERS = [
   { key: "tous", label: "Tous" },
   { key: "non_a_jour", label: "Non à jour" },
   { key: "a_jour", label: "À jour" },
   { key: "insc_non_soldee", label: "Inscription non soldée" },
   { key: "solde", label: "Soldés" },
 ];
-
 const CAT_STATUS: Record<string, string> = {
   solde: "solde",
   insc_non_soldee: "inscription_non_soldee",
@@ -31,36 +31,44 @@ const CAT_STATUS: Record<string, string> = {
   a_jour: "a_jour",
 };
 
-function frDate(iso: string): string {
-  return new Date(iso + "T00:00:00Z").toLocaleDateString("fr-FR", {
+function frDate(iso: string | null | undefined): string {
+  if (!iso) return "—";
+  return new Date(iso).toLocaleDateString("fr-FR", {
     day: "2-digit",
-    month: "short",
+    month: "2-digit",
     year: "numeric",
-    timeZone: "UTC",
   });
 }
 
 export default async function FinancePage({
   searchParams,
 }: {
-  searchParams: Promise<{ filter?: string }>;
+  searchParams: Promise<{ filter?: string; intake?: string; class?: string; type?: string }>;
 }) {
-  const { filter } = await searchParams;
-  const active = FILTERS.some((f) => f.key === filter) ? filter! : "tous";
+  const sp = await searchParams;
+  const activeStatus = STATUS_FILTERS.some((f) => f.key === sp.filter) ? sp.filter! : "tous";
 
   const { supabase, userId } = await requireUser();
   const { data: me } = await supabase.from("profiles").select("role").eq("id", userId).single();
   if (!STAFF.includes(me?.role ?? "")) redirect("/espace");
 
-  const [{ data: students }, { data: finances }, { data: payments }, { data: schedules }] =
-    await Promise.all([
-      supabase.from("profiles").select("id, full_name, email").eq("role", "etudiant").order("full_name"),
-      supabase
-        .from("student_finance")
-        .select("student_id, registration_fee, tuition_due, discount_rate, level, status, access_state"),
-      supabase.from("payments").select("student_id, amount, method, kind, paid_at"),
-      supabase.from("payment_schedules").select("student_id, amount, due_date"),
-    ]);
+  const [
+    { data: students },
+    { data: finances },
+    { data: payments },
+    { data: schedules },
+    { data: members },
+    { data: classRows },
+  ] = await Promise.all([
+    supabase.from("profiles").select("id, full_name, email, created_at").eq("role", "etudiant").order("full_name"),
+    supabase
+      .from("student_finance")
+      .select("student_id, registration_fee, tuition_due, discount_rate, level, status, payer_note"),
+    supabase.from("payments").select("student_id, amount, method, kind"),
+    supabase.from("payment_schedules").select("student_id, amount, due_date"),
+    supabase.from("class_members").select("student_id, class_id"),
+    supabase.from("classes").select("id, name, intake, class_type"),
+  ]);
 
   const finMap = new Map((finances ?? []).map((f) => [f.student_id, f]));
   const payByStudent = new Map<string, { amount: number; kind: string | null }[]>();
@@ -75,20 +83,36 @@ export default async function FinancePage({
     arr.push({ amount: Number(s.amount), due_date: s.due_date });
     schedByStudent.set(s.student_id, arr);
   }
+  const classOf = new Map((members ?? []).map((m) => [m.student_id, m.class_id]));
+  const classInfo = new Map(
+    (classRows ?? []).map((c) => [c.id, { name: c.name, intake: c.intake, type: c.class_type }])
+  );
 
   const today = new Date().toISOString().slice(0, 10);
 
   type Row = {
     id: string;
     name: string;
-    level: string;
-    due: number;
+    className: string;
+    intake: string;
+    typeLabel: string;
+    classType: string | null;
+    classId: string | null;
+    enrolledAt: string | null;
+    registrationFee: number;
+    tuitionDue: number;
+    discountRate: number;
+    discountAmount: number;
+    totalDue: number;
     paid: number;
     balance: number;
+    nextDate: string | null;
+    nextAmount: number;
     category: string;
     statusLabel: string;
     statusCls: string;
-    nextDue: string;
+    hasSchedule: boolean;
+    payerNote: string;
   };
 
   const rows: Row[] = (students ?? []).map((s) => {
@@ -103,80 +127,115 @@ export default async function FinancePage({
     const isSolde = fin.totalDue > 0 && fin.balance <= 0;
     const inscNonSoldee = fin.registrationFee > 0 && !fin.registrationSettled;
     const isOverdue = !isSolde && overdue.length > 0;
-    const category = isSolde
-      ? "solde"
-      : inscNonSoldee
-        ? "insc_non_soldee"
-        : isOverdue
-          ? "non_a_jour"
-          : "a_jour";
+    const category = isSolde ? "solde" : inscNonSoldee ? "insc_non_soldee" : isOverdue ? "non_a_jour" : "a_jour";
     const statusKey = f?.status || CAT_STATUS[category];
     const info = FINANCIAL_STATUS[statusKey] ?? { label: statusKey, cls: "bg-black/5 text-black/60" };
+    const cid = classOf.get(s.id) ?? null;
+    const ci = cid ? classInfo.get(cid) : null;
     return {
       id: s.id,
       name: s.full_name || s.email || "—",
-      level: f?.level ?? "",
-      due: fin.totalDue,
+      className: ci?.name ?? "—",
+      intake: ci?.intake ?? "—",
+      classType: ci?.type ?? null,
+      typeLabel: ci?.type ? CLASS_TYPE_LABEL[ci.type] ?? ci.type : "—",
+      classId: cid,
+      enrolledAt: s.created_at ?? null,
+      registrationFee: fin.registrationFee,
+      tuitionDue: fin.tuitionDue,
+      discountRate: fin.discountRate,
+      discountAmount: fin.tuitionDue - fin.tuitionNet,
+      totalDue: fin.totalDue,
       paid: fin.totalPaid,
       balance: fin.balance,
+      nextDate: sched.next ? sched.next.due_date : null,
+      nextAmount: sched.next ? Number(sched.next.amount) : 0,
       category,
       statusLabel: info.label,
       statusCls: info.cls,
-      nextDue: sched.next ? frDate(sched.next.due_date) : "—",
+      hasSchedule: (schedByStudent.get(s.id) ?? []).length > 0,
+      payerNote: f?.payer_note ?? "",
     };
   });
 
-  // KPIs
-  const totalDue = rows.reduce((a, r) => a + r.due, 0);
-  const totalPaid = rows.reduce((a, r) => a + r.paid, 0);
-  const remaining = Math.max(0, totalDue - totalPaid);
-  const counts = {
-    solde: rows.filter((r) => r.category === "solde").length,
-    non_a_jour: rows.filter((r) => r.category === "non_a_jour").length,
-    a_jour: rows.filter((r) => r.category === "a_jour").length,
-    insc_non_soldee: rows.filter((r) => r.category === "insc_non_soldee").length,
+  // Options de filtres.
+  const intakes = [...new Set(rows.map((r) => r.intake).filter((x) => x && x !== "—"))].sort();
+  const classOptions = [...new Set(rows.filter((r) => r.classId).map((r) => `${r.classId}|${r.className}`))];
+  const types = ["initial", "pro", "partenaire"];
+
+  // Application des filtres.
+  let shown = rows;
+  if (sp.intake) shown = shown.filter((r) => r.intake === sp.intake);
+  if (sp.class) shown = shown.filter((r) => r.classId === sp.class);
+  if (sp.type) shown = shown.filter((r) => r.classType === sp.type);
+  if (activeStatus !== "tous") shown = shown.filter((r) => r.category === activeStatus);
+
+  // Récap (sur la sélection filtrée).
+  const sum = (f: (r: Row) => number) => shown.reduce((a, r) => a + f(r), 0);
+  const recap = {
+    inscription: sum((r) => r.registrationFee),
+    scolariteBrut: sum((r) => r.tuitionDue),
+    reductions: sum((r) => r.discountAmount),
+    duApres: sum((r) => r.totalDue),
+    encaisse: sum((r) => r.paid),
+    reste: sum((r) => Math.max(0, r.balance)),
+    soldes: shown.filter((r) => r.category === "solde").length,
+    nonSoldes: shown.filter((r) => r.category !== "solde").length,
+    retard: shown.filter((r) => r.category === "non_a_jour").length,
+    echeancier: shown.filter((r) => r.hasSchedule).length,
+    prochaine: shown.filter((r) => r.category !== "solde").reduce((a, r) => a + r.nextAmount, 0),
   };
 
-  // Encaissements par mode
-  const byMethod = new Map<string, number>();
-  for (const p of payments ?? []) {
-    const k = p.method || "Autre";
-    byMethod.set(k, (byMethod.get(k) ?? 0) + Number(p.amount));
-  }
-  const methods = [...byMethod.entries()].sort((a, b) => b[1] - a[1]);
+  const queryWith = (patch: Record<string, string>) => {
+    const q = new URLSearchParams();
+    if (sp.intake) q.set("intake", sp.intake);
+    if (sp.class) q.set("class", sp.class);
+    if (sp.type) q.set("type", sp.type);
+    if (activeStatus !== "tous") q.set("filter", activeStatus);
+    for (const [k, v] of Object.entries(patch)) {
+      if (v) q.set(k, v);
+      else q.delete(k);
+    }
+    const s = q.toString();
+    return `/espace/finance${s ? `?${s}` : ""}`;
+  };
 
-  // Évolution des encaissements (12 derniers mois)
-  const now = new Date();
-  const months: { key: string; label: string; total: number }[] = [];
-  for (let i = 11; i >= 0; i--) {
-    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-    months.push({
-      key: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`,
-      label: d.toLocaleDateString("fr-FR", { month: "short" }),
-      total: 0,
-    });
-  }
-  const mIdx = new Map(months.map((m, i) => [m.key, i]));
-  for (const p of payments ?? []) {
-    const i = mIdx.get(String(p.paid_at).slice(0, 7));
-    if (i != null) months[i].total += Number(p.amount);
-  }
-  const maxMonth = Math.max(1, ...months.map((m) => m.total));
-  const monthlyTotal = months.reduce((a, m) => a + m.total, 0);
+  const exportColumns = [
+    "Étudiant", "Classe", "Rentrée", "Type", "Date inscription", "Inscription",
+    "Scolarité", "Réduction %", "Montant réduction", "Total dû", "Payé", "Reste",
+    "Prochaine échéance", "Statut", "Profil payeur",
+  ];
+  const exportRows = shown.map((r) => ({
+    "Étudiant": r.name,
+    "Classe": r.className,
+    "Rentrée": r.intake,
+    "Type": r.typeLabel,
+    "Date inscription": frDate(r.enrolledAt),
+    "Inscription": r.registrationFee,
+    "Scolarité": r.tuitionDue,
+    "Réduction %": Math.round(r.discountRate * 100),
+    "Montant réduction": r.discountAmount,
+    "Total dû": r.totalDue,
+    "Payé": r.paid,
+    "Reste": Math.max(0, r.balance),
+    "Prochaine échéance": r.nextDate ? `${frDate(r.nextDate)} (${r.nextAmount})` : "—",
+    "Statut": r.statusLabel,
+    "Profil payeur": r.payerNote,
+  }));
 
-  const shown = active === "tous" ? rows : rows.filter((r) => r.category === active);
-
-  const kpi = (label: string, value: string, cls = "text-ipmd-black") => (
-    <div className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-black/5">
-      <p className="text-[11px] font-semibold uppercase tracking-wider text-black/40">{label}</p>
-      <p className={`mt-1 text-xl font-extrabold ${cls}`}>{value}</p>
+  const stat = (label: string, value: string, cls = "text-ipmd-black") => (
+    <div className="rounded-xl bg-white p-3 shadow-sm ring-1 ring-black/5">
+      <p className="text-[10px] font-semibold uppercase tracking-wider text-black/40">{label}</p>
+      <p className={`mt-0.5 text-base font-extrabold ${cls}`}>{value}</p>
     </div>
   );
+
+  const filterSelect = "rounded-full border border-black/10 bg-white px-3 py-1.5 text-sm text-ipmd-black";
 
   return (
     <section className="min-h-[70vh] bg-ipmd-light">
       <Container className="py-12 sm:py-16">
-        <div className="mx-auto max-w-5xl">
+        <div className="mx-auto max-w-6xl">
           <Link href="/espace" className="text-sm font-semibold text-black/50 hover:text-ipmd-red print:hidden">
             ← Retour à l&apos;espace
           </Link>
@@ -184,149 +243,139 @@ export default async function FinancePage({
             <h1 className="text-2xl font-extrabold tracking-tight text-ipmd-black">Finance</h1>
             <div className="flex flex-wrap gap-2 print:hidden">
               <PrintButton />
-              <FinanceExportButton
-                rows={shown.map((r) => ({
-                  name: r.name,
-                  level: r.level,
-                  due: r.due,
-                  paid: r.paid,
-                  balance: r.balance,
-                  status: r.statusLabel,
-                  nextDue: r.nextDue,
-                }))}
-                filename={`finance-${active}.csv`}
-              />
-              <Link
-                href="/espace/finance/parametres"
-                className="inline-flex items-center gap-2 rounded-full bg-ipmd-light px-4 py-2 text-sm font-semibold text-ipmd-black ring-1 ring-black/10 transition-colors hover:ring-ipmd-red/40"
-              >
+              <FinanceExportButton rows={exportRows} columns={exportColumns} filename={`finance-${sp.intake || sp.type || activeStatus}.csv`} />
+              <Link href="/espace/finance/parametres" className="inline-flex items-center gap-2 rounded-full bg-ipmd-light px-4 py-2 text-sm font-semibold text-ipmd-black ring-1 ring-black/10 hover:ring-ipmd-red/40">
                 ⚙️ Paramètres
               </Link>
             </div>
           </div>
 
-          {/* KPIs */}
-          <div className="mt-6 grid gap-3 sm:grid-cols-3 lg:grid-cols-5">
-            {kpi("Total attendu", formatFCFA(totalDue))}
-            {kpi("Encaissé", formatFCFA(totalPaid), "text-green-600")}
-            {kpi("Reste à encaisser", formatFCFA(remaining), "text-ipmd-red")}
-            {kpi("Non à jour", String(counts.non_a_jour), "text-ipmd-red")}
-            {kpi("Soldés", String(counts.solde), "text-green-600")}
+          {/* Filtres cohorte (form GET) */}
+          <form className="mt-5 flex flex-wrap items-center gap-2 print:hidden">
+            {activeStatus !== "tous" && <input type="hidden" name="filter" value={activeStatus} />}
+            <span className="text-xs font-semibold uppercase tracking-wider text-black/40">Filtrer :</span>
+            <select name="intake" defaultValue={sp.intake ?? ""} className={filterSelect}>
+              <option value="">Toutes les rentrées</option>
+              {intakes.map((i) => (
+                <option key={i} value={i}>{i}</option>
+              ))}
+            </select>
+            <select name="class" defaultValue={sp.class ?? ""} className={filterSelect}>
+              <option value="">Toutes les classes</option>
+              {classOptions.map((co) => {
+                const [id, name] = co.split("|");
+                return <option key={id} value={id}>{name}</option>;
+              })}
+            </select>
+            <select name="type" defaultValue={sp.type ?? ""} className={filterSelect}>
+              <option value="">Tous les types</option>
+              {types.map((t) => (
+                <option key={t} value={t}>{CLASS_TYPE_LABEL[t]}</option>
+              ))}
+            </select>
+            <button type="submit" className="rounded-full bg-ipmd-red px-4 py-1.5 text-sm font-semibold text-white">
+              Appliquer
+            </button>
+            {(sp.intake || sp.class || sp.type) && (
+              <Link href={queryWith({ intake: "", class: "", type: "" })} className="text-sm font-semibold text-ipmd-red hover:underline">
+                Réinitialiser
+              </Link>
+            )}
+          </form>
+
+          {/* Récap détaillé (selon le filtre) */}
+          <div className="mt-4 grid gap-2 sm:grid-cols-3 lg:grid-cols-4">
+            {stat("Inscription attendue", formatFCFA(recap.inscription))}
+            {stat("Scolarité attendue (brut)", formatFCFA(recap.scolariteBrut))}
+            {stat("Réductions accordées", formatFCFA(recap.reductions), "text-amber-600")}
+            {stat("Total dû (après réduction)", formatFCFA(recap.duApres))}
+            {stat("Encaissé", formatFCFA(recap.encaisse), "text-green-600")}
+            {stat("Reste à encaisser", formatFCFA(recap.reste), "text-ipmd-red")}
+            {stat("Prochaine échéance (att.)", formatFCFA(recap.prochaine))}
+            {stat("Soldés", String(recap.soldes), "text-green-600")}
+            {stat("Non soldés", String(recap.nonSoldes))}
+            {stat("En retard", String(recap.retard), "text-ipmd-red")}
+            {stat("Avec échéancier", String(recap.echeancier))}
+            {stat("Étudiants (vue)", String(shown.length))}
           </div>
 
-          {/* Encaissements par mode */}
-          {methods.length > 0 && (
-            <div className="mt-4 rounded-2xl bg-white p-4 shadow-sm ring-1 ring-black/5">
-              <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-black/40">
-                Encaissements par mode
-              </p>
-              <div className="flex flex-wrap gap-2">
-                {methods.map(([m, v]) => (
-                  <span key={m} className="rounded-full bg-ipmd-light px-3 py-1.5 text-xs font-semibold text-black/70">
-                    {m} · <span className="text-ipmd-black">{formatFCFA(v)}</span>
-                  </span>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Évolution des encaissements */}
-          {monthlyTotal > 0 && (
-            <div className="mt-4 rounded-2xl bg-white p-5 shadow-sm ring-1 ring-black/5">
-              <p className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-black/40">
-                Encaissements — 12 derniers mois
-              </p>
-              <div className="flex h-32 items-end gap-1.5">
-                {months.map((m) => (
-                  <div key={m.key} className="flex h-full flex-1 flex-col items-center justify-end gap-1">
-                    <span className="text-[8px] font-semibold text-black/40">
-                      {m.total > 0 ? Math.round(m.total / 1000) + "k" : ""}
-                    </span>
-                    <div
-                      className="w-full rounded-t bg-ipmd-red/80"
-                      style={{
-                        height: `${Math.round((m.total / maxMonth) * 100)}%`,
-                        minHeight: m.total > 0 ? "3px" : "0",
-                      }}
-                      title={`${m.label} : ${formatFCFA(m.total)}`}
-                    />
-                    <span className="text-[9px] capitalize text-black/40">{m.label}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Filtres (états) */}
-          <div className="mt-6 flex flex-wrap gap-2 print:hidden">
-            {FILTERS.map((f) => (
+          {/* Filtres statut */}
+          <div className="mt-5 flex flex-wrap gap-2 print:hidden">
+            {STATUS_FILTERS.map((f) => (
               <Link
                 key={f.key}
-                href={`/espace/finance?filter=${f.key}`}
+                href={queryWith({ filter: f.key === "tous" ? "" : f.key })}
                 className={`rounded-full px-3 py-1.5 text-sm font-semibold transition-colors ${
-                  active === f.key
-                    ? "bg-ipmd-red text-white"
-                    : "bg-white text-black/60 ring-1 ring-black/10 hover:text-ipmd-red"
+                  activeStatus === f.key ? "bg-ipmd-red text-white" : "bg-white text-black/60 ring-1 ring-black/10 hover:text-ipmd-red"
                 }`}
               >
                 {f.label}
-                {f.key !== "tous" && f.key in counts
-                  ? ` (${counts[f.key as keyof typeof counts]})`
-                  : ""}
               </Link>
             ))}
           </div>
 
-          {/* Tableau / état */}
-          <div className="mt-4 overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-black/5">
-            <table className="w-full text-sm">
+          {/* Tableau détaillé */}
+          <div className="mt-4 overflow-x-auto rounded-2xl bg-white shadow-sm ring-1 ring-black/5">
+            <table className="w-full min-w-[1100px] text-[12px]">
               <thead>
-                <tr className="border-b border-black/10 bg-ipmd-light text-left text-xs uppercase tracking-wider text-black/45">
-                  <th className="px-4 py-3 font-semibold">Étudiant</th>
-                  <th className="px-4 py-3 font-semibold">Niveau</th>
-                  <th className="px-4 py-3 text-right font-semibold">Dû</th>
-                  <th className="px-4 py-3 text-right font-semibold">Payé</th>
-                  <th className="px-4 py-3 text-right font-semibold">Reste</th>
-                  <th className="px-4 py-3 font-semibold">Statut</th>
-                  <th className="px-4 py-3 font-semibold">Prochaine</th>
+                <tr className="border-b border-black/10 bg-ipmd-light text-left text-[10px] uppercase tracking-wider text-black/45">
+                  <th className="px-3 py-2 font-semibold">Étudiant</th>
+                  <th className="px-3 py-2 font-semibold">Classe</th>
+                  <th className="px-3 py-2 font-semibold">Rentrée</th>
+                  <th className="px-3 py-2 font-semibold">Type</th>
+                  <th className="px-3 py-2 font-semibold">Date inscr.</th>
+                  <th className="px-3 py-2 font-semibold">Inscription</th>
+                  <th className="px-3 py-2 font-semibold">Scolarité</th>
+                  <th className="px-3 py-2 font-semibold">Réduction</th>
+                  <th className="px-3 py-2 text-right font-semibold">Total dû</th>
+                  <th className="px-3 py-2 text-right font-semibold">Payé</th>
+                  <th className="px-3 py-2 text-right font-semibold">Reste</th>
+                  <th className="px-3 py-2 font-semibold">Prochaine éch.</th>
+                  <th className="px-3 py-2 font-semibold">Statut</th>
+                  <th className="px-3 py-2 font-semibold">Profil payeur</th>
                 </tr>
               </thead>
               <tbody>
                 {shown.length === 0 ? (
-                  <tr>
-                    <td colSpan={7} className="px-4 py-6 text-center text-black/45">
-                      Aucun étudiant dans cet état.
-                    </td>
-                  </tr>
+                  <tr><td colSpan={14} className="px-3 py-6 text-center text-black/45">Aucun étudiant dans cette sélection.</td></tr>
                 ) : (
                   shown.map((r) => (
-                    <tr key={r.id} className="border-t border-black/5 hover:bg-ipmd-light/50">
-                      <td className="px-4 py-3 font-medium text-ipmd-black">
-                        <Link href={`/espace/finance/${r.id}`} className="hover:text-ipmd-red">
-                          {r.name}
-                        </Link>
+                    <tr key={r.id} className="border-t border-black/5 hover:bg-ipmd-light/40">
+                      <td className="px-3 py-2 font-medium text-ipmd-black">
+                        <Link href={`/espace/finance/${r.id}`} className="hover:text-ipmd-red">{r.name}</Link>
                       </td>
-                      <td className="px-4 py-3 text-black/55">{r.level || "—"}</td>
-                      <td className="px-4 py-3 text-right text-black/70">{formatFCFA(r.due)}</td>
-                      <td className="px-4 py-3 text-right text-green-700">{formatFCFA(r.paid)}</td>
-                      <td className={`px-4 py-3 text-right font-semibold ${r.balance <= 0 ? "text-green-600" : "text-ipmd-red"}`}>
+                      <td className="px-3 py-2 text-black/60">{r.className}</td>
+                      <td className="px-3 py-2 text-black/60">{r.intake}</td>
+                      <td className="px-3 py-2 text-black/60">{r.typeLabel}</td>
+                      <td className="px-3 py-2 text-black/50">{frDate(r.enrolledAt)}</td>
+                      <td className="px-3 py-2 text-black/60">{formatFCFA(r.registrationFee)}</td>
+                      <td className="px-3 py-2 text-black/60">{formatFCFA(r.tuitionDue)}</td>
+                      <td className="px-3 py-2 text-amber-600">
+                        {r.discountRate > 0 ? `−${Math.round(r.discountRate * 100)}% (${r.discountAmount.toLocaleString("fr-FR")})` : "—"}
+                      </td>
+                      <td className="px-3 py-2 text-right font-semibold text-ipmd-black">{formatFCFA(r.totalDue)}</td>
+                      <td className="px-3 py-2 text-right text-green-700">{formatFCFA(r.paid)}</td>
+                      <td className={`px-3 py-2 text-right font-semibold ${r.balance <= 0 ? "text-green-600" : "text-ipmd-red"}`}>
                         {r.balance <= 0 ? "—" : formatFCFA(r.balance)}
                       </td>
-                      <td className="px-4 py-3">
-                        <span className={`rounded-full px-2.5 py-1 text-[11px] font-bold ${r.statusCls}`}>
-                          {r.statusLabel}
-                        </span>
+                      <td className="px-3 py-2 text-black/55">
+                        {r.nextDate ? `${frDate(r.nextDate)} · ${r.nextAmount.toLocaleString("fr-FR")}` : "—"}
                       </td>
-                      <td className="px-4 py-3 text-black/55">{r.nextDue}</td>
+                      <td className="px-3 py-2">
+                        <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${r.statusCls}`}>{r.statusLabel}</span>
+                      </td>
+                      <td className="px-3 py-2 text-black/55">{r.payerNote || "—"}</td>
                     </tr>
                   ))
                 )}
               </tbody>
             </table>
           </div>
-          <p className="mt-3 text-[11px] text-black/40 print:block">
-            État « {FILTERS.find((f) => f.key === active)?.label} » · {shown.length} étudiant(s) ·
-            IPMD — scolarite@ipmd.pro
+          <p className="mt-3 text-[11px] text-black/40">
+            {shown.length} étudiant(s) ·
+            {sp.intake ? ` Rentrée ${sp.intake} ·` : ""}
+            {sp.type ? ` ${CLASS_TYPE_LABEL[sp.type]} ·` : ""}
+            {" "}La réduction s&apos;applique uniquement sur la scolarité. IPMD — scolarite@ipmd.pro
           </p>
         </div>
       </Container>

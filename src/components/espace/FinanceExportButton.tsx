@@ -1,26 +1,19 @@
 "use client";
 
-type Row = {
-  name: string;
-  level: string;
-  due: number;
-  paid: number;
-  balance: number;
-  status: string;
-  nextDue: string;
-};
+type Row = Record<string, string | number>;
 
 export function FinanceExportButton({
   rows,
+  columns,
   filename,
 }: {
   rows: Row[];
+  columns: string[];
   filename: string;
 }) {
   const onClick = () => {
-    const header = ["Nom", "Niveau", "Dû", "Payé", "Reste", "Statut", "Prochaine échéance"];
-    const body = rows.map((r) => [r.name, r.level, r.due, r.paid, r.balance, r.status, r.nextDue]);
-    const csv = [header, ...body]
+    const body = rows.map((r) => columns.map((c) => r[c] ?? ""));
+    const csv = [columns, ...body]
       .map((row) => row.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(";"))
       .join("\n");
     const blob = new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8;" });

@@ -149,3 +149,15 @@ export function computeSchedule(
   const next = rows.find((r) => r.status !== "payee") ?? null;
   return { rows, next };
 }
+
+/** Profils payeur / commentaires de suivi (qualification de l'étudiant). */
+export const PAYER_NOTES = [
+  "Bon payeur",
+  "Payeur moyen",
+  "Mauvais payeur",
+  "Fiable",
+  "À relancer",
+  "Échéancier négocié",
+  "Cas sensible",
+  "Paiement en attente de preuve",
+];

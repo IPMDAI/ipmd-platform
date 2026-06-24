@@ -135,6 +135,7 @@ export async function setStudentAccess(
       student_id: studentId,
       status: str(formData, "status") || null,
       access_state: str(formData, "access_state") || "actif",
+      payer_note: str(formData, "payer_note") || null,
       negotiated: formData.get("negotiated") === "on",
       updated_at: new Date().toISOString(),
     },
