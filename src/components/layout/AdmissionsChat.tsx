@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { PhoneField } from "@/components/forms/PhoneField";
 import { captureChatLead } from "@/lib/prospect-actions";
@@ -181,6 +182,7 @@ export function AdmissionsChat() {
                 </button>
               )}
               <a href="https://wa.me/2250775758888" target="_blank" rel="noopener noreferrer" className="rounded-full bg-[#25D366]/10 px-2.5 py-1 font-semibold text-[#128C7E]">WhatsApp</a>
+              <Link href="/demande-info" className="rounded-full bg-ipmd-light px-2.5 py-1 font-semibold text-ipmd-black hover:bg-black/5">✉️ Demande d&apos;info</Link>
             </div>
             <form onSubmit={(e) => { e.preventDefault(); send(); }} className="flex items-end gap-2">
               <textarea
