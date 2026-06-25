@@ -1,5 +1,6 @@
 import { Hero } from "@/components/home/Hero";
 import { UniversesSection } from "@/components/home/UniversesSection";
+import { AiCarousel } from "@/components/home/AiCarousel";
 import { AiSection } from "@/components/home/AiSection";
 import { WhyIpmd } from "@/components/home/WhyIpmd";
 import { StudentLife } from "@/components/home/StudentLife";
@@ -14,6 +15,7 @@ export default function HomePage() {
     <>
       <Hero />
       <UniversesSection />
+      <AiCarousel />
       <AiSection />
       <WhyIpmd />
       <StudentLife />
