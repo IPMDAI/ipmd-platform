@@ -30,10 +30,8 @@ export function VideosBand() {
   const videos = getVideos();
   if (videos.length === 0) return null;
 
-  const single = videos.length === 1;
-  const layout = single
-    ? "mx-auto mt-10 max-w-4xl"
-    : `mt-10 grid gap-4 sm:gap-5 sm:grid-cols-2 ${videos.length >= 3 ? "lg:grid-cols-3" : ""}`;
+  // 1re vidéo (par nom) = grande, pleine largeur ; les suivantes en grille.
+  const [featured, ...rest] = videos;
 
   return (
     <Section variant="light">
@@ -42,19 +40,34 @@ export function VideosBand() {
         title="L'IPMD en mouvement"
         description="Cours, projets, vie de campus : découvrez l'ambiance et la pédagogie 80 % pratique de l'IPMD."
       />
-      <div className={layout}>
-        {videos.map((src) => (
-          <div key={src} className="overflow-hidden rounded-2xl bg-ipmd-black shadow-xl ring-1 ring-black/5">
-            <video
-              src={src}
-              controls
-              preload="metadata"
-              playsInline
-              className="aspect-video h-full w-full object-cover"
-            />
-          </div>
-        ))}
+
+      {/* Vidéo principale en grand */}
+      <div className="mt-10 overflow-hidden rounded-3xl bg-ipmd-black shadow-xl ring-1 ring-black/5">
+        <video
+          src={featured}
+          controls
+          preload="metadata"
+          playsInline
+          className="aspect-video h-full w-full object-cover"
+        />
       </div>
+
+      {/* Autres vidéos en grille */}
+      {rest.length > 0 && (
+        <div className={`mt-5 grid gap-4 sm:gap-5 sm:grid-cols-2 ${rest.length >= 3 ? "lg:grid-cols-3" : ""}`}>
+          {rest.map((src) => (
+            <div key={src} className="overflow-hidden rounded-2xl bg-ipmd-black shadow ring-1 ring-black/5">
+              <video
+                src={src}
+                controls
+                preload="metadata"
+                playsInline
+                className="aspect-video h-full w-full object-cover"
+              />
+            </div>
+          ))}
+        </div>
+      )}
     </Section>
   );
 }
