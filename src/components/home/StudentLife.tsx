@@ -1,34 +1,22 @@
-import fs from "node:fs";
-import path from "node:path";
 import Image from "next/image";
+import Link from "next/link";
 import { Section } from "@/components/ui/Section";
 import { SectionHeading } from "@/components/ui/SectionHeading";
+import { getGalleryImages } from "@/lib/gallery";
 
 /**
- * Galerie « La vie à l'IPMD » — photos réelles des étudiants.
+ * Galerie « La vie à l'IPMD » sur l'accueil — aperçu des meilleures photos.
+ * On n'affiche qu'un échantillon (HOME_MAX) pour garder l'accueil léger ;
+ * la galerie complète est sur la page /galerie.
  *
- * 👉 Pour ajouter des photos : déposez simplement vos images (jpg/png/webp)
- *    dans le dossier `public/galerie/`. Elles apparaissent automatiquement,
- *    triées par nom de fichier. Aucun code à modifier.
- *
- * Si le dossier est vide ou absent, la section ne s'affiche pas.
+ * 👉 Pour ajouter des photos : déposez vos images dans `public/galerie/`.
  */
-function getGalleryImages(): string[] {
-  try {
-    const dir = path.join(process.cwd(), "public", "galerie");
-    return fs
-      .readdirSync(dir)
-      .filter((f) => /\.(jpe?g|png|webp|avif)$/i.test(f))
-      .sort()
-      .map((f) => `/galerie/${encodeURIComponent(f)}`);
-  } catch {
-    return [];
-  }
-}
+const HOME_MAX = 8;
 
 export function StudentLife() {
-  const images = getGalleryImages();
-  if (images.length === 0) return null;
+  const all = getGalleryImages("galerie");
+  if (all.length === 0) return null;
+  const images = all.slice(0, HOME_MAX);
 
   return (
     <Section variant="white">
@@ -53,6 +41,16 @@ export function StudentLife() {
             />
           </div>
         ))}
+      </div>
+
+      <div className="mt-8 text-center">
+        <Link
+          href="/galerie"
+          className="inline-flex items-center gap-2 rounded-full bg-ipmd-black px-6 py-3 text-sm font-bold text-white transition-colors hover:bg-ipmd-red"
+        >
+          Voir toute la galerie
+          <span aria-hidden>→</span>
+        </Link>
       </div>
     </Section>
   );
