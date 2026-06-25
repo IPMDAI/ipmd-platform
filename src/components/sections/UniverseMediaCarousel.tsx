@@ -1,22 +1,42 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 export type CarouselMedia = { src: string; type: "image" | "video" };
 
+const AUTOPLAY_MS = 3000; // défilement automatique toutes les 3 s
+
 /**
  * Carrousel du grand média en haut des pages d'univers.
- * Fait défiler vidéos et images (flèches + pastilles). Une seule diapo à la fois :
- * changer de diapo démonte la vidéo précédente (donc elle s'arrête).
+ * Défile automatiquement (3 s), en pause quand une vidéo joue ou au survol.
+ * Une seule diapo à la fois : changer de diapo arrête la vidéo précédente.
  */
 export function UniverseMediaCarousel({ media }: { media: CarouselMedia[] }) {
   const [index, setIndex] = useState(0);
+  const [videoPlaying, setVideoPlaying] = useState(false);
+  const [hovering, setHovering] = useState(false);
   const count = media.length;
-  const go = (delta: number) => setIndex((i) => (i + delta + count) % count);
   const current = media[index];
 
+  const goTo = (k: number) => {
+    setVideoPlaying(false);
+    setIndex(((k % count) + count) % count);
+  };
+  const go = (delta: number) => goTo(index + delta);
+
+  // Défilement automatique (sauf vidéo en lecture ou survol).
+  useEffect(() => {
+    if (count <= 1 || videoPlaying || hovering) return;
+    const t = setInterval(() => setIndex((i) => (i + 1) % count), AUTOPLAY_MS);
+    return () => clearInterval(t);
+  }, [count, videoPlaying, hovering, index]);
+
   return (
-    <div className="relative overflow-hidden rounded-3xl bg-ipmd-black shadow-xl ring-1 ring-black/5">
+    <div
+      className="relative overflow-hidden rounded-3xl bg-ipmd-black shadow-xl ring-1 ring-black/5"
+      onMouseEnter={() => setHovering(true)}
+      onMouseLeave={() => setHovering(false)}
+    >
       <div className="aspect-video w-full">
         {current.type === "video" ? (
           <video
@@ -26,6 +46,9 @@ export function UniverseMediaCarousel({ media }: { media: CarouselMedia[] }) {
             preload="metadata"
             playsInline
             className="h-full w-full object-contain"
+            onPlay={() => setVideoPlaying(true)}
+            onPause={() => setVideoPlaying(false)}
+            onEnded={() => { setVideoPlaying(false); setIndex((i) => (i + 1) % count); }}
           />
         ) : (
           // eslint-disable-next-line @next/next/no-img-element
@@ -57,7 +80,7 @@ export function UniverseMediaCarousel({ media }: { media: CarouselMedia[] }) {
               <button
                 key={m.src}
                 type="button"
-                onClick={() => setIndex(k)}
+                onClick={() => goTo(k)}
                 aria-label={`Aller au média ${k + 1}`}
                 className={`h-2.5 w-2.5 rounded-full transition ${k === index ? "bg-ipmd-red" : "bg-white/60 hover:bg-white"}`}
               />
