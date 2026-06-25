@@ -1,6 +1,7 @@
 import { Section } from "@/components/ui/Section";
 import { Reveal } from "@/components/ui/Reveal";
 import { PageHero } from "@/components/sections/PageHero";
+import { UniverseVideo } from "@/components/sections/UniverseVideo";
 import { CtaBanner } from "@/components/sections/CtaBanner";
 import { ProgramCard } from "@/components/cards/ProgramCard";
 import { BootcampCard } from "@/components/cards/BootcampCard";
@@ -50,6 +51,9 @@ export function UniverseShowcase({ universeId }: { universeId: UniverseId }) {
           )}
         </div>
       </PageHero>
+
+      {/* Grande vidéo de présentation (si une vidéo est déposée pour cet univers) */}
+      <UniverseVideo universeId={universeId} />
 
       {/* Public visé */}
       <Section variant="white">
