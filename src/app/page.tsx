@@ -33,6 +33,13 @@ export default function HomePage() {
         title="Nos professionnels en formation"
         description="Cadres et professionnels en activité qui montent en compétences à l'IPMD (cours du soir, formation continue, certifications)."
       />
+      <MediaGallery
+        dir="galerie-entreprises"
+        variant="light"
+        eyebrow="Formation en entreprise"
+        title="Entreprises & organisations formées"
+        description="Des entreprises et organisations qui ont formé leurs équipes aux métiers du digital et de l'IA avec l'IPMD."
+      />
       <VideosBand />
       <PartnersBand />
       <CtaBanner
