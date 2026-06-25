@@ -78,7 +78,7 @@ export function UniverseShowcase({ universeId }: { universeId: UniverseId }) {
       </Section>
 
       {/* Programmes ou bootcamps */}
-      <Section variant="light">
+      <Section variant="light" id="formations">
         <h2 className="text-2xl font-extrabold tracking-tight text-ipmd-black sm:text-3xl">
           {isDiploma ? "Nos formations diplômantes" : "Nos bootcamps certifiants"}
         </h2>
