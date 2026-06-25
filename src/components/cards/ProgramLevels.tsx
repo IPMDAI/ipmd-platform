@@ -172,18 +172,6 @@ export function ProgramLevels({ programTitle, detail }: ProgramLevelsProps) {
               </ul>
             </div>
 
-            <div className="rounded-2xl bg-ipmd-light p-4">
-              <p className="text-sm font-bold text-ipmd-black">
-                💳 Frais de scolarité
-              </p>
-              <ul className="mt-2 space-y-1.5">
-                {detail.admission.fees.map((fee) => (
-                  <li key={fee} className="text-sm text-black/75">
-                    • {fee}
-                  </li>
-                ))}
-              </ul>
-            </div>
           </div>
         ) : (
           <p className="text-sm text-black/70">
