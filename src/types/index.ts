@@ -81,6 +81,8 @@ export interface Program {
   /** Mot-clé de domaine, ex. « Marketing », « Développement ». */
   field: string;
   icon: string;
+  /** Image d'illustration spécifique (sinon image par domaine). */
+  image?: string;
 }
 
 // ──────────────────────────────────────────────────────────────

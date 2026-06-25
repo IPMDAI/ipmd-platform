@@ -19,6 +19,7 @@ export const programs: Program[] = [
   },
   {
     id: "campus-communication",
+    image: "/IPMD%20Campus%202024-42.png",
     universe: "campus",
     title: "Communication digitale",
     description:
@@ -30,6 +31,7 @@ export const programs: Program[] = [
   },
   {
     id: "campus-design",
+    image: "/IPMD%20Campus%202024-52.png",
     universe: "campus",
     title: "Graphisme & Design",
     description:
@@ -63,6 +65,7 @@ export const programs: Program[] = [
   },
   {
     id: "campus-ia",
+    image: "/Visuel%20UltraBoost%2C-17.png",
     universe: "campus",
     title: "Informatique & intelligence artificielle",
     description:
@@ -74,6 +77,7 @@ export const programs: Program[] = [
   },
   {
     id: "campus-management",
+    image: "/IPMD%20Campus%202024-1%20(4).png",
     universe: "campus",
     title: "Management de projet digital",
     description:
@@ -85,6 +89,7 @@ export const programs: Program[] = [
   },
   {
     id: "campus-finance",
+    image: "/IPMD%20Campus%202024-57.png",
     universe: "campus",
     title: "Comptabilité & finance digitale",
     description:

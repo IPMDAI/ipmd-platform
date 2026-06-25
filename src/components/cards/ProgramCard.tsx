@@ -3,6 +3,7 @@ import type { Program } from "@/types";
 import { getProgramImage } from "@/data/programs";
 import { getProgramDetail } from "@/data/programDetails";
 import { ProgramLevels } from "@/components/cards/ProgramLevels";
+import { ProgramDescription } from "@/components/cards/ProgramDescription";
 
 /** Carte d'un programme diplômant. */
 export function ProgramCard({ program }: { program: Program }) {
@@ -13,7 +14,7 @@ export function ProgramCard({ program }: { program: Program }) {
       {/* Image d'illustration */}
       <div className="relative aspect-[16/9] overflow-hidden">
         <Image
-          src={getProgramImage(program.field)}
+          src={program.image ?? getProgramImage(program.field)}
           alt={program.title}
           fill
           sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
@@ -31,9 +32,9 @@ export function ProgramCard({ program }: { program: Program }) {
       {/* Contenu */}
       <div className="flex flex-1 flex-col p-6">
         <h3 className="text-lg font-bold text-ipmd-black">{program.title}</h3>
-        <p className="mt-2 flex-1 whitespace-pre-line text-sm leading-relaxed text-black/60">
-          {program.description}
-        </p>
+        <div className="mt-2 flex flex-1 flex-col">
+          <ProgramDescription title={program.title} description={program.description} />
+        </div>
 
         <div className="mt-4 border-t border-black/5 pt-4">
           <p className="text-[11px] font-bold uppercase tracking-wide text-black/40">
