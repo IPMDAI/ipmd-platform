@@ -31,7 +31,7 @@ export const programs: Program[] = [
   },
   {
     id: "campus-design",
-    image: "/IPMD%20Campus%202024-52.png",
+    image: "/IPMD%20Campus%202024-60.png",
     universe: "campus",
     title: "Graphisme & Design",
     description:
