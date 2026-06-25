@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { Section } from "@/components/ui/Section";
+import { UniverseMediaCarousel } from "@/components/sections/UniverseMediaCarousel";
 
 /**
  * Grand média (vidéo OU image) en haut d'une page d'univers (sous le hero).
@@ -42,47 +43,9 @@ export function UniverseVideo({ universeId }: { universeId: string }) {
   const media = getMedia(`videos-${universeId}`);
   if (media.length === 0) return null;
 
-  const [featured, ...rest] = media;
-
   return (
     <Section variant="white">
-      {/* Média principal en grand */}
-      <div className="overflow-hidden rounded-3xl bg-ipmd-black shadow-xl ring-1 ring-black/5">
-        {featured.type === "video" ? (
-          <video
-            src={featured.src}
-            controls
-            preload="metadata"
-            playsInline
-            className="aspect-video h-full w-full object-cover"
-          />
-        ) : (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={featured.src} alt="" className="h-auto w-full" />
-        )}
-      </div>
-
-      {/* Médias suivants en grille */}
-      {rest.length > 0 && (
-        <div className={`mt-5 grid gap-4 sm:grid-cols-2 ${rest.length >= 3 ? "lg:grid-cols-3" : ""}`}>
-          {rest.map((m) => (
-            <div key={m.src} className="overflow-hidden rounded-2xl bg-ipmd-black shadow ring-1 ring-black/5">
-              {m.type === "video" ? (
-                <video
-                  src={m.src}
-                  controls
-                  preload="metadata"
-                  playsInline
-                  className="aspect-video h-full w-full object-cover"
-                />
-              ) : (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={m.src} alt="" className="aspect-video h-full w-full object-cover" />
-              )}
-            </div>
-          ))}
-        </div>
-      )}
+      <UniverseMediaCarousel media={media} />
     </Section>
   );
 }
