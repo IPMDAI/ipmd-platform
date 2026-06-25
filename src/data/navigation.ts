@@ -45,6 +45,7 @@ export const footerNav = {
     { label: "Admission", href: "/admission" },
     { label: "Toutes les formations", href: "/formations" },
     { label: "Nos partenaires", href: "/partenaires" },
+    { label: "Tableau d'honneur", href: "/distingues" },
     { label: "Enseigner à l'IPMD", href: "/recrutement" },
     { label: "Contact", href: "/contact" },
   ] satisfies NavItem[],
