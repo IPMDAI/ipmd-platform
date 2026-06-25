@@ -8,6 +8,7 @@ export const programs: Program[] = [
   // ── IPMD Campus — Licence, Bachelor, Master ─────────────────
   {
     id: "campus-marketing",
+    image: "/IPMD_Campus%20Marketing.png",
     universe: "campus",
     title: "Marketing digital",
     description:
