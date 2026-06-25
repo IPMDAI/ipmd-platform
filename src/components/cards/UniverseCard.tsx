@@ -29,9 +29,14 @@ export function UniverseCard({ universe }: { universe: Universe }) {
         <span className="absolute left-4 top-4 flex h-11 w-11 items-center justify-center rounded-2xl bg-white/90 text-xl shadow-sm backdrop-blur">
           {universe.icon}
         </span>
-        <span className="absolute right-4 top-4">
+        <div className="absolute right-4 top-4 flex flex-col items-end gap-2">
           <Badge tone="red">{isDiploma ? "Diplômes" : "Certificats"}</Badge>
-        </span>
+          {isDiploma && (
+            <span className="rounded-full bg-ipmd-red px-3 py-1 text-center text-[11px] font-bold leading-tight text-white shadow-md">
+              Rentrée<br />6 octobre 2026
+            </span>
+          )}
+        </div>
       </Link>
 
       {/* Contenu */}
