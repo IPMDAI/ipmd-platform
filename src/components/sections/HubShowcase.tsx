@@ -1,14 +1,19 @@
+import Image from "next/image";
 import { Section } from "@/components/ui/Section";
 import { Reveal } from "@/components/ui/Reveal";
 import { PageHero } from "@/components/sections/PageHero";
 import { CtaBanner } from "@/components/sections/CtaBanner";
 import { Button } from "@/components/ui/Button";
 import { getHub } from "@/data/ecosystem";
+import { getGalleryImages } from "@/lib/gallery";
 
-/** Page d'un pôle de l'écosystème IPMD (SeniorsHub, Hub, Skills). */
+/** Page d'un pôle de l'écosystème IPMD (SeniorsHub, Hub, Skills, Entreprise). */
 export function HubShowcase({ hubId }: { hubId: string }) {
   const hub = getHub(hubId);
   if (!hub) return null;
+
+  // Photos optionnelles : public/galerie-<hubId>/ (ex. galerie-seniorshub).
+  const photos = getGalleryImages(`galerie-${hubId}`);
 
   return (
     <>
@@ -49,6 +54,31 @@ export function HubShowcase({ hubId }: { hubId: string }) {
           ))}
         </div>
       </Section>
+
+      {photos.length > 0 && (
+        <Section variant="light">
+          <h2 className="text-2xl font-extrabold tracking-tight text-ipmd-black sm:text-3xl">
+            {hub.name} en images
+          </h2>
+          <div className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4">
+            {photos.map((src, i) => (
+              <div
+                key={src}
+                className="group relative aspect-square overflow-hidden rounded-2xl bg-white ring-1 ring-black/5"
+              >
+                <Image
+                  src={src}
+                  alt={`${hub.name} — en images`}
+                  fill
+                  sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                  className="object-cover transition-transform duration-500 group-hover:scale-105"
+                  priority={i < 4}
+                />
+              </div>
+            ))}
+          </div>
+        </Section>
+      )}
 
       <CtaBanner
         title={`Intéressé par ${hub.name} ?`}
