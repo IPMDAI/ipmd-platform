@@ -173,4 +173,8 @@ export interface NavItem {
   href: string;
   /** Sous-liens (menu déroulant). */
   children?: NavItem[];
+  /** Courte description affichée sous le libellé (menu déroulant). */
+  description?: string;
+  /** Intitulé de groupe (non cliquable) à l'intérieur d'un menu déroulant. */
+  heading?: boolean;
 }

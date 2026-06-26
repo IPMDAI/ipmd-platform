@@ -59,16 +59,28 @@ export function Header({ isAuthenticated = false }: { isAuthenticated?: boolean 
                     ▾
                   </span>
                 </Link>
-                <div className="invisible absolute left-0 top-full w-60 translate-y-2 rounded-2xl border border-black/5 bg-white p-2 opacity-0 shadow-xl transition-all group-hover:visible group-hover:translate-y-0 group-hover:opacity-100">
-                  {item.children.map((child) => (
-                    <Link
-                      key={child.href}
-                      href={child.href}
-                      className="block rounded-xl px-3 py-2 text-sm font-medium text-ipmd-black/80 transition-colors hover:bg-ipmd-light hover:text-ipmd-red"
-                    >
-                      {child.label}
-                    </Link>
-                  ))}
+                <div className="invisible absolute left-0 top-full w-72 translate-y-2 rounded-2xl border border-black/5 bg-white p-2 opacity-0 shadow-xl transition-all group-hover:visible group-hover:translate-y-0 group-hover:opacity-100">
+                  {item.children.map((child, ci) =>
+                    child.heading ? (
+                      <p
+                        key={`${child.label}-${ci}`}
+                        className={`px-3 pb-1 text-[11px] font-bold uppercase tracking-wide text-ipmd-red ${ci > 0 ? "mt-2 border-t border-black/5 pt-2" : "pt-1"}`}
+                      >
+                        {child.label}
+                      </p>
+                    ) : (
+                      <Link
+                        key={child.href}
+                        href={child.href}
+                        className="block rounded-xl px-3 py-2 transition-colors hover:bg-ipmd-light"
+                      >
+                        <span className="block text-sm font-semibold text-ipmd-black/90">{child.label}</span>
+                        {child.description && (
+                          <span className="block text-xs text-black/50">{child.description}</span>
+                        )}
+                      </Link>
+                    )
+                  )}
                 </div>
               </div>
             ) : (
@@ -159,15 +171,20 @@ export function Header({ isAuthenticated = false }: { isAuthenticated?: boolean 
                 </Link>
                 {item.children && (
                   <div className="ml-3 border-l border-black/10 pl-3">
-                    {item.children.map((child) => (
-                      <Link
-                        key={child.href}
-                        href={child.href}
-                        className="block rounded-lg px-3 py-2 text-sm font-medium text-ipmd-black/70"
-                      >
-                        {child.label}
-                      </Link>
-                    ))}
+                    {item.children.map((child, ci) =>
+                      child.heading ? (
+                        <p key={`${child.label}-${ci}`} className="px-3 pb-0.5 pt-2 text-[11px] font-bold uppercase tracking-wide text-ipmd-red">
+                          {child.label}
+                        </p>
+                      ) : (
+                        <Link key={child.href} href={child.href} className="block rounded-lg px-3 py-2">
+                          <span className="block text-sm font-semibold text-ipmd-black/80">{child.label}</span>
+                          {child.description && (
+                            <span className="block text-xs text-black/50">{child.description}</span>
+                          )}
+                        </Link>
+                      )
+                    )}
                   </div>
                 )}
               </div>
