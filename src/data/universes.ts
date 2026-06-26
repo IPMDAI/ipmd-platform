@@ -110,7 +110,7 @@ export const universes: Universe[] = [
     credentials: ["Bootcamps certifiants"],
     href: "/seniorshub",
     icon: "🌟",
-    image: "/IPMD-Pro.png",
+    image: "/galerie-reconversion/SeniorsHub0.jpg",
     badge: "Certificats",
     simple: true,
   },
