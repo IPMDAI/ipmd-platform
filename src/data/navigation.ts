@@ -15,6 +15,15 @@ export const mainNav: NavItem[] = [
       { label: "UltraExecutive", href: "/ultraexecutive" },
     ],
   },
+  {
+    label: "Écosystème",
+    href: "/seniorshub",
+    children: [
+      { label: "SeniorsHub — Bootcamps IA", href: "/seniorshub" },
+      { label: "Hub — Recherche & incubation", href: "/hub" },
+      { label: "Skills — Insertion & emploi", href: "/skills" },
+    ],
+  },
   { label: "Scolarité", href: "/scolarite" },
   {
     label: "Admission",
