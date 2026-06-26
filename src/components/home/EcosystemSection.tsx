@@ -4,17 +4,20 @@ import { SectionHeading } from "@/components/ui/SectionHeading";
 import { Reveal } from "@/components/ui/Reveal";
 import { hubs } from "@/data/ecosystem";
 
-/** Section « Notre écosystème » : SeniorsHub, Hub, Skills (au-delà des 6 univers). */
+// SeniorsHub et Entreprise sont désormais des univers à part entière (section « Nos 8 univers »).
+const ECOSYSTEM = hubs.filter((h) => h.id !== "seniorshub" && h.id !== "entreprise");
+
+/** Section « Notre écosystème » : Hub & Skills (au-delà des univers). */
 export function EcosystemSection() {
   return (
     <Section variant="white">
       <SectionHeading
-        eyebrow="Au-delà des diplômes"
+        eyebrow="Au-delà des formations"
         title="Notre écosystème"
-        description="Bootcamps, innovation et insertion professionnelle : l'IPMD vous accompagne bien au-delà de la formation."
+        description="Innovation, recherche et insertion professionnelle : l'IPMD vous accompagne bien au-delà de la formation."
       />
       <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        {hubs.map((hub, i) => (
+        {ECOSYSTEM.map((hub, i) => (
           <Reveal key={hub.id} delay={i * 60}>
             <Link
               href={hub.href}

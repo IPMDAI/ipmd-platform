@@ -98,6 +98,38 @@ export const universes: Universe[] = [
     icon: "👑",
     image: "/UltraExecutive.png",
   },
+  {
+    id: "seniorshub",
+    name: "SeniorsHub",
+    tagline: "Bootcamps certifiants — IA & e-business",
+    description:
+      "Bootcamps intensifs et 100 % pratiques, certifiants, pour les adultes et professionnels qui veulent monter en compétences à l'ère de l'IA : IA & e-business, digitalisation des compétences, IA.",
+    kind: "certificat",
+    audience: "Adultes, professionnels et personnes en reconversion",
+    target: "Adultes & Professionnels",
+    credentials: ["Bootcamps certifiants"],
+    href: "/seniorshub",
+    icon: "🚀",
+    image: "/UltraBoost.png",
+    badge: "Certificats",
+    simple: true,
+  },
+  {
+    id: "entreprise",
+    name: "Entreprise / Organisation",
+    tagline: "Former, recruter, collaborer",
+    description:
+      "L'offre IPMD pour les entreprises et organisations : former vos équipes aux métiers du digital et de l'IA, recruter des talents et nouer des partenariats.",
+    kind: "service",
+    audience: "Entreprises, organisations, institutions et partenaires",
+    target: "Entreprises & Organisations",
+    credentials: ["Formation", "Recrutement", "Partenariat"],
+    href: "/entreprise",
+    icon: "🏢",
+    image: "/galerie-entreprises/Image%20A.jpg",
+    badge: "Entreprises",
+    simple: true,
+  },
 ];
 
 export const getUniverse = (id: string): Universe | undefined =>

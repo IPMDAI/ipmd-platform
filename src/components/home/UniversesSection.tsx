@@ -9,12 +9,13 @@ export function UniversesSection() {
   const ordered = [
     ...universes.filter((u) => u.kind === "diplome"),
     ...universes.filter((u) => u.kind === "certificat"),
+    ...universes.filter((u) => u.kind === "service"),
   ];
 
   return (
     <Section id="univers" variant="light">
       <SectionHeading
-        eyebrow="Nos 6 univers"
+        eyebrow="Nos 8 univers"
         title="80 % de pratique, l'IA au cœur de nos formations."
         description="Du bachelier au dirigeant, des formations et bootcamps pratiques à l'ère de l'IA*"
         titleClassName="lg:whitespace-nowrap"

@@ -75,4 +75,24 @@ export const hubs: Hub[] = [
   },
 ];
 
+// Pôle « Entreprise / Organisation » — affiché comme 8e univers, page dédiée /entreprise.
+hubs.push({
+  id: "entreprise",
+  href: "/entreprise",
+  name: "Entreprise / Organisation",
+  eyebrow: "Entreprises & organisations",
+  tagline: "Former · Recruter · Collaborer",
+  description:
+    "L'IPMD accompagne les entreprises et organisations : formez vos équipes aux métiers du digital et de l'IA, recrutez des talents et nouez des partenariats.",
+  icon: "🏢",
+  badge: "Entreprises",
+  items: [
+    { title: "Former vos équipes", description: "Formations et bootcamps sur mesure en digital, IA, data, management… pour vos collaborateurs." },
+    { title: "Recruter des talents", description: "Accédez à nos étudiants et diplômés via le pôle IPMD Skills (stage, emploi, présélection)." },
+    { title: "Sessions de recrutement", description: "Organisation de journées et campagnes de recrutement avec vos équipes RH." },
+    { title: "Partenariat & collaboration", description: "Projets communs, interventions d'experts, accueil de stagiaires, innovation avec IPMD Hub." },
+  ],
+  cta: { label: "Devenir partenaire", href: "/contact" },
+});
+
 export const getHub = (id: string): Hub | undefined => hubs.find((h) => h.id === id);

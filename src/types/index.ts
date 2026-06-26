@@ -11,17 +11,19 @@
 // Univers & navigation
 // ──────────────────────────────────────────────────────────────
 
-/** Identifiant stable de chacun des 6 grands univers IPMD. */
+/** Identifiant stable de chacun des grands univers IPMD. */
 export type UniverseId =
   | "campus"
   | "ultrajobs"
   | "professionnel"
   | "ultraboost"
   | "gouvernance"
-  | "ultraexecutive";
+  | "ultraexecutive"
+  | "seniorshub"
+  | "entreprise";
 
-/** Nature pédagogique d'un univers. */
-export type UniverseKind = "diplome" | "certificat";
+/** Nature d'un univers : diplômant, certifiant, ou pôle de services. */
+export type UniverseKind = "diplome" | "certificat" | "service";
 
 export interface Universe {
   id: UniverseId;
@@ -46,6 +48,10 @@ export interface Universe {
   icon: string;
   /** Image d'illustration de la carte (URL ou chemin /public). */
   image: string;
+  /** Badge personnalisé (sinon déduit du `kind`). */
+  badge?: string;
+  /** Carte simplifiée (sans boutons formation/admission) pour les pôles de services. */
+  simple?: boolean;
 }
 
 // ──────────────────────────────────────────────────────────────

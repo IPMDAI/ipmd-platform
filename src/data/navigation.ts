@@ -13,13 +13,14 @@ export const mainNav: NavItem[] = [
       { label: "UltraBoost", href: "/ultraboost" },
       { label: "IPMD Executive", href: "/gouvernance" },
       { label: "UltraExecutive", href: "/ultraexecutive" },
+      { label: "SeniorsHub", href: "/seniorshub" },
+      { label: "Entreprise / Organisation", href: "/entreprise" },
     ],
   },
   {
     label: "Écosystème",
-    href: "/seniorshub",
+    href: "/hub",
     children: [
-      { label: "SeniorsHub — Bootcamps IA", href: "/seniorshub" },
       { label: "Hub — Recherche & incubation", href: "/hub" },
       { label: "Skills — Insertion & emploi", href: "/skills" },
     ],

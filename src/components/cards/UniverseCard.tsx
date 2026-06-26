@@ -7,6 +7,8 @@ import { Badge } from "@/components/ui/Badge";
 export function UniverseCard({ universe }: { universe: Universe }) {
   const isDiploma = universe.kind === "diplome";
   const admissionHref = isDiploma ? "/admission" : `/inscription-bootcamp?u=${universe.id}`;
+  const badgeLabel =
+    universe.badge ?? (isDiploma ? "Diplômes" : universe.kind === "certificat" ? "Certificats" : "Pôle");
 
   const quickLinks = [
     { label: "📚 Formations", href: `${universe.href}#formations` },
@@ -30,7 +32,7 @@ export function UniverseCard({ universe }: { universe: Universe }) {
           {universe.icon}
         </span>
         <div className="absolute right-4 top-4 flex flex-col items-end gap-2">
-          <Badge tone="red">{isDiploma ? "Diplômes" : "Certificats"}</Badge>
+          <Badge tone="red">{badgeLabel}</Badge>
           {isDiploma && (
             <span className="rounded-full bg-ipmd-red px-3 py-1 text-center text-[11px] font-bold leading-tight text-white shadow-md">
               Rentrée<br />6 octobre 2026
@@ -59,35 +61,48 @@ export function UniverseCard({ universe }: { universe: Universe }) {
           ))}
         </div>
 
-        {/* Boutons d'accès rapides */}
-        <div className="mt-5 flex flex-wrap gap-2">
-          {quickLinks.map((l) => (
+        {universe.simple ? (
+          /* Pôle de services : carte simplifiée */
+          <Link
+            href={universe.href}
+            className="mt-5 inline-flex items-center justify-center gap-2 rounded-full bg-ipmd-red px-5 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-ipmd-red/90"
+          >
+            Découvrir cet univers
+            <span className="transition-transform group-hover:translate-x-1">→</span>
+          </Link>
+        ) : (
+          <>
+            {/* Boutons d'accès rapides */}
+            <div className="mt-5 flex flex-wrap gap-2">
+              {quickLinks.map((l) => (
+                <Link
+                  key={l.href}
+                  href={l.href}
+                  className="rounded-full bg-ipmd-light px-3 py-1.5 text-xs font-semibold text-ipmd-black ring-1 ring-black/5 transition-colors hover:bg-ipmd-red hover:text-white"
+                >
+                  {l.label}
+                </Link>
+              ))}
+            </div>
+
+            {/* Bouton principal */}
             <Link
-              key={l.href}
-              href={l.href}
-              className="rounded-full bg-ipmd-light px-3 py-1.5 text-xs font-semibold text-ipmd-black ring-1 ring-black/5 transition-colors hover:bg-ipmd-red hover:text-white"
+              href={admissionHref}
+              className="mt-4 inline-flex items-center justify-center rounded-full bg-ipmd-red px-5 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-ipmd-red/90"
             >
-              {l.label}
+              Demander une admission
             </Link>
-          ))}
-        </div>
 
-        {/* Bouton principal */}
-        <Link
-          href={admissionHref}
-          className="mt-4 inline-flex items-center justify-center rounded-full bg-ipmd-red px-5 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-ipmd-red/90"
-        >
-          Demander une admission
-        </Link>
-
-        {/* Consulter tout l'univers */}
-        <Link
-          href={universe.href}
-          className="mt-3 inline-flex items-center justify-center gap-1 text-sm font-semibold text-ipmd-black transition-colors hover:text-ipmd-red"
-        >
-          Consulter tout cet univers
-          <span className="transition-transform group-hover:translate-x-1">→</span>
-        </Link>
+            {/* Consulter tout l'univers */}
+            <Link
+              href={universe.href}
+              className="mt-3 inline-flex items-center justify-center gap-1 text-sm font-semibold text-ipmd-black transition-colors hover:text-ipmd-red"
+            >
+              Consulter tout cet univers
+              <span className="transition-transform group-hover:translate-x-1">→</span>
+            </Link>
+          </>
+        )}
       </div>
     </div>
   );
