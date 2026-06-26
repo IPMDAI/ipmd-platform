@@ -17,6 +17,11 @@ export function HubShowcase({ hubId }: { hubId: string }) {
         title={hub.name}
         description={hub.description}
       >
+        {hub.badge && (
+          <span className="mb-4 inline-block rounded-full bg-ipmd-red px-4 py-1.5 text-sm font-bold uppercase tracking-wide text-white">
+            {hub.badge}
+          </span>
+        )}
         <div className="mt-2">
           <Button href={hub.cta.href}>{hub.cta.label}</Button>
         </div>

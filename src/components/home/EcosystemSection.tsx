@@ -20,9 +20,16 @@ export function EcosystemSection() {
               href={hub.href}
               className="group flex h-full flex-col rounded-3xl border border-black/5 bg-ipmd-light p-7 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-ipmd-red/20 hover:shadow-xl"
             >
-              <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white text-2xl shadow-sm">
-                {hub.icon}
-              </span>
+              <div className="flex items-center justify-between">
+                <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white text-2xl shadow-sm">
+                  {hub.icon}
+                </span>
+                {hub.badge && (
+                  <span className="rounded-full bg-ipmd-red px-3 py-1 text-[11px] font-bold uppercase tracking-wide text-white">
+                    {hub.badge}
+                  </span>
+                )}
+              </div>
               <h3 className="mt-4 text-xl font-extrabold tracking-tight text-ipmd-black">
                 {hub.name}
               </h3>

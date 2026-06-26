@@ -14,6 +14,8 @@ export type Hub = {
   description: string;
   icon: string;
   items: HubItem[];
+  /** Badge optionnel (ex. « Certificats »). */
+  badge?: string;
   /** Bouton d'action principal. */
   cta: { label: string; href: string };
 };
@@ -24,10 +26,11 @@ export const hubs: Hub[] = [
     href: "/seniorshub",
     name: "SeniorsHub",
     eyebrow: "Bootcamps & montée en compétences",
-    tagline: "Bootcamps IA pour adultes & professionnels",
+    tagline: "Bootcamps certifiants IA pour adultes & professionnels",
     description:
-      "Des bootcamps intensifs et 100 % pratiques pour monter en compétences à l'ère de l'IA, quel que soit votre parcours.",
+      "Des bootcamps intensifs et 100 % pratiques, certifiants, pour monter en compétences à l'ère de l'IA, quel que soit votre parcours.",
     icon: "🚀",
+    badge: "Certificats",
     items: [
       { title: "Bootcamp IA & e-business", description: "Maîtriser l'intelligence artificielle et le business en ligne." },
       { title: "Bootcamps digitalisation des compétences", description: "Digitaliser et moderniser vos compétences métiers." },
