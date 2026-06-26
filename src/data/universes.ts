@@ -101,12 +101,12 @@ export const universes: Universe[] = [
   {
     id: "seniorshub",
     name: "SeniorsHub",
-    tagline: "Bootcamps seniors — valoriser & monétiser son expertise",
+    tagline: "Bootcamps certifiants — IA, digital & valorisation d'expertise",
     description:
-      "Pour les seniors, retraités ou proches de la retraite : apprendre le digital, l'IA et l'e-business, et valoriser, digitaliser et monétiser leurs compétences et leur expertise dans le numérique et l'innovation.",
+      "Pour les seniors, retraités et professionnels expérimentés qui souhaitent apprendre le digital, l'intelligence artificielle et l'e-business, afin de valoriser, transmettre et monétiser leur expertise.",
     kind: "certificat",
-    audience: "Seniors, retraités et personnes proches de la retraite",
-    target: "Seniors & Retraités",
+    audience: "Seniors, retraités et professionnels expérimentés",
+    target: "Seniors & Professionnels expérimentés",
     credentials: ["Bootcamps certifiants"],
     href: "/seniorshub",
     icon: "🌟",

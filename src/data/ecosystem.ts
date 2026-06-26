@@ -25,10 +25,10 @@ export const hubs: Hub[] = [
     id: "seniorshub",
     href: "/seniorshub",
     name: "SeniorsHub",
-    eyebrow: "Bootcamps seniors — digital, IA & e-business",
-    tagline: "Valoriser, digitaliser et monétiser l'expertise des seniors",
+    eyebrow: "Bootcamps certifiants — IA, digital & valorisation d'expertise",
+    tagline: "Valoriser, transmettre et monétiser l'expertise des seniors & professionnels expérimentés",
     description:
-      "SeniorsHub s'adresse aux seniors, retraités ou proches de la retraite, qui veulent apprendre le digital, l'IA et l'e-business, et valoriser leurs compétences et leur expertise dans le numérique et l'innovation pour mieux les monétiser.",
+      "SeniorsHub s'adresse aux seniors, retraités et professionnels expérimentés qui souhaitent apprendre le digital, l'intelligence artificielle et l'e-business, afin de valoriser, transmettre et monétiser leur expertise.",
     icon: "🌟",
     badge: "Certificats",
     items: [
