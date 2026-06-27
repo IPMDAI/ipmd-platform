@@ -91,9 +91,14 @@ export async function submitInscription(
     };
   }
 
+  // CV (bootcamps) : n'ajouter la colonne que si présente, pour rester compatible
+  // même si la migration candidature-cv.sql n'a pas encore été exécutée.
+  const docCv = getString(formData, "docCvPath");
+  const insertData = docCv ? { ...payload, doc_cv: docCv } : payload;
+
   // Insertion (les pièces sont déjà uploadées côté navigateur ; on ne stocke
   // que leurs chemins → corps léger, pas de relecture RLS nécessaire).
-  const { error } = await supabase.from("inscription_requests").insert(payload);
+  const { error } = await supabase.from("inscription_requests").insert(insertData);
   if (error) {
     return { ok: false, message: "Une erreur est survenue. Merci de réessayer." };
   }

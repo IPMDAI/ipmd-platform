@@ -43,7 +43,7 @@ export default async function CandidaturesPage({
     supabase
       .from("inscription_requests")
       .select(
-        "id, full_name, email, phone, whatsapp, universe, program_interest, entry_level, last_education, last_diploma, message, created_at, status, desired_role, doc_diploma, doc_bulletins, doc_id, doc_attestation"
+        "id, full_name, email, phone, whatsapp, universe, program_interest, entry_level, last_education, last_diploma, message, created_at, status, desired_role, doc_diploma, doc_bulletins, doc_id, doc_attestation, doc_cv"
       )
       .order("created_at", { ascending: false }),
     supabase.from("classes").select("id, name").order("name"),
@@ -80,6 +80,7 @@ export default async function CandidaturesPage({
         ...(c.doc_bulletins ? c.doc_bulletins.split(",") : []),
         c.doc_id,
         c.doc_attestation,
+        c.doc_cv,
       ])
       .filter(Boolean) as string[];
     if (paths.length > 0) {
@@ -230,6 +231,7 @@ export default async function CandidaturesPage({
 
                   {(() => {
                     const links: { label: string; path: string }[] = [];
+                    if (c.doc_cv) links.push({ label: "CV", path: c.doc_cv });
                     if (c.doc_diploma) links.push({ label: "Diplôme", path: c.doc_diploma });
                     if (c.doc_bulletins) {
                       const ps: string[] = c.doc_bulletins.split(",");
