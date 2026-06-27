@@ -69,18 +69,25 @@ export async function createClasse(
   if (!name) return { ok: false, message: "Le nom de la classe est requis." };
   const tuitionRaw = str(formData, "tuition_amount").replace(",", ".");
   const tuition = tuitionRaw ? Number.parseFloat(tuitionRaw) : null;
+  const regRaw = str(formData, "registration_fee").replace(",", ".");
+  const regFee = regRaw ? Number.parseFloat(regRaw) : null;
+  const inst = Number.parseInt(str(formData, "installments"), 10);
   const { error } = await ctx.supabase.from("classes").insert({
     name,
     filiere_id: str(formData, "filiere_id") || null,
     level: str(formData, "level") || null,
     academic_year: str(formData, "academic_year") || null,
     intake: str(formData, "intake") || null,
+    kind: str(formData, "kind") === "bootcamp" ? "bootcamp" : "diplome",
     class_type: str(formData, "class_type") || null,
     partner_name: str(formData, "partner_name") || null,
     start_date: str(formData, "start_date") || null,
     end_date: str(formData, "end_date") || null,
     payment_regime: str(formData, "payment_regime") || null,
     tuition_amount: tuition != null && !Number.isNaN(tuition) ? tuition : null,
+    registration_fee: regFee != null && !Number.isNaN(regFee) ? regFee : null,
+    installments: Number.isNaN(inst) || inst < 1 ? 1 : Math.min(inst, 5),
+    mode: str(formData, "mode") || null,
   });
   if (error) return { ok: false, message: error.message };
   revalidatePath("/espace/classes");

@@ -14,6 +14,7 @@ import {
   classTypeBadge,
   CLASS_TYPE_LABEL,
   PAYMENT_REGIME_LABEL,
+  FORMATION_MODE_LABEL,
 } from "@/lib/academic";
 import {
   deleteFiliere,
@@ -49,7 +50,7 @@ export default async function ClassesPage() {
     supabase.from("filieres").select("id, name, status").order("name"),
     supabase
       .from("classes")
-      .select("id, name, level, academic_year, filiere_id, intake, class_type, partner_name, start_date, end_date, payment_regime, tuition_amount")
+      .select("id, name, level, academic_year, filiere_id, intake, class_type, partner_name, start_date, end_date, payment_regime, tuition_amount, kind, mode")
       .order("name"),
     supabase
       .from("profiles")
@@ -192,9 +193,19 @@ export default async function ClassesPage() {
                       <div className="min-w-0 flex-1 space-y-0.5">
                         <div className="flex flex-wrap items-center gap-2">
                           <p className="font-semibold text-ipmd-black">{c.name}</p>
+                          {c.kind === "bootcamp" && (
+                            <span className="rounded-full bg-ipmd-red px-2 py-0.5 text-[10px] font-bold text-white">
+                              📜 Bootcamp
+                            </span>
+                          )}
                           {c.class_type && (
                             <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${classTypeBadge(c.class_type)}`}>
                               {CLASS_TYPE_LABEL[c.class_type] ?? c.class_type}
+                            </span>
+                          )}
+                          {c.mode && (
+                            <span className="rounded-full bg-black/5 px-2 py-0.5 text-[10px] font-bold text-black/55">
+                              {FORMATION_MODE_LABEL[c.mode] ?? c.mode}
                             </span>
                           )}
                         </div>

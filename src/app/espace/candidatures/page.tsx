@@ -46,10 +46,21 @@ export default async function CandidaturesPage({
         "id, full_name, email, phone, whatsapp, universe, program_interest, entry_level, last_education, last_diploma, message, created_at, status, desired_role, doc_diploma, doc_bulletins, doc_id, doc_attestation, doc_cv"
       )
       .order("created_at", { ascending: false }),
-    supabase.from("classes").select("id, name").order("name"),
+    supabase
+      .from("classes")
+      .select("id, name, kind, tuition_amount, registration_fee, installments, mode")
+      .order("name"),
     supabase.from("tuition_levels").select("level, amount").order("sort_order"),
   ]);
-  const classes = (classRows ?? []).map((c) => ({ id: c.id, name: c.name }));
+  const classes = (classRows ?? []).map((c) => ({
+    id: c.id,
+    name: c.name,
+    kind: (c.kind as string) ?? "diplome",
+    tuition_amount: c.tuition_amount != null ? Number(c.tuition_amount) : null,
+    registration_fee: c.registration_fee != null ? Number(c.registration_fee) : null,
+    installments: c.installments != null ? Number(c.installments) : 1,
+    mode: (c.mode as string) ?? null,
+  }));
   const levels = (levelRows ?? []).map((l) => ({
     level: l.level,
     amount: Number(l.amount ?? 0),
@@ -358,6 +369,7 @@ export default async function CandidaturesPage({
                     <CandidatureInvite
                       candidatureId={c.id}
                       defaultRole={c.desired_role || roleForUniverse(c.universe)}
+                      isBootcamp={typeOf(c.universe) === "bootcamp"}
                       classes={classes}
                       levels={levels}
                       registrationFee={registrationFee}

@@ -61,6 +61,30 @@ export function classTypeBadge(type: string | null): string {
   }
 }
 
+/** Nature d'une classe : cursus diplômant ou session bootcamp. */
+export const CLASS_KINDS = [
+  { value: "diplome", label: "Diplôme (cursus)" },
+  { value: "bootcamp", label: "Bootcamp (session)" },
+] as const;
+
+export const CLASS_KIND_LABEL: Record<string, string> = Object.fromEntries(
+  CLASS_KINDS.map((k) => [k.value, k.label])
+);
+
+/** Mode de formation. */
+export const FORMATION_MODES = [
+  { value: "presentiel", label: "Présentiel" },
+  { value: "distance", label: "À distance" },
+  { value: "hybride", label: "Hybride" },
+] as const;
+
+export const FORMATION_MODE_LABEL: Record<string, string> = Object.fromEntries(
+  FORMATION_MODES.map((m) => [m.value, m.label])
+);
+
+/** Nombre de versements autorisés (1 à 5). */
+export const INSTALLMENT_OPTIONS = [1, 2, 3, 4, 5] as const;
+
 /** Régimes de paiement. */
 export const PAYMENT_REGIMES = [
   { value: "classique", label: "Paiement classique" },

@@ -9,7 +9,7 @@ import {
 import { Field, inputBase } from "@/components/forms/FormField";
 import { ActionButton } from "@/components/ui/Button";
 import { NIVEAUX } from "@/lib/referentiel";
-import { CLASS_TYPES, PAYMENT_REGIMES } from "@/lib/academic";
+import { CLASS_TYPES, PAYMENT_REGIMES, CLASS_KINDS, FORMATION_MODES, INSTALLMENT_OPTIONS } from "@/lib/academic";
 import type { FormResult } from "@/types";
 
 function Feedback({ state }: { state: FormResult | null }) {
@@ -121,6 +121,28 @@ export function NewClasseForm({
       </div>
 
       <div className="grid grid-cols-2 gap-3">
+        <Field label="Nature" htmlFor="c-kind">
+          <select id="c-kind" name="kind" defaultValue="diplome" className={inputBase}>
+            {CLASS_KINDS.map((k) => (
+              <option key={k.value} value={k.value}>
+                {k.label}
+              </option>
+            ))}
+          </select>
+        </Field>
+        <Field label="Mode" htmlFor="c-mode">
+          <select id="c-mode" name="mode" defaultValue="" className={inputBase}>
+            <option value="">—</option>
+            {FORMATION_MODES.map((m) => (
+              <option key={m.value} value={m.value}>
+                {m.label}
+              </option>
+            ))}
+          </select>
+        </Field>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3">
         <Field label="Rentrée / session" htmlFor="c-intake">
           <input id="c-intake" name="intake" placeholder="Ex. Octobre 2025" className={inputBase} />
         </Field>
@@ -157,8 +179,23 @@ export function NewClasseForm({
             ))}
           </select>
         </Field>
-        <Field label="Tarif spécifique (FCFA, optionnel)" htmlFor="c-tuition">
+        <Field label="Tarif scolarité (FCFA, optionnel)" htmlFor="c-tuition">
           <input id="c-tuition" name="tuition_amount" type="number" min="0" placeholder="sinon tarif du niveau" className={inputBase} />
+        </Field>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3">
+        <Field label="Frais d'inscription (FCFA — bootcamp : 0 si aucun)" htmlFor="c-reg">
+          <input id="c-reg" name="registration_fee" type="number" min="0" placeholder="sinon frais global" className={inputBase} />
+        </Field>
+        <Field label="Paiement en (versements)" htmlFor="c-inst">
+          <select id="c-inst" name="installments" defaultValue="1" className={inputBase}>
+            {INSTALLMENT_OPTIONS.map((n) => (
+              <option key={n} value={n}>
+                {n} fois
+              </option>
+            ))}
+          </select>
         </Field>
       </div>
 

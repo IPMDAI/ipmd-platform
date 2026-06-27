@@ -202,31 +202,41 @@ export async function inviteFromCandidature(
         ? ctx.supabase.from("tuition_levels").select("amount").eq("level", level).maybeSingle()
         : Promise.resolve({ data: null }),
       classId
-        ? ctx.supabase.from("classes").select("tuition_amount").eq("id", classId).maybeSingle()
+        ? ctx.supabase
+            .from("classes")
+            .select("tuition_amount, registration_fee, installments, mode")
+            .eq("id", classId)
+            .maybeSingle()
         : Promise.resolve({ data: null }),
     ]);
-    const registrationFee = Number(settings?.registration_fee ?? 300000);
-    // Tarif de la classe (Pro/Partenaire) prioritaire s'il est défini, sinon tarif du niveau.
-    const classTuition = classRes?.data?.tuition_amount;
+    const cls = classRes?.data as
+      | { tuition_amount: number | null; registration_fee: number | null; installments: number | null; mode: string | null }
+      | null;
+    const globalReg = Number(settings?.registration_fee ?? 300000);
+    // Frais d'inscription propres à la session (bootcamp) prioritaires, sinon frais global.
+    const registrationFee = cls?.registration_fee != null ? Number(cls.registration_fee) : globalReg;
+    // Tarif de la classe/session prioritaire s'il est défini, sinon tarif du niveau.
+    const classTuition = cls?.tuition_amount;
     const tuitionDue =
       classTuition != null ? Number(classTuition) : Number(lvlRes?.data?.amount ?? 0);
     const totalDue = registrationFee + tuitionDue;
 
-    await ctx.supabase.from("student_finance").upsert(
-      {
-        student_id: newId,
-        registration_fee: registrationFee,
-        tuition_due: tuitionDue,
-        discount_rate: 0,
-        level: level || null,
-        academic_year: settings?.academic_year ?? null,
-        total_due: totalDue,
-        // Accès en pause tant que les frais d'inscription ne sont pas réglés.
-        access_state: "pause",
-        updated_at: new Date().toISOString(),
-      },
-      { onConflict: "student_id" }
-    );
+    const financeRow: Record<string, unknown> = {
+      student_id: newId,
+      registration_fee: registrationFee,
+      tuition_due: tuitionDue,
+      discount_rate: 0,
+      level: level || null,
+      academic_year: settings?.academic_year ?? null,
+      total_due: totalDue,
+      // Accès en pause tant que les frais d'inscription ne sont pas réglés.
+      access_state: "pause",
+      updated_at: new Date().toISOString(),
+    };
+    if (cls?.installments != null) financeRow.installments = Number(cls.installments);
+    if (cls?.mode) financeRow.mode = cls.mode;
+
+    await ctx.supabase.from("student_finance").upsert(financeRow, { onConflict: "student_id" });
 
     const rows = buildRows([
       ["Formation", cand.program_interest || "—"],
