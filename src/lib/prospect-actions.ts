@@ -45,7 +45,7 @@ export async function submitProspect(
     return { ok: false, message: "Merci de remplir tous les champs du formulaire." };
   }
 
-  const { error } = await supabase.from("prospects").insert({
+  const row: Record<string, unknown> = {
     full_name: fullName,
     email,
     phone,
@@ -56,7 +56,10 @@ export async function submitProspect(
     message,
     source: "site",
     status: "nouveau",
-  });
+  };
+  const universe = str(formData, "universe");
+  if (universe) row.universe = universe;
+  const { error } = await supabase.from("prospects").insert(row);
   if (error) return { ok: false, message: error.message };
   return { ok: true, message: "Merci ! Votre demande a bien été reçue. L'équipe des admissions vous recontactera très vite." };
 }
@@ -97,7 +100,7 @@ export async function addProspect(
   if (!ctx) return { ok: false, message: "Réservé à l'administration." };
   const fullName = str(formData, "full_name");
   if (!fullName) return { ok: false, message: "Le nom est requis." };
-  const { error } = await ctx.supabase.from("prospects").insert({
+  const row: Record<string, unknown> = {
     full_name: fullName,
     email: str(formData, "email") || null,
     phone: str(formData, "phone") || null,
@@ -108,7 +111,10 @@ export async function addProspect(
     message: str(formData, "message") || null,
     source: str(formData, "source") || "manuel",
     status: "nouveau",
-  });
+  };
+  const universe = str(formData, "universe");
+  if (universe) row.universe = universe;
+  const { error } = await ctx.supabase.from("prospects").insert(row);
   if (error) return { ok: false, message: error.message };
   revalidatePath("/espace/marketing");
   return { ok: true, message: "Prospect ajouté." };
@@ -138,18 +144,21 @@ export async function updateProspect(
   if (!ctx) return { ok: false, message: "Réservé à l'administration." };
   const fullName = str(formData, "full_name");
   if (!fullName) return { ok: false, message: "Le nom est requis." };
+  const upd: Record<string, unknown> = {
+    full_name: fullName,
+    email: str(formData, "email") || null,
+    phone: str(formData, "phone") || null,
+    whatsapp: str(formData, "whatsapp") || str(formData, "phone") || null,
+    program_interest: str(formData, "program_interest") || null,
+    level_interest: str(formData, "level_interest") || null,
+    format: str(formData, "format") || null,
+    updated_at: new Date().toISOString(),
+  };
+  const universe = str(formData, "universe");
+  if (universe) upd.universe = universe;
   const { error } = await ctx.supabase
     .from("prospects")
-    .update({
-      full_name: fullName,
-      email: str(formData, "email") || null,
-      phone: str(formData, "phone") || null,
-      whatsapp: str(formData, "whatsapp") || str(formData, "phone") || null,
-      program_interest: str(formData, "program_interest") || null,
-      level_interest: str(formData, "level_interest") || null,
-      format: str(formData, "format") || null,
-      updated_at: new Date().toISOString(),
-    })
+    .update(upd)
     .eq("id", prospectId);
   if (error) return { ok: false, message: error.message };
   revalidatePath("/espace/marketing");
@@ -230,7 +239,7 @@ export async function convertProspectToCandidature(prospectId: string): Promise<
     full_name: p.full_name,
     email: p.email,
     phone: p.phone || p.whatsapp || "—",
-    universe: "campus",
+    universe: p.universe || "campus",
     program_interest: p.program_interest || null,
     entry_level: p.level_interest || null,
     message: p.message || null,

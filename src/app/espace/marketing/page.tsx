@@ -6,15 +6,22 @@ import { Container } from "@/components/ui/Container";
 import { AddProspectForm } from "@/components/espace/AddProspectForm";
 import { ProspectRow, type Prospect } from "@/components/espace/ProspectRow";
 import { PROSPECT_STATUS, PROSPECT_STATUS_LIST } from "@/lib/prospect";
+import { universes } from "@/data/universes";
 
 export const metadata: Metadata = { title: "Marketing / Prospects" };
 
 const STAFF = ["super_admin", "admin", "scolarite"];
+const universeNames: Record<string, string> = Object.fromEntries(universes.map((u) => [u.id, u.name]));
+const kindById: Record<string, string> = Object.fromEntries(universes.map((u) => [u.id, u.kind]));
+const typeOf = (uId: string | null | undefined) => {
+  const k = uId ? kindById[uId] : undefined;
+  return k === "diplome" ? "diplome" : k === "certificat" ? "bootcamp" : "autre";
+};
 
 export default async function MarketingPage({
   searchParams,
 }: {
-  searchParams: Promise<{ status?: string }>;
+  searchParams: Promise<{ status?: string; type?: string; universe?: string }>;
 }) {
   const sp = await searchParams;
   const { supabase, userId } = await requireUser();
@@ -23,7 +30,7 @@ export default async function MarketingPage({
 
   const { data } = await supabase
     .from("prospects")
-    .select("id, full_name, email, phone, whatsapp, program_interest, level_interest, format, source, message, status, note, created_at")
+    .select("id, full_name, email, phone, whatsapp, universe, program_interest, level_interest, format, source, message, status, note, created_at")
     .order("created_at", { ascending: false });
   const all = (data ?? []) as Prospect[];
 
@@ -33,10 +40,35 @@ export default async function MarketingPage({
   const inscrits = countBy["inscrit"] ?? 0;
   const conv = total > 0 ? Math.round((inscrits / total) * 100) : 0;
 
-  const active = sp.status && PROSPECT_STATUS[sp.status] ? sp.status : "tous";
-  const shown = active === "tous" ? all : all.filter((p) => p.status === active);
+  // Filtres type (diplôme/bootcamp) + univers, combinables avec le statut.
+  const activeType = sp.type === "diplome" || sp.type === "bootcamp" ? sp.type : "";
+  const activeUniv = sp.universe && universeNames[sp.universe] ? sp.universe : "";
+  const diplomeCount = all.filter((p) => typeOf(p.universe) === "diplome").length;
+  const bootcampCount = all.filter((p) => typeOf(p.universe) === "bootcamp").length;
+  const countByUniv: Record<string, number> = {};
+  for (const p of all) if (p.universe) countByUniv[p.universe] = (countByUniv[p.universe] ?? 0) + 1;
+  const filterUniverses = universes.filter(
+    (u) => (u.kind === "diplome" || u.kind === "certificat") && (!activeType || typeOf(u.id) === activeType)
+  );
 
-  const q = (s: string) => (s === "tous" ? "/espace/marketing" : `/espace/marketing?status=${s}`);
+  const active = sp.status && PROSPECT_STATUS[sp.status] ? sp.status : "tous";
+  const shown = all.filter(
+    (p) =>
+      (active === "tous" || p.status === active) &&
+      (!activeType || typeOf(p.universe) === activeType) &&
+      (!activeUniv || p.universe === activeUniv)
+  );
+
+  const buildHref = (o: { status?: string; type?: string; universe?: string }) => {
+    const m = { status: active === "tous" ? "" : active, type: activeType, universe: activeUniv, ...o };
+    const qs = new URLSearchParams();
+    if (m.status) qs.set("status", m.status);
+    if (m.type) qs.set("type", m.type);
+    if (m.universe) qs.set("universe", m.universe);
+    const s = qs.toString();
+    return s ? `/espace/marketing?${s}` : "/espace/marketing";
+  };
+  const q = (s: string) => buildHref({ status: s === "tous" ? "" : s });
 
   return (
     <section className="min-h-[70vh] bg-ipmd-light">
@@ -74,8 +106,24 @@ export default async function MarketingPage({
             <AddProspectForm />
           </div>
 
-          {/* Filtres pipeline */}
+          {/* Filtre type : Diplômes vs Bootcamps */}
           <div className="mt-6 flex flex-wrap gap-2">
+            <Link href={buildHref({ type: "", universe: "" })} className={`rounded-full px-3 py-1.5 text-sm font-semibold ${!activeType ? "bg-ipmd-black text-white" : "bg-white text-black/60 ring-1 ring-black/10 hover:text-ipmd-red"}`}>Tout</Link>
+            <Link href={buildHref({ type: "diplome", universe: "" })} className={`rounded-full px-3 py-1.5 text-sm font-semibold ${activeType === "diplome" ? "bg-ipmd-black text-white" : "bg-white text-black/60 ring-1 ring-black/10 hover:text-ipmd-red"}`}>🎓 Diplômes {diplomeCount}</Link>
+            <Link href={buildHref({ type: "bootcamp", universe: "" })} className={`rounded-full px-3 py-1.5 text-sm font-semibold ${activeType === "bootcamp" ? "bg-ipmd-black text-white" : "bg-white text-black/60 ring-1 ring-black/10 hover:text-ipmd-red"}`}>📜 Bootcamps {bootcampCount}</Link>
+          </div>
+          {/* Filtre univers */}
+          <div className="mt-2 flex flex-wrap gap-2">
+            <Link href={buildHref({ universe: "" })} className={`rounded-full px-3 py-1.5 text-sm font-semibold ${!activeUniv ? "bg-ipmd-black text-white" : "bg-white text-black/60 ring-1 ring-black/10 hover:text-ipmd-red"}`}>Tous les univers</Link>
+            {filterUniverses.map((u) => (
+              <Link key={u.id} href={buildHref({ universe: u.id })} className={`rounded-full px-3 py-1.5 text-sm font-semibold ${activeUniv === u.id ? "bg-ipmd-black text-white" : "bg-white text-black/60 ring-1 ring-black/10 hover:text-ipmd-red"}`}>
+                {u.name} {countByUniv[u.id] ?? 0}
+              </Link>
+            ))}
+          </div>
+
+          {/* Filtres pipeline */}
+          <div className="mt-3 flex flex-wrap gap-2 border-t border-black/5 pt-3">
             <Link href={q("tous")} className={`rounded-full px-3 py-1.5 text-sm font-semibold ${active === "tous" ? "bg-ipmd-red text-white" : "bg-white text-black/60 ring-1 ring-black/10 hover:text-ipmd-red"}`}>
               Tous ({total})
             </Link>

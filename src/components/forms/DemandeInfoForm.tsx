@@ -7,7 +7,10 @@ import { PhoneField } from "@/components/forms/PhoneField";
 import { ActionButton } from "@/components/ui/Button";
 import { NIVEAUX, IPMD_FILIERES } from "@/lib/referentiel";
 import { PROSPECT_FORMATS } from "@/lib/prospect";
+import { universes } from "@/data/universes";
 import type { FormResult } from "@/types";
+
+const DI_UNIVERSES = universes.filter((u) => u.kind === "diplome" || u.kind === "certificat");
 
 export function DemandeInfoForm() {
   const [state, action, pending] = useActionState<FormResult | null, FormData>(submitProspect, null);
@@ -45,6 +48,14 @@ export function DemandeInfoForm() {
       </div>
       <Field label="Téléphone / WhatsApp" htmlFor="di-phone" required>
         <PhoneField id="di-phone" name="phone" required />
+      </Field>
+      <Field label="Univers visé (optionnel)" htmlFor="di-univ">
+        <select id="di-univ" name="universe" defaultValue="" className={inputBase}>
+          <option value="">— Je ne sais pas encore —</option>
+          {DI_UNIVERSES.map((u) => (
+            <option key={u.id} value={u.id}>{u.name}</option>
+          ))}
+        </select>
       </Field>
       <div className="grid gap-4 sm:grid-cols-2">
         <Field label="Programme qui vous intéresse" htmlFor="di-prog" required>

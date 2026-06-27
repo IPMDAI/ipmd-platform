@@ -14,8 +14,13 @@ import {
 } from "@/lib/prospect-actions";
 import { NIVEAUX } from "@/lib/referentiel";
 import { PROSPECT_STATUS, PROSPECT_STATUS_LIST, PROSPECT_FORMATS, FORMAT_LABEL } from "@/lib/prospect";
-import { Field, inputBase } from "@/components/forms/FormField";
+import { inputBase } from "@/components/forms/FormField";
+import { universes } from "@/data/universes";
 import type { FormResult } from "@/types";
+
+const PROSPECT_UNIVERSES = universes.filter((u) => u.kind === "diplome" || u.kind === "certificat");
+const universeName: Record<string, string> = Object.fromEntries(universes.map((u) => [u.id, u.name]));
+const universeKind: Record<string, string> = Object.fromEntries(universes.map((u) => [u.id, u.kind]));
 
 export type Prospect = {
   id: string;
@@ -23,6 +28,7 @@ export type Prospect = {
   email: string | null;
   phone: string | null;
   whatsapp: string | null;
+  universe: string | null;
   program_interest: string | null;
   level_interest: string | null;
   format: string | null;
@@ -58,6 +64,18 @@ export function ProspectRow({ p }: { p: Prospect }) {
           <p className="text-xs text-black/55">
             {[p.email, p.phone || p.whatsapp].filter(Boolean).join(" · ") || "—"}
           </p>
+          {p.universe && (
+            <div className="mt-1 flex flex-wrap gap-1.5">
+              {universeKind[p.universe] === "certificat" ? (
+                <span className="rounded-full bg-ipmd-red px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white">📜 Bootcamp</span>
+              ) : universeKind[p.universe] === "diplome" ? (
+                <span className="rounded-full bg-emerald-600 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white">🎓 Diplôme</span>
+              ) : null}
+              <span className="rounded-full bg-ipmd-black px-2 py-0.5 text-[10px] font-semibold text-white">
+                {universeName[p.universe] ?? p.universe}
+              </span>
+            </div>
+          )}
           <p className="mt-0.5 text-xs text-black/45">
             {[p.program_interest, p.level_interest, p.format ? FORMAT_LABEL[p.format] ?? p.format : null]
               .filter(Boolean)
@@ -182,6 +200,12 @@ export function ProspectRow({ p }: { p: Prospect }) {
           <input name="email" type="email" defaultValue={p.email ?? ""} placeholder="Email" className={inputBase} />
           <input name="phone" defaultValue={p.phone ?? ""} placeholder="Téléphone" className={inputBase} />
           <input name="whatsapp" defaultValue={p.whatsapp ?? ""} placeholder="WhatsApp" className={inputBase} />
+          <select name="universe" defaultValue={p.universe ?? ""} className={inputBase}>
+            <option value="">Univers —</option>
+            {PROSPECT_UNIVERSES.map((u) => (
+              <option key={u.id} value={u.id}>{u.name}</option>
+            ))}
+          </select>
           <input name="program_interest" defaultValue={p.program_interest ?? ""} placeholder="Programme" className={inputBase} />
           <select name="level_interest" defaultValue={p.level_interest ?? ""} className={inputBase}>
             <option value="">Niveau —</option>

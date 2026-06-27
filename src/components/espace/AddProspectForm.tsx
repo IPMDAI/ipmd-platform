@@ -6,7 +6,10 @@ import { Field, inputBase } from "@/components/forms/FormField";
 import { ActionButton } from "@/components/ui/Button";
 import { NIVEAUX } from "@/lib/referentiel";
 import { PROSPECT_FORMATS, PROSPECT_SOURCES } from "@/lib/prospect";
+import { universes } from "@/data/universes";
 import type { FormResult } from "@/types";
+
+const PROSPECT_UNIVERSES = universes.filter((u) => u.kind === "diplome" || u.kind === "certificat");
 
 export function AddProspectForm() {
   const [state, action, pending] = useActionState<FormResult | null, FormData>(addProspect, null);
@@ -29,6 +32,12 @@ export function AddProspectForm() {
           </Field>
           <Field label="WhatsApp" htmlFor="ap-wa">
             <input id="ap-wa" name="whatsapp" placeholder="+225 07…" className={inputBase} />
+          </Field>
+          <Field label="Univers visé" htmlFor="ap-univ">
+            <select id="ap-univ" name="universe" defaultValue="" className={inputBase}>
+              <option value="">—</option>
+              {PROSPECT_UNIVERSES.map((u) => <option key={u.id} value={u.id}>{u.name}</option>)}
+            </select>
           </Field>
           <Field label="Programme visé" htmlFor="ap-prog">
             <input id="ap-prog" name="program_interest" placeholder="Master Communication digitale" className={inputBase} />
