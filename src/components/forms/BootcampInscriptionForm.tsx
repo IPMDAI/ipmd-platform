@@ -4,6 +4,7 @@ import { useState, type FormEvent } from "react";
 import { submitInscription } from "@/lib/actions";
 import { createClient } from "@/lib/supabase/client";
 import { universes } from "@/data/universes";
+import { FORMATION_MODES } from "@/lib/academic";
 import { ActionButton } from "@/components/ui/Button";
 import { Field, inputBase } from "./FormField";
 import { PhoneField } from "./PhoneField";
@@ -143,6 +144,17 @@ export function BootcampInscriptionForm({
             <input id="programInterest" name="programInterest" type="text" required placeholder="Ex. IA générative, Community management…" className={inputBase} />
           </Field>
         </div>
+
+        <Field label="Mode souhaité" htmlFor="mode">
+          <select id="mode" name="mode" defaultValue="" className={inputBase}>
+            <option value="">— Indifférent —</option>
+            {FORMATION_MODES.map((m) => (
+              <option key={m.value} value={m.value}>
+                {m.label}
+              </option>
+            ))}
+          </select>
+        </Field>
 
         <fieldset className="rounded-2xl border border-black/10 p-4">
           <legend className="px-2 text-xs font-bold uppercase tracking-wider text-ipmd-red">

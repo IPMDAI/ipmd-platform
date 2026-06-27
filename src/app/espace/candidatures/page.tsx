@@ -8,6 +8,7 @@ import { CandidatureActions } from "@/components/espace/CandidatureActions";
 import { CandidatureInvite } from "@/components/espace/CandidatureInvite";
 import { roleForUniverse } from "@/data/universes";
 import { roleLabels } from "@/lib/dashboards";
+import { FORMATION_MODE_LABEL } from "@/lib/academic";
 import {
   CANDIDATURE_STATUSES,
   CANDIDATURE_LABEL,
@@ -43,7 +44,7 @@ export default async function CandidaturesPage({
     supabase
       .from("inscription_requests")
       .select(
-        "id, full_name, email, phone, whatsapp, universe, program_interest, entry_level, last_education, last_diploma, message, created_at, status, desired_role, doc_diploma, doc_bulletins, doc_id, doc_attestation, doc_cv"
+        "id, full_name, email, phone, whatsapp, universe, program_interest, entry_level, last_education, last_diploma, message, created_at, status, desired_role, doc_diploma, doc_bulletins, doc_id, doc_attestation, doc_cv, mode"
       )
       .order("created_at", { ascending: false }),
     supabase
@@ -287,6 +288,11 @@ export default async function CandidaturesPage({
                     {c.desired_role && (
                       <span className="rounded-full bg-ipmd-black/5 px-2.5 py-1 text-[11px] font-semibold text-ipmd-black">
                         👤 {roleLabels[c.desired_role] ?? c.desired_role}
+                      </span>
+                    )}
+                    {c.mode && (
+                      <span className="rounded-full bg-blue-50 px-2.5 py-1 text-[11px] font-semibold text-blue-700 ring-1 ring-blue-200">
+                        🖥️ {FORMATION_MODE_LABEL[c.mode] ?? c.mode}
                       </span>
                     )}
                   </div>
