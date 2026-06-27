@@ -5,7 +5,11 @@ import { Container } from "@/components/ui/Container";
 import { formatFCFA } from "@/lib/finance";
 import { averageValue, mention } from "@/lib/grades";
 import { CANDIDATURE_STATUSES, CANDIDATURE_LABEL } from "@/lib/candidatures";
-import { universeNameById } from "@/data/universes";
+import { universeNameById, universes } from "@/data/universes";
+
+const universeKindById: Record<string, string> = Object.fromEntries(
+  universes.map((u) => [u.id, u.kind])
+);
 
 export const metadata: Metadata = {
   title: "Statistiques",
@@ -18,6 +22,7 @@ export default async function StatistiquesPage() {
 
   const [
     studentsC,
+    participantsC,
     teachersC,
     classesC,
     coursC,
@@ -32,6 +37,7 @@ export default async function StatistiquesPage() {
     { data: learners },
   ] = await Promise.all([
     supabase.from("profiles").select("*", { count: "exact", head: true }).eq("role", "etudiant"),
+    supabase.from("profiles").select("*", { count: "exact", head: true }).eq("role", "participant"),
     supabase.from("profiles").select("*", { count: "exact", head: true }).eq("role", "enseignant"),
     supabase.from("classes").select("*", { count: "exact", head: true }),
     supabase.from("courses").select("*", { count: "exact", head: true }),
@@ -46,18 +52,23 @@ export default async function StatistiquesPage() {
     supabase
       .from("profiles")
       .select("universe")
-      .in("role", ["etudiant", "professionnel", "dirigeant"]),
+      .in("role", ["etudiant", "professionnel", "dirigeant", "participant"]),
   ]);
 
-  // Effectifs par univers de formation.
-  const byUniverse = new Map<string, number>();
+  // Effectifs par univers, séparés Diplômes / Bootcamps.
+  const byUnivId = new Map<string, number>();
+  let nonPrecise = 0;
   for (const p of learners ?? []) {
-    const name = p.universe
-      ? universeNameById[p.universe] ?? "Autre"
-      : "Non précisé";
-    byUniverse.set(name, (byUniverse.get(name) ?? 0) + 1);
+    if (!p.universe) { nonPrecise += 1; continue; }
+    byUnivId.set(p.universe, (byUnivId.get(p.universe) ?? 0) + 1);
   }
-  const universeRows = [...byUniverse.entries()].sort((a, b) => b[1] - a[1]);
+  const toRows = (kind: string): [string, number][] =>
+    [...byUnivId.entries()]
+      .filter(([id]) => universeKindById[id] === kind)
+      .map(([id, n]) => [universeNameById[id] ?? id, n] as [string, number])
+      .sort((a, b) => b[1] - a[1]);
+  const diplomeRows = toRows("diplome");
+  const bootcampRows = toRows("certificat");
 
   // Effectifs par filière + par niveau.
   const classInfo = new Map(
@@ -151,8 +162,9 @@ export default async function StatistiquesPage() {
           </p>
 
           {/* Indicateurs clés */}
-          <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {metric("Étudiants", String(headCount(studentsC)))}
+          <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+            {metric("Étudiants (diplôme)", String(headCount(studentsC)))}
+            {metric("Participants (bootcamp)", String(headCount(participantsC)), "text-ipmd-red")}
             {metric("Enseignants", String(headCount(teachersC)))}
             {metric("Classes", String(headCount(classesC)))}
             {metric("Cours", String(headCount(coursC)))}
@@ -180,19 +192,30 @@ export default async function StatistiquesPage() {
             </div>
           </div>
 
-          {/* Effectifs par univers */}
-          <div className="mt-6 rounded-2xl bg-white p-5 shadow-sm ring-1 ring-black/5">
-            <h2 className="mb-3 font-bold text-ipmd-black">
-              Effectifs par univers
-            </h2>
-            {universeRows.length === 0 ? (
-              <p className="text-sm text-black/45">
-                Aucun univers renseigné sur les profils.
-              </p>
-            ) : (
-              bars(universeRows, "bg-ipmd-red")
-            )}
+          {/* Effectifs par univers — Diplômes vs Bootcamps */}
+          <div className="mt-6 grid gap-6 lg:grid-cols-2">
+            <div className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-black/5">
+              <h2 className="mb-3 font-bold text-ipmd-black">🎓 Diplômes — par univers</h2>
+              {diplomeRows.length === 0 ? (
+                <p className="text-sm text-black/45">Aucun étudiant diplôme avec univers renseigné.</p>
+              ) : (
+                bars(diplomeRows, "bg-emerald-600")
+              )}
+            </div>
+            <div className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-black/5">
+              <h2 className="mb-3 font-bold text-ipmd-black">📜 Bootcamps — par univers</h2>
+              {bootcampRows.length === 0 ? (
+                <p className="text-sm text-black/45">Aucun participant bootcamp avec univers renseigné.</p>
+              ) : (
+                bars(bootcampRows, "bg-ipmd-red")
+              )}
+            </div>
           </div>
+          {nonPrecise > 0 && (
+            <p className="mt-2 text-xs text-black/45">
+              ⚠️ {nonPrecise} apprenant(s) sans univers renseigné (anciens imports) — non comptés ci-dessus.
+            </p>
+          )}
 
           {/* Finance / Assiduité / Résultats */}
           <div className="mt-6 grid gap-4 sm:grid-cols-3">
