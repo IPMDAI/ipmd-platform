@@ -376,6 +376,7 @@ export default async function CandidaturesPage({
                       candidatureId={c.id}
                       defaultRole={c.desired_role || roleForUniverse(c.universe)}
                       isBootcamp={typeOf(c.universe) === "bootcamp"}
+                      universeName={universeNames[c.universe] ?? c.universe}
                       classes={classes}
                       levels={levels}
                       registrationFee={registrationFee}

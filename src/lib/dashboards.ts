@@ -25,6 +25,7 @@ export const roleLabels: Record<string, string> = {
   parent: "Parent",
   professionnel: "Professionnel",
   dirigeant: "Dirigeant",
+  participant: "Participant",
 };
 
 /** Sous-titre affiché sous le nom, selon le rôle. */
@@ -38,14 +39,16 @@ export const roleTagline: Record<string, string> = {
   parent: "Le suivi de votre enfant",
   professionnel: "Votre formation continue",
   dirigeant: "Votre programme executive",
+  participant: "Votre bootcamp à l'IPMD",
 };
 
 /** Rôles « apprenants » : ils disposent du Tuteur IA dans leur espace. */
-export const LEARNER_ROLES = new Set(["etudiant", "professionnel", "dirigeant"]);
+export const LEARNER_ROLES = new Set(["etudiant", "professionnel", "dirigeant", "participant"]);
 
 /** Options proposées dans le panneau d'attribution des rôles. */
 export const ROLE_OPTIONS: { value: string; label: string }[] = [
   { value: "etudiant", label: "Étudiant" },
+  { value: "participant", label: "Participant (bootcamp)" },
   { value: "parent", label: "Parent" },
   { value: "enseignant", label: "Enseignant" },
   { value: "professionnel", label: "Professionnel" },

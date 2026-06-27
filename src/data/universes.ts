@@ -142,9 +142,11 @@ export const universeNameById: Record<string, string> = Object.fromEntries(
 
 /** Rôle apprenant proposé par défaut selon l'univers de formation. */
 export function roleForUniverse(id: string): string {
-  if (id === "professionnel" || id === "ultraboost") return "professionnel";
-  if (id === "gouvernance" || id === "ultraexecutive") return "dirigeant";
-  return "etudiant"; // campus, ultrajobs
+  // Bootcamps (certificats) : participant, quel que soit le bootcamp.
+  if (universes.find((u) => u.id === id)?.kind === "certificat") return "participant";
+  if (id === "professionnel") return "professionnel";
+  if (id === "gouvernance") return "dirigeant";
+  return "etudiant"; // campus
 }
 
 /** Options d'univers pour les sélecteurs (id + nom). */

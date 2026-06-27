@@ -22,6 +22,7 @@ export function CandidatureInvite({
   candidatureId,
   defaultRole,
   isBootcamp = false,
+  universeName = "",
   classes,
   levels = [],
   registrationFee = 300000,
@@ -29,6 +30,7 @@ export function CandidatureInvite({
   candidatureId: string;
   defaultRole: string;
   isBootcamp?: boolean;
+  universeName?: string;
   classes: ClassOption[];
   levels?: { level: string; amount: number }[];
   registrationFee?: number;
@@ -71,16 +73,26 @@ export function CandidatureInvite({
         Créer le compte & inviter — {isBootcamp ? "Bootcamp" : "Diplôme"}
       </p>
       <div className="flex flex-wrap items-end gap-2">
-        <label className="text-xs font-semibold text-black/55">
-          Rôle
-          <select name="role" defaultValue={defaultRole} className={`${inputBase} mt-1 py-1.5 text-sm`}>
-            {ROLE_OPTIONS.map((r) => (
-              <option key={r.value} value={r.value}>
-                {r.label}
-              </option>
-            ))}
-          </select>
-        </label>
+        {isBootcamp ? (
+          <label className="text-xs font-semibold text-black/55">
+            Cible
+            <input type="hidden" name="role" value="participant" />
+            <span className="mt-1 block rounded-lg bg-ipmd-red px-3 py-1.5 text-sm font-bold text-white">
+              Participant{universeName ? ` — ${universeName}` : ""}
+            </span>
+          </label>
+        ) : (
+          <label className="text-xs font-semibold text-black/55">
+            Rôle
+            <select name="role" defaultValue={defaultRole} className={`${inputBase} mt-1 py-1.5 text-sm`}>
+              {ROLE_OPTIONS.map((r) => (
+                <option key={r.value} value={r.value}>
+                  {r.label}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
 
         {/* Diplôme uniquement : niveau (frais du niveau) */}
         {!isBootcamp && (
