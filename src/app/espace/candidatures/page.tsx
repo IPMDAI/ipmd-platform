@@ -82,6 +82,16 @@ export default async function CandidaturesPage({
 
   const diplomeCount = all.filter((c) => typeOf(c.universe) === "diplome").length;
   const bootcampCount = all.filter((c) => typeOf(c.universe) === "bootcamp").length;
+  const newDiplome = all.filter((c) => typeOf(c.universe) === "diplome" && c.status === "nouveau").length;
+  const newBootcamp = all.filter((c) => typeOf(c.universe) === "bootcamp" && c.status === "nouveau").length;
+
+  // Compteurs par univers (total + nouvelles demandes).
+  const countByUniv: Record<string, number> = {};
+  const newByUniv: Record<string, number> = {};
+  for (const c of all) {
+    countByUniv[c.universe] = (countByUniv[c.universe] ?? 0) + 1;
+    if (c.status === "nouveau") newByUniv[c.universe] = (newByUniv[c.universe] ?? 0) + 1;
+  }
 
   const candidatures = all.filter(
     (c) =>
@@ -147,16 +157,21 @@ export default async function CandidaturesPage({
     );
   };
 
-  const chip = (label: string, on: boolean, href: string) => (
+  const chip = (label: string, on: boolean, href: string, newCount = 0) => (
     <Link
       href={href}
-      className={`rounded-full px-3 py-1.5 text-sm font-semibold transition-colors ${
+      className={`relative inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-semibold transition-colors ${
         on
           ? "bg-ipmd-black text-white"
           : "bg-white text-black/60 ring-1 ring-black/10 hover:text-ipmd-red"
       }`}
     >
       {label}
+      {newCount > 0 && (
+        <span className="rounded-full bg-ipmd-red px-1.5 py-0.5 text-[10px] font-bold text-white">
+          {newCount} nouv.
+        </span>
+      )}
     </Link>
   );
 
@@ -181,15 +196,20 @@ export default async function CandidaturesPage({
           {/* Filtre par TYPE : Diplômes vs Bootcamps (ne pas mélanger) */}
           <div className="mt-5 flex flex-wrap gap-2">
             {chip("Tout", !activeType, buildHref({ type: "", univers: "" }))}
-            {chip(`🎓 Diplômes ${diplomeCount}`, activeType === "diplome", buildHref({ type: "diplome", univers: "" }))}
-            {chip(`📜 Bootcamps ${bootcampCount}`, activeType === "bootcamp", buildHref({ type: "bootcamp", univers: "" }))}
+            {chip(`🎓 Diplômes ${diplomeCount}`, activeType === "diplome", buildHref({ type: "diplome", univers: "" }), newDiplome)}
+            {chip(`📜 Bootcamps ${bootcampCount}`, activeType === "bootcamp", buildHref({ type: "bootcamp", univers: "" }), newBootcamp)}
           </div>
 
-          {/* Filtre par univers */}
+          {/* Filtre par univers (avec compteur + nouvelles demandes) */}
           <div className="mt-2 flex flex-wrap gap-2">
             {chip("Tous les univers", !activeUniv, buildHref({ univers: "" }))}
             {filterUniverses.map((u) =>
-              chip(u.name, activeUniv === u.id, buildHref({ univers: u.id }))
+              chip(
+                `${u.name} ${countByUniv[u.id] ?? 0}`,
+                activeUniv === u.id,
+                buildHref({ univers: u.id }),
+                newByUniv[u.id] ?? 0
+              )
             )}
           </div>
 
