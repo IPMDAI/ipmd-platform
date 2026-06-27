@@ -33,9 +33,9 @@ function formatDate(iso: string): string {
 export default async function CandidaturesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ statut?: string }>;
+  searchParams: Promise<{ statut?: string; type?: string; univers?: string }>;
 }) {
-  const { statut } = await searchParams;
+  const { statut, type, univers } = await searchParams;
   const { supabase, role } = await requireAdmin();
   const isSuper = role === "super_admin";
 
@@ -67,8 +67,46 @@ export default async function CandidaturesPage({
   const counts: Record<string, number> = {};
   for (const c of all) counts[c.status] = (counts[c.status] ?? 0) + 1;
 
+  // Type d'univers : diplôme vs bootcamp (certificat), pour ne pas mélanger.
+  const kindById: Record<string, string> = Object.fromEntries(
+    universes.map((u) => [u.id, u.kind])
+  );
+  const typeOf = (uId: string) => {
+    const k = kindById[uId];
+    return k === "diplome" ? "diplome" : k === "certificat" ? "bootcamp" : "autre";
+  };
+
   const active = statut && CANDIDATURE_LABEL[statut] ? statut : "";
-  const candidatures = active ? all.filter((c) => c.status === active) : all;
+  const activeType = type === "diplome" || type === "bootcamp" ? type : "";
+  const activeUniv = univers && universeNames[univers] ? univers : "";
+
+  const diplomeCount = all.filter((c) => typeOf(c.universe) === "diplome").length;
+  const bootcampCount = all.filter((c) => typeOf(c.universe) === "bootcamp").length;
+
+  const candidatures = all.filter(
+    (c) =>
+      (!active || c.status === active) &&
+      (!activeType || typeOf(c.universe) === activeType) &&
+      (!activeUniv || c.universe === activeUniv)
+  );
+
+  // Construit une URL de filtre en conservant les autres filtres actifs.
+  const buildHref = (o: { statut?: string; type?: string; univers?: string }) => {
+    const m = { statut: active, type: activeType, univers: activeUniv, ...o };
+    const qs = new URLSearchParams();
+    if (m.statut) qs.set("statut", m.statut);
+    if (m.type) qs.set("type", m.type);
+    if (m.univers) qs.set("univers", m.univers);
+    const s = qs.toString();
+    return s ? `/espace/candidatures?${s}` : "/espace/candidatures";
+  };
+
+  // Univers proposés au filtre (diplômes + bootcamps), selon le type actif.
+  const filterUniverses = universes.filter(
+    (u) =>
+      (u.kind === "diplome" || u.kind === "certificat") &&
+      (!activeType || typeOf(u.id) === activeType)
+  );
 
   // URLs signées pour les pièces jointes (lecture admin du bucket privé).
   const docUrls = new Map<string, string>();
@@ -94,11 +132,10 @@ export default async function CandidaturesPage({
 
   const tab = (key: string, label: string, count: number) => {
     const on = active === key || (!active && key === "");
-    const href = key ? `/espace/candidatures?statut=${key}` : "/espace/candidatures";
     return (
       <Link
         key={key || "tous"}
-        href={href}
+        href={buildHref({ statut: key })}
         className={`rounded-full px-3 py-1.5 text-sm font-semibold transition-colors ${
           on
             ? "bg-ipmd-red text-white"
@@ -109,6 +146,19 @@ export default async function CandidaturesPage({
       </Link>
     );
   };
+
+  const chip = (label: string, on: boolean, href: string) => (
+    <Link
+      href={href}
+      className={`rounded-full px-3 py-1.5 text-sm font-semibold transition-colors ${
+        on
+          ? "bg-ipmd-black text-white"
+          : "bg-white text-black/60 ring-1 ring-black/10 hover:text-ipmd-red"
+      }`}
+    >
+      {label}
+    </Link>
+  );
 
   return (
     <section className="min-h-[70vh] bg-ipmd-light">
@@ -128,8 +178,23 @@ export default async function CandidaturesPage({
             Inscrit.
           </p>
 
-          {/* Filtres par statut */}
+          {/* Filtre par TYPE : Diplômes vs Bootcamps (ne pas mélanger) */}
           <div className="mt-5 flex flex-wrap gap-2">
+            {chip("Tout", !activeType, buildHref({ type: "", univers: "" }))}
+            {chip(`🎓 Diplômes ${diplomeCount}`, activeType === "diplome", buildHref({ type: "diplome", univers: "" }))}
+            {chip(`📜 Bootcamps ${bootcampCount}`, activeType === "bootcamp", buildHref({ type: "bootcamp", univers: "" }))}
+          </div>
+
+          {/* Filtre par univers */}
+          <div className="mt-2 flex flex-wrap gap-2">
+            {chip("Tous les univers", !activeUniv, buildHref({ univers: "" }))}
+            {filterUniverses.map((u) =>
+              chip(u.name, activeUniv === u.id, buildHref({ univers: u.id }))
+            )}
+          </div>
+
+          {/* Filtres par statut */}
+          <div className="mt-3 flex flex-wrap gap-2 border-t border-black/5 pt-3">
             {tab("", "Toutes", all.length)}
             {CANDIDATURE_STATUSES.map((s) =>
               tab(s.value, s.label, counts[s.value] ?? 0)
@@ -166,6 +231,15 @@ export default async function CandidaturesPage({
                   </div>
 
                   <div className="mt-2 flex flex-wrap gap-2">
+                    {typeOf(c.universe) === "bootcamp" ? (
+                      <span className="rounded-full bg-ipmd-red px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-white">
+                        📜 Bootcamp
+                      </span>
+                    ) : typeOf(c.universe) === "diplome" ? (
+                      <span className="rounded-full bg-emerald-600 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-white">
+                        🎓 Diplôme
+                      </span>
+                    ) : null}
                     <span className="rounded-full bg-ipmd-black px-2.5 py-1 text-[11px] font-semibold text-white">
                       {universeNames[c.universe] ?? c.universe}
                     </span>
