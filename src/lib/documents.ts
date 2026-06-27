@@ -1,6 +1,10 @@
 import { createClient } from "@/lib/supabase/server";
-import { universeNameById } from "@/data/universes";
+import { universeNameById, universes } from "@/data/universes";
 import { averageValue, mention } from "@/lib/grades";
+
+const universeKindById: Record<string, string> = Object.fromEntries(
+  universes.map((u) => [u.id, u.kind])
+);
 
 /** Documents officiels délivrés par l'IPMD. */
 export const DOCUMENT_TYPES = [
@@ -29,6 +33,39 @@ export const DOCUMENT_TYPES = [
     desc: "Ta carte étudiant IPMD digitale, prête à imprimer.",
   },
 ] as const;
+
+/** Documents pour les apprenants bootcamp (mêmes routes/slugs, libellés adaptés). */
+export const BOOTCAMP_DOCUMENT_TYPES = [
+  {
+    slug: "attestation-scolarite",
+    label: "Attestation d'inscription",
+    icon: "📄",
+    desc: "Justifie votre inscription au bootcamp.",
+  },
+  {
+    slug: "certificat-scolarite",
+    label: "Certificat de formation",
+    icon: "🎓",
+    desc: "Atteste votre formation bootcamp à l'IPMD.",
+  },
+  {
+    slug: "attestation-reussite",
+    label: "Certificat de fin de bootcamp",
+    icon: "🏆",
+    desc: "Atteste la complétion de votre bootcamp et votre mention.",
+  },
+  {
+    slug: "carte",
+    label: "Carte d'apprenant",
+    icon: "🪪",
+    desc: "Votre carte d'apprenant IPMD digitale, prête à imprimer.",
+  },
+] as const;
+
+/** Jeu de documents selon le type d'apprenant (diplôme vs bootcamp). */
+export function documentTypesFor(isBootcamp: boolean) {
+  return isBootcamp ? BOOTCAMP_DOCUMENT_TYPES : DOCUMENT_TYPES;
+}
 
 export type DocumentSlug = (typeof DOCUMENT_TYPES)[number]["slug"];
 
@@ -65,6 +102,7 @@ export type Dossier = {
   filiereName: string | null;
   level: string | null;
   universe: string | null;
+  isBootcamp: boolean;
   matricule: string;
   year: string;
   average: number | null;
@@ -126,6 +164,7 @@ export async function getDossier(studentId: string): Promise<Dossier | null> {
     filiereName,
     level,
     universe: profile.universe ? universeNameById[profile.universe] ?? null : null,
+    isBootcamp: profile.universe ? universeKindById[profile.universe] === "certificat" : false,
     matricule: matricule(studentId),
     year: academicYear(),
     average,

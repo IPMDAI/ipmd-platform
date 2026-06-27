@@ -11,6 +11,12 @@ const TITLES: Record<Kind, string> = {
   reussite: "Attestation de réussite",
 };
 
+const TITLES_BOOTCAMP: Record<Kind, string> = {
+  scolarite: "Attestation d'inscription",
+  certificat: "Certificat de formation",
+  reussite: "Certificat de fin de bootcamp",
+};
+
 function programLine(d: Dossier): string {
   const parts = [d.filiereName, d.level, d.className].filter(Boolean);
   return parts.length ? parts.join(" · ") : "Formation IPMD";
@@ -26,7 +32,8 @@ export function DocumentLetter({
   kind: Kind;
   verifyHref: string;
 }) {
-  const title = TITLES[kind];
+  const isBC = dossier.isBootcamp;
+  const title = (isBC ? TITLES_BOOTCAMP : TITLES)[kind];
 
   return (
     <div className="relative overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-black/5 print:rounded-none print:shadow-none print:ring-0">
@@ -90,10 +97,19 @@ export function DocumentLetter({
           {kind === "reussite" ? (
             <>
               <p>
-                a satisfait aux exigences pédagogiques de l&apos;IPMD et{" "}
-                <strong>validé son parcours</strong> en{" "}
-                <strong>{programLine(dossier)}</strong> au titre de
-                l&apos;année académique <strong>{dossier.year}</strong>
+                {isBC ? (
+                  <>
+                    a <strong>suivi et complété avec succès</strong> le bootcamp{" "}
+                    <strong>{programLine(dossier)}</strong> à l&apos;IPMD
+                  </>
+                ) : (
+                  <>
+                    a satisfait aux exigences pédagogiques de l&apos;IPMD et{" "}
+                    <strong>validé son parcours</strong> en{" "}
+                    <strong>{programLine(dossier)}</strong> au titre de
+                    l&apos;année académique <strong>{dossier.year}</strong>
+                  </>
+                )}
                 {dossier.average !== null ? (
                   <>
                     , avec une moyenne générale de{" "}
@@ -104,17 +120,27 @@ export function DocumentLetter({
                 .
               </p>
               <p>
-                La présente attestation est délivrée pour servir et valoir ce
-                que de droit.
+                {isBC ? "Le présent certificat" : "La présente attestation"} est
+                délivré(e) pour servir et valoir ce que de droit.
               </p>
             </>
           ) : (
             <>
               <p>
-                est régulièrement inscrit(e) à l&apos;IPMD au titre de
-                l&apos;année académique <strong>{dossier.year}</strong>, en{" "}
-                <strong>{programLine(dossier)}</strong>, et y suit assidûment
-                les enseignements.
+                {isBC ? (
+                  <>
+                    est régulièrement inscrit(e) au bootcamp{" "}
+                    <strong>{programLine(dossier)}</strong> à l&apos;IPMD, et y
+                    suit assidûment la formation.
+                  </>
+                ) : (
+                  <>
+                    est régulièrement inscrit(e) à l&apos;IPMD au titre de
+                    l&apos;année académique <strong>{dossier.year}</strong>, en{" "}
+                    <strong>{programLine(dossier)}</strong>, et y suit assidûment
+                    les enseignements.
+                  </>
+                )}
               </p>
               <p>
                 {kind === "certificat" ? "Le présent certificat" : "La présente attestation"}{" "}

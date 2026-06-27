@@ -2,8 +2,13 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { requireUser } from "@/lib/require-user";
 import { Container } from "@/components/ui/Container";
-import { DOCUMENT_TYPES } from "@/lib/documents";
+import { documentTypesFor } from "@/lib/documents";
 import { LEARNER_ROLES } from "@/lib/dashboards";
+import { universes } from "@/data/universes";
+
+const universeKindById: Record<string, string> = Object.fromEntries(
+  universes.map((u) => [u.id, u.kind])
+);
 
 export const metadata: Metadata = {
   title: "Mes documents",
@@ -94,10 +99,12 @@ export default async function DocumentsPage({
   // Nom de la cible (RLS : self / parent / admin).
   const { data: target } = await supabase
     .from("profiles")
-    .select("full_name, email")
+    .select("full_name, email, universe")
     .eq("id", targetId)
     .single();
   const targetName = target?.full_name || target?.email || "Étudiant";
+  const isBootcamp = target?.universe ? universeKindById[target.universe] === "certificat" : false;
+  const docTypes = documentTypesFor(isBootcamp);
 
   const qs = student ? `?student=${student}` : "";
 
@@ -121,7 +128,7 @@ export default async function DocumentsPage({
           </p>
 
           <div className="mt-8 grid gap-4 sm:grid-cols-2">
-            {DOCUMENT_TYPES.map((d) => (
+            {docTypes.map((d) => (
               <Link
                 key={d.slug}
                 href={`/espace/document/${d.slug}${qs}`}
