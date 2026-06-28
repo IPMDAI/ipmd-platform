@@ -7,7 +7,7 @@ import { AnnualAgenda } from "@/components/sections/AnnualAgenda";
 import { getUpcoming } from "@/data/upcoming-bootcamps";
 import { getAgenda } from "@/data/agenda";
 
-type Panel = { id: string; icon: string; label: string; sublabel: string; render: () => ReactNode };
+type Panel = { id: string; icon: string; label: string; short: string; sublabel: string; render: () => ReactNode };
 
 /**
  * Espace type « boîte mail » : liste de rubriques à gauche, contenu à droite.
@@ -23,6 +23,7 @@ export function ExperienceWorkspace({ universeId }: { universeId: string }) {
       id: "prochains",
       icon: "📅",
       label: "Prochains bootcamps",
+      short: "Bootcamps",
       sublabel: `${upcoming.length} session${upcoming.length > 1 ? "s" : ""} à venir`,
       render: () => <UpcomingBootcampsGrid universeId={universeId} />,
     });
@@ -34,6 +35,7 @@ export function ExperienceWorkspace({ universeId }: { universeId: string }) {
       id: "agenda",
       icon: "🗓️",
       label: "Agenda annuel",
+      short: "Agenda",
       sublabel: "Temps forts mensuels",
       render: () => <AnnualAgenda universeId={universeId} />,
     });
@@ -119,7 +121,7 @@ export function ExperienceWorkspace({ universeId }: { universeId: string }) {
     {/* Barre des rubriques — fixée en bas sur mobile (style application),
         visible uniquement quand la section est à l'écran */}
     <div
-      className={`fixed bottom-4 left-4 right-20 z-40 lg:hidden transition-all duration-300 ${
+      className={`fixed bottom-4 left-4 z-40 w-fit max-w-[calc(100%-5.5rem)] lg:hidden transition-all duration-300 ${
         barVisible ? "translate-y-0 opacity-100" : "pointer-events-none translate-y-6 opacity-0"
       }`}
     >
@@ -132,12 +134,12 @@ export function ExperienceWorkspace({ universeId }: { universeId: string }) {
               type="button"
               onClick={() => setActive(p.id)}
               aria-current={isActive}
-              className={`flex flex-1 items-center justify-center gap-1.5 rounded-full px-3 py-2.5 text-xs font-bold transition-colors ${
+              className={`flex items-center gap-1.5 rounded-full px-3.5 py-2.5 text-xs font-bold transition-colors ${
                 isActive ? "bg-ipmd-red text-white" : "text-ipmd-black hover:bg-ipmd-light"
               }`}
             >
               <span className="text-base">{p.icon}</span>
-              <span className="truncate">{p.label}</span>
+              <span className="whitespace-nowrap">{p.short}</span>
             </button>
           );
         })}
