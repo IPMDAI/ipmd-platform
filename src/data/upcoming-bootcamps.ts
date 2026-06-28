@@ -183,6 +183,58 @@ export const UPCOMING_BY_UNIVERSE: Record<string, UpcomingBootcamp[]> = {
       variant: "premium",
     },
   ],
+
+  // ⚠️ Échantillons à ajuster (dates, places, frais réels) — UltraExecutive.
+  ultraexecutive: [
+    {
+      id: "ux-ia-strategie-aout-2026",
+      title: "IA & Stratégie pour Dirigeants",
+      subtitle: "Bootcamp Executive · Décision · Gouvernance IA",
+      badge: "Bootcamp Executive à Abidjan",
+      description:
+        "Programme intensif pour comprendre les enjeux de l'IA, en faire un levier stratégique et piloter sa mise en œuvre au plus haut niveau de l'organisation.",
+      audience: "Réservé aux dirigeants, cadres supérieurs et décideurs.",
+      date: "4 au 6 août 2026",
+      places: "Limité à 12 participants",
+      location: "UltraExecutive à Abidjan",
+      price: "585 000 FCFA",
+      slots: ["Créneau Matin · 8h – 11h", "Créneau Soir · 18h – 21h"],
+      slotsNote: "Chaque participant choisit le créneau qui lui convient.",
+      variant: "premium",
+    },
+    {
+      id: "ux-transformation-aout-2026",
+      title: "Transformation Digitale & Gouvernance IA",
+      subtitle: "Bootcamp Executive · Pilotage du changement",
+      badge: "Bootcamp Executive à Abidjan",
+      description:
+        "Conduire la transformation digitale de son organisation : feuille de route, gouvernance des données et de l'IA, conduite du changement et création de valeur.",
+      audience: "Réservé aux dirigeants, cadres supérieurs et décideurs.",
+      date: "11 au 13 août 2026",
+      places: "Limité à 12 participants",
+      location: "UltraExecutive à Abidjan",
+      price: "585 000 FCFA",
+      slots: ["Créneau Matin · 8h – 11h", "Créneau Soir · 18h – 21h"],
+      slotsNote: "Chaque participant choisit le créneau qui lui convient.",
+      variant: "premium",
+    },
+    {
+      id: "ux-masterclass-bassam-aout-2026",
+      title: "Executive Masterclass — IA & Croissance",
+      subtitle: "Bootcamp Executive · Immersion résidentielle",
+      badge: "Bootcamp Executive à Grand-Bassam",
+      description:
+        "Masterclass immersive pour dirigeants : stratégies d'IA, leadership augmenté et accélération de la croissance, dans un cadre d'exception propice au réseautage de haut niveau.",
+      highlights: ["2 jours résidentiels", "Dîner Black Tie", "Hébergement inclus"],
+      audience: "Réservé aux dirigeants, entrepreneurs et décideurs.",
+      date: "29 & 30 août 2026",
+      places: "Limité à 25 participants",
+      location: "Comoé Lodge — Grand-Bassam",
+      price: "850 000 FCFA",
+      slots: ["Créneau Matin · 7h30 – 12h30", "Créneau Après-midi · 14h – 17h"],
+      variant: "luxe",
+    },
+  ],
 };
 
 /** Renvoie les sessions à venir d'un univers (vide si aucune). */
