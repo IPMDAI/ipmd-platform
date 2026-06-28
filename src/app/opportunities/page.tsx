@@ -1,13 +1,13 @@
 import type { Metadata } from "next";
 import { PageHero } from "@/components/sections/PageHero";
 import { Section } from "@/components/ui/Section";
-import { FeedSection } from "@/components/sections/FeedSection";
+import { FeedBoard } from "@/components/sections/FeedBoard";
 import { getOpportunities } from "@/data/feed";
 
 export const metadata: Metadata = {
-  title: "IPMD Opportunities — Bourses, concours & programmes",
+  title: "IPMD Opportunities — Bourses, concours & opportunités internationales",
   description:
-    "Bourses d'études, concours, appels à projets, financements, hackathons, incubateurs et programmes internationaux.",
+    "Bourses, concours, hackathons, incubateurs, appels à projets et programmes internationaux pour développer vos compétences, votre réseau et votre avenir.",
 };
 
 export default function OpportunitiesPage() {
@@ -16,12 +16,12 @@ export default function OpportunitiesPage() {
     <>
       <PageHero
         eyebrow="🌍 IPMD Opportunities"
-        title="Bourses, concours, appels à projets & programmes"
-        description="Bourses d'études, hackathons, incubateurs, financements et programmes internationaux à ne pas manquer."
+        title="Bourses, concours & opportunités internationales"
+        description="Découvrez les bourses, concours, hackathons, incubateurs, appels à projets et programmes internationaux pour développer vos compétences, votre réseau et votre avenir."
       />
       {feed && (
         <Section variant="light">
-          <FeedSection feed={feed} />
+          <FeedBoard feed={feed} heading={false} />
         </Section>
       )}
     </>

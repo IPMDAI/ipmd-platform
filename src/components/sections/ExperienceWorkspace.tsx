@@ -6,7 +6,7 @@ import { UpcomingBootcampsGrid } from "@/components/ultraboost/UpcomingBootcamps
 import { AnnualAgenda } from "@/components/sections/AnnualAgenda";
 import { HubSkills } from "@/components/sections/HubSkills";
 import { Webinaires } from "@/components/sections/Webinaires";
-import { FeedSection } from "@/components/sections/FeedSection";
+import { FeedBoard } from "@/components/sections/FeedBoard";
 import { getUpcoming } from "@/data/upcoming-bootcamps";
 import { getAgenda } from "@/data/agenda";
 import { getHubSkills } from "@/data/hubskills";
@@ -83,15 +83,15 @@ export function ExperienceWorkspace({
 
   const news = getNews(universeId);
   if (news) {
-    panels.push({ id: "news", icon: "📰", label: "IPMD News", short: "News", sublabel: "Actus digital & IA", render: () => <FeedSection feed={news} /> });
+    panels.push({ id: "news", icon: "📰", label: "IPMD News", short: "News", sublabel: "Actus digital & IA", render: () => <FeedBoard feed={news} filters={false} actions={false} limit={4} moreHref={news.pageHref} /> });
   }
   const jobs = getJobs(universeId);
   if (jobs) {
-    panels.push({ id: "jobs", icon: "💼", label: "IPMD Jobs", short: "Jobs", sublabel: "Emplois, stages, freelance", render: () => <FeedSection feed={jobs} /> });
+    panels.push({ id: "jobs", icon: "💼", label: "IPMD Jobs", short: "Jobs", sublabel: "Emplois, stages, freelance", render: () => <FeedBoard feed={jobs} filters={false} actions={false} limit={4} moreHref={jobs.pageHref} /> });
   }
   const opportunities = getOpportunities(universeId);
   if (opportunities) {
-    panels.push({ id: "opportunities", icon: "🌍", label: "IPMD Opportunities", short: "Opportunités", sublabel: "Bourses, concours, projets", render: () => <FeedSection feed={opportunities} /> });
+    panels.push({ id: "opportunities", icon: "🌍", label: "IPMD Opportunities", short: "Opportunités", sublabel: "Bourses, concours, projets", render: () => <FeedBoard feed={opportunities} filters={false} actions={false} limit={4} moreHref={opportunities.pageHref} /> });
   }
 
   const [active, setActive] = useState(panels[0]?.id ?? "");

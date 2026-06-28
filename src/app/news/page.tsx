@@ -1,13 +1,13 @@
 import type { Metadata } from "next";
 import { PageHero } from "@/components/sections/PageHero";
 import { Section } from "@/components/ui/Section";
-import { FeedSection } from "@/components/sections/FeedSection";
+import { FeedBoard } from "@/components/sections/FeedBoard";
 import { getNews } from "@/data/feed";
 
 export const metadata: Metadata = {
-  title: "IPMD News — Actualités digital, IA & innovations",
+  title: "IPMD News — Actualités Digital, IA & Métiers d'avenir",
   description:
-    "Actualités sur le digital, l'IA, les innovations, les technologies émergentes et les annonces d'IPMD.",
+    "Décryptages, tendances, innovations et annonces IPMD pour comprendre les métiers de demain et rester à la pointe du digital et de l'IA.",
 };
 
 export default function NewsPage() {
@@ -16,12 +16,12 @@ export default function NewsPage() {
     <>
       <PageHero
         eyebrow="📰 IPMD News"
-        title="Actualités digital, IA & innovations"
-        description="Décryptages, tendances tech et annonces IPMD pour rester toujours à la pointe."
+        title="Actualités Digital, IA & Métiers d'avenir"
+        description="Décryptages, tendances, innovations et annonces IPMD pour comprendre les métiers de demain et rester à la pointe du digital et de l'IA."
       />
       {feed && (
         <Section variant="light">
-          <FeedSection feed={feed} />
+          <FeedBoard feed={feed} heading={false} />
         </Section>
       )}
     </>
