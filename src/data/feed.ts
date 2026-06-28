@@ -12,6 +12,7 @@ export type FeedItem = {
   category: string;
   summary: string;
   icon?: string;
+  image?: string;
   date?: string;
   readingTime?: string;
   deadline?: string;
@@ -127,3 +128,22 @@ const OPPORTUNITIES_BY_UNIVERSE: Record<string, Feed> = { home: OPPORTUNITIES };
 export const getNews = (u: string): Feed | null => NEWS_BY_UNIVERSE[u] ?? null;
 export const getJobs = (u: string): Feed | null => JOBS_BY_UNIVERSE[u] ?? null;
 export const getOpportunities = (u: string): Feed | null => OPPORTUNITIES_BY_UNIVERSE[u] ?? null;
+
+export type FeedKind = "news" | "jobs" | "opportunities";
+
+/** Métadonnées statiques (eyebrow, titre, filtres, CTA…) d'un fil. */
+export function getStaticFeed(kind: FeedKind): Feed {
+  return kind === "news" ? NEWS : kind === "jobs" ? JOBS : OPPORTUNITIES;
+}
+
+/** Libellés des fils pour l'administration. */
+export const FEED_KIND_META: Record<FeedKind, { label: string; icon: string }> = {
+  news: { label: "IPMD News", icon: "📰" },
+  jobs: { label: "IPMD Jobs", icon: "💼" },
+  opportunities: { label: "IPMD Opportunities", icon: "🌍" },
+};
+
+/** Catégories proposées à l'admin (filtres sans « Toutes »). */
+export function feedCategories(kind: FeedKind): string[] {
+  return getStaticFeed(kind).filters.filter((f) => f !== "Toutes");
+}

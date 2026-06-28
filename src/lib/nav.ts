@@ -49,6 +49,7 @@ const ADMIN_NAV: NavGroup[] = [
     title: "Relations & accès",
     items: [
       { label: "Annonces", href: "/espace/annonces", icon: "📢" },
+      { label: "Actu & Opportunités", href: "/espace/contenus", icon: "📰" },
       { label: "Modération", href: "/espace/moderation", icon: "🛡️" },
       { label: "Marketing / Prospects", href: "/espace/marketing", icon: "📣" },
       { label: "Partenaires", href: "/espace/partenaires", icon: "🤝" },

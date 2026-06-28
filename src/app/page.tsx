@@ -11,8 +11,14 @@ import { PartnersBand } from "@/components/home/PartnersBand";
 import { ExperienceWorkspace } from "@/components/sections/ExperienceWorkspace";
 import { CtaBanner } from "@/components/sections/CtaBanner";
 import { ContactTeaser } from "@/components/home/ContactTeaser";
+import { resolveFeed } from "@/lib/feed-db";
 
-export default function HomePage() {
+export default async function HomePage() {
+  const [news, jobs, opportunities] = await Promise.all([
+    resolveFeed("news"),
+    resolveFeed("jobs"),
+    resolveFeed("opportunities"),
+  ]);
   return (
     <>
       <Hero />
@@ -22,6 +28,7 @@ export default function HomePage() {
         eyebrow="Restez connecté"
         title="IPMD News, Jobs & Opportunities"
         intro="L'actualité du digital et de l'IA, les offres d'emploi et les opportunités à saisir — choisissez une rubrique."
+        feeds={{ news, jobs, opportunities }}
       />
       <EcosystemSection />
       <AiCarousel />

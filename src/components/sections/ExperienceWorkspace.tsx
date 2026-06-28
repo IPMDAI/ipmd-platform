@@ -11,7 +11,7 @@ import { getUpcoming } from "@/data/upcoming-bootcamps";
 import { getAgenda } from "@/data/agenda";
 import { getHubSkills } from "@/data/hubskills";
 import { getWebinaires } from "@/data/webinaires";
-import { getNews, getJobs, getOpportunities } from "@/data/feed";
+import { getNews, getJobs, getOpportunities, type Feed } from "@/data/feed";
 
 type Panel = { id: string; icon: string; label: string; short: string; sublabel: string; render: () => ReactNode };
 
@@ -25,11 +25,14 @@ export function ExperienceWorkspace({
   eyebrow = "À ne pas manquer",
   title = "Sessions, agenda & événements",
   intro = "Choisissez une rubrique : le contenu s'affiche aussitôt. La barre des rubriques reste accessible pendant que vous faites défiler.",
+  feeds,
 }: {
   universeId: string;
   eyebrow?: string;
   title?: string;
   intro?: string;
+  /** Fils News/Jobs/Opportunities résolus côté serveur (sinon contenu statique). */
+  feeds?: { news?: Feed | null; jobs?: Feed | null; opportunities?: Feed | null };
 }) {
   const panels: Panel[] = [];
 
@@ -81,15 +84,15 @@ export function ExperienceWorkspace({
     });
   }
 
-  const news = getNews(universeId);
+  const news = feeds?.news ?? getNews(universeId);
   if (news) {
     panels.push({ id: "news", icon: "📰", label: "IPMD News", short: "News", sublabel: "Actus digital & IA", render: () => <FeedBoard feed={news} filters={false} actions={false} limit={4} moreHref={news.pageHref} /> });
   }
-  const jobs = getJobs(universeId);
+  const jobs = feeds?.jobs ?? getJobs(universeId);
   if (jobs) {
     panels.push({ id: "jobs", icon: "💼", label: "IPMD Jobs", short: "Jobs", sublabel: "Emplois, stages, freelance", render: () => <FeedBoard feed={jobs} filters={false} actions={false} limit={4} moreHref={jobs.pageHref} /> });
   }
-  const opportunities = getOpportunities(universeId);
+  const opportunities = feeds?.opportunities ?? getOpportunities(universeId);
   if (opportunities) {
     panels.push({ id: "opportunities", icon: "🌍", label: "IPMD Opportunities", short: "Opportunités", sublabel: "Bourses, concours, projets", render: () => <FeedBoard feed={opportunities} filters={false} actions={false} limit={4} moreHref={opportunities.pageHref} /> });
   }

@@ -93,11 +93,14 @@ export function FeedBoard({ feed, heading = true, filters = true, actions = true
               className="flex h-full flex-col rounded-2xl border border-black/5 bg-white p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md"
             >
               <div className="flex items-start gap-3">
-                {it.icon && (
+                {it.image ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={it.image} alt="" className="h-10 w-10 shrink-0 rounded-xl object-cover" />
+                ) : it.icon ? (
                   <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-ipmd-red/10 text-lg">
                     {it.icon}
                   </span>
-                )}
+                ) : null}
                 <div className="min-w-0">
                   <h3 className="font-bold leading-snug text-ipmd-black">{it.title}</h3>
                   {it.subtitle && <p className="text-sm font-medium text-black/60">{it.subtitle}</p>}

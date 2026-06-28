@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { PageHero } from "@/components/sections/PageHero";
 import { Section } from "@/components/ui/Section";
 import { FeedBoard } from "@/components/sections/FeedBoard";
-import { getJobs } from "@/data/feed";
+import { resolveFeed } from "@/lib/feed-db";
 
 export const metadata: Metadata = {
   title: "IPMD Jobs — Stages, emplois & missions dans le digital et l'IA",
@@ -10,8 +10,8 @@ export const metadata: Metadata = {
     "Offres de stages, emplois, alternances et missions freelance proposées par IPMD, ses entreprises partenaires et le réseau UltraJobs.",
 };
 
-export default function JobsPage() {
-  const feed = getJobs("home");
+export default async function JobsPage() {
+  const feed = await resolveFeed("jobs");
   return (
     <>
       <PageHero

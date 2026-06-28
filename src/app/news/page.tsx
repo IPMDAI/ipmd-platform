@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { PageHero } from "@/components/sections/PageHero";
 import { Section } from "@/components/ui/Section";
 import { FeedBoard } from "@/components/sections/FeedBoard";
-import { getNews } from "@/data/feed";
+import { resolveFeed } from "@/lib/feed-db";
 
 export const metadata: Metadata = {
   title: "IPMD News — Actualités Digital, IA & Métiers d'avenir",
@@ -10,8 +10,8 @@ export const metadata: Metadata = {
     "Décryptages, tendances, innovations et annonces IPMD pour comprendre les métiers de demain et rester à la pointe du digital et de l'IA.",
 };
 
-export default function NewsPage() {
-  const feed = getNews("home");
+export default async function NewsPage() {
+  const feed = await resolveFeed("news");
   return (
     <>
       <PageHero

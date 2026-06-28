@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { PageHero } from "@/components/sections/PageHero";
 import { Section } from "@/components/ui/Section";
 import { FeedBoard } from "@/components/sections/FeedBoard";
-import { getOpportunities } from "@/data/feed";
+import { resolveFeed } from "@/lib/feed-db";
 
 export const metadata: Metadata = {
   title: "IPMD Opportunities — Bourses, concours & opportunités internationales",
@@ -10,8 +10,8 @@ export const metadata: Metadata = {
     "Bourses, concours, hackathons, incubateurs, appels à projets et programmes internationaux pour développer vos compétences, votre réseau et votre avenir.",
 };
 
-export default function OpportunitiesPage() {
-  const feed = getOpportunities("home");
+export default async function OpportunitiesPage() {
+  const feed = await resolveFeed("opportunities");
   return (
     <>
       <PageHero
