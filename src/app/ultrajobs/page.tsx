@@ -5,6 +5,7 @@ import { Section } from "@/components/ui/Section";
 import { Button } from "@/components/ui/Button";
 import { CtaBanner } from "@/components/sections/CtaBanner";
 import { UltraJobsCatalog } from "@/components/ultrajobs/UltraJobsCatalog";
+import { UpcomingBootcamps } from "@/components/ultraboost/UpcomingBootcamps";
 import { getUniverse } from "@/data/universes";
 
 export const metadata: Metadata = {
@@ -33,7 +34,9 @@ export default function UltraJobsPage() {
 
       <UniverseVideo universeId="ultrajobs" />
 
-      <Section variant="light">
+      <UpcomingBootcamps universeId="ultrajobs" />
+
+      <Section variant="white">
         <h2 className="text-2xl font-extrabold tracking-tight text-ipmd-black sm:text-3xl">
           Nos bootcamps métiers, par domaine
         </h2>

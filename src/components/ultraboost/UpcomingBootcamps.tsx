@@ -2,17 +2,37 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { UPCOMING_BOOTCAMPS, type UpcomingBootcamp } from "@/data/upcoming-bootcamps";
+import { Section } from "@/components/ui/Section";
+import { getUpcoming, type UpcomingBootcamp } from "@/data/upcoming-bootcamps";
 
 const META = (label: string, value: string, icon: string) => ({ label, value, icon });
 
-export function UpcomingBootcamps() {
+/** Section « Prochains bootcamps » d'un univers (rien si aucune session). */
+export function UpcomingBootcamps({ universeId }: { universeId: string }) {
+  const list = getUpcoming(universeId);
   const [selected, setSelected] = useState<UpcomingBootcamp | null>(null);
+  if (list.length === 0) return null;
+
+  const inscriptionHref = `/inscription-bootcamp?u=${universeId}`;
 
   return (
-    <div>
-      <div className="grid gap-6 lg:grid-cols-2">
-        {UPCOMING_BOOTCAMPS.map((b) => {
+    <Section variant="light">
+      <div className="flex flex-wrap items-center gap-3">
+        <span className="rounded-full bg-ipmd-red px-3 py-1 text-xs font-bold uppercase tracking-wide text-white">
+          Sessions à venir
+        </span>
+        <h2 className="text-2xl font-extrabold tracking-tight text-ipmd-black sm:text-3xl">
+          Prochains bootcamps
+        </h2>
+      </div>
+      <p className="mt-2 max-w-2xl text-black/60">
+        Des sessions à <strong>dates fixes</strong> et <strong>places limitées</strong>. Une session terminée
+        est remplacée par une nouvelle ; la date peut être reportée si le nombre minimum de participants
+        n&apos;est pas atteint. Réservez tôt.
+      </p>
+
+      <div className="mt-8 grid gap-6 lg:grid-cols-2">
+        {list.map((b) => {
           const luxe = b.variant === "luxe";
           return (
             <article
@@ -49,9 +69,7 @@ export function UpcomingBootcamps() {
                 <p className="mt-2 text-sm leading-relaxed text-white/70">{b.description}</p>
 
                 {b.highlights && (
-                  <p className="mt-3 text-sm font-semibold text-amber-200">
-                    {b.highlights.join("  ·  ")}
-                  </p>
+                  <p className="mt-3 text-sm font-semibold text-amber-200">{b.highlights.join("  ·  ")}</p>
                 )}
                 {b.audience && <p className="mt-1 text-xs text-white/55">🔒 {b.audience}</p>}
 
@@ -90,7 +108,7 @@ export function UpcomingBootcamps() {
                     Consulter le programme
                   </button>
                   <Link
-                    href="/inscription-bootcamp?u=ultraboost"
+                    href={inscriptionHref}
                     className="rounded-full bg-amber-400 px-4 py-2 text-sm font-bold text-ipmd-black transition-opacity hover:opacity-90"
                   >
                     Demande d&apos;inscription →
@@ -169,7 +187,7 @@ export function UpcomingBootcamps() {
 
             <div className="mt-5 flex gap-2">
               <Link
-                href="/inscription-bootcamp?u=ultraboost"
+                href={inscriptionHref}
                 className="flex-1 rounded-full bg-amber-400 px-6 py-3 text-center text-sm font-bold text-ipmd-black transition-opacity hover:opacity-90"
               >
                 Demande d&apos;inscription
@@ -185,6 +203,6 @@ export function UpcomingBootcamps() {
           </div>
         </div>
       )}
-    </div>
+    </Section>
   );
 }

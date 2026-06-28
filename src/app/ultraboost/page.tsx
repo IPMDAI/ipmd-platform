@@ -34,24 +34,7 @@ export default function UltraBoostPage() {
 
       <UniverseVideo universeId="ultraboost" />
 
-      <Section variant="light">
-        <div className="flex flex-wrap items-center gap-3">
-          <span className="rounded-full bg-ipmd-red px-3 py-1 text-xs font-bold uppercase tracking-wide text-white">
-            Sessions à venir
-          </span>
-          <h2 className="text-2xl font-extrabold tracking-tight text-ipmd-black sm:text-3xl">
-            Prochains bootcamps
-          </h2>
-        </div>
-        <p className="mt-2 max-w-2xl text-black/60">
-          Des sessions à <strong>dates fixes</strong> et <strong>places limitées</strong>. Une session terminée
-          est remplacée par une nouvelle ; la date peut être reportée si le nombre minimum de participants
-          n&apos;est pas atteint. Réservez tôt.
-        </p>
-        <div className="mt-8">
-          <UpcomingBootcamps />
-        </div>
-      </Section>
+      <UpcomingBootcamps universeId="ultraboost" />
 
       <Section variant="white">
         <h2 className="text-2xl font-extrabold tracking-tight text-ipmd-black sm:text-3xl">
