@@ -19,7 +19,7 @@ export function WhatsAppFloat() {
   if (pathname?.startsWith("/espace")) return null;
 
   return (
-    <div className="fixed bottom-5 right-5 z-50 flex flex-col items-end gap-3 print:hidden">
+    <div className="fab-whatsapp fixed bottom-5 right-5 z-50 flex flex-col items-end gap-3 transition-transform duration-300 print:hidden">
       {open && (
         <div className="w-72 overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-black/10">
           <div className="bg-[#075E54] px-4 py-3 text-white">

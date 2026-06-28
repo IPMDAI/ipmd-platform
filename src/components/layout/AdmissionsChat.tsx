@@ -295,7 +295,7 @@ export function AdmissionsChat() {
   const askedCount = messages.filter((m) => m.role === "user").length;
 
   return (
-    <div className="fixed bottom-24 right-5 z-50 flex flex-col items-end gap-3 print:hidden">
+    <div className="fab-chat fixed bottom-24 right-5 z-50 flex flex-col items-end gap-3 transition-transform duration-300 print:hidden">
       {open && (
         <div className="flex h-[60vh] max-h-[520px] w-[88vw] max-w-sm flex-col overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-black/10">
           <div className="flex items-center justify-between bg-ipmd-black px-4 py-3 text-white">

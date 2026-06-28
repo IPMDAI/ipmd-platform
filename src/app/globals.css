@@ -90,6 +90,15 @@ body {
   }
 }
 
+/* Quand la barre de menu mobile (ExperienceWorkspace) est affichée,
+   on masque les boutons flottants WhatsApp / chat pour ne pas les chevaucher. */
+@media (max-width: 1023px) {
+  body.has-mobile-tabbar .fab-whatsapp,
+  body.has-mobile-tabbar .fab-chat {
+    display: none !important;
+  }
+}
+
 /* Dégradé radial utilitaire pour les fonds sombres */
 .bg-grid {
   background-image:

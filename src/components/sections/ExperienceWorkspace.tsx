@@ -56,6 +56,12 @@ export function ExperienceWorkspace({ universeId }: { universeId: string }) {
     return () => io.disconnect();
   }, []);
 
+  // Remonte les boutons flottants (WhatsApp/chat) quand la barre est affichée.
+  useEffect(() => {
+    document.body.classList.toggle("has-mobile-tabbar", barVisible);
+    return () => document.body.classList.remove("has-mobile-tabbar");
+  }, [barVisible]);
+
   if (panels.length === 0) return null;
   const current = panels.find((p) => p.id === active) ?? panels[0];
 
@@ -118,14 +124,15 @@ export function ExperienceWorkspace({ universeId }: { universeId: string }) {
       </div>
     </Section>
 
-    {/* Barre des rubriques — fixée en bas sur mobile (style application),
+    {/* Menu du bas — pleine largeur, style application mobile (TikTok/Insta),
         visible uniquement quand la section est à l'écran */}
-    <div
-      className={`fixed bottom-4 left-4 z-40 w-fit max-w-[calc(100%-5.5rem)] lg:hidden transition-all duration-300 ${
-        barVisible ? "translate-y-0 opacity-100" : "pointer-events-none translate-y-6 opacity-0"
+    <nav
+      aria-label="Rubriques"
+      className={`fixed inset-x-0 bottom-0 z-40 lg:hidden transition-transform duration-300 ${
+        barVisible ? "translate-y-0" : "pointer-events-none translate-y-full"
       }`}
     >
-      <div className="flex items-center gap-1 rounded-full border border-black/10 bg-white/95 p-1.5 shadow-xl backdrop-blur">
+      <div className="flex items-stretch border-t border-black/10 bg-white/95 pb-[env(safe-area-inset-bottom)] shadow-[0_-6px_24px_rgba(0,0,0,0.10)] backdrop-blur">
         {panels.map((p) => {
           const isActive = p.id === current.id;
           return (
@@ -134,17 +141,18 @@ export function ExperienceWorkspace({ universeId }: { universeId: string }) {
               type="button"
               onClick={() => setActive(p.id)}
               aria-current={isActive}
-              className={`flex items-center gap-1.5 rounded-full px-3.5 py-2.5 text-xs font-bold transition-colors ${
-                isActive ? "bg-ipmd-red text-white" : "text-ipmd-black hover:bg-ipmd-light"
+              className={`relative flex flex-1 flex-col items-center justify-center gap-0.5 py-2.5 text-[11px] font-bold transition-colors ${
+                isActive ? "text-ipmd-red" : "text-ipmd-black/55"
               }`}
             >
-              <span className="text-base">{p.icon}</span>
-              <span className="whitespace-nowrap">{p.short}</span>
+              {isActive && <span className="absolute inset-x-6 top-0 h-0.5 rounded-full bg-ipmd-red" />}
+              <span className="text-xl leading-none">{p.icon}</span>
+              <span>{p.short}</span>
             </button>
           );
         })}
       </div>
-    </div>
+    </nav>
     </>
   );
 }
