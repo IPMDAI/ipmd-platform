@@ -27,6 +27,15 @@ export const mainNav: NavItem[] = [
       { label: "Entreprise / Organisation", href: "/entreprise", description: "Former, recruter, collaborer" },
     ],
   },
+  {
+    label: "Actu & Opportunités",
+    href: "/news",
+    children: [
+      { label: "📰 IPMD News", href: "/news", description: "Actualités digital, IA & innovations" },
+      { label: "💼 IPMD Jobs", href: "/jobs", description: "Emplois, stages, alternances, freelance" },
+      { label: "🌍 IPMD Opportunities", href: "/opportunities", description: "Bourses, concours, hackathons, programmes" },
+    ],
+  },
   { label: "Scolarité", href: "/scolarite" },
   {
     label: "Admission",
@@ -57,6 +66,9 @@ export const footerNav = {
     { label: "Admission", href: "/admission" },
     { label: "Toutes les formations", href: "/formations" },
     { label: "Nos partenaires", href: "/partenaires" },
+    { label: "IPMD News", href: "/news" },
+    { label: "IPMD Jobs", href: "/jobs" },
+    { label: "IPMD Opportunities", href: "/opportunities" },
     { label: "Galerie", href: "/galerie" },
     { label: "Tableau d'honneur", href: "/distingues" },
     { label: "Enseigner à l'IPMD", href: "/recrutement" },
