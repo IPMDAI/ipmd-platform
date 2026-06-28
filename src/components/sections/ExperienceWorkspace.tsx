@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useState, useRef, useEffect, type ReactNode } from "react";
 import { Section } from "@/components/ui/Section";
 import { UpcomingBootcampsGrid } from "@/components/ultraboost/UpcomingBootcamps";
 import { AnnualAgenda } from "@/components/sections/AnnualAgenda";
@@ -40,11 +40,25 @@ export function ExperienceWorkspace({ universeId }: { universeId: string }) {
   }
 
   const [active, setActive] = useState(panels[0]?.id ?? "");
-  const [mobileView, setMobileView] = useState<"list" | "detail">("list");
+  const rootRef = useRef<HTMLDivElement>(null);
+  const [barVisible, setBarVisible] = useState(false);
+
+  useEffect(() => {
+    const el = rootRef.current;
+    if (!el || typeof IntersectionObserver === "undefined") return;
+    const io = new IntersectionObserver(
+      ([entry]) => setBarVisible(entry.isIntersecting),
+      { rootMargin: "-15% 0px -10% 0px" },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+
   if (panels.length === 0) return null;
   const current = panels.find((p) => p.id === active) ?? panels[0];
 
   return (
+    <>
     <Section variant="light">
       <div className="flex flex-wrap items-center gap-3">
         <span className="rounded-full bg-ipmd-red px-3 py-1 text-xs font-bold uppercase tracking-wide text-white">
@@ -55,15 +69,13 @@ export function ExperienceWorkspace({ universeId }: { universeId: string }) {
         </h2>
       </div>
       <p className="mt-2 max-w-2xl text-black/60">
-        <span className="lg:hidden">Choisissez une rubrique pour afficher son détail.</span>
-        <span className="hidden lg:inline">Parcourez les rubriques à gauche : cliquez pour afficher le détail à droite.</span>
+        Choisissez une rubrique : le contenu s&apos;affiche aussitôt. La barre des rubriques reste accessible
+        pendant que vous faites défiler.
       </p>
 
-      <div className="mt-8 grid gap-6 lg:grid-cols-[280px_1fr]">
-        {/* Liste (style boîte mail) — plein écran sur mobile, rail à gauche sur desktop */}
-        <aside
-          className={`${mobileView === "detail" ? "hidden lg:block" : "block"} lg:sticky lg:top-24 lg:self-start`}
-        >
+      <div ref={rootRef} className="mt-8 lg:grid lg:gap-6 lg:grid-cols-[280px_1fr]">
+        {/* Liste latérale — reste fixe (sticky) sur desktop */}
+        <aside className="hidden lg:block lg:sticky lg:top-24 lg:self-start">
           <ul className="flex flex-col gap-2">
             {panels.map((p) => {
               const isActive = p.id === current.id;
@@ -71,14 +83,11 @@ export function ExperienceWorkspace({ universeId }: { universeId: string }) {
                 <li key={p.id}>
                   <button
                     type="button"
-                    onClick={() => {
-                      setActive(p.id);
-                      setMobileView("detail");
-                    }}
+                    onClick={() => setActive(p.id)}
                     aria-current={isActive}
                     className={`flex w-full items-center gap-3 rounded-2xl border px-4 py-3 text-left transition-colors ${
                       isActive
-                        ? "border-ipmd-red/30 bg-white shadow-sm lg:bg-white"
+                        ? "border-ipmd-red/30 bg-white shadow-sm"
                         : "border-black/5 bg-ipmd-light hover:bg-white"
                     }`}
                   >
@@ -90,12 +99,11 @@ export function ExperienceWorkspace({ universeId }: { universeId: string }) {
                       {p.icon}
                     </span>
                     <span className="min-w-0 flex-1">
-                      <span className={`block text-sm font-bold ${isActive ? "text-ipmd-red lg:text-ipmd-red" : "text-ipmd-black"}`}>
+                      <span className={`block text-sm font-bold ${isActive ? "text-ipmd-red" : "text-ipmd-black"}`}>
                         {p.label}
                       </span>
                       <span className="block truncate text-xs text-black/50">{p.sublabel}</span>
                     </span>
-                    <span className="shrink-0 text-lg text-black/25 lg:hidden">›</span>
                   </button>
                 </li>
               );
@@ -104,17 +112,37 @@ export function ExperienceWorkspace({ universeId }: { universeId: string }) {
         </aside>
 
         {/* Contenu */}
-        <div className={`${mobileView === "list" ? "hidden lg:block" : "block"} min-w-0`}>
-          <button
-            type="button"
-            onClick={() => setMobileView("list")}
-            className="mb-4 inline-flex items-center gap-1.5 rounded-full bg-ipmd-light px-4 py-2 text-sm font-semibold text-ipmd-black ring-1 ring-black/5 transition-colors hover:bg-white lg:hidden"
-          >
-            ← Toutes les rubriques
-          </button>
-          {current.render()}
-        </div>
+        <div className="min-w-0 pb-20 lg:pb-0">{current.render()}</div>
       </div>
     </Section>
+
+    {/* Barre des rubriques — fixée en bas sur mobile (style application),
+        visible uniquement quand la section est à l'écran */}
+    <div
+      className={`fixed bottom-4 left-4 right-20 z-40 lg:hidden transition-all duration-300 ${
+        barVisible ? "translate-y-0 opacity-100" : "pointer-events-none translate-y-6 opacity-0"
+      }`}
+    >
+      <div className="flex items-center gap-1 rounded-full border border-black/10 bg-white/95 p-1.5 shadow-xl backdrop-blur">
+        {panels.map((p) => {
+          const isActive = p.id === current.id;
+          return (
+            <button
+              key={p.id}
+              type="button"
+              onClick={() => setActive(p.id)}
+              aria-current={isActive}
+              className={`flex flex-1 items-center justify-center gap-1.5 rounded-full px-3 py-2.5 text-xs font-bold transition-colors ${
+                isActive ? "bg-ipmd-red text-white" : "text-ipmd-black hover:bg-ipmd-light"
+              }`}
+            >
+              <span className="text-base">{p.icon}</span>
+              <span className="truncate">{p.label}</span>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+    </>
   );
 }
