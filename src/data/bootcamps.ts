@@ -5,29 +5,7 @@ import type { Bootcamp } from "@/types";
  * (professionnels) et UltraExecutive (dirigeants).
  */
 export const bootcamps: Bootcamp[] = [
-  // ── UltraJobs — 15 bootcamps jeunes (à l'ère de l'IA) ───────
-  {
-    id: "uj-marketing",
-    universe: "ultrajobs",
-    title: "Marketing digital & Growth à l'ère de l'IA",
-    description:
-      "Attirez, convertissez et analysez vos campagnes digitales avec des outils modernes et l'IA.",
-    duration: "8 semaines",
-    format: "Intensif",
-    skills: ["SEO/SEA", "Réseaux sociaux", "Analytics IA"],
-    icon: "📈",
-  },
-  {
-    id: "uj-community",
-    universe: "ultrajobs",
-    title: "Community Management à l'ère de l'IA",
-    description:
-      "Animez les réseaux sociaux, créez des contenus et gagnez du temps grâce à l'IA.",
-    duration: "6 semaines",
-    format: "Intensif",
-    skills: ["Content IA", "Modération", "Social ads"],
-    icon: "📣",
-  },
+  // ── UltraJobs — bootcamps jeunes (à l'ère de l'IA) ──────────
   {
     id: "uj-design",
     universe: "ultrajobs",
@@ -284,6 +262,17 @@ export const bootcamps: Bootcamp[] = [
     format: "Intensif",
     skills: ["Figma", "Prototypage", "Design system"],
     icon: "🧩",
+  },
+  {
+    id: "uj-mobile",
+    universe: "ultrajobs",
+    title: "Développement d'applications mobiles",
+    description:
+      "Concevez et publiez des applications mobiles modernes (Android/iOS) avec l'IA.",
+    duration: "10 semaines",
+    format: "Intensif",
+    skills: ["Mobile", "React Native", "Publication"],
+    icon: "📲",
   },
 
   // ── UltraBoost — 15 bootcamps professionnels ────────────────
