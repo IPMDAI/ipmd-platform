@@ -107,6 +107,12 @@ export interface Bootcamp {
   /** Compétences clés visées. */
   skills: string[];
   icon: string;
+  /** Objectifs spécifiques (page programme). */
+  objectives?: string[];
+  /** Cas pratiques (page programme). */
+  casPratiques?: string[];
+  /** Livrable final (page programme). */
+  livrable?: string;
 }
 
 // ──────────────────────────────────────────────────────────────
