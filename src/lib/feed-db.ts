@@ -47,18 +47,23 @@ function mapRow(r: Row): FeedItem {
  */
 export async function resolveFeed(kind: FeedKind): Promise<Feed> {
   const base = getStaticFeed(kind);
-  const supabase = await createClient();
-  if (!supabase) return base;
+  try {
+    const supabase = await createClient();
+    if (!supabase) return base;
 
-  const { data, error } = await supabase
-    .from("feed_items")
-    .select("id,title,subtitle,category,summary,icon,image_url,href,date_label,reading_time,deadline,status,meta,tags,featured")
-    .eq("kind", kind)
-    .eq("published", true)
-    .order("featured", { ascending: false })
-    .order("sort_order", { ascending: true })
-    .order("created_at", { ascending: false });
+    const { data, error } = await supabase
+      .from("feed_items")
+      .select("id,title,subtitle,category,summary,icon,image_url,href,date_label,reading_time,deadline,status,meta,tags,featured")
+      .eq("kind", kind)
+      .eq("published", true)
+      .order("featured", { ascending: false })
+      .order("sort_order", { ascending: true })
+      .order("created_at", { ascending: false });
 
-  if (error || !data || data.length === 0) return base;
-  return { ...base, items: (data as Row[]).map(mapRow) };
+    if (error || !data || data.length === 0) return base;
+    return { ...base, items: (data as Row[]).map(mapRow) };
+  } catch {
+    // Toute erreur (table absente, réseau, config) → contenu statique.
+    return base;
+  }
 }
