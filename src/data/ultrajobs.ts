@@ -16,6 +16,38 @@ export type UltraJobsDomain = {
   metiers: UltraJobsMetier[];
 };
 
+/** Tarif & volume horaire communs aux bootcamps métiers UltraJobs. */
+export const ULTRAJOBS_PRICE = "345 000 FCFA";
+export const ULTRAJOBS_HOURS = 44;
+
+/** Gabarit commun du programme (modal). */
+export const ULTRAJOBS_OBJECTIFS_SPECIFIQUES = [
+  "Maîtriser les concepts fondamentaux, le vocabulaire métier et les cas d'usage à forte valeur.",
+  "Mettre en œuvre des exercices pratiques et des mises en situation alignées sur les attentes des entreprises.",
+  "Construire un plan d'actions personnalisé pour déployer les acquis dans votre contexte professionnel.",
+];
+
+export const ULTRAJOBS_PREREQUIS = [
+  "Bonnes bases numériques (bureautique, messagerie, visioconférence).",
+  "Disponibilité pour les travaux guidés entre les sessions.",
+  "Motivation pour progresser sur un rythme exigeant type bootcamp.",
+];
+
+export const ULTRAJOBS_FORMATS = [
+  "En ligne (live)",
+  "Présentiel premium",
+  "Hybride",
+  "VIP",
+  "Équipe / cohorte dédiée",
+];
+
+export const ULTRAJOBS_CRENEAUX = [
+  "Matin : 09h – 12h",
+  "Après-midi : 13h – 15h",
+  "Journée complète : 09h – 15h",
+  "Soir : 18h – 21h",
+];
+
 export const ULTRAJOBS_DOMAINS: UltraJobsDomain[] = [
   {
     id: "marketing",
