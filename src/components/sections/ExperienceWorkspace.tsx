@@ -47,10 +47,10 @@ export function ExperienceWorkspace({ universeId }: { universeId: string }) {
   if (hubskills) {
     panels.push({
       id: "hubskills",
-      icon: "💡",
-      label: "HubSkills",
-      short: "HubSkills",
-      sublabel: "Rencontres, pitch, incubation…",
+      icon: hubskills.icon ?? "💡",
+      label: hubskills.eyebrow,
+      short: hubskills.eyebrow,
+      sublabel: "Réseau, compétences & accompagnement",
       render: () => <HubSkills universeId={universeId} />,
     });
   }

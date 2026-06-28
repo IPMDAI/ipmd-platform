@@ -5,7 +5,7 @@ import { Section } from "@/components/ui/Section";
 import { Button } from "@/components/ui/Button";
 import { CtaBanner } from "@/components/sections/CtaBanner";
 import { UltraBoostCatalog } from "@/components/ultraboost/UltraBoostCatalog";
-import { UpcomingBootcamps } from "@/components/ultraboost/UpcomingBootcamps";
+import { ExperienceWorkspace } from "@/components/sections/ExperienceWorkspace";
 import { getUniverse } from "@/data/universes";
 
 export const metadata: Metadata = {
@@ -34,7 +34,7 @@ export default function UltraBoostPage() {
 
       <UniverseVideo universeId="ultraboost" />
 
-      <UpcomingBootcamps universeId="ultraboost" />
+      <ExperienceWorkspace universeId="ultraboost" />
 
       <Section variant="white">
         <h2 className="text-2xl font-extrabold tracking-tight text-ipmd-black sm:text-3xl">

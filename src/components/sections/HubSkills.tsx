@@ -29,8 +29,8 @@ export function HubSkills({ universeId }: { universeId: string }) {
 
       <div className="mt-8 flex flex-col items-start gap-3 rounded-2xl bg-ipmd-black p-6 text-white sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <p className="text-lg font-bold">Envie de rejoindre HubSkills ?</p>
-          <p className="text-sm text-white/60">Rencontres, pitch, incubation et accompagnement — on vous accueille.</p>
+          <p className="text-lg font-bold">Envie de rejoindre {hub.eyebrow} ?</p>
+          <p className="text-sm text-white/60">Rencontres, accompagnement et communauté — on vous accueille.</p>
         </div>
         <Link
           href="/contact"

@@ -5,7 +5,7 @@ import { UniverseVideo } from "@/components/sections/UniverseVideo";
 import { CtaBanner } from "@/components/sections/CtaBanner";
 import { ProgramCard } from "@/components/cards/ProgramCard";
 import { BootcampCard } from "@/components/cards/BootcampCard";
-import { UpcomingBootcamps } from "@/components/ultraboost/UpcomingBootcamps";
+import { ExperienceWorkspace } from "@/components/sections/ExperienceWorkspace";
 import { Button } from "@/components/ui/Button";
 import { getUniverse } from "@/data/universes";
 import { getProgramsByUniverse } from "@/data/programs";
@@ -108,7 +108,7 @@ export function UniverseShowcase({ universeId }: { universeId: UniverseId }) {
         )}
       </Section>
 
-      <UpcomingBootcamps universeId={universeId} />
+      <ExperienceWorkspace universeId={universeId} />
 
       <CtaBanner
         title="Prêt à rejoindre IPMD ?"

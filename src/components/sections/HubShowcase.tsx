@@ -4,7 +4,7 @@ import { Reveal } from "@/components/ui/Reveal";
 import { PageHero } from "@/components/sections/PageHero";
 import { CtaBanner } from "@/components/sections/CtaBanner";
 import { Button } from "@/components/ui/Button";
-import { UpcomingBootcamps } from "@/components/ultraboost/UpcomingBootcamps";
+import { ExperienceWorkspace } from "@/components/sections/ExperienceWorkspace";
 import { getHub } from "@/data/ecosystem";
 import { getGalleryImages } from "@/lib/gallery";
 
@@ -81,7 +81,7 @@ export function HubShowcase({ hubId }: { hubId: string }) {
         </Section>
       )}
 
-      <UpcomingBootcamps universeId={hubId} />
+      <ExperienceWorkspace universeId={hubId} />
 
       <CtaBanner
         title={`Intéressé par ${hub.name} ?`}
