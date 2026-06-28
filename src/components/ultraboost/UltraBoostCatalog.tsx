@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import {
-  ULTRABOOST_BOOTCAMPS,
+  ULTRABOOST_SECTORS,
   ULTRABOOST_DURATION_H,
   ULTRABOOST_PRICE,
   ULTRABOOST_SCHEDULES,
@@ -18,39 +18,52 @@ export function UltraBoostCatalog() {
   const [selected, setSelected] = useState<UltraBoostBootcamp | null>(null);
 
   return (
-    <div className="rounded-3xl bg-ipmd-black p-5 text-white sm:p-8">
-      {/* Grille des bootcamps */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {ULTRABOOST_BOOTCAMPS.map((b) => (
-          <div
-            key={b.id}
-            className="flex flex-col rounded-2xl bg-white/5 p-5 ring-1 ring-white/10 transition-colors hover:ring-amber-400/40"
-          >
-            <span className="w-fit rounded-full bg-amber-400/15 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-300">
-              VIP Bootcamp
+    <div className="space-y-12 rounded-3xl bg-ipmd-black p-5 text-white sm:p-8">
+      {/* Bootcamps groupés par secteur */}
+      {ULTRABOOST_SECTORS.map((sector) => (
+        <div key={sector.id}>
+          <div className="flex items-center gap-3">
+            <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-amber-400/15 text-xl">
+              {sector.icon}
             </span>
-            <h3 className="mt-3 font-bold text-amber-200">{b.title}</h3>
-            <p className="mt-2 text-sm text-white/70">
-              {ULTRABOOST_DURATION_H} h · {ULTRABOOST_PRICE}
-            </p>
-            <div className="mt-4 flex gap-2">
-              <button
-                type="button"
-                onClick={() => setSelected(b)}
-                className="rounded-full bg-white/10 px-4 py-1.5 text-sm font-semibold text-white transition-colors hover:bg-white/20"
-              >
-                Programme
-              </button>
-              <Link
-                href={`/inscription-bootcamp?u=ultraboost`}
-                className="rounded-full bg-amber-400 px-4 py-1.5 text-sm font-bold text-ipmd-black transition-opacity hover:opacity-90"
-              >
-                Admission
-              </Link>
-            </div>
+            <h3 className="text-xl font-extrabold tracking-tight text-white sm:text-2xl">
+              {sector.title}
+            </h3>
           </div>
-        ))}
-      </div>
+
+          <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {sector.bootcamps.map((b) => (
+              <div
+                key={b.id}
+                className="flex flex-col rounded-2xl bg-white/5 p-5 ring-1 ring-white/10 transition-colors hover:ring-amber-400/40"
+              >
+                <span className="w-fit rounded-full bg-amber-400/15 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-300">
+                  VIP Bootcamp
+                </span>
+                <h4 className="mt-3 font-bold text-amber-200">{b.title}</h4>
+                <p className="mt-2 text-sm text-white/70">
+                  {ULTRABOOST_DURATION_H} h · {ULTRABOOST_PRICE}
+                </p>
+                <div className="mt-4 flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setSelected(b)}
+                    className="rounded-full bg-white/10 px-4 py-1.5 text-sm font-semibold text-white transition-colors hover:bg-white/20"
+                  >
+                    Programme
+                  </button>
+                  <Link
+                    href={`/inscription-bootcamp?u=ultraboost`}
+                    className="rounded-full bg-amber-400 px-4 py-1.5 text-sm font-bold text-ipmd-black transition-opacity hover:opacity-90"
+                  >
+                    Admission
+                  </Link>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
 
       {/* Modal Programme */}
       {selected && (
