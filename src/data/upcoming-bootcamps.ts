@@ -207,6 +207,21 @@ export const UPCOMING_BY_UNIVERSE: Record<string, UpcomingBootcamp[]> = {
       slotsNote: "Chaque participant choisit le créneau qui lui convient.",
       variant: "premium",
     },
+    {
+      id: "sh-reseaux-juil-2026",
+      image: "/galerie-seniorshub/SeniorsHub2.png",
+      title: "Réseaux sociaux & rester connecté avec ses proches",
+      badge: "Session SeniorsHub à Abidjan",
+      description:
+        "Bootcamp 80 % pratique pour utiliser Facebook, WhatsApp, les photos et les appels vidéo afin de rester en lien avec sa famille en toute confiance.",
+      date: "28 au 30 juillet 2026",
+      places: "Limité à 15 participants",
+      location: "SeniorsHub à Abidjan",
+      price: "150 000 FCFA",
+      slots: ["Créneau Matin · 9h – 12h", "Créneau Après-midi · 14h – 17h"],
+      slotsNote: "Chaque participant choisit le créneau qui lui convient.",
+      variant: "premium",
+    },
   ],
 
   // ⚠️ Échantillons à ajuster (dates, places, frais réels) — UltraExecutive.
@@ -261,6 +276,23 @@ export const UPCOMING_BY_UNIVERSE: Record<string, UpcomingBootcamp[]> = {
       price: "850 000 FCFA",
       slots: ["Créneau Matin · 7h30 – 12h30", "Créneau Après-midi · 14h – 17h"],
       variant: "luxe",
+    },
+    {
+      id: "ux-cybergouvernance-aout-2026",
+      image: "/carousel-ia/3.png",
+      title: "Cybersécurité & gouvernance des données pour dirigeants",
+      subtitle: "Bootcamp Executive · Risques & conformité",
+      badge: "Bootcamp Executive à Abidjan",
+      description:
+        "Programme pour comprendre et piloter la sécurité, la gouvernance des données et la conformité au plus haut niveau, et protéger la valeur de l'organisation.",
+      audience: "Réservé aux dirigeants, cadres supérieurs et décideurs.",
+      date: "18 au 20 août 2026",
+      places: "Limité à 12 participants",
+      location: "UltraExecutive à Abidjan",
+      price: "585 000 FCFA",
+      slots: ["Créneau Matin · 8h – 11h", "Créneau Soir · 18h – 21h"],
+      slotsNote: "Chaque participant choisit le créneau qui lui convient.",
+      variant: "premium",
     },
   ],
 };
