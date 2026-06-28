@@ -3,6 +3,8 @@
 -- À exécuter APRÈS supabase/feed-items.sql.
 -- Idempotent : ids fixes + ON CONFLICT DO NOTHING (re-exécutable sans doublon).
 -- Modifiable ensuite depuis le dashboard (/espace/contenus).
+-- Colonnes (16) : id, kind, title, subtitle, category, summary, icon,
+--   date_label, reading_time, deadline, status, meta, tags, published, featured, sort_order
 -- ══════════════════════════════════════════════════════════════
 
 insert into public.feed_items
@@ -35,9 +37,9 @@ values
 ('c0000000-0000-4000-8000-000000000002','opportunities',$$Hackathon IA IPMD$$,null,$$Hackathons$$,$$48h pour concevoir une solution IA en équipe et remporter des prix.$$,$$💡$$,null,null,null,$$Candidatures ouvertes$$,array[$$Abidjan$$,$$Tous niveaux$$]::text[],array[$$Hackathons$$,$$Jeunes talents$$]::text[],true,false,2),
 ('c0000000-0000-4000-8000-000000000003','opportunities',$$Appel à projets — startups tech$$,null,$$Appels à projets$$,$$Présentez votre projet et bénéficiez d'un accompagnement dédié.$$,$$🚀$$,null,null,null,$$Candidatures ouvertes$$,array[$$Afrique de l'Ouest$$,$$Entrepreneurs$$]::text[],array[$$Appels à projets$$,$$Entrepreneuriat$$]::text[],true,false,3),
 ('c0000000-0000-4000-8000-000000000004','opportunities',$$Programme d'incubation IPMD$$,null,$$Incubateurs$$,$$Transformez votre idée en entreprise avec notre incubateur.$$,$$🌱$$,null,null,null,$$Candidatures ouvertes$$,array[$$Abidjan$$,$$Porteurs de projet$$]::text[],array[$$Incubateurs$$,$$Entrepreneuriat$$]::text[],true,false,4),
-('c0000000-0000-4000-8000-000000000005','opportunities',$$Concours d'innovation numérique$$,null,$$Concours$$,$$Tentez votre chance et gagnez un accompagnement sur mesure.$$,$$🏆$$,null,$$Bientôt clôturé$$,$$Bientôt clôturé$$,array[$$National$$,$$Jeunes$$]::text[],array[$$Concours$$,$$Jeunes talents$$]::text[],true,false,5),
-('c0000000-0000-4000-8000-000000000006','opportunities',$$Programmes internationaux & mobilité$$,null,$$Programmes internationaux$$,$$Mobilité, partenariats et opportunités à l'international.$$,$$✈️$$,null,null,$$Candidatures ouvertes$$,array[$$International$$,$$Tous$$]::text[],array[$$Programmes internationaux$$]::text[],true,false,6),
-('c0000000-0000-4000-8000-000000000007','opportunities',$$Bourse femmes & digital$$,null,$$Bourses$$,$$Un coup de pouce dédié aux femmes qui se lancent dans le numérique.$$,$$🌸$$,null,null,$$Candidatures ouvertes$$,array[$$Côte d'Ivoire$$,$$Femmes$$]::text[],array[$$Bourses$$,$$Femmes & digital$$,$$Financements$$]::text[],true,false,7),
-('c0000000-0000-4000-8000-000000000008','opportunities',$$Challenge jeunes talents IA$$,null,$$Concours$$,$$Un challenge pour révéler les jeunes talents de l'IA.$$,$$⭐$$,null,null,$$Candidatures ouvertes$$,array[$$Abidjan$$,$$18-30 ans$$]::text[],array[$$Concours$$,$$Jeunes talents$$,$$Hackathons$$]::text[],true,false,8)
+('c0000000-0000-4000-8000-000000000005','opportunities',$$Concours d'innovation numérique$$,null,$$Concours$$,$$Tentez votre chance et gagnez un accompagnement sur mesure.$$,$$🏆$$,null,null,$$Bientôt clôturé$$,$$Bientôt clôturé$$,array[$$National$$,$$Jeunes$$]::text[],array[$$Concours$$,$$Jeunes talents$$]::text[],true,false,5),
+('c0000000-0000-4000-8000-000000000006','opportunities',$$Programmes internationaux & mobilité$$,null,$$Programmes internationaux$$,$$Mobilité, partenariats et opportunités à l'international.$$,$$✈️$$,null,null,null,$$Candidatures ouvertes$$,array[$$International$$,$$Tous$$]::text[],array[$$Programmes internationaux$$]::text[],true,false,6),
+('c0000000-0000-4000-8000-000000000007','opportunities',$$Bourse femmes & digital$$,null,$$Bourses$$,$$Un coup de pouce dédié aux femmes qui se lancent dans le numérique.$$,$$🌸$$,null,null,null,$$Candidatures ouvertes$$,array[$$Côte d'Ivoire$$,$$Femmes$$]::text[],array[$$Bourses$$,$$Femmes & digital$$,$$Financements$$]::text[],true,false,7),
+('c0000000-0000-4000-8000-000000000008','opportunities',$$Challenge jeunes talents IA$$,null,$$Concours$$,$$Un challenge pour révéler les jeunes talents de l'IA.$$,$$⭐$$,null,null,null,$$Candidatures ouvertes$$,array[$$Abidjan$$,$$18-30 ans$$]::text[],array[$$Concours$$,$$Jeunes talents$$,$$Hackathons$$]::text[],true,false,8)
 
 on conflict (id) do nothing;
