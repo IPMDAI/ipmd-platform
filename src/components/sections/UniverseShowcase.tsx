@@ -56,6 +56,9 @@ export function UniverseShowcase({ universeId }: { universeId: UniverseId }) {
       {/* Grande vidéo de présentation (si une vidéo est déposée pour cet univers) */}
       <UniverseVideo universeId={universeId} />
 
+      {/* Sessions, agenda & événements — remontés en haut */}
+      <ExperienceWorkspace universeId={universeId} />
+
       {/* Public visé */}
       <Section variant="white">
         <div className="grid gap-8 rounded-3xl bg-ipmd-light p-8 sm:grid-cols-2 sm:p-10">
@@ -107,8 +110,6 @@ export function UniverseShowcase({ universeId }: { universeId: UniverseId }) {
           </div>
         )}
       </Section>
-
-      <ExperienceWorkspace universeId={universeId} />
 
       <CtaBanner
         title="Prêt à rejoindre IPMD ?"
