@@ -6,10 +6,12 @@ import { UpcomingBootcampsGrid } from "@/components/ultraboost/UpcomingBootcamps
 import { AnnualAgenda } from "@/components/sections/AnnualAgenda";
 import { HubSkills } from "@/components/sections/HubSkills";
 import { Webinaires } from "@/components/sections/Webinaires";
+import { FeedSection } from "@/components/sections/FeedSection";
 import { getUpcoming } from "@/data/upcoming-bootcamps";
 import { getAgenda } from "@/data/agenda";
 import { getHubSkills } from "@/data/hubskills";
 import { getWebinaires } from "@/data/webinaires";
+import { getNews, getJobs, getOpportunities } from "@/data/feed";
 
 type Panel = { id: string; icon: string; label: string; short: string; sublabel: string; render: () => ReactNode };
 
@@ -18,7 +20,17 @@ type Panel = { id: string; icon: string; label: string; short: string; sublabel:
  * Les rubriques apparaissent selon les données disponibles pour l'univers
  * (sessions à venir, agenda annuel, …). Réutilisable pour tout univers/certificat.
  */
-export function ExperienceWorkspace({ universeId }: { universeId: string }) {
+export function ExperienceWorkspace({
+  universeId,
+  eyebrow = "À ne pas manquer",
+  title = "Sessions, agenda & événements",
+  intro = "Choisissez une rubrique : le contenu s'affiche aussitôt. La barre des rubriques reste accessible pendant que vous faites défiler.",
+}: {
+  universeId: string;
+  eyebrow?: string;
+  title?: string;
+  intro?: string;
+}) {
   const panels: Panel[] = [];
 
   const upcoming = getUpcoming(universeId);
@@ -69,6 +81,19 @@ export function ExperienceWorkspace({ universeId }: { universeId: string }) {
     });
   }
 
+  const news = getNews(universeId);
+  if (news) {
+    panels.push({ id: "news", icon: "📰", label: "IPMD News", short: "News", sublabel: "Actus digital & IA", render: () => <FeedSection feed={news} /> });
+  }
+  const jobs = getJobs(universeId);
+  if (jobs) {
+    panels.push({ id: "jobs", icon: "💼", label: "IPMD Jobs", short: "Jobs", sublabel: "Emplois, stages, freelance", render: () => <FeedSection feed={jobs} /> });
+  }
+  const opportunities = getOpportunities(universeId);
+  if (opportunities) {
+    panels.push({ id: "opportunities", icon: "🌍", label: "IPMD Opportunities", short: "Opportunités", sublabel: "Bourses, concours, projets", render: () => <FeedSection feed={opportunities} /> });
+  }
+
   const [active, setActive] = useState(panels[0]?.id ?? "");
   const hasPanels = panels.length > 0;
 
@@ -87,16 +112,13 @@ export function ExperienceWorkspace({ universeId }: { universeId: string }) {
     <Section variant="light">
       <div className="flex flex-wrap items-center gap-3">
         <span className="rounded-full bg-ipmd-red px-3 py-1 text-xs font-bold uppercase tracking-wide text-white">
-          À ne pas manquer
+          {eyebrow}
         </span>
         <h2 className="text-2xl font-extrabold tracking-tight text-ipmd-black sm:text-3xl">
-          Sessions, agenda & événements
+          {title}
         </h2>
       </div>
-      <p className="mt-2 max-w-2xl text-black/60">
-        Choisissez une rubrique : le contenu s&apos;affiche aussitôt. La barre des rubriques reste accessible
-        pendant que vous faites défiler.
-      </p>
+      <p className="mt-2 max-w-2xl text-black/60">{intro}</p>
 
       <div className="mt-8 lg:grid lg:gap-6 lg:grid-cols-[280px_1fr]">
         {/* Liste latérale — reste fixe (sticky) sur desktop */}

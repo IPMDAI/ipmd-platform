@@ -8,6 +8,7 @@ import { StudentLife } from "@/components/home/StudentLife";
 import { MediaGallery } from "@/components/home/MediaGallery";
 import { VideosBand } from "@/components/home/VideosBand";
 import { PartnersBand } from "@/components/home/PartnersBand";
+import { ExperienceWorkspace } from "@/components/sections/ExperienceWorkspace";
 import { CtaBanner } from "@/components/sections/CtaBanner";
 import { ContactTeaser } from "@/components/home/ContactTeaser";
 
@@ -16,6 +17,12 @@ export default function HomePage() {
     <>
       <Hero />
       <UniversesSection />
+      <ExperienceWorkspace
+        universeId="home"
+        eyebrow="Restez connecté"
+        title="IPMD News, Jobs & Opportunities"
+        intro="L'actualité du digital et de l'IA, les offres d'emploi et les opportunités à saisir — choisissez une rubrique."
+      />
       <EcosystemSection />
       <AiCarousel />
       <AiSection />
