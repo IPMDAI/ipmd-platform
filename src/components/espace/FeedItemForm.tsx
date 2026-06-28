@@ -106,17 +106,15 @@ export function FeedItemForm({
         )}
       </div>
 
-      {kind === "opportunities" && (
-        <div>
-          <label className={labelCls}>Statut</label>
-          <select name="status" defaultValue={item?.status ?? ""} className={input}>
-            <option value="">— Aucun —</option>
-            {STATUS_OPTIONS.map((s) => (
-              <option key={s} value={s}>{s}</option>
-            ))}
-          </select>
-        </div>
-      )}
+      <div>
+        <label className={labelCls}>Statut (optionnel)</label>
+        <input name="status" defaultValue={item?.status ?? ""} list="feed-status-options" placeholder={kind === "opportunities" ? "Candidatures ouvertes" : "À la une, Nouveau…"} className={input} />
+        <datalist id="feed-status-options">
+          {STATUS_OPTIONS.map((s) => (
+            <option key={s} value={s} />
+          ))}
+        </datalist>
+      </div>
 
       <div className="grid gap-3 sm:grid-cols-2">
         <div>

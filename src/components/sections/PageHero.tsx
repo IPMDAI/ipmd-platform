@@ -7,6 +7,8 @@ interface PageHeroProps {
   title: ReactNode;
   description?: ReactNode;
   children?: ReactNode;
+  /** En-tête plus court (pages de listing : news/jobs/opportunities). */
+  compact?: boolean;
 }
 
 /** En-tête sombre standard des pages intérieures. */
@@ -15,6 +17,7 @@ export function PageHero({
   title,
   description,
   children,
+  compact = false,
 }: PageHeroProps) {
   return (
     <section className="relative overflow-hidden bg-ipmd-black text-white">
@@ -23,7 +26,7 @@ export function PageHero({
         className="absolute -right-24 -top-24 h-80 w-80 rounded-full bg-ipmd-red/25 blur-3xl"
         aria-hidden
       />
-      <Container className="relative py-20 sm:py-28">
+      <Container className={`relative ${compact ? "py-12 sm:py-16" : "py-20 sm:py-28"}`}>
         <div className="max-w-3xl">
           {eyebrow && (
             <div className="mb-4">

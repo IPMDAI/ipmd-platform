@@ -15,6 +15,7 @@ export default async function JobsPage() {
   return (
     <>
       <PageHero
+        compact
         eyebrow="💼 IPMD Jobs"
         title="Stages, emplois & missions dans le digital et l'IA"
         description="Accédez aux offres de stages, emplois, alternances et missions freelance proposées par IPMD, ses entreprises partenaires et le réseau UltraJobs."
@@ -24,7 +25,7 @@ export default async function JobsPage() {
           <FeedBoard feed={feed} heading={false} />
           <p className="mt-8 rounded-2xl bg-white p-4 text-sm text-black/55 ring-1 ring-black/5">
             <strong className="text-ipmd-black">À noter :</strong> IPMD Jobs regroupe des offres professionnelles.
-            UltraJobs est notre programme d&apos;accompagnement, de formation et d&apos;insertion — ces offres peuvent
+            UltraJobs est notre programme d&apos;accompagnement, de formation et d&apos;insertion. Ces offres peuvent
             être alimentées par le réseau UltraJobs.
           </p>
         </Section>

@@ -15,6 +15,7 @@ export default async function NewsPage() {
   return (
     <>
       <PageHero
+        compact
         eyebrow="📰 IPMD News"
         title="Actualités Digital, IA & Métiers d'avenir"
         description="Décryptages, tendances, innovations et annonces IPMD pour comprendre les métiers de demain et rester à la pointe du digital et de l'IA."

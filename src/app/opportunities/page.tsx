@@ -15,6 +15,7 @@ export default async function OpportunitiesPage() {
   return (
     <>
       <PageHero
+        compact
         eyebrow="🌍 IPMD Opportunities"
         title="Bourses, concours & opportunités internationales"
         description="Découvrez les bourses, concours, hackathons, incubateurs, appels à projets et programmes internationaux pour développer vos compétences, votre réseau et votre avenir."

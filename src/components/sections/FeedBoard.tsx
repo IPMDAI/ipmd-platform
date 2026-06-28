@@ -90,7 +90,9 @@ export function FeedBoard({ feed, heading = true, filters = true, actions = true
           {items.map((it) => (
             <article
               key={it.id}
-              className="flex h-full flex-col rounded-2xl border border-black/5 bg-white p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md"
+              className={`flex h-full flex-col rounded-2xl bg-white p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md ${
+                it.featured ? "border-2 border-ipmd-red/40 ring-1 ring-ipmd-red/10" : "border border-black/5"
+              }`}
             >
               <div className="flex items-start gap-3">
                 {it.image ? (
@@ -107,11 +109,16 @@ export function FeedBoard({ feed, heading = true, filters = true, actions = true
                 </div>
               </div>
 
-              {/* Badges : catégorie + statut + meta */}
+              {/* Badges : à la une + catégorie + statut + meta */}
               <div className="mt-3 flex flex-wrap items-center gap-1.5">
-                <span className="rounded-full bg-ipmd-red/10 px-2.5 py-1 text-[11px] font-bold text-ipmd-red">
-                  {it.category}
-                </span>
+                {it.featured && (
+                  <span className="rounded-full bg-ipmd-red px-2.5 py-1 text-[11px] font-bold text-white">★ À la une</span>
+                )}
+                {it.category && (
+                  <span className="rounded-full bg-ipmd-red/10 px-2.5 py-1 text-[11px] font-bold text-ipmd-red">
+                    {it.category}
+                  </span>
+                )}
                 {it.status && (
                   <span className={`rounded-full px-2.5 py-1 text-[11px] font-bold ${statusClasses(it.status)}`}>
                     {it.status}

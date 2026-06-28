@@ -17,6 +17,7 @@ type Row = {
   status: string | null;
   meta: string[] | null;
   tags: string[] | null;
+  featured: boolean | null;
 };
 
 function mapRow(r: Row): FeedItem {
@@ -35,6 +36,7 @@ function mapRow(r: Row): FeedItem {
     status: r.status ?? undefined,
     meta: r.meta ?? [],
     tags: r.tags ?? [],
+    featured: r.featured ?? false,
   };
 }
 
@@ -50,7 +52,7 @@ export async function resolveFeed(kind: FeedKind): Promise<Feed> {
 
   const { data, error } = await supabase
     .from("feed_items")
-    .select("id,title,subtitle,category,summary,icon,image_url,href,date_label,reading_time,deadline,status,meta,tags")
+    .select("id,title,subtitle,category,summary,icon,image_url,href,date_label,reading_time,deadline,status,meta,tags,featured")
     .eq("kind", kind)
     .eq("published", true)
     .order("featured", { ascending: false })
