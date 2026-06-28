@@ -18,10 +18,14 @@ export type UltraJobsDomain = {
   icon: string;
   title: string;
   metiers: UltraJobsMetier[];
+  /** Tarif du domaine (sinon ULTRAJOBS_PRICE). Le tarif d'un métier reste prioritaire. */
+  price?: string;
+  /** Volume horaire du domaine (sinon ULTRAJOBS_HOURS). Celui d'un métier reste prioritaire. */
+  hours?: number;
 };
 
-/** Tarif & volume horaire communs aux bootcamps métiers UltraJobs. */
-export const ULTRAJOBS_PRICE = "345 000 FCFA";
+/** Tarif & volume horaire par défaut des bootcamps métiers UltraJobs. */
+export const ULTRAJOBS_PRICE = "385 000 FCFA";
 export const ULTRAJOBS_HOURS = 44;
 
 /** Gabarit commun du programme (modal). */
@@ -57,12 +61,25 @@ export const ULTRAJOBS_DOMAINS: UltraJobsDomain[] = [
     id: "marketing",
     icon: "📣",
     title: "Marketing digital & réseaux sociaux",
+    hours: 30,
     metiers: [
       { title: "Community Manager & Créateur de contenu IA", summary: "Fédérez une communauté et produisez du contenu viral en un temps record grâce à l'IA.", skills: ["Réseaux sociaux", "Contenu IA", "Storytelling"] },
       { title: "Social Media Manager", summary: "Pilotez la présence d'une marque sur tous les réseaux et transformez l'audience en clients.", skills: ["Stratégie social", "Calendrier édito", "KPIs"] },
       { title: "Traffic Manager / Spécialiste Ads", summary: "Générez du trafic qualifié et des ventes avec des campagnes Meta & Google rentables.", skills: ["Meta Ads", "Google Ads", "ROAS"] },
       { title: "Growth Marketer", summary: "Activez des leviers de croissance data-driven et faites décoller l'acquisition.", skills: ["Funnel", "A/B testing", "Growth"] },
       { title: "Marketing Automation Specialist", summary: "Automatisez le marketing de bout en bout (emails, CRM, chatbots) pour vendre 24/7.", skills: ["Automation", "CRM", "Chatbots IA"] },
+    ],
+  },
+  {
+    id: "communication",
+    icon: "🗣️",
+    title: "Communication digitale & relations publiques",
+    metiers: [
+      { title: "Chargé de communication digitale", summary: "Pilotez la communication d'une organisation sur tous les canaux numériques.", skills: ["Communication", "Multicanal", "Image"] },
+      { title: "Content Manager & rédacteur web", summary: "Produisez et orchestrez des contenus éditoriaux qui engagent et convertissent.", skills: ["Rédaction web", "Contenu", "SEO"] },
+      { title: "Brand Content & storytelling", summary: "Racontez la marque avec un storytelling fort, cohérent et mémorable.", skills: ["Storytelling", "Brand content", "Éditorial"] },
+      { title: "Relations presse & influence digitale", summary: "Gérez l'image, la presse et les partenariats d'influence en ligne.", skills: ["RP", "Influence", "Médias"] },
+      { title: "Communication interne & événementielle", summary: "Animez la communication interne et les événements digitaux de l'organisation.", skills: ["Com interne", "Événementiel", "Animation"] },
     ],
   },
   {
@@ -81,6 +98,7 @@ export const ULTRAJOBS_DOMAINS: UltraJobsDomain[] = [
     id: "dev",
     icon: "💻",
     title: "Développement web & applications",
+    hours: 50,
     metiers: [
       { title: "Développeur web à l'ère de l'IA", summary: "Codez des sites modernes et performants, assisté par l'IA.", skills: ["HTML/CSS", "JavaScript", "Outils IA"] },
       { title: "Développeur d'applications mobiles", summary: "Concevez et publiez des apps Android/iOS prêtes pour le marché.", skills: ["Mobile", "React Native", "Publication"] },
@@ -93,6 +111,7 @@ export const ULTRAJOBS_DOMAINS: UltraJobsDomain[] = [
     id: "ia",
     icon: "🤖",
     title: "IA appliquée, prompting & productivité",
+    hours: 40,
     metiers: [
       { title: "Spécialiste IA appliquée", summary: "Déployez l'IA dans les métiers pour gagner en efficacité et en valeur.", skills: ["IA métier", "Outils IA", "Cas d'usage"] },
       { title: "Prompt Engineer métier", summary: "Maîtrisez l'art du prompt pour faire produire l'IA au niveau expert.", skills: ["Prompting", "LLM", "Optimisation"] },
@@ -129,6 +148,7 @@ export const ULTRAJOBS_DOMAINS: UltraJobsDomain[] = [
     id: "ecommerce",
     icon: "🛒",
     title: "E-commerce, business en ligne & vente digitale",
+    hours: 40,
     metiers: [
       { title: "Assistant e-commerce", summary: "Gérez une boutique en ligne et boostez les ventes au quotidien.", skills: ["Boutique", "Commandes", "Ventes"] },
       { title: "Gestionnaire boutique en ligne", summary: "Pilotez catalogue, commandes et logistique d'une boutique digitale.", skills: ["Catalogue", "Logistique", "Shopify"] },
@@ -141,6 +161,7 @@ export const ULTRAJOBS_DOMAINS: UltraJobsDomain[] = [
     id: "support",
     icon: "💬",
     title: "Support client digital, assistant virtuel & télétravail",
+    hours: 30,
     metiers: [
       { title: "Assistant virtuel avec IA", summary: "Gérez agendas, tâches et clients à distance, augmenté par l'IA.", skills: ["Assistance", "IA", "Organisation"] },
       { title: "Support client digital", summary: "Offrez un service client réactif et professionnel en ligne.", skills: ["Support", "Tickets", "Communication"] },

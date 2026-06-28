@@ -13,7 +13,7 @@ import {
   type UltraJobsMetier,
 } from "@/data/ultrajobs";
 
-type Selected = { metier: UltraJobsMetier; domain: string } | null;
+type Selected = { metier: UltraJobsMetier; domain: string; price: string; hours: number } | null;
 
 /** Catalogue UltraJobs : métiers par domaine, avec tarif, volume horaire et modal Programme. */
 export function UltraJobsCatalog() {
@@ -33,7 +33,10 @@ export function UltraJobsCatalog() {
           </div>
 
           <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {domain.metiers.map((m) => (
+            {domain.metiers.map((m) => {
+              const price = m.price ?? domain.price ?? ULTRAJOBS_PRICE;
+              const hours = m.hours ?? domain.hours ?? ULTRAJOBS_HOURS;
+              return (
               <div
                 key={m.title}
                 className="flex h-full flex-col rounded-2xl border border-black/5 bg-white p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md"
@@ -53,13 +56,13 @@ export function UltraJobsCatalog() {
                   ))}
                 </div>
                 <p className="mt-3 text-sm font-bold text-ipmd-red">
-                  {m.price ?? ULTRAJOBS_PRICE}
-                  <span className="font-medium text-black/45"> · {m.hours ?? ULTRAJOBS_HOURS}h</span>
+                  {price}
+                  <span className="font-medium text-black/45"> · {hours}h</span>
                 </p>
                 <div className="mt-3 flex gap-2">
                   <button
                     type="button"
-                    onClick={() => setSelected({ metier: m, domain: domain.title })}
+                    onClick={() => setSelected({ metier: m, domain: domain.title, price, hours })}
                     className="rounded-full bg-ipmd-light px-4 py-2 text-sm font-semibold text-ipmd-black ring-1 ring-black/10 transition-colors hover:bg-black/5"
                   >
                     Programme
@@ -72,7 +75,8 @@ export function UltraJobsCatalog() {
                   </Link>
                 </div>
               </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       ))}
@@ -107,9 +111,9 @@ export function UltraJobsCatalog() {
             </div>
 
             <p className="mt-3 border-y border-white/10 py-3 text-sm">
-              <span className="font-bold text-ipmd-red">{selected.metier.price ?? ULTRAJOBS_PRICE}</span>
+              <span className="font-bold text-ipmd-red">{selected.price}</span>
               <span className="text-white/55"> · Volume horaire : </span>
-              <span className="font-semibold">{selected.metier.hours ?? ULTRAJOBS_HOURS}h</span>
+              <span className="font-semibold">{selected.hours}h</span>
             </p>
 
             <h4 className="mt-4 text-sm font-bold text-ipmd-red">Objectif général</h4>
