@@ -8,12 +8,14 @@ import { StudentLife } from "@/components/home/StudentLife";
 import { MediaGallery } from "@/components/home/MediaGallery";
 import { VideosBand } from "@/components/home/VideosBand";
 import { PartnersBand } from "@/components/home/PartnersBand";
+import { HomeQuickNav } from "@/components/home/HomeQuickNav";
 import { CtaBanner } from "@/components/sections/CtaBanner";
 import { ContactTeaser } from "@/components/home/ContactTeaser";
 
 export default function HomePage() {
   return (
     <>
+      <HomeQuickNav />
       <Hero />
       <UniversesSection />
       <EcosystemSection />

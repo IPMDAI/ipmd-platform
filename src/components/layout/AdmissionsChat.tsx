@@ -12,7 +12,7 @@ type Msg = { role: "user" | "assistant"; content: string };
 const LEAD_KEY = "ipmd_chat_lead";
 
 // Pages avec la barre de rubriques persistante : on remonte le bouton (mobile).
-const WORKSPACE_PAGES = ["/ultrajobs", "/ultraboost", "/seniorshub", "/ultraexecutive", "/campus", "/professionnel", "/gouvernance", "/entreprise"];
+const WORKSPACE_PAGES = ["/", "/ultrajobs", "/ultraboost", "/seniorshub", "/ultraexecutive", "/campus", "/professionnel", "/gouvernance", "/entreprise"];
 
 const GREETING =
   "Bonjour 👋 Je suis Awa, votre assistante d'admission à l'IPMD. Posez-moi vos questions sur nos formations, les frais, les cours du soir, l'admission ou une réorientation !";
