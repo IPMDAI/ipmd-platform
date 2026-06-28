@@ -34,6 +34,7 @@ export const UPCOMING_BY_UNIVERSE: Record<string, UpcomingBootcamp[]> = {
   ultraboost: [
     {
       id: "ia-chatgpt-juin-2026",
+      image: "/carousel-ia/1.png",
       title: "Intelligence Artificielle & ChatGPT",
       badge: "Bootcamp Premium à Abidjan",
       description:
@@ -48,6 +49,7 @@ export const UPCOMING_BY_UNIVERSE: Record<string, UpcomingBootcamp[]> = {
     },
     {
       id: "vente-ligne-juin-2026",
+      image: "/carousel-ia/2.png",
       title: "Vente en Ligne & Automatisation",
       badge: "Bootcamp Premium à Abidjan",
       description:
@@ -62,6 +64,7 @@ export const UPCOMING_BY_UNIVERSE: Record<string, UpcomingBootcamp[]> = {
     },
     {
       id: "administration-digitale-juin-2026",
+      image: "/carousel-ia/3.png",
       title: "Administration Digitale, IA & Automatisation Professionnelle",
       badge: "Bootcamp Premium à Abidjan",
       description:
@@ -76,6 +79,7 @@ export const UPCOMING_BY_UNIVERSE: Record<string, UpcomingBootcamp[]> = {
     },
     {
       id: "silver-masters-juin-2026",
+      image: "/IPMD_Executive.png",
       title: "Silver Masters",
       subtitle: "Bootcamp Écosystème Digital · IA · E-Business",
       badge: "Bootcamp Premium à Grand-Bassam",
