@@ -1,53 +1,33 @@
 /**
- * Catalogue riche UltraBoost — VIP Bootcamps.
- * Niveaux : SPECIALIST → MANAGER → DIRECTOR → EXECUTIVE.
+ * Catalogue UltraBoost — VIP Bootcamps (liste unique, sans niveaux).
  * Le contenu du modal « Programme » est un gabarit commun (le titre change).
  *
- * 👉 Pour compléter : ajouter les bootcamps des niveaux MANAGER/DIRECTOR/EXECUTIVE
- *    dans BOOTCAMPS_BY_LEVEL (mêmes objets { id, title }).
+ * 👉 Pour gérer : modifier ULTRABOOST_BOOTCAMPS (id + titre).
  */
-
-export type UltraBoostLevelKey = "specialist" | "manager" | "director" | "executive";
-
-export type UltraBoostLevel = {
-  key: UltraBoostLevelKey;
-  label: string;
-  tagline: string;
-  durationH: number;
-  price: string;
-  certPrice: string;
-};
-
-export const ULTRABOOST_LEVELS: UltraBoostLevel[] = [
-  { key: "specialist", label: "SPECIALIST", tagline: "Expertise Métier", durationH: 42, price: "730 000 FCFA", certPrice: "545 000 FCFA" },
-  { key: "manager", label: "MANAGER", tagline: "Pilotage & Management", durationH: 42, price: "à définir", certPrice: "à définir" },
-  { key: "director", label: "DIRECTOR", tagline: "Direction & Stratégie", durationH: 42, price: "à définir", certPrice: "à définir" },
-  { key: "executive", label: "EXECUTIVE", tagline: "Gouvernance & Vision", durationH: 42, price: "à définir", certPrice: "à définir" },
-];
 
 export type UltraBoostBootcamp = { id: string; title: string };
 
-export const BOOTCAMPS_BY_LEVEL: Record<UltraBoostLevelKey, UltraBoostBootcamp[]> = {
-  specialist: [
-    { id: "spec-marketing-ia", title: "Marketing Digital & Stratégie IA" },
-    { id: "spec-marketing-des-ia", title: "Marketing des IA" },
-    { id: "spec-ecommerce-ia", title: "E-Commerce & Stratégie IA" },
-    { id: "spec-communication-ia", title: "Communication Digitale & Stratégie IA" },
-    { id: "spec-design", title: "Design & Graphisme Digital" },
-    { id: "spec-uxui", title: "UX/UI & Produits Numériques" },
-    { id: "spec-web", title: "Développement de Sites Web" },
-    { id: "spec-mobile", title: "Développement d'Applications Mobiles" },
-    { id: "spec-cloud", title: "Cloud & DevOps" },
-    { id: "spec-droit", title: "Droit du Digital & IA" },
-    { id: "spec-data", title: "Data & Analyse" },
-    { id: "spec-fintech", title: "FinTech" },
-    { id: "spec-cyber", title: "Cybersécurité" },
-    { id: "spec-ia", title: "Intelligence Artificielle" },
-  ],
-  manager: [],
-  director: [],
-  executive: [],
-};
+/** Durée et tarif indicatifs communs (affichés sur les cartes / le modal). */
+export const ULTRABOOST_DURATION_H = 42;
+export const ULTRABOOST_PRICE = "730 000 FCFA";
+
+export const ULTRABOOST_BOOTCAMPS: UltraBoostBootcamp[] = [
+  { id: "ub-manager-ia", title: "Manager augmenté par l'IA" },
+  { id: "ub-assistant-direction", title: "Assistant de direction & productivité IA" },
+  { id: "ub-compta-finance", title: "Comptabilité, finance & contrôle avec IA" },
+  { id: "ub-data-excel-bi", title: "Data, Excel, Power BI & reporting" },
+  { id: "ub-rh-talents", title: "RH, recrutement & gestion des talents avec IA" },
+  { id: "ub-marketing-crm", title: "Marketing, vente, CRM & relation client avec IA" },
+  { id: "ub-chef-projet", title: "Chef de projet digital & transformation numérique" },
+  { id: "ub-automatisation-nocode", title: "Automatisation, no-code & productivité IA" },
+  { id: "ub-cyber-donnees", title: "Cybersécurité & protection des données professionnelles" },
+  { id: "ub-formateur", title: "Formateur digital / formateur IA" },
+  { id: "ub-communication", title: "Communication Digitale & Stratégie IA" },
+  { id: "ub-ecommerce", title: "E-Commerce & Stratégie IA" },
+  { id: "ub-droit", title: "Droit du Digital & IA" },
+  { id: "ub-marketing-des-ia", title: "Marketing des IA" },
+  { id: "ub-dev-apps-ia", title: "Développement d'Applications avec IA" },
+];
 
 /** Gabarit commun du programme (modal). */
 export const ULTRABOOST_SCHEDULES = [
@@ -86,5 +66,3 @@ export const ULTRABOOST_OBJECTIFS_SPECIFIQUES = [
   "Valider les acquis par des livrables et mises en situation encadrées",
   "Préparer la certification et votre visibilité au sein du réseau UltraBoost",
 ];
-
-export const getLevel = (key: string) => ULTRABOOST_LEVELS.find((l) => l.key === key);

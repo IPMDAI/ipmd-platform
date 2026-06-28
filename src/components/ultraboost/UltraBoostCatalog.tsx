@@ -3,94 +3,54 @@
 import { useState } from "react";
 import Link from "next/link";
 import {
-  ULTRABOOST_LEVELS,
-  BOOTCAMPS_BY_LEVEL,
+  ULTRABOOST_BOOTCAMPS,
+  ULTRABOOST_DURATION_H,
+  ULTRABOOST_PRICE,
   ULTRABOOST_SCHEDULES,
   ULTRABOOST_FORMATS,
   ULTRABOOST_INCLUDED,
   ULTRABOOST_PREREQUIS,
   ULTRABOOST_OBJECTIFS_SPECIFIQUES,
-  getLevel,
-  type UltraBoostLevelKey,
   type UltraBoostBootcamp,
 } from "@/data/ultraboost";
 
 export function UltraBoostCatalog() {
-  const [active, setActive] = useState<UltraBoostLevelKey>("specialist");
   const [selected, setSelected] = useState<UltraBoostBootcamp | null>(null);
-  const level = getLevel(active)!;
-  const bootcamps = BOOTCAMPS_BY_LEVEL[active];
 
   return (
     <div className="rounded-3xl bg-ipmd-black p-5 text-white sm:p-8">
-      {/* Onglets de niveau */}
-      <div className="flex flex-wrap gap-2 border-b border-white/10 pb-4">
-        {ULTRABOOST_LEVELS.map((l) => (
-          <button
-            key={l.key}
-            type="button"
-            onClick={() => setActive(l.key)}
-            className={`rounded-full px-4 py-1.5 text-xs font-bold uppercase tracking-wide transition-colors ${
-              active === l.key
-                ? "bg-amber-400 text-ipmd-black"
-                : "text-white/60 ring-1 ring-white/15 hover:text-white"
-            }`}
+      {/* Grille des bootcamps */}
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {ULTRABOOST_BOOTCAMPS.map((b) => (
+          <div
+            key={b.id}
+            className="flex flex-col rounded-2xl bg-white/5 p-5 ring-1 ring-white/10 transition-colors hover:ring-amber-400/40"
           >
-            {l.label}
-          </button>
+            <span className="w-fit rounded-full bg-amber-400/15 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-300">
+              VIP Bootcamp
+            </span>
+            <h3 className="mt-3 font-bold text-amber-200">{b.title}</h3>
+            <p className="mt-2 text-sm text-white/70">
+              {ULTRABOOST_DURATION_H} h · {ULTRABOOST_PRICE}
+            </p>
+            <div className="mt-4 flex gap-2">
+              <button
+                type="button"
+                onClick={() => setSelected(b)}
+                className="rounded-full bg-white/10 px-4 py-1.5 text-sm font-semibold text-white transition-colors hover:bg-white/20"
+              >
+                Programme
+              </button>
+              <Link
+                href={`/inscription-bootcamp?u=ultraboost`}
+                className="rounded-full bg-amber-400 px-4 py-1.5 text-sm font-bold text-ipmd-black transition-opacity hover:opacity-90"
+              >
+                Admission
+              </Link>
+            </div>
+          </div>
         ))}
       </div>
-
-      {/* En-tête du niveau */}
-      <div className="mt-6 flex flex-wrap items-baseline gap-3">
-        <span className="rounded-full bg-amber-400/15 px-3 py-1 text-xs font-bold uppercase tracking-wide text-amber-300">
-          {level.label}
-        </span>
-        <h2 className="text-2xl font-extrabold text-white">{level.tagline}</h2>
-      </div>
-      <p className="mt-1 text-sm text-white/55">
-        {level.certPrice} — {level.durationH}h — {bootcamps.length} bootcamps
-      </p>
-
-      {/* Grille des bootcamps */}
-      {bootcamps.length === 0 ? (
-        <p className="mt-8 rounded-2xl bg-white/5 p-6 text-center text-sm text-white/55">
-          Les bootcamps du niveau {level.label} seront bientôt publiés.
-        </p>
-      ) : (
-        <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {bootcamps.map((b) => (
-            <div
-              key={b.id}
-              className="flex flex-col rounded-2xl bg-white/5 p-5 ring-1 ring-white/10 transition-colors hover:ring-amber-400/40"
-            >
-              <span className="w-fit rounded-full bg-amber-400/15 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-300">
-                {level.label}
-              </span>
-              <h3 className="mt-3 font-bold text-amber-200">{b.title}</h3>
-              <p className="mt-2 text-sm text-white/70">
-                {level.durationH} h · {level.price}
-              </p>
-              <p className="text-xs font-semibold text-white/45">VIP</p>
-              <div className="mt-4 flex gap-2">
-                <button
-                  type="button"
-                  onClick={() => setSelected(b)}
-                  className="rounded-full bg-white/10 px-4 py-1.5 text-sm font-semibold text-white transition-colors hover:bg-white/20"
-                >
-                  Programme
-                </button>
-                <Link
-                  href={`/inscription-bootcamp?u=ultraboost`}
-                  className="rounded-full bg-amber-400 px-4 py-1.5 text-sm font-bold text-ipmd-black transition-opacity hover:opacity-90"
-                >
-                  Admission
-                </Link>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
 
       {/* Modal Programme */}
       {selected && (
@@ -107,7 +67,7 @@ export function UltraBoostCatalog() {
             <div className="flex items-start justify-between gap-4">
               <div>
                 <span className="rounded-full bg-amber-400/15 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-300">
-                  {level.label}
+                  VIP Bootcamp
                 </span>
                 <h3 className="mt-2 text-xl font-extrabold text-amber-200">{selected.title}</h3>
               </div>
@@ -127,16 +87,15 @@ export function UltraBoostCatalog() {
             </p>
 
             <div className="mt-4 space-y-1 border-y border-white/10 py-3 text-sm">
-              <p><span className="text-white/55">Certification :</span> Professional Certificate — {level.certPrice} — {level.durationH}h</p>
+              <p><span className="text-white/55">Certification :</span> Professional Certificate — {ULTRABOOST_DURATION_H}h</p>
               <p className="text-xs text-white/45">Les conditions financières et d&apos;accompagnement sont précisées par l&apos;administration après examen de votre admission.</p>
-              <p className="mt-2"><span className="text-white/55">Durée :</span> {level.durationH} heures</p>
-              <p><span className="text-white/55">Tarif :</span> {level.price}</p>
+              <p className="mt-2"><span className="text-white/55">Durée :</span> {ULTRABOOST_DURATION_H} heures</p>
             </div>
 
             <h4 className="mt-5 text-sm font-bold text-amber-300">🎯 Objectifs généraux</h4>
             <p className="mt-1 text-sm text-white/70">
               Renforcer vos compétences sur « {selected.title} » avec une approche actionnable, des cas réels et
-              un cadre UltraBoost — du niveau {level.label} jusqu&apos;à la certification.
+              un cadre UltraBoost jusqu&apos;à la certification.
             </p>
 
             <h4 className="mt-4 text-sm font-bold text-white/80">Objectifs spécifiques</h4>

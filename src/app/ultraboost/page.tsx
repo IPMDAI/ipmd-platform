@@ -11,7 +11,7 @@ import { getUniverse } from "@/data/universes";
 export const metadata: Metadata = {
   title: "UltraBoost — VIP Bootcamps",
   description:
-    "Bootcamps certifiants UltraBoost — du niveau SPECIALIST à EXECUTIVE : marketing, IA, data, dev, finance… Formats présentiel, distance, hybride et VIP.",
+    "Bootcamps certifiants UltraBoost pour professionnels et cadres : management & IA, finance, data, RH, marketing, cybersécurité, no-code… Formats présentiel, distance, hybride et VIP.",
 };
 
 export default function UltraBoostPage() {
@@ -41,7 +41,7 @@ export default function UltraBoostPage() {
           Nos VIP Bootcamps
         </h2>
         <p className="mt-2 max-w-2xl text-black/60">
-          Des bootcamps certifiants par niveau d&apos;expertise — du SPECIALIST à l&apos;EXECUTIVE.
+          Des bootcamps certifiants, intensifs et 100&nbsp;% pratiques pour les professionnels et cadres.
         </p>
         <div className="mt-8">
           <UltraBoostCatalog />
