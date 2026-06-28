@@ -172,6 +172,120 @@ export const bootcamps: Bootcamp[] = [
     icon: "⚙️",
   },
 
+  // ── UltraJobs — Marketing & Communication ───────────────────
+  {
+    id: "uj-community-content",
+    universe: "ultrajobs",
+    title: "Community Manager & Créateur de contenu IA",
+    description:
+      "Animez les communautés, créez du contenu engageant et gagnez du temps avec l'IA.",
+    duration: "6 semaines",
+    format: "Intensif",
+    skills: ["Réseaux sociaux", "Création IA", "Storytelling"],
+    icon: "📱",
+  },
+  {
+    id: "uj-pub-digitale",
+    universe: "ultrajobs",
+    title: "Publicité digitale : Meta Ads, Google Ads & Traffic",
+    description:
+      "Lancez et optimisez des campagnes publicitaires rentables sur Meta et Google.",
+    duration: "5 semaines",
+    format: "Intensif",
+    skills: ["Meta Ads", "Google Ads", "Traffic"],
+    icon: "🎯",
+  },
+  {
+    id: "uj-growth-tunnel",
+    universe: "ultrajobs",
+    title: "Growth Marketing & Tunnel de vente",
+    description:
+      "Construisez des tunnels de vente performants et accélérez la conversion.",
+    duration: "6 semaines",
+    format: "Intensif",
+    skills: ["Funnel", "Conversion", "Growth"],
+    icon: "🚀",
+  },
+  {
+    id: "uj-marketing-auto",
+    universe: "ultrajobs",
+    title: "Marketing Automation, CRM & Chatbots IA",
+    description:
+      "Automatisez vos relances, gérez vos contacts et déployez des chatbots IA.",
+    duration: "5 semaines",
+    format: "Intensif",
+    skills: ["CRM", "Automation", "Chatbots IA"],
+    icon: "🤖",
+  },
+  {
+    id: "uj-seo-contenu",
+    universe: "ultrajobs",
+    title: "SEO, contenu web & analyse de performance",
+    description:
+      "Référencez, rédigez pour le web et pilotez vos performances avec les bons outils.",
+    duration: "6 semaines",
+    format: "Intensif",
+    skills: ["SEO", "Contenu web", "Analytics"],
+    icon: "🔍",
+  },
+
+  // ── UltraJobs — Design & Création visuelle ──────────────────
+  {
+    id: "uj-designer-graphique",
+    universe: "ultrajobs",
+    title: "Designer graphique & identité visuelle",
+    description:
+      "Créez logos, chartes et identités visuelles professionnelles avec l'IA.",
+    duration: "8 semaines",
+    format: "Intensif",
+    skills: ["Identité visuelle", "Branding", "Création IA"],
+    icon: "🎨",
+  },
+  {
+    id: "uj-uiux",
+    universe: "ultrajobs",
+    title: "UI/UX Designer pour applications et sites web",
+    description:
+      "Concevez des interfaces claires et désirables pour apps et sites web.",
+    duration: "8 semaines",
+    format: "Intensif",
+    skills: ["UX", "UI", "Figma"],
+    icon: "🖌️",
+  },
+  {
+    id: "uj-social-designer",
+    universe: "ultrajobs",
+    title: "Social Media Designer & contenu visuel IA",
+    description:
+      "Produisez des visuels percutants pour les réseaux sociaux avec l'IA.",
+    duration: "6 semaines",
+    format: "Intensif",
+    skills: ["Visuels", "Réseaux sociaux", "Création IA"],
+    icon: "🖼️",
+  },
+  {
+    id: "uj-motion",
+    universe: "ultrajobs",
+    title: "Motion Designer pour réseaux sociaux",
+    description:
+      "Créez des vidéos animées et du motion design prêts pour les réseaux.",
+    duration: "6 semaines",
+    format: "Intensif",
+    skills: ["Motion design", "Animation", "Vidéo"],
+    icon: "🎬",
+  },
+  {
+    id: "uj-product-designer",
+    universe: "ultrajobs",
+    title: "Product Designer junior avec Figma & IA",
+    description:
+      "Devenez product designer : prototypage, design systems et IA avec Figma.",
+    duration: "8 semaines",
+    format: "Intensif",
+    skills: ["Figma", "Prototypage", "Design system"],
+    icon: "🧩",
+  },
+
   // ── UltraBoost — 15 bootcamps professionnels ────────────────
   {
     id: "ub-growth",
