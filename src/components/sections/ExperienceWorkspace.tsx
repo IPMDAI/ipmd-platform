@@ -57,36 +57,36 @@ export function ExperienceWorkspace({ universeId }: { universeId: string }) {
         Parcourez les rubriques à gauche : cliquez pour afficher le détail à droite.
       </p>
 
-      <div className="mt-8 grid gap-6 lg:grid-cols-[280px_1fr]">
-        {/* Liste (style boîte mail) */}
+      <div className="mt-8 grid grid-cols-[92px_1fr] gap-4 sm:grid-cols-[220px_1fr] sm:gap-6 lg:grid-cols-[280px_1fr]">
+        {/* Liste (style boîte mail) — toujours à gauche, compacte sur mobile */}
         <aside className="lg:sticky lg:top-24 lg:self-start">
-          <ul className="flex gap-2 overflow-x-auto pb-2 lg:flex-col lg:gap-2 lg:overflow-visible lg:pb-0">
+          <ul className="flex flex-col gap-2">
             {panels.map((p) => {
               const isActive = p.id === current.id;
               return (
-                <li key={p.id} className="shrink-0 lg:shrink">
+                <li key={p.id}>
                   <button
                     type="button"
                     onClick={() => setActive(p.id)}
                     aria-current={isActive}
-                    className={`flex w-full items-center gap-3 rounded-2xl border px-4 py-3 text-left transition-colors ${
+                    className={`flex w-full flex-col items-center gap-1.5 rounded-2xl border px-2 py-3 text-center transition-colors sm:flex-row sm:items-center sm:gap-3 sm:px-4 sm:text-left ${
                       isActive
                         ? "border-ipmd-red/30 bg-white shadow-sm"
                         : "border-black/5 bg-ipmd-light hover:bg-white"
                     }`}
                   >
                     <span
-                      className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-lg ${
+                      className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-lg sm:h-10 sm:w-10 ${
                         isActive ? "bg-ipmd-red/10" : "bg-white"
                       }`}
                     >
                       {p.icon}
                     </span>
                     <span className="min-w-0">
-                      <span className={`block truncate text-sm font-bold ${isActive ? "text-ipmd-red" : "text-ipmd-black"}`}>
+                      <span className={`block text-[11px] font-bold leading-tight sm:truncate sm:text-sm ${isActive ? "text-ipmd-red" : "text-ipmd-black"}`}>
                         {p.label}
                       </span>
-                      <span className="block truncate text-xs text-black/50">{p.sublabel}</span>
+                      <span className="hidden truncate text-xs text-black/50 sm:block">{p.sublabel}</span>
                     </span>
                   </button>
                 </li>
