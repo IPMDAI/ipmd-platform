@@ -90,6 +90,14 @@ body {
   }
 }
 
+/* Barre de rubriques persistante (ExperienceWorkspace) : on réserve de
+   l'espace en bas de page sur mobile pour ne pas masquer le pied de page. */
+@media (max-width: 1023px) {
+  body.has-workspace-bar {
+    padding-bottom: calc(4rem + env(safe-area-inset-bottom, 0px));
+  }
+}
+
 /* Dégradé radial utilitaire pour les fonds sombres */
 .bg-grid {
   background-image:

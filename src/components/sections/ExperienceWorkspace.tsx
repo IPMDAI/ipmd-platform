@@ -1,13 +1,15 @@
 "use client";
 
-import { useState, useRef, useEffect, type ReactNode } from "react";
+import { useState, useEffect, type ReactNode } from "react";
 import { Section } from "@/components/ui/Section";
 import { UpcomingBootcampsGrid } from "@/components/ultraboost/UpcomingBootcamps";
 import { AnnualAgenda } from "@/components/sections/AnnualAgenda";
 import { HubSkills } from "@/components/sections/HubSkills";
+import { Webinaires } from "@/components/sections/Webinaires";
 import { getUpcoming } from "@/data/upcoming-bootcamps";
 import { getAgenda } from "@/data/agenda";
 import { getHubSkills } from "@/data/hubskills";
+import { getWebinaires } from "@/data/webinaires";
 
 type Panel = { id: string; icon: string; label: string; short: string; sublabel: string; render: () => ReactNode };
 
@@ -43,6 +45,18 @@ export function ExperienceWorkspace({ universeId }: { universeId: string }) {
     });
   }
 
+  const webinaires = getWebinaires(universeId);
+  if (webinaires) {
+    panels.push({
+      id: "webinaires",
+      icon: "🎥",
+      label: "Webinaires",
+      short: "Webinaire",
+      sublabel: "Sessions en ligne",
+      render: () => <Webinaires universeId={universeId} />,
+    });
+  }
+
   const hubskills = getHubSkills(universeId);
   if (hubskills) {
     panels.push({
@@ -56,21 +70,16 @@ export function ExperienceWorkspace({ universeId }: { universeId: string }) {
   }
 
   const [active, setActive] = useState(panels[0]?.id ?? "");
-  const rootRef = useRef<HTMLDivElement>(null);
-  const [barVisible, setBarVisible] = useState(false);
+  const hasPanels = panels.length > 0;
 
+  // Réserve de l'espace en bas de page (mobile) pour la barre persistante.
   useEffect(() => {
-    const el = rootRef.current;
-    if (!el || typeof IntersectionObserver === "undefined") return;
-    const io = new IntersectionObserver(
-      ([entry]) => setBarVisible(entry.isIntersecting),
-      { rootMargin: "-15% 0px -10% 0px" },
-    );
-    io.observe(el);
-    return () => io.disconnect();
-  }, []);
+    if (!hasPanels) return;
+    document.body.classList.add("has-workspace-bar");
+    return () => document.body.classList.remove("has-workspace-bar");
+  }, [hasPanels]);
 
-  if (panels.length === 0) return null;
+  if (!hasPanels) return null;
   const current = panels.find((p) => p.id === active) ?? panels[0];
 
   return (
@@ -89,7 +98,7 @@ export function ExperienceWorkspace({ universeId }: { universeId: string }) {
         pendant que vous faites défiler.
       </p>
 
-      <div ref={rootRef} className="mt-8 lg:grid lg:gap-6 lg:grid-cols-[280px_1fr]">
+      <div className="mt-8 lg:grid lg:gap-6 lg:grid-cols-[280px_1fr]">
         {/* Liste latérale — reste fixe (sticky) sur desktop */}
         <aside className="hidden lg:block lg:sticky lg:top-24 lg:self-start">
           <ul className="flex flex-col gap-2">
@@ -132,15 +141,12 @@ export function ExperienceWorkspace({ universeId }: { universeId: string }) {
       </div>
     </Section>
 
-    {/* Menu du bas — pleine largeur, style application mobile (TikTok/Insta),
-        visible uniquement quand la section est à l'écran */}
+    {/* Menu du bas — pleine largeur, persistant, style application mobile (TikTok/Insta) */}
     <nav
       aria-label="Rubriques"
-      className={`fixed inset-x-0 bottom-0 z-40 lg:hidden transition-transform duration-300 ${
-        barVisible ? "translate-y-0" : "pointer-events-none translate-y-full"
-      }`}
+      className="fixed inset-x-0 bottom-0 z-40 lg:hidden"
     >
-      <div className="flex items-stretch border-t border-black/10 bg-white/95 pr-[5.25rem] pb-[env(safe-area-inset-bottom)] shadow-[0_-6px_24px_rgba(0,0,0,0.10)] backdrop-blur">
+      <div className="flex items-stretch border-t border-black/10 bg-white/95 pb-[env(safe-area-inset-bottom)] shadow-[0_-6px_24px_rgba(0,0,0,0.10)] backdrop-blur">
         {panels.map((p) => {
           const isActive = p.id === current.id;
           return (

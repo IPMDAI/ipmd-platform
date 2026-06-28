@@ -11,6 +11,9 @@ type Msg = { role: "user" | "assistant"; content: string };
 
 const LEAD_KEY = "ipmd_chat_lead";
 
+// Pages avec la barre de rubriques persistante : on remonte le bouton (mobile).
+const WORKSPACE_PAGES = ["/ultrajobs", "/ultraboost", "/seniorshub", "/ultraexecutive"];
+
 const GREETING =
   "Bonjour 👋 Je suis Awa, votre assistante d'admission à l'IPMD. Posez-moi vos questions sur nos formations, les frais, les cours du soir, l'admission ou une réorientation !";
 
@@ -295,7 +298,9 @@ export function AdmissionsChat() {
   const askedCount = messages.filter((m) => m.role === "user").length;
 
   return (
-    <div className="fixed bottom-24 right-5 z-50 flex flex-col items-end gap-3 print:hidden">
+    <div className={`fixed right-5 z-50 flex flex-col items-end gap-3 print:hidden ${
+      WORKSPACE_PAGES.includes(pathname ?? "") ? "bottom-[10.5rem] lg:bottom-24" : "bottom-24"
+    }`}>
       {open && (
         <div className="flex h-[60vh] max-h-[520px] w-[88vw] max-w-sm flex-col overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-black/10">
           <div className="flex items-center justify-between bg-ipmd-black px-4 py-3 text-white">

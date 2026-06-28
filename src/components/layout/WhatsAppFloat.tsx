@@ -18,8 +18,14 @@ export function WhatsAppFloat() {
   // On n'affiche pas dans l'espace privé (ERP).
   if (pathname?.startsWith("/espace")) return null;
 
+  // Sur les pages avec la barre de rubriques persistante (mobile), on remonte
+  // le bouton au-dessus de la barre. Sur desktop (lg), position normale.
+  const WORKSPACE_PAGES = ["/ultrajobs", "/ultraboost", "/seniorshub", "/ultraexecutive"];
+  const onWorkspace = WORKSPACE_PAGES.includes(pathname ?? "");
+  const posClass = onWorkspace ? "bottom-[6.25rem] right-5 lg:bottom-5" : "bottom-5 right-5";
+
   return (
-    <div className="fixed bottom-5 right-5 z-50 flex flex-col items-end gap-3 print:hidden">
+    <div className={`fixed ${posClass} z-50 flex flex-col items-end gap-3 print:hidden`}>
       {open && (
         <div className="w-72 overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-black/10">
           <div className="bg-[#075E54] px-4 py-3 text-white">
