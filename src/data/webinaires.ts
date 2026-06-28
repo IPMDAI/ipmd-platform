@@ -63,6 +63,36 @@ export const WEBINAIRES_BY_UNIVERSE: Record<string, Webinaires> = {
       { id: "ux-w3", title: "Leadership à l'ère de l'IA", date: "22 juillet 2026", time: "18h – 19h", speaker: "Coach Dirigeants", description: "Faire évoluer sa posture et fédérer ses équipes face au changement.", tag: ONLINE_FREE },
     ],
   },
+  campus: {
+    eyebrow: "Webinaires",
+    title: "Des webinaires pour bien choisir ses études",
+    intro: "Des sessions en ligne pour découvrir nos formations, l'admission et la vie de campus.",
+    items: [
+      { id: "cp-w1", title: "Réussir son orientation post-bac", date: "10 juillet 2026", time: "16h – 17h", speaker: "Conseillers d'orientation IPMD", description: "Choisir la bonne filière digitale et construire son projet d'études.", tag: ONLINE_FREE },
+      { id: "cp-w2", title: "Étudier le digital & l'IA à l'IPMD", date: "17 juillet 2026", time: "16h – 17h", speaker: "Équipe pédagogique", description: "Programmes, pédagogie 80 % pratique et débouchés de nos diplômes.", tag: ONLINE_FREE },
+      { id: "cp-w3", title: "Financer ses études & bourses", date: "24 juillet 2026", time: "16h – 17h", speaker: "Service admissions", description: "Frais, facilités de paiement et dispositifs d'aide disponibles.", tag: ONLINE_FREE },
+    ],
+  },
+  professionnel: {
+    eyebrow: "Webinaires",
+    title: "Des webinaires pour évoluer professionnellement",
+    intro: "Des sessions en ligne pour les professionnels : reconversion, montée en compétence et diplôme.",
+    items: [
+      { id: "pr-w1", title: "Se reconvertir dans le digital", date: "9 juillet 2026", time: "18h – 19h", speaker: "Conseillers IPMD", description: "Changer de métier vers le digital : par où commencer et comment réussir.", tag: ONLINE_FREE },
+      { id: "pr-w2", title: "Concilier emploi et formation diplômante", date: "16 juillet 2026", time: "18h – 19h", speaker: "Équipe pédagogique", description: "Cours du soir, alternance et organisation pour se former tout en travaillant.", tag: ONLINE_FREE },
+      { id: "pr-w3", title: "Booster sa carrière avec un diplôme IPMD", date: "23 juillet 2026", time: "18h – 19h", speaker: "Service carrière", description: "Diplômes, débouchés et accompagnement pour faire évoluer votre carrière.", tag: ONLINE_FREE },
+    ],
+  },
+  gouvernance: {
+    eyebrow: "Webinaires",
+    title: "Des webinaires stratégiques pour dirigeants",
+    intro: "Des sessions en ligne de haut niveau pour les dirigeants et décideurs.",
+    items: [
+      { id: "gv-w1", title: "Diriger à l'ère de l'IA", date: "8 juillet 2026", time: "18h – 19h", speaker: "Direction IPMD", description: "Les enjeux de l'IA pour la stratégie et la gouvernance des organisations.", tag: ONLINE_FREE },
+      { id: "gv-w2", title: "Gouvernance & stratégie digitale", date: "15 juillet 2026", time: "18h – 19h", speaker: "Expert Gouvernance", description: "Structurer la transformation et la gouvernance data/IA de l'entreprise.", tag: ONLINE_FREE },
+      { id: "gv-w3", title: "L'Executive qui transforme les dirigeants", date: "22 juillet 2026", time: "18h – 19h", speaker: "Équipe Executive", description: "Découvrez le programme Executive et son impact sur votre leadership.", tag: ONLINE_FREE },
+    ],
+  },
 };
 
 /** Renvoie les webinaires d'un univers (null si aucun). */

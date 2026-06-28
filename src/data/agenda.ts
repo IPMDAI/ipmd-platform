@@ -33,6 +33,15 @@ const TIME_SH = "14h à 16h";
 const FREQ_EX = "Un rendez-vous par mois (entre le 10 et le 20)";
 const TIME_EX = "18h à 21h";
 
+// Diplômes (Campus / Pro / Executive)
+const BADGE_EVT = "À venir";
+const FREQ_CAMPUS = "Selon le calendrier académique";
+const TIME_CAMPUS = "Horaires variables";
+const FREQ_PRO = "Un rendez-vous par mois";
+const TIME_PRO = "18h à 20h";
+const FREQ_GOUV = "Un rendez-vous par mois";
+const TIME_GOUV = "18h à 21h";
+
 export const AGENDA_BY_UNIVERSE: Record<string, Agenda> = {
   ultrajobs: {
     eyebrow: "Agenda annuel",
@@ -115,6 +124,69 @@ export const AGENDA_BY_UNIVERSE: Record<string, Agenda> = {
       { month: "Octobre", badge: BADGE, frequency: FREQ_EX, time: TIME_EX, events: ["Masterclass — finance & pilotage", "Think tank — co-développement"] },
       { month: "Novembre", badge: BADGE, frequency: FREQ_EX, time: TIME_EX, events: ["Cercle de dirigeants — cybersécurité & risques", "Dîner C-level — networking"] },
       { month: "Décembre", badge: BADGE, frequency: FREQ_EX, time: TIME_EX, events: ["Bilan stratégique & perspectives", "Gala de fin d'année — dirigeants"] },
+    ],
+  },
+
+  campus: {
+    eyebrow: "Agenda annuel",
+    title: "IPMD Campus — la vie du campus",
+    intro:
+      "Tout au long de l'année, des temps forts rythment la vie étudiante : portes ouvertes, conférences, hackathons et événements de campus.",
+    months: [
+      { month: "Janvier", badge: BADGE_EVT, frequency: FREQ_CAMPUS, time: TIME_CAMPUS, events: ["Journée portes ouvertes", "Conférence — métiers du digital & IA"] },
+      { month: "Février", badge: BADGE_EVT, frequency: FREQ_CAMPUS, time: TIME_CAMPUS, events: ["Atelier orientation post-bac", "Soirée d'intégration"] },
+      { month: "Mars", badge: BADGE_EVT, frequency: FREQ_CAMPUS, time: TIME_CAMPUS, events: ["Hackathon étudiant", "Forum des clubs & associations"] },
+      { month: "Avril", badge: BADGE_EVT, frequency: FREQ_CAMPUS, time: TIME_CAMPUS, events: ["Conférence — IA & innovation", "Journée portes ouvertes"] },
+      { month: "Mai", badge: BADGE_EVT, frequency: FREQ_CAMPUS, time: TIME_CAMPUS, events: ["Forum entreprises & stages", "Projets étudiants — démo day"] },
+      { month: "Juin", badge: BADGE_EVT, frequency: FREQ_CAMPUS, time: TIME_CAMPUS, events: ["Semaine de la création digitale", "Soirée de fin d'année"] },
+      { month: "Juillet", badge: BADGE_EVT, frequency: FREQ_CAMPUS, time: TIME_CAMPUS, events: ["Sessions d'admission", "Journée portes ouvertes d'été"] },
+      { month: "Août", badge: BADGE_EVT, frequency: FREQ_CAMPUS, time: TIME_CAMPUS, events: ["Préparation à la rentrée", "Sessions d'admission"] },
+      { month: "Septembre", badge: BADGE_EVT, frequency: FREQ_CAMPUS, time: TIME_CAMPUS, events: ["Journées d'intégration", "Forum des clubs"] },
+      { month: "Octobre", badge: BADGE_EVT, frequency: FREQ_CAMPUS, time: TIME_CAMPUS, events: ["Rentrée académique", "Conférence de rentrée — tendances IA"] },
+      { month: "Novembre", badge: BADGE_EVT, frequency: FREQ_CAMPUS, time: TIME_CAMPUS, events: ["Hackathon inter-promos", "Forum entreprises & alternance"] },
+      { month: "Décembre", badge: BADGE_EVT, frequency: FREQ_CAMPUS, time: TIME_CAMPUS, events: ["Démo day des projets", "Soirée de fin d'année"] },
+    ],
+  },
+
+  professionnel: {
+    eyebrow: "Agenda annuel",
+    title: "IPMD Pro — rendez-vous des professionnels",
+    intro:
+      "Chaque mois, des rendez-vous pour les professionnels en formation : conférences métiers, networking et forums emploi. Horaires indicatifs : 18h – 20h.",
+    months: [
+      { month: "Janvier", badge: BADGE_EVT, frequency: FREQ_PRO, time: TIME_PRO, events: ["Conférence — se reconvertir dans le digital", "Networking pro"] },
+      { month: "Février", badge: BADGE_EVT, frequency: FREQ_PRO, time: TIME_PRO, events: ["Masterclass — IA au travail", "Rencontre — alternance & financement"] },
+      { month: "Mars", badge: BADGE_EVT, frequency: FREQ_PRO, time: TIME_PRO, events: ["Conférence — métiers en tension", "Forum emploi & partenaires"] },
+      { month: "Avril", badge: BADGE_EVT, frequency: FREQ_PRO, time: TIME_PRO, events: ["Masterclass — data & décision", "Networking pro"] },
+      { month: "Mai", badge: BADGE_EVT, frequency: FREQ_PRO, time: TIME_PRO, events: ["Atelier — concilier emploi & formation", "Rencontre alumni pro"] },
+      { month: "Juin", badge: BADGE_EVT, frequency: FREQ_PRO, time: TIME_PRO, events: ["Conférence — entrepreneuriat", "Forum emploi"] },
+      { month: "Juillet", badge: BADGE_EVT, frequency: FREQ_PRO, time: TIME_PRO, events: ["Sessions d'admission", "Networking pro d'été"] },
+      { month: "Août", badge: BADGE_EVT, frequency: FREQ_PRO, time: TIME_PRO, events: ["Préparation à la rentrée", "Sessions d'admission"] },
+      { month: "Septembre", badge: BADGE_EVT, frequency: FREQ_PRO, time: TIME_PRO, events: ["Conférence de rentrée", "Networking pro"] },
+      { month: "Octobre", badge: BADGE_EVT, frequency: FREQ_PRO, time: TIME_PRO, events: ["Masterclass — leadership", "Forum emploi & alternance"] },
+      { month: "Novembre", badge: BADGE_EVT, frequency: FREQ_PRO, time: TIME_PRO, events: ["Conférence — cybersécurité pro", "Rencontre alumni pro"] },
+      { month: "Décembre", badge: BADGE_EVT, frequency: FREQ_PRO, time: TIME_PRO, events: ["Bilan & tendances métiers", "Networking de fin d'année"] },
+    ],
+  },
+
+  gouvernance: {
+    eyebrow: "Agenda annuel",
+    title: "IPMD Executive — agenda des dirigeants",
+    intro:
+      "Chaque mois, des rendez-vous d'exception pour dirigeants et décideurs : conférences stratégiques, tables rondes et networking de haut niveau. Horaires indicatifs : 18h – 21h.",
+    months: [
+      { month: "Janvier", badge: BADGE_EVT, frequency: FREQ_GOUV, time: TIME_GOUV, events: ["Conférence — diriger à l'ère de l'IA", "Dîner de dirigeants"] },
+      { month: "Février", badge: BADGE_EVT, frequency: FREQ_GOUV, time: TIME_GOUV, events: ["Table ronde — gouvernance & data", "Networking C-level"] },
+      { month: "Mars", badge: BADGE_EVT, frequency: FREQ_GOUV, time: TIME_GOUV, events: ["Masterclass — transformation digitale", "Think tank dirigeants"] },
+      { month: "Avril", badge: BADGE_EVT, frequency: FREQ_GOUV, time: TIME_GOUV, events: ["Conférence — leadership augmenté", "Dîner de dirigeants"] },
+      { month: "Mai", badge: BADGE_EVT, frequency: FREQ_GOUV, time: TIME_GOUV, events: ["Table ronde — création de valeur & IA", "Networking C-level"] },
+      { month: "Juin", badge: BADGE_EVT, frequency: FREQ_GOUV, time: TIME_GOUV, events: ["Conférence — conduite du changement", "Think tank dirigeants"] },
+      { month: "Juillet", badge: BADGE_EVT, frequency: FREQ_GOUV, time: TIME_GOUV, events: ["Immersion résidentielle — stratégie", "Dîner de dirigeants"] },
+      { month: "Août", badge: BADGE_EVT, frequency: FREQ_GOUV, time: TIME_GOUV, events: ["Masterclass — IA & gouvernance", "Veille stratégique"] },
+      { month: "Septembre", badge: BADGE_EVT, frequency: FREQ_GOUV, time: TIME_GOUV, events: ["Conférence de rentrée stratégique", "Networking C-level"] },
+      { month: "Octobre", badge: BADGE_EVT, frequency: FREQ_GOUV, time: TIME_GOUV, events: ["Table ronde — finance & pilotage", "Think tank dirigeants"] },
+      { month: "Novembre", badge: BADGE_EVT, frequency: FREQ_GOUV, time: TIME_GOUV, events: ["Conférence — cybersécurité & risques", "Dîner de dirigeants"] },
+      { month: "Décembre", badge: BADGE_EVT, frequency: FREQ_GOUV, time: TIME_GOUV, events: ["Bilan stratégique & perspectives", "Gala des dirigeants"] },
     ],
   },
 };

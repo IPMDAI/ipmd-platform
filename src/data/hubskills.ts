@@ -93,6 +93,60 @@ export const HUBSKILLS_BY_UNIVERSE: Record<string, HubSkills> = {
       { icon: "🥂", title: "Événements VIP & immersions", description: "Des rendez-vous d'exception (retraites, dîners, immersions) propices au réseautage de haut niveau." },
     ],
   },
+
+  campus: {
+    eyebrow: "HubCampus",
+    icon: "🎓",
+    title: "Le hub de la vie étudiante à l'IPMD",
+    intro:
+      "Au-delà des cours, HubCampus réunit tout ce qui fait l'expérience étudiante : clubs, événements, sport, mentorat, projets et insertion professionnelle.",
+    items: [
+      { icon: "🎉", title: "Vie de campus & événements", description: "Soirées, journées d'intégration et temps forts qui rythment l'année." },
+      { icon: "🤝", title: "Clubs & associations", description: "Rejoignez des clubs (tech, design, entrepreneuriat…) et créez le vôtre." },
+      { icon: "⚽", title: "Sport & bien-être", description: "Activités sportives et initiatives bien-être pour s'épanouir." },
+      { icon: "🎯", title: "Mentorat & tutorat", description: "Un accompagnement par des aînés et des enseignants pour réussir." },
+      { icon: "🚀", title: "Hackathons & projets", description: "Des défis et projets concrets pour appliquer ce que vous apprenez." },
+      { icon: "🧭", title: "Orientation & carrière", description: "Stages, alternance et insertion : un accompagnement vers l'emploi." },
+      { icon: "🌐", title: "Communauté & alumni", description: "Un réseau d'étudiants et de diplômés actifs pour avancer ensemble." },
+      { icon: "🎤", title: "Conférences & culture", description: "Des intervenants inspirants et des rencontres ouvertes sur le monde." },
+    ],
+  },
+
+  professionnel: {
+    eyebrow: "HubCarrière",
+    icon: "📈",
+    title: "Le hub qui fait avancer votre carrière",
+    intro:
+      "HubCarrière réunit l'essentiel pour les professionnels en formation : networking, coaching, certifications, mentorat et opportunités d'emploi.",
+    items: [
+      { icon: "🤝", title: "Networking professionnel", description: "Des rencontres régulières avec pros, recruteurs et pairs." },
+      { icon: "🧭", title: "Coaching carrière", description: "CV, LinkedIn, entretien et stratégie d'évolution professionnelle." },
+      { icon: "📜", title: "Certifications & compétences", description: "Renforcez et validez vos compétences avec des certifications reconnues." },
+      { icon: "🎓", title: "Masterclass & ateliers", description: "Des sessions pratiques animées par des experts du métier." },
+      { icon: "🎯", title: "Mentorat", description: "Des mentors expérimentés pour vous guider dans vos choix." },
+      { icon: "💼", title: "Forum emploi & alternance", description: "Stages, alternance et offres via notre réseau de partenaires." },
+      { icon: "🌐", title: "Communauté & alumni", description: "Un réseau actif de professionnels et d'anciens pour s'entraider." },
+      { icon: "🚀", title: "Entrepreneuriat", description: "Un accompagnement pour ceux qui veulent créer leur activité." },
+    ],
+  },
+
+  gouvernance: {
+    eyebrow: "HubLeaders",
+    icon: "👑",
+    title: "Le cercle des dirigeants & décideurs",
+    intro:
+      "HubLeaders réunit dirigeants et décideurs autour de la stratégie : networking C-level, conférences, think tank, gouvernance et accompagnement de haut niveau.",
+    items: [
+      { icon: "🤝", title: "Cercle de dirigeants", description: "Un networking C-level confidentiel pour échanger entre pairs." },
+      { icon: "🔭", title: "Veille & prospective", description: "Anticiper les ruptures IA, marché et réglementaires." },
+      { icon: "🎓", title: "Conférences & masterclass", description: "Des interventions d'experts sur les enjeux de transformation." },
+      { icon: "🏛️", title: "Gouvernance & stratégie", description: "Piloter la stratégie data/IA et la conduite du changement." },
+      { icon: "🧠", title: "Think tank & co-développement", description: "Résoudre ses défis de dirigeant en intelligence collective." },
+      { icon: "💬", title: "Leadership & influence", description: "Posture, prise de parole et soft power pour fédérer." },
+      { icon: "🎯", title: "Mentorat & advisory", description: "Un accompagnement par des dirigeants et advisors expérimentés." },
+      { icon: "🥂", title: "Événements VIP", description: "Des rendez-vous d'exception propices au réseautage de haut niveau." },
+    ],
+  },
 };
 
 /** Renvoie le HubSkills d'un univers (null si aucun). */
