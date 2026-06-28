@@ -74,6 +74,7 @@ export const ULTRAJOBS_DOMAINS: UltraJobsDomain[] = [
     id: "communication",
     icon: "🗣️",
     title: "Communication digitale & relations publiques",
+    hours: 30,
     metiers: [
       { title: "Chargé de communication digitale", summary: "Pilotez la communication d'une organisation sur tous les canaux numériques.", skills: ["Communication", "Multicanal", "Image"] },
       { title: "Content Manager & rédacteur web", summary: "Produisez et orchestrez des contenus éditoriaux qui engagent et convertissent.", skills: ["Rédaction web", "Contenu", "SEO"] },
