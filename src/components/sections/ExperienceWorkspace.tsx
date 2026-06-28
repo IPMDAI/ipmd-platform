@@ -4,8 +4,10 @@ import { useState, useRef, useEffect, type ReactNode } from "react";
 import { Section } from "@/components/ui/Section";
 import { UpcomingBootcampsGrid } from "@/components/ultraboost/UpcomingBootcamps";
 import { AnnualAgenda } from "@/components/sections/AnnualAgenda";
+import { HubSkills } from "@/components/sections/HubSkills";
 import { getUpcoming } from "@/data/upcoming-bootcamps";
 import { getAgenda } from "@/data/agenda";
+import { getHubSkills } from "@/data/hubskills";
 
 type Panel = { id: string; icon: string; label: string; short: string; sublabel: string; render: () => ReactNode };
 
@@ -38,6 +40,18 @@ export function ExperienceWorkspace({ universeId }: { universeId: string }) {
       short: "Agenda",
       sublabel: "Temps forts mensuels",
       render: () => <AnnualAgenda universeId={universeId} />,
+    });
+  }
+
+  const hubskills = getHubSkills(universeId);
+  if (hubskills) {
+    panels.push({
+      id: "hubskills",
+      icon: "💡",
+      label: "HubSkills",
+      short: "HubSkills",
+      sublabel: "Rencontres, pitch, incubation…",
+      render: () => <HubSkills universeId={universeId} />,
     });
   }
 
