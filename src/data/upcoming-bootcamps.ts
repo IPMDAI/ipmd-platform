@@ -136,6 +136,20 @@ export const UPCOMING_BY_UNIVERSE: Record<string, UpcomingBootcamp[]> = {
       slotsNote: "Chaque participant choisit le créneau qui lui convient.",
       variant: "premium",
     },
+    {
+      id: "uj-marketing-juil-2026",
+      title: "Marketing digital & Publicité en ligne",
+      badge: "Session UltraJobs à Abidjan",
+      description:
+        "Bootcamp 80 % pratique pour lancer des campagnes Meta & Google rentables, attirer une audience qualifiée et générer des ventes avec l'IA.",
+      date: "28 au 31 juillet 2026",
+      places: "Limité à 20 participants",
+      location: "UltraJobs à Abidjan",
+      price: "150 000 FCFA",
+      slots: ["Créneau Matin · 8h – 11h", "Créneau Soir · 18h – 21h"],
+      slotsNote: "Chaque participant choisit le créneau qui lui convient.",
+      variant: "premium",
+    },
   ],
 
   // ⚠️ Échantillons à ajuster (dates, places, frais réels) — SeniorsHub.

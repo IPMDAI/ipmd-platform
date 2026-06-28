@@ -9,12 +9,7 @@ const META = (label: string, value: string, icon: string) => ({ label, value, ic
 
 /** Section « Prochains bootcamps » d'un univers (rien si aucune session). */
 export function UpcomingBootcamps({ universeId }: { universeId: string }) {
-  const list = getUpcoming(universeId);
-  const [selected, setSelected] = useState<UpcomingBootcamp | null>(null);
-  if (list.length === 0) return null;
-
-  const inscriptionHref = `/inscription-bootcamp?u=${universeId}`;
-
+  if (getUpcoming(universeId).length === 0) return null;
   return (
     <Section variant="light">
       <div className="flex flex-wrap items-center gap-3">
@@ -30,8 +25,24 @@ export function UpcomingBootcamps({ universeId }: { universeId: string }) {
         est remplacée par une nouvelle ; la date peut être reportée si le nombre minimum de participants
         n&apos;est pas atteint. Réservez tôt.
       </p>
+      <div className="mt-8">
+        <UpcomingBootcampsGrid universeId={universeId} />
+      </div>
+    </Section>
+  );
+}
 
-      <div className="mt-8 grid gap-6 lg:grid-cols-2">
+/** Grille des sessions à venir (cartes + modal), sans en-tête — réutilisable. */
+export function UpcomingBootcampsGrid({ universeId }: { universeId: string }) {
+  const list = getUpcoming(universeId);
+  const [selected, setSelected] = useState<UpcomingBootcamp | null>(null);
+  if (list.length === 0) return null;
+
+  const inscriptionHref = `/inscription-bootcamp?u=${universeId}`;
+
+  return (
+    <>
+      <div className="grid gap-6 lg:grid-cols-2">
         {list.map((b) => {
           const luxe = b.variant === "luxe";
           return (
@@ -203,6 +214,6 @@ export function UpcomingBootcamps({ universeId }: { universeId: string }) {
           </div>
         </div>
       )}
-    </Section>
+    </>
   );
 }
