@@ -70,12 +70,6 @@ export function ExperienceWorkspace({ universeId }: { universeId: string }) {
     return () => io.disconnect();
   }, []);
 
-  // Remonte les boutons flottants (WhatsApp/chat) quand la barre est affichée.
-  useEffect(() => {
-    document.body.classList.toggle("has-mobile-tabbar", barVisible);
-    return () => document.body.classList.remove("has-mobile-tabbar");
-  }, [barVisible]);
-
   if (panels.length === 0) return null;
   const current = panels.find((p) => p.id === active) ?? panels[0];
 
@@ -146,7 +140,7 @@ export function ExperienceWorkspace({ universeId }: { universeId: string }) {
         barVisible ? "translate-y-0" : "pointer-events-none translate-y-full"
       }`}
     >
-      <div className="flex items-stretch border-t border-black/10 bg-white/95 pb-[env(safe-area-inset-bottom)] shadow-[0_-6px_24px_rgba(0,0,0,0.10)] backdrop-blur">
+      <div className="flex items-stretch border-t border-black/10 bg-white/95 pr-[5.25rem] pb-[env(safe-area-inset-bottom)] shadow-[0_-6px_24px_rgba(0,0,0,0.10)] backdrop-blur">
         {panels.map((p) => {
           const isActive = p.id === current.id;
           return (
