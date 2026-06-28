@@ -18,12 +18,12 @@ export function UltraBoostCatalog() {
   const [selected, setSelected] = useState<UltraBoostBootcamp | null>(null);
 
   return (
-    <div className="space-y-12 rounded-3xl bg-ipmd-black p-5 text-white sm:p-8">
+    <div className="space-y-14 text-white sm:space-y-20">
       {/* Bootcamps groupés par secteur */}
       {ULTRABOOST_SECTORS.map((sector) => (
         <div key={sector.id}>
           <div className="flex items-center gap-3">
-            <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-amber-400/15 text-xl">
+            <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-400/15 text-2xl ring-1 ring-amber-400/20">
               {sector.icon}
             </span>
             <h3 className="text-xl font-extrabold tracking-tight text-white sm:text-2xl">
@@ -31,20 +31,20 @@ export function UltraBoostCatalog() {
             </h3>
           </div>
 
-          <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="mt-7 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {sector.bootcamps.map((b) => (
               <div
                 key={b.id}
-                className="flex flex-col rounded-2xl bg-white/5 p-5 ring-1 ring-white/10 transition-colors hover:ring-amber-400/40"
+                className="flex flex-col rounded-2xl bg-white/[0.04] p-6 ring-1 ring-white/10 transition-colors hover:ring-amber-400/40"
               >
                 <span className="w-fit rounded-full bg-amber-400/15 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-300">
-                  VIP Bootcamp
+                  Executive Bootcamp
                 </span>
-                <h4 className="mt-3 font-bold text-amber-200">{b.title}</h4>
-                <p className="mt-2 text-sm text-white/70">
-                  {ULTRABOOST_DURATION_H} h · {ULTRABOOST_PRICE}
+                <h4 className="mt-3 font-bold leading-snug text-amber-200">{b.title}</h4>
+                <p className="mt-2 flex-1 text-xs leading-relaxed text-white/60">
+                  {ULTRABOOST_DURATION_H}h intensives · 100&nbsp;% pratique · Certificat IPMD · {ULTRABOOST_PRICE}
                 </p>
-                <div className="mt-4 flex gap-2">
+                <div className="mt-5 flex gap-2">
                   <button
                     type="button"
                     onClick={() => setSelected(b)}
@@ -80,7 +80,7 @@ export function UltraBoostCatalog() {
             <div className="flex items-start justify-between gap-4">
               <div>
                 <span className="rounded-full bg-amber-400/15 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-300">
-                  VIP Bootcamp
+                  Executive Bootcamp
                 </span>
                 <h3 className="mt-2 text-xl font-extrabold text-amber-200">{selected.title}</h3>
               </div>
@@ -151,7 +151,7 @@ export function UltraBoostCatalog() {
               </div>
             </div>
 
-            <p className="mt-4 text-xs text-white/50">Formats disponibles : Distance | Présentiel | Hybride | VIP</p>
+            <p className="mt-4 text-xs text-white/50">Formats disponibles : Distance | Présentiel | Hybride | Sur-mesure</p>
 
             <Link
               href="/inscription-bootcamp?u=ultraboost"

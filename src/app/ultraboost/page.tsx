@@ -9,9 +9,9 @@ import { ExperienceWorkspace } from "@/components/sections/ExperienceWorkspace";
 import { getUniverse } from "@/data/universes";
 
 export const metadata: Metadata = {
-  title: "UltraBoost — VIP Bootcamps",
+  title: "UltraBoost — Executive Bootcamps",
   description:
-    "Bootcamps certifiants UltraBoost pour professionnels et cadres : management & IA, finance, data, RH, marketing, cybersécurité, no-code… Formats présentiel, distance, hybride et VIP.",
+    "Bootcamps certifiants UltraBoost pour cadres, dirigeants, managers et professionnels : management & IA, finance, data, RH, marketing, cybersécurité, no-code… Formats présentiel, distance, hybride et sur-mesure.",
 };
 
 export default function UltraBoostPage() {
@@ -36,14 +36,20 @@ export default function UltraBoostPage() {
 
       <ExperienceWorkspace universeId="ultraboost" />
 
-      <Section variant="white">
-        <h2 className="text-2xl font-extrabold tracking-tight text-ipmd-black sm:text-3xl">
-          Nos VIP Bootcamps
-        </h2>
-        <p className="mt-2 max-w-2xl text-black/60">
-          Des bootcamps certifiants, intensifs et 100&nbsp;% pratiques pour les professionnels et cadres.
+      <Section variant="dark">
+        <div className="flex flex-wrap items-center gap-3">
+          <span className="rounded-full bg-amber-400 px-3 py-1 text-xs font-bold uppercase tracking-wide text-ipmd-black">
+            Pour cadres &amp; professionnels
+          </span>
+          <h2 className="text-2xl font-extrabold tracking-tight text-white sm:text-3xl">
+            Nos Executive Bootcamps
+          </h2>
+        </div>
+        <p className="mt-3 max-w-2xl text-white/65">
+          Des bootcamps certifiants, intensifs et 100&nbsp;% pratiques pour cadres, dirigeants, managers et
+          professionnels.
         </p>
-        <div className="mt-8">
+        <div className="mt-10">
           <UltraBoostCatalog />
         </div>
       </Section>
