@@ -53,8 +53,8 @@ export function UltraJobsCatalog() {
                   ))}
                 </div>
                 <p className="mt-3 text-sm font-bold text-ipmd-red">
-                  {ULTRAJOBS_PRICE}
-                  <span className="font-medium text-black/45"> · {ULTRAJOBS_HOURS}h</span>
+                  {m.price ?? ULTRAJOBS_PRICE}
+                  <span className="font-medium text-black/45"> · {m.hours ?? ULTRAJOBS_HOURS}h</span>
                 </p>
                 <div className="mt-3 flex gap-2">
                   <button
@@ -107,9 +107,9 @@ export function UltraJobsCatalog() {
             </div>
 
             <p className="mt-3 border-y border-white/10 py-3 text-sm">
-              <span className="font-bold text-ipmd-red">{ULTRAJOBS_PRICE}</span>
+              <span className="font-bold text-ipmd-red">{selected.metier.price ?? ULTRAJOBS_PRICE}</span>
               <span className="text-white/55"> · Volume horaire : </span>
-              <span className="font-semibold">{ULTRAJOBS_HOURS}h</span>
+              <span className="font-semibold">{selected.metier.hours ?? ULTRAJOBS_HOURS}h</span>
             </p>
 
             <h4 className="mt-4 text-sm font-bold text-ipmd-red">Objectif général</h4>

@@ -7,6 +7,10 @@ export type UltraJobsMetier = {
   title: string;
   summary: string;
   skills: string[];
+  /** Tarif spécifique (sinon ULTRAJOBS_PRICE par défaut). */
+  price?: string;
+  /** Volume horaire spécifique (sinon ULTRAJOBS_HOURS par défaut). */
+  hours?: number;
 };
 
 export type UltraJobsDomain = {
@@ -150,11 +154,11 @@ export const ULTRAJOBS_DOMAINS: UltraJobsDomain[] = [
     icon: "🚀",
     title: "Transformation digitale & gestion de projets numériques",
     metiers: [
-      { title: "Digital Transformation Officer", summary: "Conduisez la transformation digitale des organisations.", skills: ["Transformation", "Conduite du changement", "Digital"] },
-      { title: "Chef de projet digital junior", summary: "Pilotez des projets numériques de l'idée à la livraison.", skills: ["Gestion de projet", "Agile", "Coordination"] },
-      { title: "Product Manager junior", summary: "Portez la vision produit et priorisez ce qui crée de la valeur.", skills: ["Produit", "Roadmap", "Priorisation"] },
-      { title: "Business Analyst digital", summary: "Analysez les besoins et traduisez-les en solutions digitales.", skills: ["Analyse", "Besoins", "Spécifications"] },
-      { title: "Coordinateur transformation digitale", summary: "Coordonnez les équipes et les outils du changement digital.", skills: ["Coordination", "Outils", "Suivi"] },
+      { title: "Digital Transformation Officer", summary: "Conduisez la transformation digitale des organisations.", skills: ["Transformation", "Conduite du changement", "Digital"], price: "585 000 FCFA", hours: 60 },
+      { title: "Chef de projet digital junior", summary: "Pilotez des projets numériques de l'idée à la livraison.", skills: ["Gestion de projet", "Agile", "Coordination"], price: "585 000 FCFA", hours: 60 },
+      { title: "Product Manager junior", summary: "Portez la vision produit et priorisez ce qui crée de la valeur.", skills: ["Produit", "Roadmap", "Priorisation"], price: "585 000 FCFA", hours: 60 },
+      { title: "Business Analyst digital", summary: "Analysez les besoins et traduisez-les en solutions digitales.", skills: ["Analyse", "Besoins", "Spécifications"], price: "585 000 FCFA", hours: 48 },
+      { title: "Coordinateur transformation digitale", summary: "Coordonnez les équipes et les outils du changement digital.", skills: ["Coordination", "Outils", "Suivi"], price: "585 000 FCFA", hours: 48 },
     ],
   },
 ];
