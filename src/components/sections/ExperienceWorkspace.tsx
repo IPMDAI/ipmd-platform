@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, type ReactNode } from "react";
+import { useState, useEffect, useRef, type ReactNode } from "react";
 import { Section } from "@/components/ui/Section";
 import { UpcomingBootcampsGrid } from "@/components/ultraboost/UpcomingBootcamps";
 import { AnnualAgenda } from "@/components/sections/AnnualAgenda";
@@ -98,7 +98,16 @@ export function ExperienceWorkspace({
   }
 
   const [active, setActive] = useState(panels[0]?.id ?? "");
+  const contentRef = useRef<HTMLDivElement>(null);
   const hasPanels = panels.length > 0;
+
+  /** Onglet de la barre du bas (mobile) : change le contenu ET défile jusqu'à lui. */
+  function selectAndScroll(id: string) {
+    setActive(id);
+    requestAnimationFrame(() => {
+      contentRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  }
 
   // Réserve de l'espace en bas de page (mobile) pour la barre persistante.
   useEffect(() => {
@@ -162,7 +171,7 @@ export function ExperienceWorkspace({
         </aside>
 
         {/* Contenu */}
-        <div className="min-w-0 pb-20 lg:pb-0">{current.render()}</div>
+        <div ref={contentRef} className="min-w-0 scroll-mt-24 pb-20 lg:pb-0">{current.render()}</div>
       </div>
     </Section>
 
@@ -178,7 +187,7 @@ export function ExperienceWorkspace({
             <button
               key={p.id}
               type="button"
-              onClick={() => setActive(p.id)}
+              onClick={() => selectAndScroll(p.id)}
               aria-current={isActive}
               className={`relative flex flex-1 flex-col items-center justify-center gap-0.5 py-2.5 text-[11px] font-bold transition-colors ${
                 isActive ? "text-ipmd-red" : "text-ipmd-black/55"
