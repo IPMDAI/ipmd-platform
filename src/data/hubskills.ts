@@ -147,6 +147,24 @@ export const HUBSKILLS_BY_UNIVERSE: Record<string, HubSkills> = {
       { icon: "🥂", title: "Événements VIP", description: "Des rendez-vous d'exception propices au réseautage de haut niveau." },
     ],
   },
+
+  entreprise: {
+    eyebrow: "HubEntreprise",
+    icon: "🏢",
+    title: "Le hub des organisations qui se transforment",
+    intro:
+      "HubEntreprise réunit nos services aux organisations : formation sur mesure, conseil IA, accompagnement des équipes et partenariats.",
+    items: [
+      { icon: "🎯", title: "Formation sur mesure", description: "Des parcours conçus pour vos besoins, en présentiel, à distance ou hybride." },
+      { icon: "🧭", title: "Conseil & audit IA", description: "Diagnostic, feuille de route et cas d'usage IA adaptés à votre activité." },
+      { icon: "👥", title: "Coaching des équipes", description: "Acculturation et montée en compétence de vos collaborateurs." },
+      { icon: "🛠️", title: "Ateliers & séminaires", description: "Des sessions pratiques pour ancrer les compétences au sein des équipes." },
+      { icon: "📜", title: "Certification des collaborateurs", description: "Validez officiellement les compétences acquises par vos équipes." },
+      { icon: "🚀", title: "Transformation digitale", description: "Un accompagnement de bout en bout, de la stratégie à la mise en œuvre." },
+      { icon: "🤝", title: "Partenariats & alternance", description: "Recrutez et formez vos futurs talents via nos parcours et notre réseau." },
+      { icon: "📈", title: "Accompagnement projet", description: "Un appui opérationnel pour réussir vos projets digitaux et IA." },
+    ],
+  },
 };
 
 /** Renvoie le HubSkills d'un univers (null si aucun). */

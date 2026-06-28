@@ -93,6 +93,16 @@ export const WEBINAIRES_BY_UNIVERSE: Record<string, Webinaires> = {
       { id: "gv-w3", title: "L'Executive qui transforme les dirigeants", date: "22 juillet 2026", time: "18h – 19h", speaker: "Équipe Executive", description: "Découvrez le programme Executive et son impact sur votre leadership.", tag: ONLINE_FREE },
     ],
   },
+  entreprise: {
+    eyebrow: "Webinaires",
+    title: "Des webinaires pour les organisations",
+    intro: "Des sessions en ligne pour aider les entreprises à former leurs équipes et réussir leur transformation.",
+    items: [
+      { id: "en-w1", title: "Former ses équipes à l'IA", date: "9 juillet 2026", time: "11h – 12h", speaker: "IPMD Entreprise", description: "Acculturer et monter en compétence ses collaborateurs sur l'IA, concrètement.", tag: ONLINE_FREE },
+      { id: "en-w2", title: "Réussir sa transformation digitale", date: "16 juillet 2026", time: "11h – 12h", speaker: "Expert Transformation", description: "Méthode et feuille de route pour digitaliser son organisation sans la subir.", tag: ONLINE_FREE },
+      { id: "en-w3", title: "Recruter et fidéliser les talents du digital", date: "23 juillet 2026", time: "11h – 12h", speaker: "IPMD Entreprise & RH", description: "Attirer, former et garder les compétences clés du numérique.", tag: ONLINE_FREE },
+    ],
+  },
 };
 
 /** Renvoie les webinaires d'un univers (null si aucun). */

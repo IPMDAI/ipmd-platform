@@ -20,7 +20,7 @@ export function WhatsAppFloat() {
 
   // Sur les pages avec la barre de rubriques persistante (mobile), on remonte
   // le bouton au-dessus de la barre. Sur desktop (lg), position normale.
-  const WORKSPACE_PAGES = ["/ultrajobs", "/ultraboost", "/seniorshub", "/ultraexecutive", "/campus", "/professionnel", "/gouvernance"];
+  const WORKSPACE_PAGES = ["/ultrajobs", "/ultraboost", "/seniorshub", "/ultraexecutive", "/campus", "/professionnel", "/gouvernance", "/entreprise"];
   const onWorkspace = WORKSPACE_PAGES.includes(pathname ?? "");
   const posClass = onWorkspace ? "bottom-[6.25rem] right-5 lg:bottom-5" : "bottom-5 right-5";
 

@@ -42,6 +42,10 @@ const TIME_PRO = "18h à 20h";
 const FREQ_GOUV = "Un rendez-vous par mois";
 const TIME_GOUV = "18h à 21h";
 
+// Entreprise / Organisation (B2B)
+const FREQ_ENT = "Un rendez-vous par mois";
+const TIME_ENT = "Sur invitation · en ligne ou présentiel";
+
 export const AGENDA_BY_UNIVERSE: Record<string, Agenda> = {
   ultrajobs: {
     eyebrow: "Agenda annuel",
@@ -187,6 +191,27 @@ export const AGENDA_BY_UNIVERSE: Record<string, Agenda> = {
       { month: "Octobre", badge: BADGE_EVT, frequency: FREQ_GOUV, time: TIME_GOUV, events: ["Table ronde — finance & pilotage", "Think tank dirigeants"] },
       { month: "Novembre", badge: BADGE_EVT, frequency: FREQ_GOUV, time: TIME_GOUV, events: ["Conférence — cybersécurité & risques", "Dîner de dirigeants"] },
       { month: "Décembre", badge: BADGE_EVT, frequency: FREQ_GOUV, time: TIME_GOUV, events: ["Bilan stratégique & perspectives", "Gala des dirigeants"] },
+    ],
+  },
+
+  entreprise: {
+    eyebrow: "Agenda annuel",
+    title: "Entreprise & Organisation — rendez-vous B2B",
+    intro:
+      "Chaque mois, des rendez-vous pour les organisations : petits-déjeuners, webinaires et ateliers pour monter en compétence et innover.",
+    months: [
+      { month: "Janvier", badge: BADGE_EVT, frequency: FREQ_ENT, time: TIME_ENT, events: ["Petit-déjeuner — IA & productivité en entreprise", "Webinaire — former ses équipes au digital"] },
+      { month: "Février", badge: BADGE_EVT, frequency: FREQ_ENT, time: TIME_ENT, events: ["Atelier — automatisation des processus", "Rencontre partenaires & RH"] },
+      { month: "Mars", badge: BADGE_EVT, frequency: FREQ_ENT, time: TIME_ENT, events: ["Petit-déjeuner — transformation digitale", "Webinaire — data & décision"] },
+      { month: "Avril", badge: BADGE_EVT, frequency: FREQ_ENT, time: TIME_ENT, events: ["Atelier — IA générative au travail", "Rencontre — formation sur mesure"] },
+      { month: "Mai", badge: BADGE_EVT, frequency: FREQ_ENT, time: TIME_ENT, events: ["Petit-déjeuner — cybersécurité en entreprise", "Webinaire — recruter les talents du digital"] },
+      { month: "Juin", badge: BADGE_EVT, frequency: FREQ_ENT, time: TIME_ENT, events: ["Atelier — marketing & vente B2B", "Rencontre partenaires"] },
+      { month: "Juillet", badge: BADGE_EVT, frequency: FREQ_ENT, time: TIME_ENT, events: ["Webinaire — bilan mi-année & IA", "Atelier sur mesure (sur demande)"] },
+      { month: "Août", badge: BADGE_EVT, frequency: FREQ_ENT, time: TIME_ENT, events: ["Préparation des plans de formation", "Rencontre — besoins entreprises"] },
+      { month: "Septembre", badge: BADGE_EVT, frequency: FREQ_ENT, time: TIME_ENT, events: ["Petit-déjeuner de rentrée — IA & stratégie", "Webinaire — feuille de route digitale"] },
+      { month: "Octobre", badge: BADGE_EVT, frequency: FREQ_ENT, time: TIME_ENT, events: ["Atelier — gouvernance des données", "Rencontre partenaires & RH"] },
+      { month: "Novembre", badge: BADGE_EVT, frequency: FREQ_ENT, time: TIME_ENT, events: ["Petit-déjeuner — innovation & IA", "Webinaire — fidéliser ses talents"] },
+      { month: "Décembre", badge: BADGE_EVT, frequency: FREQ_ENT, time: TIME_ENT, events: ["Bilan annuel & tendances", "Rencontre partenaires — fin d'année"] },
     ],
   },
 };
