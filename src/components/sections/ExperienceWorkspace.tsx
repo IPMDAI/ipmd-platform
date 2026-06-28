@@ -40,6 +40,7 @@ export function ExperienceWorkspace({ universeId }: { universeId: string }) {
   }
 
   const [active, setActive] = useState(panels[0]?.id ?? "");
+  const [mobileView, setMobileView] = useState<"list" | "detail">("list");
   if (panels.length === 0) return null;
   const current = panels.find((p) => p.id === active) ?? panels[0];
 
@@ -54,12 +55,15 @@ export function ExperienceWorkspace({ universeId }: { universeId: string }) {
         </h2>
       </div>
       <p className="mt-2 max-w-2xl text-black/60">
-        Parcourez les rubriques à gauche : cliquez pour afficher le détail à droite.
+        <span className="lg:hidden">Choisissez une rubrique pour afficher son détail.</span>
+        <span className="hidden lg:inline">Parcourez les rubriques à gauche : cliquez pour afficher le détail à droite.</span>
       </p>
 
-      <div className="mt-8 grid grid-cols-[92px_1fr] gap-4 sm:grid-cols-[220px_1fr] sm:gap-6 lg:grid-cols-[280px_1fr]">
-        {/* Liste (style boîte mail) — toujours à gauche, compacte sur mobile */}
-        <aside className="lg:sticky lg:top-24 lg:self-start">
+      <div className="mt-8 grid gap-6 lg:grid-cols-[280px_1fr]">
+        {/* Liste (style boîte mail) — plein écran sur mobile, rail à gauche sur desktop */}
+        <aside
+          className={`${mobileView === "detail" ? "hidden lg:block" : "block"} lg:sticky lg:top-24 lg:self-start`}
+        >
           <ul className="flex flex-col gap-2">
             {panels.map((p) => {
               const isActive = p.id === current.id;
@@ -67,27 +71,31 @@ export function ExperienceWorkspace({ universeId }: { universeId: string }) {
                 <li key={p.id}>
                   <button
                     type="button"
-                    onClick={() => setActive(p.id)}
+                    onClick={() => {
+                      setActive(p.id);
+                      setMobileView("detail");
+                    }}
                     aria-current={isActive}
-                    className={`flex w-full flex-col items-center gap-1.5 rounded-2xl border px-2 py-3 text-center transition-colors sm:flex-row sm:items-center sm:gap-3 sm:px-4 sm:text-left ${
+                    className={`flex w-full items-center gap-3 rounded-2xl border px-4 py-3 text-left transition-colors ${
                       isActive
-                        ? "border-ipmd-red/30 bg-white shadow-sm"
+                        ? "border-ipmd-red/30 bg-white shadow-sm lg:bg-white"
                         : "border-black/5 bg-ipmd-light hover:bg-white"
                     }`}
                   >
                     <span
-                      className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-lg sm:h-10 sm:w-10 ${
+                      className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-xl ${
                         isActive ? "bg-ipmd-red/10" : "bg-white"
                       }`}
                     >
                       {p.icon}
                     </span>
-                    <span className="min-w-0">
-                      <span className={`block text-[11px] font-bold leading-tight sm:truncate sm:text-sm ${isActive ? "text-ipmd-red" : "text-ipmd-black"}`}>
+                    <span className="min-w-0 flex-1">
+                      <span className={`block text-sm font-bold ${isActive ? "text-ipmd-red lg:text-ipmd-red" : "text-ipmd-black"}`}>
                         {p.label}
                       </span>
-                      <span className="hidden truncate text-xs text-black/50 sm:block">{p.sublabel}</span>
+                      <span className="block truncate text-xs text-black/50">{p.sublabel}</span>
                     </span>
+                    <span className="shrink-0 text-lg text-black/25 lg:hidden">›</span>
                   </button>
                 </li>
               );
@@ -96,7 +104,16 @@ export function ExperienceWorkspace({ universeId }: { universeId: string }) {
         </aside>
 
         {/* Contenu */}
-        <div className="min-w-0">{current.render()}</div>
+        <div className={`${mobileView === "list" ? "hidden lg:block" : "block"} min-w-0`}>
+          <button
+            type="button"
+            onClick={() => setMobileView("list")}
+            className="mb-4 inline-flex items-center gap-1.5 rounded-full bg-ipmd-light px-4 py-2 text-sm font-semibold text-ipmd-black ring-1 ring-black/5 transition-colors hover:bg-white lg:hidden"
+          >
+            ← Toutes les rubriques
+          </button>
+          {current.render()}
+        </div>
       </div>
     </Section>
   );
