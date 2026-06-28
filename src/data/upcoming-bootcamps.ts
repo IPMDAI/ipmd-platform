@@ -100,6 +100,7 @@ export const UPCOMING_BY_UNIVERSE: Record<string, UpcomingBootcamp[]> = {
   ultrajobs: [
     {
       id: "uj-community-juil-2026",
+      image: "/carousel-ia/1.png",
       title: "Community Management & Création de contenu IA",
       badge: "Session UltraJobs à Abidjan",
       description:
@@ -114,6 +115,7 @@ export const UPCOMING_BY_UNIVERSE: Record<string, UpcomingBootcamp[]> = {
     },
     {
       id: "uj-design-juil-2026",
+      image: "/carousel-ia/2.png",
       title: "Design graphique & Canva IA",
       badge: "Session UltraJobs à Abidjan",
       description:
@@ -128,6 +130,7 @@ export const UPCOMING_BY_UNIVERSE: Record<string, UpcomingBootcamp[]> = {
     },
     {
       id: "uj-web-juil-2026",
+      image: "/carousel-ia/3.png",
       title: "Développement web express avec l'IA",
       badge: "Session UltraJobs à Abidjan",
       description:
@@ -142,6 +145,7 @@ export const UPCOMING_BY_UNIVERSE: Record<string, UpcomingBootcamp[]> = {
     },
     {
       id: "uj-marketing-juil-2026",
+      image: "/IPMD_Campus%20Marketing.png",
       title: "Marketing digital & Publicité en ligne",
       badge: "Session UltraJobs à Abidjan",
       description:
@@ -160,6 +164,7 @@ export const UPCOMING_BY_UNIVERSE: Record<string, UpcomingBootcamp[]> = {
   seniorshub: [
     {
       id: "sh-ia-quotidien-juil-2026",
+      image: "/galerie-seniorshub/SeniorsHub.jpg",
       title: "Maîtriser l'IA & les outils numériques au quotidien",
       badge: "Session SeniorsHub à Abidjan",
       description:
@@ -174,6 +179,7 @@ export const UPCOMING_BY_UNIVERSE: Record<string, UpcomingBootcamp[]> = {
     },
     {
       id: "sh-whatsapp-juil-2026",
+      image: "/galerie-seniorshub/SeniorsHub0.jpg",
       title: "WhatsApp Business & communication digitale",
       badge: "Session SeniorsHub à Abidjan",
       description:
@@ -188,6 +194,7 @@ export const UPCOMING_BY_UNIVERSE: Record<string, UpcomingBootcamp[]> = {
     },
     {
       id: "sh-bureautique-juil-2026",
+      image: "/galerie-seniorshub/SeniorsHub1.jpg",
       title: "Bureautique, sécurité numérique & démarches en ligne",
       badge: "Session SeniorsHub à Abidjan",
       description:
@@ -206,6 +213,7 @@ export const UPCOMING_BY_UNIVERSE: Record<string, UpcomingBootcamp[]> = {
   ultraexecutive: [
     {
       id: "ux-ia-strategie-aout-2026",
+      image: "/IPMD_Executive.png",
       title: "IA & Stratégie pour Dirigeants",
       subtitle: "Bootcamp Executive · Décision · Gouvernance IA",
       badge: "Bootcamp Executive à Abidjan",
@@ -222,6 +230,7 @@ export const UPCOMING_BY_UNIVERSE: Record<string, UpcomingBootcamp[]> = {
     },
     {
       id: "ux-transformation-aout-2026",
+      image: "/UltraExecutive.png",
       title: "Transformation Digitale & Gouvernance IA",
       subtitle: "Bootcamp Executive · Pilotage du changement",
       badge: "Bootcamp Executive à Abidjan",
@@ -238,6 +247,7 @@ export const UPCOMING_BY_UNIVERSE: Record<string, UpcomingBootcamp[]> = {
     },
     {
       id: "ux-masterclass-bassam-aout-2026",
+      image: "/UltraBoost.png",
       title: "Executive Masterclass — IA & Croissance",
       subtitle: "Bootcamp Executive · Immersion résidentielle",
       badge: "Bootcamp Executive à Grand-Bassam",
