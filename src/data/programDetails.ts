@@ -36,7 +36,7 @@ export interface ProgramDetail {
 }
 
 // ── Conditions d'admission communes (IPMD Campus) ──────────
-const CAMPUS_ADMISSION: AdmissionInfo = {
+export const CAMPUS_ADMISSION: AdmissionInfo = {
   documents: [
     "Relevé de notes du baccalauréat",
     "Relevé de notes de première et terminale (pour nouveaux bacheliers)",

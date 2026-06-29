@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
-import type { ProgramDetail } from "@/data/programDetails";
+import { CAMPUS_ADMISSION, type ProgramDetail } from "@/data/programDetails";
 
 interface ProgramLevelsProps {
   programTitle: string;
@@ -132,52 +132,50 @@ export function ProgramLevels({ programTitle, detail }: ProgramLevelsProps) {
         title={`${programTitle} — Candidature`}
         subtitle="Conditions d'admission"
       >
-        {detail.admission ? (
-          <div className="space-y-5">
-            <div>
-              <p className="text-sm font-bold text-ipmd-black">
-                📂 Pièces à fournir
-              </p>
-              <ul className="mt-2 space-y-1.5">
-                {detail.admission.documents.map((doc) => (
-                  <li
-                    key={doc}
-                    className="flex items-start gap-2.5 text-sm text-black/75"
-                  >
-                    <span className="mt-0.5 text-ipmd-red" aria-hidden>
-                      ✓
-                    </span>
-                    {doc}
-                  </li>
-                ))}
-              </ul>
-            </div>
+        {(() => {
+          const admission = detail.admission ?? CAMPUS_ADMISSION;
+          return (
+            <div className="space-y-5">
+              <div>
+                <p className="text-sm font-bold text-ipmd-black">
+                  📂 Pièces à fournir
+                </p>
+                <ul className="mt-2 space-y-1.5">
+                  {admission.documents.map((doc) => (
+                    <li
+                      key={doc}
+                      className="flex items-start gap-2.5 text-sm text-black/75"
+                    >
+                      <span className="mt-0.5 text-ipmd-red" aria-hidden>
+                        ✓
+                      </span>
+                      {doc}
+                    </li>
+                  ))}
+                </ul>
+              </div>
 
-            <div>
-              <p className="text-sm font-bold text-ipmd-black">
-                💻 Matériel nécessaire
-              </p>
-              <ul className="mt-2 space-y-1.5">
-                {detail.admission.equipment.map((item) => (
-                  <li
-                    key={item}
-                    className="flex items-start gap-2.5 text-sm text-black/75"
-                  >
-                    <span className="mt-0.5 text-ipmd-red" aria-hidden>
-                      ✓
-                    </span>
-                    {item}
-                  </li>
-                ))}
-              </ul>
+              <div>
+                <p className="text-sm font-bold text-ipmd-black">
+                  💻 Matériel nécessaire
+                </p>
+                <ul className="mt-2 space-y-1.5">
+                  {admission.equipment.map((item) => (
+                    <li
+                      key={item}
+                      className="flex items-start gap-2.5 text-sm text-black/75"
+                    >
+                      <span className="mt-0.5 text-ipmd-red" aria-hidden>
+                        ✓
+                      </span>
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+              </div>
             </div>
-
-          </div>
-        ) : (
-          <p className="text-sm text-black/70">
-            Contactez-nous pour connaître les conditions d&apos;admission.
-          </p>
-        )}
+          );
+        })()}
 
         <div className="mt-6">
           <Button href="/admission" size="lg" className="w-full">
