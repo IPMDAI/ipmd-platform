@@ -45,7 +45,6 @@ export const mainNav: NavItem[] = [
       { label: "Candidature / Inscription", href: "/admission" },
     ],
   },
-  { label: "À propos", href: "/a-propos" },
   { label: "Contact", href: "/contact" },
 ];
 
