@@ -17,6 +17,12 @@ const GROUPS = [
   { kind: "service", icon: "🏢", label: "Entreprises & organisations", desc: "L'IPMD au service des entreprises : former, recruter, collaborer." },
 ] as const;
 
+/** Grande image qui comble l'espace vide quand un groupe laisse un trou (desktop). */
+const GROUP_FILLERS: Record<string, string> = {
+  certificat: "/Visuel%20UltraBoost%2C-17.png",
+  service: "/ultra-excutive/ultraexecutive0.png",
+};
+
 /** Section « Nos 8 univers » : groupée par Diplômes / Certificats / Entreprises. */
 export function UniversesSection() {
   return (
@@ -52,13 +58,13 @@ export function UniversesSection() {
                     <UniverseCard universe={universe} />
                   </Reveal>
                 ))}
-                {/* Comble l'espace vide quand le nombre de cartes laisse un trou (ex. Certificats : 4 cartes). */}
-                {group.kind === "certificat" && (
+                {/* Comble l'espace vide quand le groupe laisse un trou (Certificats : 4 cartes ; Entreprises : 1 carte). */}
+                {GROUP_FILLERS[group.kind] && (
                   <div className="hidden overflow-hidden rounded-3xl shadow-sm ring-1 ring-black/5 lg:col-span-2 lg:block">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
-                      src="/Visuel%20UltraBoost%2C-17.png"
-                      alt="UltraBoost — bootcamps certifiants à l'ère de l'IA"
+                      src={GROUP_FILLERS[group.kind]}
+                      alt={`${group.label} — IPMD`}
                       className="h-full w-full object-cover"
                     />
                   </div>
