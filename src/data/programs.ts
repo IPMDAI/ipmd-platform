@@ -116,6 +116,7 @@ export const programs: Program[] = [
   {
     id: "pro-communication",
     universe: "professionnel",
+    image: "/galerie-ipmd-pros/IPMD%20Pro.png",
     title: "Communication digitale",
     description:
       "La Communication digitale permet de gérer l'image, la visibilité et la relation d'une entreprise, d'une marque ou d'une organisation sur les canaux numériques.\n\nTrès recherchée sur le marché, elle couvre la création de contenu, les réseaux sociaux, l'influence, la gestion de communauté, la communication de marque, la stratégie éditoriale et l'utilisation de l'intelligence artificielle pour produire plus vite et mieux.\n\nÀ l'IPMD, la formation est orientée à 80 % vers la pratique, afin de former des professionnels capables de concevoir, diffuser et piloter des actions de communication digitale efficaces.",
@@ -171,6 +172,7 @@ export const programs: Program[] = [
   {
     id: "pro-management",
     universe: "professionnel",
+    image: "/galerie-ipmd-pros/ipmd-pro6.png",
     title: "Management de projet digital",
     description:
       "Le Management de projet digital permet de planifier, organiser, piloter et suivre des projets numériques au sein des entreprises et organisations.\n\nTrès utile dans tous les secteurs, il couvre la gestion de projet, les méthodes agiles, la coordination d'équipes, les outils collaboratifs, la transformation digitale, le suivi des performances et l'intégration de l'intelligence artificielle dans la gestion des projets.\n\nÀ l'IPMD, la formation est orientée à 80 % vers la pratique, afin de former des professionnels capables de conduire des projets digitaux de l'idée jusqu'à la réalisation.",
@@ -182,6 +184,7 @@ export const programs: Program[] = [
   {
     id: "pro-finance",
     universe: "professionnel",
+    image: "/galerie-ipmd-pros/ipmd-pro10.png",
     title: "Finance digitale",
     description:
       "La Comptabilité et Finance digitale forme aux nouvelles pratiques de gestion financière, de comptabilité numérique et d'analyse des données financières.\n\nTrès demandée par les entreprises, cabinets, banques, fintechs et organisations, elle couvre la comptabilité, la finance, les outils digitaux de gestion, les tableaux de bord, la digitalisation financière, les paiements numériques, la FinTech et l'intelligence artificielle appliquée à la finance.\n\nÀ l'IPMD, la formation est orientée à 80 % vers la pratique, afin de former des professionnels capables de gérer, analyser et optimiser les opérations financières dans un environnement digitalisé.",
