@@ -52,6 +52,17 @@ export function UniversesSection() {
                     <UniverseCard universe={universe} />
                   </Reveal>
                 ))}
+                {/* Comble l'espace vide quand le nombre de cartes laisse un trou (ex. Certificats : 4 cartes). */}
+                {group.kind === "certificat" && (
+                  <div className="hidden overflow-hidden rounded-3xl shadow-sm ring-1 ring-black/5 lg:col-span-2 lg:block">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src="/Visuel%20UltraBoost%2C-17.png"
+                      alt="UltraBoost — bootcamps certifiants à l'ère de l'IA"
+                      className="h-full w-full object-cover"
+                    />
+                  </div>
+                )}
               </div>
             </div>
           );
