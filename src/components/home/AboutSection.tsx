@@ -15,7 +15,7 @@ export function AboutSection({
 }: AboutSectionProps = {}) {
   return (
     <Section variant={variant}>
-      <div className="grid items-start gap-10 lg:grid-cols-[1.45fr_1fr] lg:gap-16">
+      <div className="grid items-start gap-10 lg:grid-cols-[1.4fr_1fr] lg:items-stretch lg:gap-16">
         {/* Texte */}
         <div>
           {showHeading && (
@@ -133,9 +133,9 @@ export function AboutSection({
           </div>
         </div>
 
-        {/* Image */}
-        <div className="lg:sticky lg:top-28">
-          <div className="relative aspect-[4/5] overflow-hidden rounded-3xl shadow-xl ring-1 ring-black/5">
+        {/* Image — s'étire sur toute la hauteur du texte (desktop) */}
+        <div className="lg:h-full">
+          <div className="relative aspect-[4/5] overflow-hidden rounded-3xl shadow-xl ring-1 ring-black/5 lg:aspect-auto lg:h-full lg:min-h-[28rem]">
             <Image
               src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=1200&q=80&auto=format&fit=crop"
               alt="Étudiants IPMD en collaboration sur des projets digitaux"
