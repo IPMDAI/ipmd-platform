@@ -1,6 +1,6 @@
-import Image from "next/image";
 import { Section } from "@/components/ui/Section";
 import { Button } from "@/components/ui/Button";
+import { AboutImageCarousel } from "@/components/home/AboutImageCarousel";
 
 interface AboutSectionProps {
   /** Affiche le sur-titre « À propos » et le grand titre. */
@@ -133,25 +133,9 @@ export function AboutSection({
           </div>
         </div>
 
-        {/* Image — s'étire sur toute la hauteur du texte (desktop) */}
+        {/* Image — carrousel, s'étire sur toute la hauteur du texte (desktop) */}
         <div className="lg:h-full">
-          <div className="relative aspect-[4/5] overflow-hidden rounded-3xl shadow-xl ring-1 ring-black/5 lg:aspect-auto lg:h-full lg:min-h-[28rem]">
-            <Image
-              src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=1200&q=80&auto=format&fit=crop"
-              alt="Étudiants IPMD en collaboration sur des projets digitaux"
-              fill
-              sizes="(max-width: 1024px) 100vw, 40vw"
-              className="object-cover"
-            />
-            <div className="absolute inset-x-4 bottom-4 rounded-2xl bg-ipmd-black/80 p-4 backdrop-blur-sm">
-              <p className="text-sm font-bold text-white">
-                Abidjan, Côte d&apos;Ivoire
-              </p>
-              <p className="mt-0.5 text-xs text-white/70">
-                Au service des talents du digital depuis 2019
-              </p>
-            </div>
-          </div>
+          <AboutImageCarousel />
         </div>
       </div>
     </Section>
