@@ -1,6 +1,6 @@
 export const PARTNER_CATEGORIES = [
   { value: "academique", label: "Partenaires académiques", short: "Académique", icon: "🎓" },
-  { value: "entreprise", label: "Entreprises ayant accueilli nos étudiants en stage", short: "Entreprise", icon: "🏢" },
+  { value: "entreprise", label: "Entreprises d’accueil de nos étudiants en stage", short: "Entreprise", icon: "🏢" },
   { value: "association", label: "Partenaires associatifs", short: "Association", icon: "🤝" },
 ] as const;
 
