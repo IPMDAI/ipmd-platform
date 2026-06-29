@@ -1,4 +1,5 @@
 import { Hero } from "@/components/home/Hero";
+import { AboutSection } from "@/components/home/AboutSection";
 import { UniversesSection } from "@/components/home/UniversesSection";
 import { EcosystemSection } from "@/components/home/EcosystemSection";
 import { AiCarousel } from "@/components/home/AiCarousel";
@@ -17,6 +18,7 @@ export default function HomePage() {
     <>
       <HomeQuickNav />
       <Hero />
+      <AboutSection />
       <UniversesSection />
       <EcosystemSection />
       <AiCarousel />

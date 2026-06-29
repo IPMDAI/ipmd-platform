@@ -1,5 +1,4 @@
 import { Section } from "@/components/ui/Section";
-import { SectionHeading } from "@/components/ui/SectionHeading";
 import { Reveal } from "@/components/ui/Reveal";
 import { UniverseCard } from "@/components/cards/UniverseCard";
 import { universes } from "@/data/universes";
@@ -27,14 +26,7 @@ const GROUP_FILLERS: Record<string, string> = {
 export function UniversesSection() {
   return (
     <Section id="univers" variant="light">
-      <SectionHeading
-        eyebrow="Nos 8 univers"
-        title="80 % de pratique, l'IA au cœur de nos formations."
-        description="Du bachelier au dirigeant, des formations et bootcamps pratiques à l'ère de l'IA*"
-        titleClassName="lg:whitespace-nowrap"
-      />
-
-      <div className="mt-12 space-y-14">
+      <div className="space-y-14">
         {GROUPS.map((group) => {
           const list = universes.filter((u) => u.kind === group.kind);
           if (list.length === 0) return null;
