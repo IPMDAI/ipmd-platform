@@ -139,6 +139,7 @@ export const programs: Program[] = [
   {
     id: "pro-ecommerce",
     universe: "professionnel",
+    image: "/galerie-ipmd-pros/ipmd-pro3.png",
     title: "E-commerce & commerce international",
     description:
       "Le E-commerce & Commerce international permet de vendre des produits et services en ligne, de gérer une boutique digitale et de développer des activités commerciales sur les marchés locaux et internationaux.\n\nTrès demandé avec la croissance du numérique, ce domaine couvre le commerce en ligne, les marketplaces, la logistique, le paiement digital, le marketing e-commerce, la relation client, l'import-export et les outils d'intelligence artificielle pour améliorer les ventes.\n\nÀ l'IPMD, la formation est orientée à 80 % vers la pratique, afin de former des professionnels capables de créer, gérer et développer des activités commerciales digitales performantes.",
