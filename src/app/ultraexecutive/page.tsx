@@ -8,5 +8,5 @@ export const metadata: Metadata = {
 };
 
 export default function UltraExecutivePage() {
-  return <UniverseShowcase universeId="ultraexecutive" />;
+  return <UniverseShowcase universeId="ultraexecutive" workspaceTop />;
 }

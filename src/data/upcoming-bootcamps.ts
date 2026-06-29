@@ -278,13 +278,13 @@ export const UPCOMING_BY_UNIVERSE: Record<string, UpcomingBootcamp[]> = {
       variant: "luxe",
     },
     {
-      id: "ux-cybergouvernance-aout-2026",
+      id: "ux-gouvernance-numerique-aout-2026",
       image: "/carousel-ia/3.png",
-      title: "Cybersécurité & gouvernance des données pour dirigeants",
-      subtitle: "Bootcamp Executive · Risques & conformité",
+      title: "Gouvernance Numérique pour Dirigeants",
+      subtitle: "Bootcamp Executive · Données, sécurité & conformité",
       badge: "Bootcamp Executive à Abidjan",
       description:
-        "Programme pour comprendre et piloter la sécurité, la gouvernance des données et la conformité au plus haut niveau, et protéger la valeur de l'organisation.",
+        "Programme pour cadrer et piloter la gouvernance numérique : gouvernance des données, sécurité, éthique et conformité, afin de protéger et valoriser l'organisation.",
       audience: "Réservé aux dirigeants, cadres supérieurs et décideurs.",
       date: "18 au 20 août 2026",
       places: "Limité à 12 participants",

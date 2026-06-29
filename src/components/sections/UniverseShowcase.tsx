@@ -16,7 +16,14 @@ import type { UniverseId } from "@/types";
  * Page complète d'un univers : en-tête, infos clés, grille de programmes ou
  * de bootcamps, puis appel à l'action. Mutualise la mise en page des 6 pages.
  */
-export function UniverseShowcase({ universeId }: { universeId: UniverseId }) {
+export function UniverseShowcase({
+  universeId,
+  workspaceTop = false,
+}: {
+  universeId: UniverseId;
+  /** Place la section « Sessions, agenda & événements » en haut (sous la vidéo). */
+  workspaceTop?: boolean;
+}) {
   const universe = getUniverse(universeId);
   if (!universe) return null;
 
@@ -55,6 +62,8 @@ export function UniverseShowcase({ universeId }: { universeId: UniverseId }) {
 
       {/* Grande vidéo de présentation (si une vidéo est déposée pour cet univers) */}
       <UniverseVideo universeId={universeId} />
+
+      {workspaceTop && <ExperienceWorkspace universeId={universeId} />}
 
       {/* Public visé */}
       <Section variant="white">
@@ -108,7 +117,7 @@ export function UniverseShowcase({ universeId }: { universeId: UniverseId }) {
         )}
       </Section>
 
-      <ExperienceWorkspace universeId={universeId} />
+      {!workspaceTop && <ExperienceWorkspace universeId={universeId} />}
 
       <CtaBanner
         title="Prêt à rejoindre IPMD ?"
