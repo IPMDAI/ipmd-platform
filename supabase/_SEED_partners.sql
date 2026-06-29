@@ -23,3 +23,6 @@ from (values
 where not exists (
   select 1 from public.partners p where p.name = v.name
 );
+
+-- Logo du partenaire académique MBS (fichier dans public/).
+update public.partners set logo_url = '/partenaire_Logo_MBS.webp' where name ilike '%MBS%';
