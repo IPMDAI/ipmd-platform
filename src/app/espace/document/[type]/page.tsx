@@ -90,6 +90,12 @@ export default async function DocumentPage({
             <PrintButton />
           </div>
 
+          <p className="mt-2 text-right text-xs text-black/45 print:hidden">
+            💡 Pour une impression officielle propre, ouvrez « Plus de
+            paramètres » et décochez « En-têtes et pieds de page » (sinon le
+            navigateur ajoute la date, l&apos;URL et le numéro de page).
+          </p>
+
           {type !== "carte" && isAdmin && sig.allowed.length > 1 && (
             <div className="mt-4 flex flex-wrap items-center gap-2 rounded-xl bg-white p-3 text-xs shadow-sm ring-1 ring-black/5 print:hidden">
               <span className="font-semibold text-black/55">Signataire :</span>
