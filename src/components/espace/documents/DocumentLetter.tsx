@@ -18,14 +18,14 @@ const TITLES_BOOTCAMP: Record<Kind, string> = {
   reussite: "Certificat de fin de bootcamp",
 };
 
-/** Date de naissance en français (« 12 mai 2000 »), sans décalage de fuseau. */
+/** Date de naissance au format JJ/MM/AAAA (sans décalage de fuseau). */
 function frBirth(iso: string): string {
-  const d = new Date(iso);
+  const d = new Date(iso + "T00:00:00Z");
   return isNaN(d.getTime())
     ? iso
     : d.toLocaleDateString("fr-FR", {
-        day: "numeric",
-        month: "long",
+        day: "2-digit",
+        month: "2-digit",
         year: "numeric",
         timeZone: "UTC",
       });
@@ -155,10 +155,12 @@ export function DocumentLetter({
               Matricule {dossier.matricule}
             </p>
             {(dossier.birthDate || dossier.birthPlace) && (
-              <div className="mt-1 text-sm text-black/55">
-                {dossier.birthDate && <p>Né(e) le : {frBirth(dossier.birthDate)}</p>}
-                {dossier.birthPlace && <p>À : {dossier.birthPlace}</p>}
-              </div>
+              <p className="mt-1 text-sm text-black/55">
+                {dossier.birthDate
+                  ? `Né(e) le : ${frBirth(dossier.birthDate)}`
+                  : "Né(e)"}
+                {dossier.birthPlace ? ` à ${dossier.birthPlace}` : ""}
+              </p>
             )}
           </div>
 

@@ -139,7 +139,7 @@ export function InscriptionForm() {
             <input id="birthDate" name="birthDate" type="date" required autoComplete="bday" className={inputBase} />
           </Field>
           <Field label="À (lieu de naissance)" htmlFor="birthPlace" required>
-            <input id="birthPlace" name="birthPlace" type="text" required placeholder="Ex. Abidjan" className={inputBase} />
+            <input id="birthPlace" name="birthPlace" type="text" required placeholder="Ex. Daloa (Côte d'Ivoire)" className={inputBase} />
           </Field>
         </div>
 
