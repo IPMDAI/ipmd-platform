@@ -46,7 +46,7 @@ const s = StyleSheet.create({
     paddingBottom: 14,
   },
   headerLeft: { flexDirection: "row", alignItems: "center", gap: 10 },
-  logo: { width: 42, height: 42 },
+  logo: { width: 42, height: 42, objectFit: "contain" },
   brand: { fontSize: 14, fontWeight: 700, color: BLACK },
   brandSub: { fontSize: 7.5, color: MUTED, textTransform: "uppercase", letterSpacing: 0.6 },
   brandLoc: { fontSize: 7.5, color: "#9ca3af" },
