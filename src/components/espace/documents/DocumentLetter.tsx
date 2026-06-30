@@ -42,9 +42,10 @@ export function DocumentLetter({
   const title = (isBC ? TITLES_BOOTCAMP : TITLES)[kind];
 
   return (
-    <div className="document-page relative overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-black/5 print:rounded-none print:shadow-none print:ring-0">
-      {/* Liseré décoratif */}
-      <div className="h-2 w-full bg-gradient-to-r from-ipmd-black via-ipmd-red to-ipmd-black" />
+    <div className="document-page relative overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-black/5 print:rounded-none print:shadow-none print:ring-0 print:mb-2 print:border-t-[6px] print:border-ipmd-red">
+      {/* Liseré décoratif (écran). À l'impression : remplacé par une vraie
+          bordure rouge (border-top) qui sort toujours sur papier. */}
+      <div className="h-2 w-full bg-gradient-to-r from-ipmd-black via-ipmd-red to-ipmd-black print:hidden" />
 
       <div className="px-8 py-10 sm:px-12 print:px-10 print:py-6">
         {/* En-tête institutionnel */}

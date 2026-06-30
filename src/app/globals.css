@@ -147,11 +147,11 @@ body {
     min-height: auto !important;
   }
 
-  /* Forcer l'impression des fonds colorés (liseré rouge + bande noire),
+  /* Forcer l'impression des fonds colorés (bande noire du slogan…),
      que Chrome ignore par défaut sans « Graphismes d'arrière-plan ». */
-  .document-page,
-  .document-page * {
+  * {
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
+    color-adjust: exact !important;
   }
 }
