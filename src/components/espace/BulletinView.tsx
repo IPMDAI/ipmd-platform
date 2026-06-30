@@ -10,6 +10,8 @@ import { matricule, academicYear } from "@/lib/documents";
 import { QrCode } from "@/components/espace/documents/QrCode";
 import { Cachet } from "@/components/espace/documents/Cachet";
 import { OfficialFooter } from "@/components/espace/documents/OfficialFooter";
+import { resolveSignatory } from "@/lib/signatories";
+import { officialAssetDataUri } from "@/lib/secure-assets";
 
 type Grade = {
   id: string;
@@ -197,6 +199,11 @@ export async function BulletinView({
       )
     : null;
 
+  // Bulletin/relevé = document ACADÉMIQUE → signataire par défaut : Directeur des Études.
+  // (Noms configurables dans src/lib/signatories.ts ; délégation possible plus tard.)
+  const sig = resolveSignatory("certificat", false);
+  const signatureSrc = (await officialAssetDataUri(sig.signature)) ?? undefined;
+
   const tab = (label: string, href: string, on: boolean) => (
     <Link
       href={href}
@@ -363,11 +370,25 @@ export async function BulletinView({
                 <span />
               )}
               <div className="text-center text-[12px]">
-                <p className="font-bold text-ipmd-black">L&apos;Administrateur Général</p>
-                <div className="my-1 flex h-16 items-center justify-center">
+                <p className="font-bold text-ipmd-black">{sig.title}</p>
+                <div className="relative my-1 flex h-16 items-center justify-center">
+                  {signatureSrc ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={signatureSrc}
+                      alt={`Signature — ${sig.name}`}
+                      className="absolute inset-0 m-auto max-h-16 w-auto object-contain"
+                    />
+                  ) : (
+                    <span className="text-[10px] italic text-black/40">
+                      Signature autorisée
+                    </span>
+                  )}
                   <Cachet size={96} />
                 </div>
-                <p className="font-bold text-ipmd-black">POODA ETTIEN AUBIN</p>
+                {sig.name && (
+                  <p className="font-bold text-ipmd-black">{sig.name}</p>
+                )}
               </div>
             </div>
 
