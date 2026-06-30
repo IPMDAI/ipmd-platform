@@ -26,8 +26,16 @@ export default async function DocumentPage({
   const { student, signataire } = await searchParams;
   if (!isDocumentSlug(type)) notFound();
 
-  const { userId } = await requireUser();
+  const { supabase, userId } = await requireUser();
   const targetId = student || userId;
+
+  // Le sélecteur de signataire (délégation) est réservé aux admins.
+  const { data: me } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", userId)
+    .single();
+  const isAdmin = me?.role === "admin" || me?.role === "super_admin";
 
   const dossier = await getDossier(targetId);
   if (!dossier) notFound();
@@ -82,7 +90,7 @@ export default async function DocumentPage({
             <PrintButton />
           </div>
 
-          {type !== "carte" && sig.allowed.length > 1 && (
+          {type !== "carte" && isAdmin && sig.allowed.length > 1 && (
             <div className="mt-4 flex flex-wrap items-center gap-2 rounded-xl bg-white p-3 text-xs shadow-sm ring-1 ring-black/5 print:hidden">
               <span className="font-semibold text-black/55">Signataire :</span>
               {sig.allowed.map((key) => {

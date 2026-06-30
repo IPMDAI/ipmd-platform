@@ -17,9 +17,22 @@ const TITLES_BOOTCAMP: Record<Kind, string> = {
   reussite: "Certificat de fin de bootcamp",
 };
 
+/** Retire un éventuel suffixe d'année (« — 2022-2023 », « 2022/2023 »…). */
+function stripYear(s: string): string {
+  return s
+    .replace(/\b\d{4}\s*[-/–]\s*\d{4}\b/g, "")
+    .replace(/\s*[—–-]\s*$/, "")
+    .trim();
+}
+
 function programLine(d: Dossier): string {
-  const parts = [d.filiereName, d.level, d.className].filter(Boolean);
-  return parts.length ? parts.join(" · ") : "Formation IPMD";
+  const filiere = d.filiereName ? stripYear(d.filiereName) : null;
+  const level = d.level ? stripYear(d.level) : null;
+  if (level && filiere) return `${level} — ${filiere}`;
+  if (filiere) return filiere;
+  if (level) return level;
+  if (d.className) return stripYear(d.className);
+  return "Formation IPMD";
 }
 
 export type DocumentSignatory = {
@@ -89,8 +102,7 @@ export function DocumentLetter({
         {/* Corps */}
         <div className="mt-8 space-y-4 text-[15px] leading-relaxed text-black/80">
           <p>
-            Je soussigné, le Directeur de l&apos;Institut Polytechnique des
-            Métiers du Digital (IPMD),{" "}
+            L&apos;Institut Polytechnique des Métiers du Digital (IPMD){" "}
             {kind === "certificat" ? "certifie" : "atteste"} que :
           </p>
 
