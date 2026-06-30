@@ -9,7 +9,7 @@ import { StudentCard } from "@/components/espace/documents/StudentCard";
 import { getDossier, isDocumentSlug } from "@/lib/documents";
 import { signDoc, verifyUrl } from "@/lib/doc-verify";
 import { resolveSignatory, SIGNATORIES } from "@/lib/signatories";
-import { privateImageDataUri } from "@/lib/secure-assets";
+import { officialAssetDataUri } from "@/lib/secure-assets";
 
 export const metadata: Metadata = {
   title: "Document officiel",
@@ -57,8 +57,8 @@ export default async function DocumentPage({
 
   // Signataire : défaut selon le type, ou délégué via ?signataire=.
   const sig = resolveSignatory(kind, dossier.isBootcamp, signataire);
-  // Image de signature lue côté serveur depuis private/ (jamais d'URL publique).
-  const signatureSrc = privateImageDataUri(sig.signature) ?? undefined;
+  // Image de signature lue côté serveur depuis le bucket privé (jamais d'URL publique).
+  const signatureSrc = (await officialAssetDataUri(sig.signature)) ?? undefined;
 
   // Liens du sélecteur de signataire (conserve l'étudiant ciblé).
   const signatoryHref = (key: string) => {
