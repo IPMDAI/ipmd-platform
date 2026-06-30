@@ -170,10 +170,29 @@ export async function inviteFromCandidature(
   }
 
   // 2. Rôle + nom + univers (via le client Super Admin, autorisé par la garde).
-  await ctx.supabase
-    .from("profiles")
-    .update({ role, full_name: fullName, universe: cand.universe ?? null })
-    .eq("id", newId);
+  const profileUpdate: Record<string, unknown> = {
+    role,
+    full_name: fullName,
+    universe: cand.universe ?? null,
+  };
+  // Report de la naissance depuis la candidature → profil, UNIQUEMENT si le
+  // profil ne l'a pas déjà (jamais d'écrasement). Best-effort : si les colonnes
+  // birth_* n'existent pas encore côté candidature, on ignore proprement.
+  try {
+    const [{ data: prof }, { data: candBirth }] = await Promise.all([
+      ctx.supabase.from("profiles").select("birth_date, birth_place").eq("id", newId).maybeSingle(),
+      ctx.supabase
+        .from("inscription_requests")
+        .select("birth_date, birth_place")
+        .eq("id", candidatureId)
+        .maybeSingle(),
+    ]);
+    if (!prof?.birth_date && candBirth?.birth_date) profileUpdate.birth_date = candBirth.birth_date;
+    if (!prof?.birth_place && candBirth?.birth_place) profileUpdate.birth_place = candBirth.birth_place;
+  } catch {
+    // colonnes naissance absentes côté candidature : report ignoré
+  }
+  await ctx.supabase.from("profiles").update(profileUpdate).eq("id", newId);
 
   // 3. Affectation à une classe (optionnelle).
   if (classId) {

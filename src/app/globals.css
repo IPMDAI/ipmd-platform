@@ -105,3 +105,52 @@ body {
     linear-gradient(to bottom, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
   background-size: 48px 48px;
 }
+
+/* ──────────────────────────────────────────────────────────────
+   Impression des documents officiels : 1 page A4 propre, sans
+   coupure en bas, et sans imprimer le reste de l'interface.
+   ────────────────────────────────────────────────────────────── */
+@media print {
+  @page {
+    size: A4;
+    margin: 10mm;
+  }
+
+  html,
+  body {
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #fff !important;
+  }
+
+  /* On n'imprime que le document marqué .print-area (le reste est masqué). */
+  body * {
+    visibility: hidden !important;
+  }
+  .print-area,
+  .print-area * {
+    visibility: visible !important;
+  }
+  .print-area {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* Le document reste d'un seul tenant sur une page. */
+  .document-page {
+    break-inside: avoid;
+    page-break-inside: avoid;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    min-height: auto !important;
+  }
+
+  .print-hidden,
+  [data-print-hidden="true"] {
+    display: none !important;
+  }
+}

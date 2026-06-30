@@ -99,11 +99,11 @@ export function DocumentLetter({
   const title = (isBC ? TITLES_BOOTCAMP : TITLES)[kind];
 
   return (
-    <div className="relative overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-black/5 print:rounded-none print:shadow-none print:ring-0">
+    <div className="document-page relative overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-black/5 print:rounded-none print:shadow-none print:ring-0">
       {/* Liseré décoratif */}
       <div className="h-2 w-full bg-gradient-to-r from-ipmd-black via-ipmd-red to-ipmd-black" />
 
-      <div className="px-8 py-10 sm:px-12">
+      <div className="px-8 py-10 sm:px-12 print:px-10 print:py-6">
         {/* En-tête institutionnel */}
         <div className="flex items-start justify-between gap-4 border-b border-black/10 pb-6">
           <div className="flex items-center gap-3">
@@ -135,13 +135,13 @@ export function DocumentLetter({
         </div>
 
         {/* Titre */}
-        <h1 className="mt-8 text-center text-xl font-extrabold uppercase tracking-wide text-ipmd-black sm:text-2xl">
+        <h1 className="mt-8 text-center text-xl font-extrabold uppercase tracking-wide text-ipmd-black sm:text-2xl print:mt-4">
           {title}
         </h1>
         <div className="mx-auto mt-2 h-1 w-16 rounded-full bg-ipmd-red" />
 
         {/* Corps */}
-        <div className="mt-8 space-y-4 text-[15px] leading-relaxed text-black/80">
+        <div className="mt-8 space-y-4 text-[15px] leading-relaxed text-black/80 print:mt-4 print:space-y-2">
           <p>
             L&apos;Institut Polytechnique des Métiers du Digital (IPMD){" "}
             {kind === "certificat" ? "certifie" : "atteste"} que :
@@ -222,7 +222,7 @@ export function DocumentLetter({
         </div>
 
         {/* Signature */}
-        <div className="mt-12 flex items-end justify-between gap-6">
+        <div className="mt-12 flex items-end justify-between gap-6 print:mt-6">
           <div className="flex items-center gap-3">
             <span className="shrink-0 rounded-lg bg-white p-1 ring-1 ring-black/10">
               <QrCode value={verifyHref} size={84} />

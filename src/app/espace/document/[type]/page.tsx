@@ -112,7 +112,7 @@ export default async function DocumentPage({
             </div>
           )}
 
-          <div className="mt-6">
+          <div className="print-area mt-6">
             {type === "carte" ? (
               <StudentCard dossier={dossier} verifyHref={verifyHref} />
             ) : (

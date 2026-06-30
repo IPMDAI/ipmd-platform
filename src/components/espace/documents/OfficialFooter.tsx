@@ -26,7 +26,7 @@ export function OfficialFooter({
   nb?: "short" | "long" | "none";
 }) {
   return (
-    <div className="mt-6 border-t border-black/10 pt-3 text-center text-black/45">
+    <div className="mt-6 border-t border-black/10 pt-3 text-center text-black/45 print:mt-3 print:pt-2">
       {nb === "long" && (
         <p className="mb-2 text-[10px] italic leading-relaxed">
           <span className="font-semibold not-italic">NB : </span>
