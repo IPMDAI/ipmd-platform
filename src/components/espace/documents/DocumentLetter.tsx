@@ -17,6 +17,19 @@ const TITLES_BOOTCAMP: Record<Kind, string> = {
   reussite: "Certificat de fin de bootcamp",
 };
 
+/** Date de naissance en français (« 12 mai 2000 »), sans décalage de fuseau. */
+function frBirth(iso: string): string {
+  const d = new Date(iso);
+  return isNaN(d.getTime())
+    ? iso
+    : d.toLocaleDateString("fr-FR", {
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+        timeZone: "UTC",
+      });
+}
+
 /** Retire un éventuel suffixe d'année (« — 2022-2023 », « 2022/2023 »…). */
 function stripYear(s: string): string {
   return s
@@ -121,6 +134,12 @@ export function DocumentLetter({
             <p className="text-sm text-black/55">
               Matricule {dossier.matricule}
             </p>
+            {(dossier.birthDate || dossier.birthPlace) && (
+              <div className="mt-1 text-sm text-black/55">
+                {dossier.birthDate && <p>Né(e) le : {frBirth(dossier.birthDate)}</p>}
+                {dossier.birthPlace && <p>À : {dossier.birthPlace}</p>}
+              </div>
+            )}
           </div>
 
           {kind === "reussite" ? (
