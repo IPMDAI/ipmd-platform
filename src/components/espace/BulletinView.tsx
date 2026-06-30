@@ -9,6 +9,7 @@ import { signDoc, verifyUrl } from "@/lib/doc-verify";
 import { matricule, academicYear } from "@/lib/documents";
 import { QrCode } from "@/components/espace/documents/QrCode";
 import { Cachet } from "@/components/espace/documents/Cachet";
+import { OfficialFooter } from "@/components/espace/documents/OfficialFooter";
 
 type Grade = {
   id: string;
@@ -370,10 +371,7 @@ export async function BulletinView({
               </div>
             </div>
 
-            <p className="mt-6 border-t border-black/10 pt-3 text-center text-[10px] italic text-black/45">
-              NB : Il n&apos;est délivré que l&apos;exemplaire original du bulletin à l&apos;étudiant. Aucun duplicata ne
-              sera fourni. Vérification du document : info@ipmd.pro · ipmd.pro
-            </p>
+            <OfficialFooter nb="long" />
           </>
         )}
       </div>

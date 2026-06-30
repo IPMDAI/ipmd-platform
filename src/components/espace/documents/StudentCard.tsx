@@ -90,8 +90,10 @@ export function StudentCard({
           </div>
         </div>
       </div>
-      <p className="mt-3 text-center text-xs text-black/45 print:hidden">
-        Carte officielle IPMD · « Ose. Agis. Impacte. »
+      <p className="mt-3 text-center text-[11px] leading-relaxed text-black/45">
+        IPMD — www.ipmd.pro — (+225) 05 75 75 88 88 / 05 66 05 14 14
+        <br />
+        Carte vérifiable par QR code.
       </p>
     </div>
   );

@@ -2,6 +2,7 @@ import Image from "next/image";
 import { longDate, type Dossier } from "@/lib/documents";
 import { QrCode } from "@/components/espace/documents/QrCode";
 import { Cachet } from "@/components/espace/documents/Cachet";
+import { OfficialFooter } from "@/components/espace/documents/OfficialFooter";
 
 type Kind = "scolarite" | "certificat" | "reussite";
 
@@ -248,6 +249,9 @@ export function DocumentLetter({
             )}
           </div>
         </div>
+
+        {/* NB + mentions légales officielles */}
+        <OfficialFooter nb="short" />
       </div>
 
       {/* Pied de page */}
