@@ -3,21 +3,7 @@
  * Utilisé sur les attestations, certificats, bulletins et relevés.
  * (Pas de Facebook ici ; pas ce pied complet sur la carte étudiant.)
  */
-
-const LEGAL_LINES = [
-  "IPMD SA — Siège social : Cocody, Angré — 01 BP 13662 Abidjan 01",
-  "RCCM : CI-ABJ-03-2024-M-35856 — CC : 1948221 E — CNPS : 352039",
-  "Aut. création : Décision N°1207/MESRS/DGES/DESUP/Kkj du 24 AVR. 2020",
-  "Aut. ouverture : Arrêté N°1208/MESRS/DGES/DESUP/Kkj du 24 AVR. 2020",
-  "Tél. : (+225) 05 75 75 88 88 / 05 66 05 14 14",
-  "Email : info@ipmd.pro — Site : www.ipmd.pro",
-];
-
-const NB_LONG =
-  "Le présent document est délivré en version originale vérifiable par QR code. Toute reproduction doit conserver le QR code et le numéro unique du document. Pour toute vérification de l'authenticité de ce document, veuillez scanner le QR code ou contacter : audit@ipmd.pro.";
-
-const NB_SHORT =
-  "Document officiel vérifiable par QR code. Pour toute vérification : audit@ipmd.pro.";
+import { OFFICIAL_LEGAL_LINES as LEGAL_LINES, NB_LONG, NB_SHORT } from "@/lib/doc-format";
 
 export function OfficialFooter({
   nb = "none",

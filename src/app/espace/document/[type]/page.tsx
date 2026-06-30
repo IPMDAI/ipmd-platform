@@ -76,6 +76,15 @@ export default async function DocumentPage({
     return `?${qs.toString()}`;
   };
 
+  // Lien de téléchargement du PDF officiel (génération serveur).
+  const pdfHref = (() => {
+    const qs = new URLSearchParams();
+    if (student) qs.set("student", student);
+    if (signataire) qs.set("signataire", signataire);
+    const q = qs.toString();
+    return `/espace/document/${type}/pdf${q ? `?${q}` : ""}`;
+  })();
+
   return (
     <section className="min-h-[70vh] bg-ipmd-light print:min-h-0">
       <Container className="py-12 sm:py-16 print:py-0">
@@ -87,13 +96,25 @@ export default async function DocumentPage({
             >
               ← Mes documents
             </Link>
-            <PrintButton />
+            <div className="flex items-center gap-2">
+              {type !== "carte" && (
+                <a
+                  href={pdfHref}
+                  className="inline-flex items-center gap-1.5 rounded-full bg-ipmd-black px-4 py-2 text-sm font-semibold text-white transition-opacity hover:opacity-90"
+                >
+                  ⬇ Télécharger PDF officiel
+                </a>
+              )}
+              <PrintButton />
+            </div>
           </div>
 
           <p className="mt-2 text-right text-xs text-black/45 print:hidden">
-            💡 Pour une impression officielle propre, ouvrez « Plus de
-            paramètres » et décochez « En-têtes et pieds de page » (sinon le
-            navigateur ajoute la date, l&apos;URL et le numéro de page).
+            💡 Pour un document officiel parfaitement propre, utilisez{" "}
+            <strong>« Télécharger PDF officiel »</strong> (aucun ajout du
+            navigateur). L&apos;impression directe peut ajouter la date,
+            l&apos;URL et le numéro de page — pour les retirer, décochez
+            « En-têtes et pieds de page » dans « Plus de paramètres ».
           </p>
 
           {type !== "carte" && isAdmin && sig.allowed.length > 1 && (
