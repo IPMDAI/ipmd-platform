@@ -39,6 +39,23 @@ function stripYear(s: string): string {
     .trim();
 }
 
+/**
+ * Casse française propre pour un libellé de filière :
+ * « Informatique Et Intelligence Artificielle » → « Informatique et
+ * intelligence artificielle ». Les acronymes (tout en majuscules : IA, BTS,
+ * MBA…) sont préservés.
+ */
+function frProperCase(s: string): string {
+  return s
+    .split(/\s+/)
+    .map((w, i) => {
+      if (w.length >= 2 && w === w.toUpperCase() && /[A-ZÀ-Ÿ]/.test(w)) return w;
+      const lower = w.toLowerCase();
+      return i === 0 ? lower.charAt(0).toUpperCase() + lower.slice(1) : lower;
+    })
+    .join(" ");
+}
+
 function programLine(d: Dossier): string {
   const level = d.level ? stripYear(d.level) : null;
   let filiere = d.filiereName ? stripYear(d.filiereName) : null;
@@ -52,6 +69,8 @@ function programLine(d: Dossier): string {
     }
     filiere = c || null;
   }
+
+  if (filiere) filiere = frProperCase(filiere);
 
   if (level && filiere) return `${level} — ${filiere}`;
   return filiere || level || "Formation IPMD";
