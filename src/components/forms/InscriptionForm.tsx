@@ -9,6 +9,7 @@ import { ActionButton } from "@/components/ui/Button";
 import { Field, inputBase } from "./FormField";
 import { PhoneField } from "./PhoneField";
 import { MultiFileField } from "./MultiFileField";
+import { BirthFields } from "./BirthFields";
 import type { FormResult } from "@/types";
 
 const MAX_FILE = 8 * 1024 * 1024;
@@ -134,14 +135,7 @@ export function InscriptionForm() {
           </Field>
         </div>
 
-        <div className="grid gap-5 sm:grid-cols-2">
-          <Field label="Né(e) le" htmlFor="birthDate" required>
-            <input id="birthDate" name="birthDate" type="date" required autoComplete="bday" className={inputBase} />
-          </Field>
-          <Field label="À (lieu de naissance)" htmlFor="birthPlace" required>
-            <input id="birthPlace" name="birthPlace" type="text" required placeholder="Ex. Daloa (Côte d'Ivoire)" className={inputBase} />
-          </Field>
-        </div>
+        <BirthFields />
 
         <div className="grid gap-5 sm:grid-cols-2">
           <Field label="Email" htmlFor="email" required>
