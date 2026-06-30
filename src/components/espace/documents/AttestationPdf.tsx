@@ -71,9 +71,10 @@ const s = StyleSheet.create({
   para: { marginTop: 12 },
   bold: { fontWeight: 700, color: BLACK },
   sigRow: { marginTop: 34, flexDirection: "row", justifyContent: "space-between", alignItems: "flex-end" },
-  qrWrap: { flexDirection: "row", alignItems: "center", gap: 8 },
-  qr: { width: 74, height: 74 },
-  qrText: { fontSize: 8, color: "#9ca3af", maxWidth: 150 },
+  qrWrap: { flexDirection: "row", alignItems: "center", gap: 8, maxWidth: 320 },
+  qr: { width: 72, height: 72 },
+  qrTextCol: { flexShrink: 1 },
+  qrText: { fontSize: 8, color: "#9ca3af", maxWidth: 230 },
   qrTitle: { fontSize: 8.5, fontWeight: 700, color: BLACK },
   sigRight: { alignItems: "center", maxWidth: 200 },
   faitTxt: { fontSize: 9.5, color: MUTED },
@@ -82,14 +83,13 @@ const s = StyleSheet.create({
   sigStamp: { marginTop: 8, width: 170, height: 64, position: "relative", alignItems: "center", justifyContent: "center" },
   sigImg: { position: "absolute", maxWidth: 150, maxHeight: 60, objectFit: "contain" },
   cachetImg: { maxWidth: 80, maxHeight: 64, objectFit: "contain", opacity: 0.9 },
-  sigAuth: { fontSize: 8.5, fontStyle: "italic", color: "#9ca3af" },
+  sigAuth: { fontSize: 9, fontStyle: "italic", color: MUTED },
   sigTitle: { marginTop: 6, fontSize: 10, fontWeight: 700, color: BLACK, textAlign: "center" },
   sigName: { fontSize: 8.5, color: "#4b5563", textAlign: "center" },
   footer: { marginTop: 22, borderTopWidth: 1, borderTopColor: "#e5e7eb", paddingTop: 8, textAlign: "center" },
   nb: { fontSize: 7.5, fontStyle: "italic", color: "#9ca3af", marginBottom: 6 },
   legal: { fontSize: 7, color: "#9ca3af", marginBottom: 1.5 },
-  bandWrap: { position: "absolute", left: 0, right: 0, bottom: 0 },
-  band: { backgroundColor: BLACK, paddingVertical: 7, textAlign: "center" },
+  band: { backgroundColor: BLACK, paddingVertical: 7, textAlign: "center", marginTop: 16 },
   bandTxt: { fontSize: 8, color: "#ffffffb3", letterSpacing: 1.4, textTransform: "uppercase" },
 });
 
@@ -103,7 +103,7 @@ function buildBody(d: AttestationPdfData): { p1: string; p2: string } {
     return {
       p1: isBC
         ? `a suivi et complété avec succès le bootcamp ${d.programLine} à l'IPMD${avg}.`
-        : `a satisfait aux exigences pédagogiques de l'IPMD et validé son parcours en ${d.programLine} au titre de l'année académique ${d.year}${avg}.`,
+        : `a satisfait aux exigences pédagogiques de l'IPMD et validé son parcours en ${d.programLine}, au titre de l'année académique ${d.year}${avg}.`,
       p2: `${isBC ? "Le présent certificat" : "La présente attestation"} est délivré(e) pour servir et valoir ce que de droit.`,
     };
   }
@@ -162,7 +162,7 @@ function AttestationDocument({ d }: { d: AttestationPdfData }) {
           <View style={s.sigRow}>
             <View style={s.qrWrap}>
               <Image src={d.qrSrc} style={s.qr} />
-              <View>
+              <View style={s.qrTextCol}>
                 <Text style={s.qrTitle}>Vérifier l&apos;authenticité</Text>
                 <Text style={s.qrText}>Scannez ce QR code pour confirmer ce document.</Text>
                 <Text style={s.qrText}>Signé numériquement par l&apos;IPMD · ipmd.pro/verifier</Text>
@@ -194,11 +194,9 @@ function AttestationDocument({ d }: { d: AttestationPdfData }) {
           </View>
         </View>
 
-        {/* Bande de marque */}
-        <View style={s.bandWrap}>
-          <View style={s.band}>
-            <Text style={s.bandTxt}>Ose. Agis. Impacte. — 80% de pratique</Text>
-          </View>
+        {/* Bande de marque (juste après le pied, pas collée en bas de page) */}
+        <View style={s.band}>
+          <Text style={s.bandTxt}>Ose. Agis. Impacte. — 80% de pratique</Text>
         </View>
       </Page>
     </Document>

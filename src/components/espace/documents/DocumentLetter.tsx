@@ -114,7 +114,7 @@ export function DocumentLetter({
                   <>
                     a satisfait aux exigences pédagogiques de l&apos;IPMD et{" "}
                     <strong>validé son parcours</strong> en{" "}
-                    <strong>{programLine(dossier)}</strong> au titre de
+                    <strong>{programLine(dossier)}</strong>, au titre de
                     l&apos;année académique <strong>{dossier.year}</strong>
                   </>
                 )}
