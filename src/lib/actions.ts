@@ -99,6 +99,10 @@ export async function submitInscription(
   if (docCv) insertData.doc_cv = docCv;
   const mode = getString(formData, "mode");
   if (mode) insertData.mode = mode;
+  const birthDate = getString(formData, "birthDate");
+  if (birthDate) insertData.birth_date = birthDate;
+  const birthPlace = getString(formData, "birthPlace");
+  if (birthPlace) insertData.birth_place = birthPlace;
 
   // Insertion (les pièces sont déjà uploadées côté navigateur ; on ne stocke
   // que leurs chemins → corps léger, pas de relecture RLS nécessaire).

@@ -135,6 +135,15 @@ export function InscriptionForm() {
         </div>
 
         <div className="grid gap-5 sm:grid-cols-2">
+          <Field label="Né(e) le" htmlFor="birthDate" required>
+            <input id="birthDate" name="birthDate" type="date" required autoComplete="bday" className={inputBase} />
+          </Field>
+          <Field label="À (lieu de naissance)" htmlFor="birthPlace" required>
+            <input id="birthPlace" name="birthPlace" type="text" required placeholder="Ex. Abidjan" className={inputBase} />
+          </Field>
+        </div>
+
+        <div className="grid gap-5 sm:grid-cols-2">
           <Field label="Email" htmlFor="email" required>
             <input id="email" name="email" type="email" required autoComplete="email" placeholder="vous@email.com" className={inputBase} />
           </Field>
