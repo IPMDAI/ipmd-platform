@@ -22,15 +22,24 @@ function programLine(d: Dossier): string {
   return parts.length ? parts.join(" · ") : "Formation IPMD";
 }
 
+export type DocumentSignatory = {
+  title: string; // fonction, ex. « Le Directeur des Études »
+  name: string; // nom affiché
+  mention: string | null; // mention « par délégation » éventuelle
+  signature?: string; // image de signature (si déposée dans public/)
+};
+
 /** Document officiel imprimable (attestation / certificat). */
 export function DocumentLetter({
   dossier,
   kind,
   verifyHref,
+  signatory,
 }: {
   dossier: Dossier;
   kind: Kind;
   verifyHref: string;
+  signatory: DocumentSignatory;
 }) {
   const isBC = dossier.isBootcamp;
   const title = (isBC ? TITLES_BOOTCAMP : TITLES)[kind];
@@ -170,12 +179,31 @@ export function DocumentLetter({
             <p className="text-sm font-medium text-ipmd-black">
               le {longDate()}
             </p>
-            <div className="mt-4 flex h-16 w-44 items-center justify-center">
+            {signatory.mention && (
+              <p className="mt-1 text-[11px] italic text-black/55">
+                {signatory.mention}
+              </p>
+            )}
+            <div className="relative mt-3 flex h-16 w-44 items-center justify-center">
+              {signatory.signature && (
+                <Image
+                  src={signatory.signature}
+                  alt={`Signature — ${signatory.name}`}
+                  width={150}
+                  height={64}
+                  className="absolute inset-0 m-auto max-h-16 w-auto object-contain"
+                />
+              )}
               <Cachet size={72} />
             </div>
             <p className="mt-2 text-sm font-bold text-ipmd-black">
-              La Direction
+              {signatory.title}
             </p>
+            {signatory.name && (
+              <p className="text-xs font-medium text-black/65">
+                {signatory.name}
+              </p>
+            )}
           </div>
         </div>
       </div>

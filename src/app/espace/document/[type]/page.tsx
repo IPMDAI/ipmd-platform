@@ -1,3 +1,5 @@
+import fs from "node:fs";
+import path from "node:path";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -8,6 +10,7 @@ import { DocumentLetter } from "@/components/espace/documents/DocumentLetter";
 import { StudentCard } from "@/components/espace/documents/StudentCard";
 import { getDossier, isDocumentSlug } from "@/lib/documents";
 import { signDoc, verifyUrl } from "@/lib/doc-verify";
+import { resolveSignatory, SIGNATORIES } from "@/lib/signatories";
 
 export const metadata: Metadata = {
   title: "Document officiel",
@@ -18,10 +21,10 @@ export default async function DocumentPage({
   searchParams,
 }: {
   params: Promise<{ type: string }>;
-  searchParams: Promise<{ student?: string }>;
+  searchParams: Promise<{ student?: string; signataire?: string }>;
 }) {
   const { type } = await params;
-  const { student } = await searchParams;
+  const { student, signataire } = await searchParams;
   if (!isDocumentSlug(type)) notFound();
 
   const { userId } = await requireUser();
@@ -46,6 +49,27 @@ export default async function DocumentPage({
     ? `/espace/documents?student=${student}`
     : "/espace/documents";
 
+  const kind =
+    type === "certificat-scolarite"
+      ? ("certificat" as const)
+      : type === "attestation-reussite"
+      ? ("reussite" as const)
+      : ("scolarite" as const);
+
+  // Signataire : défaut selon le type, ou délégué via ?signataire=.
+  const sig = resolveSignatory(kind, dossier.isBootcamp, signataire);
+  // N'afficher l'image de signature que si elle a été déposée dans public/.
+  const sigPath = path.join(process.cwd(), "public", sig.signature);
+  const signatureSrc = fs.existsSync(sigPath) ? sig.signature : undefined;
+
+  // Liens du sélecteur de signataire (conserve l'étudiant ciblé).
+  const signatoryHref = (key: string) => {
+    const qs = new URLSearchParams();
+    if (student) qs.set("student", student);
+    qs.set("signataire", key);
+    return `?${qs.toString()}`;
+  };
+
   return (
     <section className="min-h-[70vh] bg-ipmd-light">
       <Container className="py-12 sm:py-16">
@@ -60,6 +84,28 @@ export default async function DocumentPage({
             <PrintButton />
           </div>
 
+          {type !== "carte" && sig.allowed.length > 1 && (
+            <div className="mt-4 flex flex-wrap items-center gap-2 rounded-xl bg-white p-3 text-xs shadow-sm ring-1 ring-black/5 print:hidden">
+              <span className="font-semibold text-black/55">Signataire :</span>
+              {sig.allowed.map((key) => {
+                const active = key === sig.key;
+                return (
+                  <Link
+                    key={key}
+                    href={signatoryHref(key)}
+                    className={`rounded-full px-3 py-1 font-medium transition-colors ${
+                      active
+                        ? "bg-ipmd-red text-white"
+                        : "bg-ipmd-light text-black/70 hover:bg-black/10"
+                    }`}
+                  >
+                    {SIGNATORIES[key].title}
+                  </Link>
+                );
+              })}
+            </div>
+          )}
+
           <div className="mt-6">
             {type === "carte" ? (
               <StudentCard dossier={dossier} verifyHref={verifyHref} />
@@ -67,13 +113,13 @@ export default async function DocumentPage({
               <DocumentLetter
                 dossier={dossier}
                 verifyHref={verifyHref}
-                kind={
-                  type === "certificat-scolarite"
-                    ? "certificat"
-                    : type === "attestation-reussite"
-                    ? "reussite"
-                    : "scolarite"
-                }
+                kind={kind}
+                signatory={{
+                  title: sig.title,
+                  name: sig.name,
+                  mention: sig.mention,
+                  signature: signatureSrc,
+                }}
               />
             )}
           </div>
