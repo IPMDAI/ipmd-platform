@@ -121,36 +121,29 @@ body {
     margin: 0 !important;
     padding: 0 !important;
     background: #fff !important;
+    min-height: 0 !important;
+    display: block !important;
   }
 
-  /* On n'imprime que le document marqué .print-area (le reste est masqué). */
-  body * {
-    visibility: hidden !important;
+  /* Masquer tout le décor du site/app pour ne garder que le document. */
+  header,
+  footer,
+  .print-hidden,
+  [data-print-hidden="true"] {
+    display: none !important;
   }
-  .print-area,
-  .print-area * {
-    visibility: visible !important;
-  }
+
+  /* Neutraliser les hauteurs minimales imposées (sidebar/sections). */
   .print-area {
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 100%;
     margin: 0 !important;
-    padding: 0 !important;
   }
 
-  /* Le document reste d'un seul tenant sur une page. */
+  /* Le document reste d'un seul tenant sur une page A4. */
   .document-page {
     break-inside: avoid;
     page-break-inside: avoid;
     box-shadow: none !important;
     border-radius: 0 !important;
     min-height: auto !important;
-  }
-
-  .print-hidden,
-  [data-print-hidden="true"] {
-    display: none !important;
   }
 }

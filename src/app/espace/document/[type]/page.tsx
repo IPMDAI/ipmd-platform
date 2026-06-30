@@ -77,8 +77,8 @@ export default async function DocumentPage({
   };
 
   return (
-    <section className="min-h-[70vh] bg-ipmd-light">
-      <Container className="py-12 sm:py-16">
+    <section className="min-h-[70vh] bg-ipmd-light print:min-h-0">
+      <Container className="py-12 sm:py-16 print:py-0">
         <div className="mx-auto max-w-2xl">
           <div className="flex items-center justify-between gap-3 print:hidden">
             <Link

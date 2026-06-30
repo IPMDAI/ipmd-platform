@@ -62,18 +62,22 @@ export default async function EspaceLayout({
   );
 
   return (
-    <div className="min-h-screen bg-ipmd-light lg:flex">
-      <Sidebar
-        groups={groups}
-        badges={badges}
-        roleLabel={roleLabels[role] ?? role}
-        userName={userName}
-        avatarUrl={profile?.avatar_url ?? null}
-      />
+    <div className="min-h-screen bg-ipmd-light lg:flex print:block print:min-h-0">
+      <div className="contents print:hidden">
+        <Sidebar
+          groups={groups}
+          badges={badges}
+          roleLabel={roleLabels[role] ?? role}
+          userName={userName}
+          avatarUrl={profile?.avatar_url ?? null}
+        />
+      </div>
       <main className="min-w-0 flex-1">{children}</main>
       <CommandPalette items={flatItems} />
       {LEARNER_ROLES.has(role) && (
-        <TutorLauncher firstName={userName.split(" ")[0]} />
+        <div className="contents print:hidden">
+          <TutorLauncher firstName={userName.split(" ")[0]} />
+        </div>
       )}
     </div>
   );
