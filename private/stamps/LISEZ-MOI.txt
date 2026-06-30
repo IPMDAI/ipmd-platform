@@ -1,0 +1,14 @@
+CACHET / TAMPON OFFICIEL IPMD  —  EMPLACEMENT SÉCURISÉ
+=======================================================
+
+🔒 Ce dossier "private/" n'est PAS servi par le serveur web.
+Le cachet n'est JAMAIS accessible par URL : le serveur le lit et l'incruste
+(base64) uniquement dans le document généré pour un admin autorisé.
+
+Nom de fichier attendu :
+  - cachet-ipmd.png   -> tampon rond officiel de l'IPMD
+
+Tant que le fichier est absent, le document s'affiche sans cachet
+(aucune image cassée).
+
+Conseil : PNG à fond transparent, ~300x300 px.

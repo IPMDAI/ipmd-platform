@@ -9,7 +9,8 @@
  *   une mention « par délégation » est alors ajoutée automatiquement.
  *
  * ⚠️ Les images de signature sont déposées par l'administration dans
- *    public/signatures/ ; elles ne sont jamais ajoutées par l'assistant.
+ *    private/signatures/ (hors public/, jamais accessible par URL) ;
+ *    elles ne sont jamais ajoutées par l'assistant.
  */
 
 export type SignatoryKey =
@@ -22,7 +23,7 @@ export type Signatory = {
   key: SignatoryKey;
   title: string; // fonction
   name: string; // nom affiché
-  signature: string; // chemin de l'image (si déposée)
+  signature: string; // chemin RELATIF dans private/ (jamais public)
 };
 
 export const SIGNATORIES: Record<SignatoryKey, Signatory> = {
@@ -30,25 +31,25 @@ export const SIGNATORIES: Record<SignatoryKey, Signatory> = {
     key: "directeur-etudes",
     title: "Le Directeur des Études",
     name: "COFFI KOMENAN EMILE",
-    signature: "/signatures/directeur-etudes.png",
+    signature: "signatures/directeur-etudes.png",
   },
   "admin-general": {
     key: "admin-general",
     title: "L'Administrateur Général",
     name: "POODA ETTIEN AUBIN",
-    signature: "/signatures/admin-general.png",
+    signature: "signatures/admin-general.png",
   },
   "responsable-pedago": {
     key: "responsable-pedago",
     title: "Le Responsable pédagogique",
     name: "",
-    signature: "/signatures/responsable-pedago.png",
+    signature: "signatures/responsable-pedago.png",
   },
   "directrice-executive": {
     key: "directrice-executive",
     title: "La Directrice Exécutive",
     name: "YEBOUE AKISSI ESTELLE SOLANGE",
-    signature: "/signatures/directrice-executive.png",
+    signature: "signatures/directrice-executive.png",
   },
 };
 

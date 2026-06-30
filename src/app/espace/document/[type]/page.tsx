@@ -1,5 +1,3 @@
-import fs from "node:fs";
-import path from "node:path";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -11,6 +9,7 @@ import { StudentCard } from "@/components/espace/documents/StudentCard";
 import { getDossier, isDocumentSlug } from "@/lib/documents";
 import { signDoc, verifyUrl } from "@/lib/doc-verify";
 import { resolveSignatory, SIGNATORIES } from "@/lib/signatories";
+import { privateImageDataUri } from "@/lib/secure-assets";
 
 export const metadata: Metadata = {
   title: "Document officiel",
@@ -58,9 +57,8 @@ export default async function DocumentPage({
 
   // Signataire : défaut selon le type, ou délégué via ?signataire=.
   const sig = resolveSignatory(kind, dossier.isBootcamp, signataire);
-  // N'afficher l'image de signature que si elle a été déposée dans public/.
-  const sigPath = path.join(process.cwd(), "public", sig.signature);
-  const signatureSrc = fs.existsSync(sigPath) ? sig.signature : undefined;
+  // Image de signature lue côté serveur depuis private/ (jamais d'URL publique).
+  const signatureSrc = privateImageDataUri(sig.signature) ?? undefined;
 
   // Liens du sélecteur de signataire (conserve l'étudiant ciblé).
   const signatoryHref = (key: string) => {

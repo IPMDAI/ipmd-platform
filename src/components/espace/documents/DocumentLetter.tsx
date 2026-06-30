@@ -185,14 +185,17 @@ export function DocumentLetter({
               </p>
             )}
             <div className="relative mt-3 flex h-16 w-44 items-center justify-center">
-              {signatory.signature && (
-                <Image
+              {signatory.signature ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
                   src={signatory.signature}
                   alt={`Signature — ${signatory.name}`}
-                  width={150}
-                  height={64}
                   className="absolute inset-0 m-auto max-h-16 w-auto object-contain"
                 />
+              ) : (
+                <span className="text-[10px] italic text-black/40">
+                  Signature autorisée
+                </span>
               )}
               <Cachet size={72} />
             </div>
