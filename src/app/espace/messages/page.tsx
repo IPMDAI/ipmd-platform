@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { requireAdmin } from "@/lib/require-admin";
+import { deleteContactMessage } from "@/lib/contact-actions";
 import { Container } from "@/components/ui/Container";
 
 export const metadata: Metadata = {
@@ -62,9 +63,21 @@ export default async function MessagesPage() {
                     <h2 className="text-lg font-bold text-ipmd-black">
                       {m.subject || "Sans objet"}
                     </h2>
-                    <span className="text-xs text-black/40">
-                      {formatDate(m.created_at)}
-                    </span>
+                    <div className="flex items-center gap-3">
+                      <span className="text-xs text-black/40">
+                        {formatDate(m.created_at)}
+                      </span>
+                      <form action={deleteContactMessage}>
+                        <input type="hidden" name="id" value={m.id} />
+                        <button
+                          type="submit"
+                          className="rounded-full px-2.5 py-1 text-xs font-semibold text-ipmd-red transition-colors hover:bg-ipmd-red hover:text-white"
+                          title="Supprimer ce message"
+                        >
+                          🗑 Supprimer
+                        </button>
+                      </form>
+                    </div>
                   </div>
 
                   <a

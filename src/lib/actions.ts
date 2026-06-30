@@ -136,6 +136,12 @@ export async function submitContact(
   _prev: FormResult | null,
   formData: FormData
 ): Promise<FormResult> {
+  // Honeypot : champ invisible. Rempli => bot. On simule le succès sans rien enregistrer.
+  const SPAM_OK = { ok: true, message: "Merci ! Votre message a bien été envoyé." };
+  if (getString(formData, "website")) {
+    return SPAM_OK;
+  }
+
   const payload = {
     full_name: getString(formData, "fullName"),
     email: getString(formData, "email"),
@@ -148,6 +154,16 @@ export async function submitContact(
   }
   if (!isValidEmail(payload.email)) {
     return { ok: false, message: "L'adresse email semble invalide." };
+  }
+
+  // Garde anti-spam : un message contenant beaucoup de liens est presque toujours du spam.
+  const linkCount = (
+    `${payload.subject} ${payload.message}`.match(
+      /https?:\/\/|www\.|\b[a-z0-9-]+\.(?:com|net|org|io|cc|ly|biz|info|xyz|shop)\b/gi
+    ) ?? []
+  ).length;
+  if (linkCount >= 3) {
+    return SPAM_OK;
   }
 
   if (!isSupabaseConfigured) {

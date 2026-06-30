@@ -60,6 +60,19 @@ export function ContactForm() {
         />
       </Field>
 
+      {/* Honeypot anti-spam : invisible pour les humains, souvent rempli par les bots. */}
+      <div aria-hidden="true" className="absolute -left-[9999px] top-0 h-0 w-0 overflow-hidden">
+        <label>
+          Ne pas remplir ce champ
+          <input
+            type="text"
+            name="website"
+            tabIndex={-1}
+            autoComplete="off"
+          />
+        </label>
+      </div>
+
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
         <ActionButton type="submit" size="lg" disabled={pending}>
           {pending ? "Envoi en cours…" : "Envoyer le message"}
