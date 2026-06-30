@@ -34,9 +34,10 @@ const LIGHT = "#f6f7f9";
 const MUTED = "#6b7280";
 
 const s = StyleSheet.create({
-  page: { fontSize: 10.5, color: "#1f2937", lineHeight: 1.5 },
+  page: { fontSize: 10.5, color: "#1f2937", lineHeight: 1.5, flexDirection: "column" },
   bar: { height: 6, backgroundColor: RED },
-  body: { paddingHorizontal: 40, paddingTop: 26, paddingBottom: 12 },
+  // Zone principale extensible : pousse le pied légal + la bande tout en bas.
+  body: { paddingHorizontal: 40, paddingTop: 26, flexGrow: 1 },
   headerRow: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -86,10 +87,10 @@ const s = StyleSheet.create({
   sigAuth: { fontSize: 9, fontStyle: "italic", color: MUTED },
   sigTitle: { marginTop: 6, fontSize: 10, fontWeight: 700, color: BLACK, textAlign: "center" },
   sigName: { fontSize: 8.5, color: "#4b5563", textAlign: "center" },
-  footer: { marginTop: 22, borderTopWidth: 1, borderTopColor: "#e5e7eb", paddingTop: 8, textAlign: "center" },
+  footer: { marginTop: 22, borderTopWidth: 1, borderTopColor: "#e5e7eb", paddingTop: 8, paddingHorizontal: 40, textAlign: "center" },
   nb: { fontSize: 7.5, fontStyle: "italic", color: "#9ca3af", marginBottom: 6 },
   legal: { fontSize: 7, color: "#9ca3af", marginBottom: 1.5 },
-  band: { backgroundColor: BLACK, paddingVertical: 7, textAlign: "center", marginTop: 16 },
+  band: { backgroundColor: BLACK, paddingVertical: 7, textAlign: "center", marginTop: 12, marginBottom: 14 },
   bandTxt: { fontSize: 8, color: "#ffffffb3", letterSpacing: 1.4, textTransform: "uppercase" },
 });
 
@@ -184,17 +185,15 @@ function AttestationDocument({ d }: { d: AttestationPdfData }) {
               {d.signatory.name ? <Text style={s.sigName}>{d.signatory.name}</Text> : null}
             </View>
           </View>
-
-          {/* Pied légal */}
-          <View style={s.footer}>
-            <Text style={s.nb}>{NB_SHORT}</Text>
-            {OFFICIAL_LEGAL_LINES.map((l) => (
-              <Text key={l} style={s.legal}>{l}</Text>
-            ))}
-          </View>
         </View>
 
-        {/* Bande de marque (juste après le pied, pas collée en bas de page) */}
+        {/* Pied légal + bande de marque : poussés en bas de page (vrai footer). */}
+        <View style={s.footer}>
+          <Text style={s.nb}>{NB_SHORT}</Text>
+          {OFFICIAL_LEGAL_LINES.map((l) => (
+            <Text key={l} style={s.legal}>{l}</Text>
+          ))}
+        </View>
         <View style={s.band}>
           <Text style={s.bandTxt}>Ose. Agis. Impacte. — 80% de pratique</Text>
         </View>
