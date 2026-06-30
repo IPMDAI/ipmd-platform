@@ -146,4 +146,12 @@ body {
     border-radius: 0 !important;
     min-height: auto !important;
   }
+
+  /* Forcer l'impression des fonds colorés (liseré rouge + bande noire),
+     que Chrome ignore par défaut sans « Graphismes d'arrière-plan ». */
+  .document-page,
+  .document-page * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
 }
