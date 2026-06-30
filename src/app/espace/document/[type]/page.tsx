@@ -110,11 +110,21 @@ export default async function DocumentPage({
           </div>
 
           <p className="mt-2 text-right text-xs text-black/45 print:hidden">
-            💡 Pour un document officiel parfaitement propre, utilisez{" "}
-            <strong>« Télécharger PDF officiel »</strong> (aucun ajout du
-            navigateur). L&apos;impression directe peut ajouter la date,
-            l&apos;URL et le numéro de page — pour les retirer, décochez
-            « En-têtes et pieds de page » dans « Plus de paramètres ».
+            {type === "carte" ? (
+              <>
+                💡 À l&apos;impression, le navigateur peut ajouter la date,
+                l&apos;URL et le numéro de page — pour les retirer, décochez
+                « En-têtes et pieds de page » dans « Plus de paramètres ».
+              </>
+            ) : (
+              <>
+                💡 Pour un document officiel parfaitement propre, utilisez{" "}
+                <strong>« Télécharger PDF officiel »</strong> (aucun ajout du
+                navigateur). L&apos;impression directe peut ajouter la date,
+                l&apos;URL et le numéro de page — pour les retirer, décochez
+                « En-têtes et pieds de page » dans « Plus de paramètres ».
+              </>
+            )}
           </p>
 
           {type !== "carte" && isAdmin && sig.allowed.length > 1 && (
