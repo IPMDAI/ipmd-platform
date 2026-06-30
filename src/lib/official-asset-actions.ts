@@ -64,3 +64,37 @@ export async function uploadOfficialAsset(formData: FormData): Promise<void> {
 
   revalidatePath("/espace/signatures");
 }
+
+/**
+ * Retire une signature / un cachet du bucket privé (réservé aux admins).
+ * Le document affichera alors « Signature autorisée ». Opération historisée.
+ */
+export async function removeOfficialAsset(formData: FormData): Promise<void> {
+  const { supabase, userId } = await requireAdmin();
+
+  const key = String(formData.get("key") ?? "");
+  if (!(OFFICIAL_ASSET_KEYS as readonly string[]).includes(key)) return;
+
+  const admin = createAdminClient();
+  if (!admin) return;
+
+  const { error } = await admin.storage
+    .from(OFFICIAL_ASSETS_BUCKET)
+    .remove([key]);
+  if (error) return;
+
+  const { data: me } = await supabase
+    .from("profiles")
+    .select("full_name, email")
+    .eq("id", userId)
+    .single();
+
+  await admin.from("official_asset_log").insert({
+    asset_key: key,
+    action: "suppression",
+    performed_by: userId,
+    performed_by_name: me?.full_name || me?.email || null,
+  });
+
+  revalidatePath("/espace/signatures");
+}

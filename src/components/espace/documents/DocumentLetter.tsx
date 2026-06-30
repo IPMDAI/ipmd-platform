@@ -26,13 +26,21 @@ function stripYear(s: string): string {
 }
 
 function programLine(d: Dossier): string {
-  const filiere = d.filiereName ? stripYear(d.filiereName) : null;
   const level = d.level ? stripYear(d.level) : null;
+  let filiere = d.filiereName ? stripYear(d.filiereName) : null;
+
+  // Pas de filière dédiée → la déduire du nom de classe (sans l'année ni le
+  // niveau répété en préfixe). Ex. « Licence 1 Informatique… — 2022-2023 ».
+  if (!filiere && d.className) {
+    let c = stripYear(d.className);
+    if (level && c.toLowerCase().startsWith(level.toLowerCase())) {
+      c = c.slice(level.length).replace(/^\s*[—–-]?\s*/, "").trim();
+    }
+    filiere = c || null;
+  }
+
   if (level && filiere) return `${level} — ${filiere}`;
-  if (filiere) return filiere;
-  if (level) return level;
-  if (d.className) return stripYear(d.className);
-  return "Formation IPMD";
+  return filiere || level || "Formation IPMD";
 }
 
 export type DocumentSignatory = {
@@ -80,7 +88,7 @@ export function DocumentLetter({
                 IPMD
               </p>
               <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-black/55">
-                Institut Polytechnique des Métiers du Digital &amp; IA
+                Institut Polytechnique des Métiers du Digital
               </p>
               <p className="text-[11px] text-black/45">
                 Abidjan — Côte d&apos;Ivoire · ipmd.pro
