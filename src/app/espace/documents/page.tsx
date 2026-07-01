@@ -3,7 +3,13 @@ import Link from "next/link";
 import { requireUser } from "@/lib/require-user";
 import { Container } from "@/components/ui/Container";
 import { documentTypesFor } from "@/lib/documents";
-import { isDocReady } from "@/lib/doc-grants";
+import { isDocReady, docKindOf } from "@/lib/doc-grants";
+import {
+  docCategory,
+  allowedSignatories,
+  defaultSignatoryKey,
+  SIGNATORIES,
+} from "@/lib/signatories";
 import { setDocumentGrant } from "@/lib/admin-actions";
 import { LEARNER_ROLES } from "@/lib/dashboards";
 import { universes } from "@/data/universes";
@@ -113,25 +119,39 @@ export default async function DocumentsPage({
   // Autorisations (activation par l'administration) pour cet étudiant.
   const { data: grantRows } = await supabase
     .from("document_grants")
-    .select("doc_type, active")
+    .select("doc_type, active, signatory")
     .eq("student_id", targetId);
-  const grantedSet = new Set(
-    (grantRows ?? []).filter((g) => g.active).map((g) => g.doc_type as string)
+  const grantMap = new Map(
+    (grantRows ?? []).map((g) => [
+      g.doc_type as string,
+      { active: !!g.active, signatory: (g.signatory as string | null) ?? null },
+    ])
   );
 
-  // Préparation (signature + cachet) de chaque document.
+  // Signataire retenu (choisi) ou titulaire par défaut, par document.
+  const effectiveSignatory: Record<string, string> = {};
+  const allowedFor: Record<string, string[]> = {};
+  // Préparation (signature du signataire retenu + cachet) de chaque document.
   const readiness: Record<string, boolean> = {};
   await Promise.all(
     docTypes.map(async (d) => {
-      readiness[d.slug] = await isDocReady(d.slug, isBootcamp);
+      if (d.slug === "carte") {
+        readiness[d.slug] = true;
+        return;
+      }
+      const cat = docCategory(docKindOf(d.slug), isBootcamp);
+      allowedFor[d.slug] = allowedSignatories(cat);
+      const chosen = grantMap.get(d.slug)?.signatory || defaultSignatoryKey(cat);
+      effectiveSignatory[d.slug] = chosen;
+      readiness[d.slug] = await isDocReady(d.slug, isBootcamp, chosen);
     })
   );
 
   // L'étudiant (non-admin) qui consulte SES documents ne voit que ceux
-  // qui sont ACTIVÉS et PRÊTS (signature + cachet).
+  // qui sont ACTIVÉS et PRÊTS (signature du signataire retenu + cachet).
   const viewerIsOwnerLearner = isLearner && !isAdmin && targetId === userId;
   const visibleDocs = viewerIsOwnerLearner
-    ? docTypes.filter((d) => grantedSet.has(d.slug) && readiness[d.slug])
+    ? docTypes.filter((d) => grantMap.get(d.slug)?.active && readiness[d.slug])
     : docTypes;
 
   return (
@@ -163,8 +183,11 @@ export default async function DocumentsPage({
           ) : (
             <div className="mt-8 grid gap-4 sm:grid-cols-2">
               {visibleDocs.map((d) => {
-                const granted = grantedSet.has(d.slug);
+                const grant = grantMap.get(d.slug);
+                const granted = !!grant?.active;
                 const ready = readiness[d.slug];
+                const chosen = effectiveSignatory[d.slug];
+                const allowed = allowedFor[d.slug] ?? [];
                 return (
                   <div
                     key={d.slug}
@@ -182,7 +205,7 @@ export default async function DocumentsPage({
                     </Link>
 
                     {isAdmin && (
-                      <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-black/5 pt-3">
+                      <div className="mt-3 space-y-2 border-t border-black/5 pt-3">
                         <div className="flex flex-col gap-0.5 text-[11px]">
                           <span
                             className={`font-semibold ${
@@ -193,25 +216,64 @@ export default async function DocumentsPage({
                           </span>
                           {d.slug !== "carte" && !ready && (
                             <span className="text-ipmd-red/80">
-                              ⚠ Signature ou cachet manquant
+                              ⚠ Signature du signataire choisi ou cachet manquant
                             </span>
                           )}
                         </div>
-                        <form action={setDocumentGrant}>
-                          <input type="hidden" name="student_id" value={targetId} />
-                          <input type="hidden" name="doc_type" value={d.slug} />
-                          <input type="hidden" name="active" value={granted ? "false" : "true"} />
-                          <button
-                            type="submit"
-                            className={`rounded-full px-3 py-1.5 text-xs font-semibold transition-colors ${
-                              granted
-                                ? "bg-black/5 text-black/60 hover:bg-black/10"
-                                : "bg-ipmd-red text-white hover:opacity-90"
-                            }`}
-                          >
-                            {granted ? "Désactiver" : "Activer"}
-                          </button>
-                        </form>
+
+                        {/* Choix du signataire + activation (pas pour la carte) */}
+                        {d.slug !== "carte" ? (
+                          <form action={setDocumentGrant} className="flex flex-wrap items-center gap-2">
+                            <input type="hidden" name="student_id" value={targetId} />
+                            <input type="hidden" name="doc_type" value={d.slug} />
+                            <input type="hidden" name="active" value="true" />
+                            <select
+                              name="signatory"
+                              defaultValue={chosen}
+                              className="rounded-lg border border-black/10 bg-white px-2 py-1 text-[11px]"
+                            >
+                              {allowed.map((k) => (
+                                <option key={k} value={k}>{SIGNATORIES[k as keyof typeof SIGNATORIES].title}</option>
+                              ))}
+                            </select>
+                            <button
+                              type="submit"
+                              className="rounded-full bg-ipmd-red px-3 py-1.5 text-xs font-semibold text-white transition-opacity hover:opacity-90"
+                            >
+                              {granted ? "Mettre à jour" : "Activer"}
+                            </button>
+                          </form>
+                        ) : (
+                          <form action={setDocumentGrant}>
+                            <input type="hidden" name="student_id" value={targetId} />
+                            <input type="hidden" name="doc_type" value={d.slug} />
+                            <input type="hidden" name="active" value={granted ? "false" : "true"} />
+                            <button
+                              type="submit"
+                              className={`rounded-full px-3 py-1.5 text-xs font-semibold transition-colors ${
+                                granted ? "bg-black/5 text-black/60 hover:bg-black/10" : "bg-ipmd-red text-white hover:opacity-90"
+                              }`}
+                            >
+                              {granted ? "Désactiver" : "Activer"}
+                            </button>
+                          </form>
+                        )}
+
+                        {/* Désactiver (documents non-carte déjà activés) */}
+                        {granted && d.slug !== "carte" && (
+                          <form action={setDocumentGrant}>
+                            <input type="hidden" name="student_id" value={targetId} />
+                            <input type="hidden" name="doc_type" value={d.slug} />
+                            <input type="hidden" name="active" value="false" />
+                            <input type="hidden" name="signatory" value={chosen} />
+                            <button
+                              type="submit"
+                              className="text-[11px] font-semibold text-black/45 underline-offset-2 hover:text-ipmd-red hover:underline"
+                            >
+                              Désactiver
+                            </button>
+                          </form>
+                        )}
                       </div>
                     )}
                   </div>

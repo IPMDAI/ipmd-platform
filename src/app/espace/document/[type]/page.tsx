@@ -42,17 +42,19 @@ export default async function DocumentPage({
   if (!dossier) notFound();
 
   // Verrou : un non-admin (étudiant/parent) ne peut ouvrir un document que s'il
-  // est ACTIVÉ par l'administration ET PRÊT (signature + cachet).
+  // est ACTIVÉ par l'administration ET PRÊT (signature DU SIGNATAIRE RETENU + cachet).
+  let grantSignatory: string | undefined;
   if (!isAdmin) {
     const { data: grant } = await supabase
       .from("document_grants")
-      .select("active")
+      .select("active, signatory")
       .eq("student_id", targetId)
       .eq("doc_type", type)
       .maybeSingle();
-    const granted = !!grant?.active;
-    const ready = await isDocReady(type, dossier.isBootcamp);
-    if (!granted || !ready) notFound();
+    if (!grant?.active) notFound();
+    grantSignatory = grant.signatory ?? undefined;
+    const ready = await isDocReady(type, dossier.isBootcamp, grantSignatory);
+    if (!ready) notFound();
   }
 
   const verifyHref = verifyUrl(
@@ -78,8 +80,10 @@ export default async function DocumentPage({
       ? ("reussite" as const)
       : ("scolarite" as const);
 
-  // Signataire : défaut selon le type, ou délégué via ?signataire=.
-  const sig = resolveSignatory(kind, dossier.isBootcamp, signataire);
+  // Signataire : pour un non-admin, celui retenu à l'activation (grant) ;
+  // pour l'admin, celui choisi via le sélecteur (?signataire=), sinon le titulaire.
+  const effectiveSignataire = isAdmin ? signataire : grantSignatory;
+  const sig = resolveSignatory(kind, dossier.isBootcamp, effectiveSignataire);
   // Image de signature lue côté serveur depuis le bucket privé (jamais d'URL publique).
   const signatureSrc = (await officialAssetDataUri(sig.signature)) ?? undefined;
 
