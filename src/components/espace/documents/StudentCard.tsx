@@ -18,7 +18,7 @@ function endYear(year: string): string {
   return y ? y[y.length - 1] : "";
 }
 
-/** Carte étudiant IPMD digitale (recto), premium, pensée pour l'impression. */
+/** Carte étudiant IPMD digitale — recto unique, premium, imprimable. */
 export function StudentCard({
   dossier,
   verifyHref,
@@ -39,14 +39,14 @@ export function StudentCard({
         <Image
           src="/logo-ipmd.png"
           alt=""
-          width={220}
-          height={220}
-          className="pointer-events-none absolute -bottom-10 -right-8 h-52 w-52 object-contain opacity-[0.06]"
+          width={200}
+          height={200}
+          className="pointer-events-none absolute -bottom-6 right-24 h-44 w-44 object-contain opacity-[0.05]"
         />
         {/* Liseré haut */}
         <div className="absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r from-ipmd-red via-white/70 to-ipmd-red" />
 
-        <div className="relative flex h-full flex-col justify-between p-4 sm:p-5">
+        <div className="relative flex h-full flex-col justify-between p-4">
           {/* En-tête institutionnel */}
           <div className="flex items-start justify-between gap-2">
             <div className="flex items-center gap-2">
@@ -67,9 +67,9 @@ export function StudentCard({
 
           {/* Identité : photo + puce + infos */}
           <div className="flex items-center gap-3">
-            <span className="flex h-[4.4rem] w-[4.4rem] shrink-0 items-center justify-center overflow-hidden rounded-xl bg-white/10 text-xl font-extrabold ring-1 ring-white/25">
+            <span className="flex h-[4.2rem] w-[4.2rem] shrink-0 items-center justify-center overflow-hidden rounded-xl bg-white/10 text-xl font-extrabold ring-1 ring-white/25">
               {dossier.avatarUrl ? (
-                <Image src={dossier.avatarUrl} alt={dossier.name} width={90} height={90} className="h-full w-full object-cover" unoptimized />
+                <Image src={dossier.avatarUrl} alt={dossier.name} width={88} height={88} className="h-full w-full object-cover" unoptimized />
               ) : (
                 initials(dossier.name) || "ET"
               )}
@@ -77,7 +77,6 @@ export function StudentCard({
 
             <div className="min-w-0 flex-1">
               <div className="mb-1 flex items-center gap-2">
-                {/* Puce dorée */}
                 <span className="flex h-5 w-8 flex-col justify-center gap-[3px] rounded-[4px] bg-gradient-to-br from-amber-200 to-amber-400 px-1 shadow-inner ring-1 ring-amber-500/40">
                   <span className="h-px w-full bg-amber-700/40" />
                   <span className="h-px w-full bg-amber-700/40" />
@@ -95,34 +94,38 @@ export function StudentCard({
             </div>
           </div>
 
-          {/* Pied : année + validité + QR */}
-          <div className="flex items-end justify-between gap-2">
-            <div className="text-[9px] uppercase tracking-wider text-white/55">
-              <p>Année académique</p>
-              <p className="text-xs font-bold normal-case tracking-normal text-white">
-                {dossier.year}
-              </p>
-              {validEnd && (
-                <p className="mt-1 normal-case tracking-normal text-white/45">
-                  Valable jusqu&apos;au 31 juillet {validEnd}
+          {/* Bas : année + validité + QR, puis coordonnées IPMD (sur la carte) */}
+          <div className="space-y-1.5">
+            <div className="flex items-end justify-between gap-2">
+              <div className="text-[9px] uppercase tracking-wider text-white/55">
+                <p>Année académique</p>
+                <p className="text-xs font-bold normal-case tracking-normal text-white">
+                  {dossier.year}
                 </p>
-              )}
+                {validEnd && (
+                  <p className="mt-0.5 normal-case tracking-normal text-white/45">
+                    Valable jusqu&apos;au 31 juillet {validEnd}
+                  </p>
+                )}
+              </div>
+              <div className="flex flex-col items-center gap-0.5">
+                <span className="rounded-md bg-white p-1">
+                  <QrCode value={verifyHref} size={46} />
+                </span>
+                <span className="text-[7px] text-white/50">Scanner pour vérifier</span>
+              </div>
             </div>
-            <div className="flex flex-col items-center gap-0.5">
-              <span className="rounded-md bg-white p-1">
-                <QrCode value={verifyHref} size={48} />
-              </span>
-              <span className="text-[7px] text-white/50">Scanner pour vérifier</span>
+
+            <div className="border-t border-white/10 pt-1 text-center text-[7px] leading-snug text-white/45">
+              <p className="font-semibold uppercase tracking-wide text-white/65">
+                Carte officielle IPMD — vérifiable par QR code
+              </p>
+              <p>IPMD — Cocody, Angré — Abidjan, Côte d&apos;Ivoire</p>
+              <p>www.ipmd.pro — (+225) 05 75 75 88 88 / 05 66 05 14 14</p>
             </div>
           </div>
         </div>
       </div>
-
-      <p className="mt-3 text-center text-[11px] leading-relaxed text-black/45">
-        Carte officielle IPMD — vérifiable par QR code
-        <br />
-        www.ipmd.pro — (+225) 05 75 75 88 88 / 05 66 05 14 14
-      </p>
     </div>
   );
 }
