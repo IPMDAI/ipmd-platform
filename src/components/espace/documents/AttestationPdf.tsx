@@ -81,10 +81,12 @@ const s = StyleSheet.create({
   faitTxt: { fontSize: 9.5, color: MUTED },
   dateTxt: { fontSize: 9.5, fontWeight: 700, color: BLACK },
   mention: { fontSize: 8, fontStyle: "italic", color: MUTED, marginTop: 2 },
-  sigStamp: { marginTop: 8, width: 200, height: 74, position: "relative", alignItems: "center", justifyContent: "center" },
-  sigImg: { position: "absolute", top: 0, left: 0, right: 0, bottom: 0, objectFit: "contain" },
-  cachetImg: { maxWidth: 84, maxHeight: 72, objectFit: "contain", opacity: 0.9 },
-  sigAuth: { fontSize: 9, fontStyle: "italic", color: MUTED },
+  sigStamp: { marginTop: 8, width: 210, height: 100, position: "relative" },
+  // Cachet DERRIÈRE, agrandi et centré.
+  cachetImg: { position: "absolute", top: 2, left: 55, maxWidth: 100, maxHeight: 96, objectFit: "contain", opacity: 0.92 },
+  // Signature AU-DESSUS, dimensionnée (maxW/maxH → transparence respectée, cachet visible).
+  sigImg: { position: "absolute", top: 24, left: 28, maxWidth: 155, maxHeight: 58, objectFit: "contain" },
+  sigAuth: { position: "absolute", top: 42, left: 0, right: 0, textAlign: "center", fontSize: 9, fontStyle: "italic", color: MUTED },
   sigTitle: { marginTop: 6, fontSize: 10, fontWeight: 700, color: BLACK, textAlign: "center" },
   sigName: { fontSize: 8.5, color: "#4b5563", textAlign: "center" },
   footer: { marginTop: 22, borderTopWidth: 1, borderTopColor: "#e5e7eb", paddingTop: 8, paddingHorizontal: 40, textAlign: "center" },
