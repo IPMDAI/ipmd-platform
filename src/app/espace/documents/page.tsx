@@ -3,6 +3,8 @@ import Link from "next/link";
 import { requireUser } from "@/lib/require-user";
 import { Container } from "@/components/ui/Container";
 import { documentTypesFor } from "@/lib/documents";
+import { isDocReady } from "@/lib/doc-grants";
+import { setDocumentGrant } from "@/lib/admin-actions";
 import { LEARNER_ROLES } from "@/lib/dashboards";
 import { universes } from "@/data/universes";
 
@@ -108,6 +110,30 @@ export default async function DocumentsPage({
 
   const qs = student ? `?student=${student}` : "";
 
+  // Autorisations (activation par l'administration) pour cet étudiant.
+  const { data: grantRows } = await supabase
+    .from("document_grants")
+    .select("doc_type, active")
+    .eq("student_id", targetId);
+  const grantedSet = new Set(
+    (grantRows ?? []).filter((g) => g.active).map((g) => g.doc_type as string)
+  );
+
+  // Préparation (signature + cachet) de chaque document.
+  const readiness: Record<string, boolean> = {};
+  await Promise.all(
+    docTypes.map(async (d) => {
+      readiness[d.slug] = await isDocReady(d.slug, isBootcamp);
+    })
+  );
+
+  // L'étudiant (non-admin) qui consulte SES documents ne voit que ceux
+  // qui sont ACTIVÉS et PRÊTS (signature + cachet).
+  const viewerIsOwnerLearner = isLearner && !isAdmin && targetId === userId;
+  const visibleDocs = viewerIsOwnerLearner
+    ? docTypes.filter((d) => grantedSet.has(d.slug) && readiness[d.slug])
+    : docTypes;
+
   return (
     <section className="min-h-[70vh] bg-ipmd-light">
       <Container className="py-12 sm:py-16">
@@ -124,24 +150,75 @@ export default async function DocumentsPage({
               : `Documents — ${targetName}`}
           </h1>
           <p className="mt-1 text-sm text-black/55">
-            Générés à ton nom, prêts à consulter et à imprimer.
+            {viewerIsOwnerLearner
+              ? "Documents activés par l'administration, prêts à consulter et à imprimer."
+              : "Active un document pour le rendre visible à l'étudiant (nécessite signature + cachet)."}
           </p>
 
-          <div className="mt-8 grid gap-4 sm:grid-cols-2">
-            {docTypes.map((d) => (
-              <Link
-                key={d.slug}
-                href={`/espace/document/${d.slug}${qs}`}
-                className="group rounded-2xl bg-white p-5 shadow-sm ring-1 ring-black/5 transition-all hover:-translate-y-0.5 hover:shadow-md hover:ring-ipmd-red/30"
-              >
-                <span className="text-2xl">{d.icon}</span>
-                <p className="mt-2 font-bold text-ipmd-black group-hover:text-ipmd-red">
-                  {d.label}
-                </p>
-                <p className="mt-1 text-sm text-black/55">{d.desc}</p>
-              </Link>
-            ))}
-          </div>
+          {viewerIsOwnerLearner && visibleDocs.length === 0 ? (
+            <p className="mt-8 rounded-2xl bg-white p-6 text-sm text-black/60 shadow-sm ring-1 ring-black/5">
+              📄 Aucun document disponible pour le moment. Vos documents seront
+              activés par l&apos;administration ; ils apparaîtront ici une fois prêts.
+            </p>
+          ) : (
+            <div className="mt-8 grid gap-4 sm:grid-cols-2">
+              {visibleDocs.map((d) => {
+                const granted = grantedSet.has(d.slug);
+                const ready = readiness[d.slug];
+                return (
+                  <div
+                    key={d.slug}
+                    className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-black/5"
+                  >
+                    <Link
+                      href={`/espace/document/${d.slug}${qs}`}
+                      className="group block"
+                    >
+                      <span className="text-2xl">{d.icon}</span>
+                      <p className="mt-2 font-bold text-ipmd-black group-hover:text-ipmd-red">
+                        {d.label}
+                      </p>
+                      <p className="mt-1 text-sm text-black/55">{d.desc}</p>
+                    </Link>
+
+                    {isAdmin && (
+                      <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-black/5 pt-3">
+                        <div className="flex flex-col gap-0.5 text-[11px]">
+                          <span
+                            className={`font-semibold ${
+                              granted ? "text-green-600" : "text-black/45"
+                            }`}
+                          >
+                            {granted ? "✅ Activé (visible)" : "⛔ Non activé (invisible)"}
+                          </span>
+                          {d.slug !== "carte" && !ready && (
+                            <span className="text-ipmd-red/80">
+                              ⚠ Signature ou cachet manquant
+                            </span>
+                          )}
+                        </div>
+                        <form action={setDocumentGrant}>
+                          <input type="hidden" name="student_id" value={targetId} />
+                          <input type="hidden" name="doc_type" value={d.slug} />
+                          <input type="hidden" name="active" value={granted ? "false" : "true"} />
+                          <button
+                            type="submit"
+                            className={`rounded-full px-3 py-1.5 text-xs font-semibold transition-colors ${
+                              granted
+                                ? "bg-black/5 text-black/60 hover:bg-black/10"
+                                : "bg-ipmd-red text-white hover:opacity-90"
+                            }`}
+                          >
+                            {granted ? "Désactiver" : "Activer"}
+                          </button>
+                        </form>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       </Container>
     </section>

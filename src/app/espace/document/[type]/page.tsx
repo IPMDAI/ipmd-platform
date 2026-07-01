@@ -10,6 +10,7 @@ import { getDossier, isDocumentSlug } from "@/lib/documents";
 import { signDoc, verifyUrl } from "@/lib/doc-verify";
 import { resolveSignatory, SIGNATORIES } from "@/lib/signatories";
 import { officialAssetDataUri } from "@/lib/secure-assets";
+import { isDocReady } from "@/lib/doc-grants";
 
 export const metadata: Metadata = {
   title: "Document officiel",
@@ -39,6 +40,20 @@ export default async function DocumentPage({
 
   const dossier = await getDossier(targetId);
   if (!dossier) notFound();
+
+  // Verrou : un non-admin (étudiant/parent) ne peut ouvrir un document que s'il
+  // est ACTIVÉ par l'administration ET PRÊT (signature + cachet).
+  if (!isAdmin) {
+    const { data: grant } = await supabase
+      .from("document_grants")
+      .select("active")
+      .eq("student_id", targetId)
+      .eq("doc_type", type)
+      .maybeSingle();
+    const granted = !!grant?.active;
+    const ready = await isDocReady(type, dossier.isBootcamp);
+    if (!granted || !ready) notFound();
+  }
 
   const verifyHref = verifyUrl(
     signDoc({

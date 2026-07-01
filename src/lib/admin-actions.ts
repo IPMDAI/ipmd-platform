@@ -171,6 +171,48 @@ export async function setStudentCivil(
   return { ok: true, message: "Enregistré ✅" };
 }
 
+/**
+ * Active / désactive un document pour un étudiant (par type).
+ * Tant qu'un document n'est pas activé ici, l'étudiant ne le voit pas.
+ * Réservé aux admins.
+ */
+export async function setDocumentGrant(formData: FormData): Promise<void> {
+  const ctx = await getAdmin();
+  if (!ctx) return;
+
+  const studentId = String(formData.get("student_id") ?? "");
+  const docType = String(formData.get("doc_type") ?? "");
+  const active = String(formData.get("active") ?? "") === "true";
+  if (!studentId || !docType) return;
+
+  const {
+    data: { user },
+  } = await ctx.supabase.auth.getUser();
+  let name: string | null = null;
+  if (user) {
+    const { data: me } = await ctx.supabase
+      .from("profiles")
+      .select("full_name, email")
+      .eq("id", user.id)
+      .single();
+    name = me?.full_name || me?.email || null;
+  }
+
+  await ctx.supabase.from("document_grants").upsert(
+    {
+      student_id: studentId,
+      doc_type: docType,
+      active,
+      granted_by: user?.id ?? null,
+      granted_by_name: name,
+      granted_at: new Date().toISOString(),
+    },
+    { onConflict: "student_id,doc_type" }
+  );
+
+  revalidatePath("/espace/documents");
+}
+
 /** Supprime un lien parent ↔ enfant (action de formulaire simple). */
 export async function unlinkParentChild(
   linkId: string,
