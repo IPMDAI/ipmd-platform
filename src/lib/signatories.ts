@@ -80,11 +80,22 @@ export function delegationMention(
   category: DocCategory,
   key: SignatoryKey
 ): string | null {
+  // Signataire titulaire → aucune mention.
   if (key === defaultSignatoryKey(category)) return null;
+
+  // Responsable pédagogique = délégué académique du Directeur des Études.
+  if (key === "responsable-pedago")
+    return "Pour le Directeur des Études et par délégation";
+
+  // Administrateur Général signant un document ACADÉMIQUE = suppléance
+  // (il ne signe pas « par délégation » du Directeur des Études).
+  if (key === "admin-general" && category === "academique")
+    return "En l'absence du Directeur des Études";
+
+  // Directrice Exécutive sur un document administratif courant.
   if (key === "directrice-executive")
     return "Pour l'Administrateur Général et par délégation";
-  if (category === "academique")
-    return "Pour le Directeur des Études et par délégation";
+
   return "Par délégation";
 }
 
