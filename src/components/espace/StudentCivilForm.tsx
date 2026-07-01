@@ -11,12 +11,14 @@ export type ClassOption = { id: string; label: string };
 /** Édition admin de l'état civil (naissance) + classe/filière d'un étudiant. */
 export function StudentCivilForm({
   userId,
+  name,
   birthDate,
   birthPlace,
   classId,
   classes,
 }: {
   userId: string;
+  name: string;
   birthDate: string | null;
   birthPlace: string | null;
   classId: string | null;
@@ -42,6 +44,17 @@ export function StudentCivilForm({
       </summary>
 
       <form action={action} className="mt-2 grid grid-cols-2 gap-2">
+        <div className="col-span-2">
+          <Field label="Nom complet (nom & prénoms)" htmlFor={`fn-${userId}`}>
+            <input
+              id={`fn-${userId}`}
+              name="full_name"
+              defaultValue={name}
+              placeholder="Ex. TONIAN, Eliam Aka"
+              className={inputBase}
+            />
+          </Field>
+        </div>
         <Field label="Date de naissance" htmlFor={`bd-${userId}`}>
           <input
             id={`bd-${userId}`}

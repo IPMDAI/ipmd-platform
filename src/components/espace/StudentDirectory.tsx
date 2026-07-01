@@ -145,6 +145,7 @@ export function StudentDirectory({
               <ContactEditForm userId={s.id} contacts={s.contacts} />
               <StudentCivilForm
                 userId={s.id}
+                name={s.name}
                 birthDate={s.birthDate}
                 birthPlace={s.birthPlace}
                 classId={s.classId}

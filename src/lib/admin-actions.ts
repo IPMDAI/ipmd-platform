@@ -145,14 +145,19 @@ export async function setStudentCivil(
     const v = formData.get(k);
     return typeof v === "string" && v.trim() ? v.trim() : null;
   };
+  const fullName = str("full_name");
   const birthDate = str("birth_date");
   const birthPlace = str("birth_place");
   const classId = str("class_id");
 
-  const { error } = await ctx.supabase
-    .from("profiles")
-    .update({ birth_date: birthDate, birth_place: birthPlace })
-    .eq("id", userId);
+  // On ne met à jour le nom que s'il est fourni (jamais l'effacer).
+  const patch: Record<string, unknown> = {
+    birth_date: birthDate,
+    birth_place: birthPlace,
+  };
+  if (fullName) patch.full_name = fullName;
+
+  const { error } = await ctx.supabase.from("profiles").update(patch).eq("id", userId);
   if (error) return { ok: false, message: error.message };
 
   if (classId) {
