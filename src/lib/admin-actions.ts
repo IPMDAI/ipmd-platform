@@ -128,6 +128,44 @@ export async function setProfileContacts(
   return { ok: true, message: "Coordonnées enregistrées." };
 }
 
+/**
+ * Complète l'état civil d'un étudiant (date + lieu de naissance) et,
+ * éventuellement, l'affecte à une classe (ce qui définit sa filière).
+ * Réservé aux admins.
+ */
+export async function setStudentCivil(
+  userId: string,
+  _prev: FormResult | null,
+  formData: FormData
+): Promise<FormResult> {
+  const ctx = await getAdmin();
+  if (!ctx) return { ok: false, message: "Action réservée à l'administration." };
+
+  const str = (k: string) => {
+    const v = formData.get(k);
+    return typeof v === "string" && v.trim() ? v.trim() : null;
+  };
+  const birthDate = str("birth_date");
+  const birthPlace = str("birth_place");
+  const classId = str("class_id");
+
+  const { error } = await ctx.supabase
+    .from("profiles")
+    .update({ birth_date: birthDate, birth_place: birthPlace })
+    .eq("id", userId);
+  if (error) return { ok: false, message: error.message };
+
+  if (classId) {
+    const { error: cErr } = await ctx.supabase
+      .from("class_members")
+      .upsert({ class_id: classId, student_id: userId }, { onConflict: "student_id" });
+    if (cErr) return { ok: false, message: `Naissance OK, mais classe : ${cErr.message}` };
+  }
+
+  revalidatePath("/espace/etudiants");
+  return { ok: true, message: "Enregistré ✅" };
+}
+
 /** Supprime un lien parent ↔ enfant (action de formulaire simple). */
 export async function unlinkParentChild(
   linkId: string,

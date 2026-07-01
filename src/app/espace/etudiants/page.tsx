@@ -16,7 +16,7 @@ export default async function EtudiantsPage() {
 
   const { data: students } = await supabase
     .from("profiles")
-    .select("id, full_name, email, avatar_url, phone, whatsapp, personal_email, school_email")
+    .select("id, full_name, email, avatar_url, phone, whatsapp, personal_email, school_email, birth_date, birth_place")
     .eq("role", "etudiant")
     .order("full_name");
   const list = students ?? [];
@@ -67,6 +67,26 @@ export default async function EtudiantsPage() {
     }
   }
 
+  // Toutes les classes (pour le menu déroulant d'affectation).
+  const { data: allClasses } = await supabase
+    .from("classes")
+    .select("id, name, filiere_id")
+    .order("name");
+  const allFilIds = [
+    ...new Set((allClasses ?? []).map((c) => c.filiere_id).filter(Boolean) as string[]),
+  ];
+  const allFiliereName = new Map<string, string>();
+  if (allFilIds.length > 0) {
+    const { data: fils } = await supabase.from("filieres").select("id, name").in("id", allFilIds);
+    for (const f of fils ?? []) allFiliereName.set(f.id, f.name);
+  }
+  const classOptions = (allClasses ?? []).map((c) => ({
+    id: c.id,
+    label: c.filiere_id
+      ? `${c.name} — ${allFiliereName.get(c.filiere_id) ?? "?"}`
+      : c.name,
+  }));
+
   const rows: StudentRow[] = list.map((s) => {
     const cid = studentClass.get(s.id);
     const cls = cid ? classInfo.get(cid) : undefined;
@@ -84,6 +104,9 @@ export default async function EtudiantsPage() {
         personal_email: s.personal_email ?? null,
         school_email: s.school_email ?? null,
       },
+      birthDate: s.birth_date ?? null,
+      birthPlace: s.birth_place ?? null,
+      classId: cid ?? null,
     };
   });
 
@@ -111,7 +134,7 @@ export default async function EtudiantsPage() {
                 utilisateurs.
               </p>
             ) : (
-              <StudentDirectory students={rows} />
+              <StudentDirectory students={rows} classes={classOptions} />
             )}
           </div>
         </div>

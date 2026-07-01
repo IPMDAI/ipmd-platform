@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { ContactEditForm, type Contacts } from "@/components/espace/ContactEditForm";
+import { StudentCivilForm, type ClassOption } from "@/components/espace/StudentCivilForm";
 
 export type StudentRow = {
   id: string;
@@ -14,6 +15,9 @@ export type StudentRow = {
   filiereName: string | null;
   academicYear: string | null;
   contacts: Contacts;
+  birthDate: string | null;
+  birthPlace: string | null;
+  classId: string | null;
 };
 
 function initialsOf(name: string): string {
@@ -33,7 +37,13 @@ function normalize(s: string): string {
     .toLowerCase();
 }
 
-export function StudentDirectory({ students }: { students: StudentRow[] }) {
+export function StudentDirectory({
+  students,
+  classes,
+}: {
+  students: StudentRow[];
+  classes: ClassOption[];
+}) {
   const [query, setQuery] = useState("");
   const [year, setYear] = useState("");
 
@@ -133,6 +143,13 @@ export function StudentDirectory({ students }: { students: StudentRow[] }) {
                 </div>
               </div>
               <ContactEditForm userId={s.id} contacts={s.contacts} />
+              <StudentCivilForm
+                userId={s.id}
+                birthDate={s.birthDate}
+                birthPlace={s.birthPlace}
+                classId={s.classId}
+                classes={classes}
+              />
             </li>
           ))}
         </ul>
