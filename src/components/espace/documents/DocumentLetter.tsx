@@ -184,20 +184,22 @@ export function DocumentLetter({
                 {signatory.mention}
               </p>
             )}
-            <div className="relative mt-3 flex h-16 w-44 items-center justify-center">
+            <div className="relative mt-3 flex h-24 w-60 items-center justify-center">
+              {/* Cachet derrière */}
+              <Cachet size={84} />
+              {/* Signature au-dessus, entièrement contenue (jamais rognée) */}
               {signatory.signature ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
                   src={signatory.signature}
                   alt={`Signature — ${signatory.name}`}
-                  className="absolute inset-0 m-auto max-h-16 w-auto object-contain"
+                  className="absolute inset-0 h-full w-full object-contain"
                 />
               ) : (
-                <span className="text-[10px] italic text-black/40">
+                <span className="absolute inset-0 flex items-center justify-center text-[10px] italic text-black/40">
                   Signature autorisée
                 </span>
               )}
-              <Cachet size={72} />
             </div>
             <p className="mt-2 text-sm font-bold text-ipmd-black">
               {signatory.title}
