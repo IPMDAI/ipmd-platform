@@ -7,10 +7,8 @@ import {
   officialAssetDataUri,
   OFFICIAL_ASSETS_BUCKET,
 } from "@/lib/secure-assets";
-import {
-  uploadOfficialAsset,
-  removeOfficialAsset,
-} from "@/lib/official-asset-actions";
+import { removeOfficialAsset } from "@/lib/official-asset-actions";
+import { AssetUploadForm } from "@/components/espace/AssetUploadForm";
 
 export const metadata: Metadata = { title: "Signatures & cachets" };
 
@@ -130,27 +128,8 @@ export default async function SignaturesPage() {
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-2">
-                      <form
-                        action={uploadOfficialAsset}
-                        className="flex items-center gap-2"
-                      >
-                        <input type="hidden" name="key" value={a.key} />
-                        <input
-                          type="file"
-                          name="file"
-                          accept="image/png,image/webp"
-                          required
-                          className="max-w-[180px] text-xs file:mr-2 file:rounded-full file:border-0 file:bg-ipmd-light file:px-3 file:py-1.5 file:text-xs file:font-semibold"
-                        />
-                        <button
-                          type="submit"
-                          disabled={!storageReady}
-                          className="rounded-full bg-ipmd-red px-3 py-1.5 text-xs font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-40"
-                        >
-                          {preview ? "Remplacer" : "Déposer"}
-                        </button>
-                      </form>
+                    <div className="flex items-start gap-2">
+                      <AssetUploadForm assetKey={a.key} present={!!preview} />
                       {preview && (
                         <form action={removeOfficialAsset}>
                           <input type="hidden" name="key" value={a.key} />

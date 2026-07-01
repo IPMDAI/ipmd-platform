@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/require-admin";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { OFFICIAL_ASSETS_BUCKET } from "@/lib/secure-assets";
+import type { FormResult } from "@/types";
 
 /** Clés autorisées dans le bucket privé (aucune autre n'est acceptée). */
 const OFFICIAL_ASSET_KEYS = [
@@ -18,19 +19,30 @@ const OFFICIAL_ASSET_KEYS = [
  * Dépose ou remplace une signature / un cachet dans le bucket privé.
  * Réservé aux admins. Chaque opération est historisée (qui, quoi, quand).
  */
-export async function uploadOfficialAsset(formData: FormData): Promise<void> {
+export async function uploadOfficialAsset(
+  _prev: FormResult | null,
+  formData: FormData
+): Promise<FormResult> {
   const { supabase, userId } = await requireAdmin();
 
   const key = String(formData.get("key") ?? "");
-  if (!(OFFICIAL_ASSET_KEYS as readonly string[]).includes(key)) return;
+  if (!(OFFICIAL_ASSET_KEYS as readonly string[]).includes(key))
+    return { ok: false, message: "Emplacement invalide." };
 
   const file = formData.get("file");
-  if (!(file instanceof File) || file.size === 0) return;
-  if (!file.type.startsWith("image/")) return;
-  if (file.size > 5 * 1024 * 1024) return; // 5 Mo max
+  if (!(file instanceof File) || file.size === 0)
+    return { ok: false, message: "Choisissez d'abord un fichier, puis cliquez sur Déposer." };
+  if (!file.type.startsWith("image/"))
+    return { ok: false, message: "Format non supporté — déposez une image PNG." };
+  if (file.size > 10 * 1024 * 1024)
+    return { ok: false, message: "Fichier trop volumineux (10 Mo maximum)." };
 
   const admin = createAdminClient();
-  if (!admin) return;
+  if (!admin)
+    return {
+      ok: false,
+      message: "Stockage non configuré (clé SUPABASE_SERVICE_ROLE_KEY manquante sur Vercel).",
+    };
 
   // Déjà présent ? (pour historiser « ajout » vs « remplacement »)
   const [folder, name] = key.split("/");
@@ -46,7 +58,7 @@ export async function uploadOfficialAsset(formData: FormData): Promise<void> {
       contentType: file.type || "image/png",
       upsert: true,
     });
-  if (upErr) return;
+  if (upErr) return { ok: false, message: `Échec de l'envoi : ${upErr.message}` };
 
   // Nom de l'admin pour l'historique.
   const { data: me } = await supabase
@@ -63,6 +75,7 @@ export async function uploadOfficialAsset(formData: FormData): Promise<void> {
   });
 
   revalidatePath("/espace/signatures");
+  return { ok: true, message: existed ? "Fichier remplacé ✅" : "Fichier déposé ✅" };
 }
 
 /**
