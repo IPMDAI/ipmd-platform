@@ -41,7 +41,7 @@ export function StudentCard({
           alt=""
           width={220}
           height={220}
-          className="pointer-events-none absolute left-1/2 top-1/2 h-52 w-52 -translate-x-1/2 -translate-y-1/2 object-contain opacity-[0.04]"
+          className="pointer-events-none absolute left-1/2 top-1/2 h-52 w-52 -translate-x-1/2 -translate-y-1/2 object-contain opacity-[0.05] grayscale"
         />
         {/* Liseré haut */}
         <div className="absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r from-ipmd-red via-white/70 to-ipmd-red" />
@@ -108,20 +108,23 @@ export function StudentCard({
                   </p>
                 )}
               </div>
-              <div className="flex flex-col items-center gap-0.5">
-                <span className="rounded-md bg-white p-1">
+              <div className="flex flex-col items-center">
+                <span className="rounded-md bg-white p-1.5">
                   <QrCode value={verifyHref} size={46} />
                 </span>
-                <span className="text-[8px] font-medium text-white/75">Scanner pour vérifier</span>
+                <span className="mt-1.5 text-[8px] font-medium text-white/80">
+                  Scanner pour vérifier
+                </span>
               </div>
             </div>
 
-            <div className="border-t border-white/15 pt-1.5 text-center text-[8px] leading-snug text-white/70">
-              <p className="font-bold uppercase tracking-wide text-white/90">
+            <div className="border-t border-white/15 pt-1.5 text-center text-[8px] leading-[1.45] text-white/75">
+              <p className="font-bold uppercase tracking-wide text-white/95">
                 Carte officielle IPMD — vérifiable par QR code
               </p>
               <p>IPMD — Abidjan, Côte d&apos;Ivoire</p>
-              <p>www.ipmd.pro — (+225) 05 75 75 88 88 / 05 66 05 14 14</p>
+              <p>www.ipmd.pro — info@ipmd.pro</p>
+              <p>+225 05 75 75 88 88 / 05 66 05 14 14</p>
             </div>
           </div>
         </div>
