@@ -98,6 +98,7 @@ export type Dossier = {
   id: string;
   name: string;
   email: string;
+  avatarUrl: string | null;
   birthDate: string | null;
   birthPlace: string | null;
   className: string | null;
@@ -121,7 +122,7 @@ export async function getDossier(studentId: string): Promise<Dossier | null> {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("full_name, email, universe, birth_date, birth_place")
+    .select("full_name, email, universe, birth_date, birth_place, avatar_url")
     .eq("id", studentId)
     .single();
   if (!profile) return null;
@@ -162,6 +163,7 @@ export async function getDossier(studentId: string): Promise<Dossier | null> {
     id: studentId,
     name: profile.full_name || profile.email || "—",
     email: profile.email,
+    avatarUrl: profile.avatar_url ?? null,
     birthDate: profile.birth_date ?? null,
     birthPlace: profile.birth_place ?? null,
     className,
