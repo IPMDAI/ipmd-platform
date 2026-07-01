@@ -120,7 +120,7 @@ export function StudentCard({
               <p className="font-bold uppercase tracking-wide text-white/90">
                 Carte officielle IPMD — vérifiable par QR code
               </p>
-              <p>IPMD — Cocody, Angré — Abidjan, Côte d&apos;Ivoire</p>
+              <p>IPMD — Abidjan, Côte d&apos;Ivoire</p>
               <p>www.ipmd.pro — (+225) 05 75 75 88 88 / 05 66 05 14 14</p>
             </div>
           </div>
