@@ -35,13 +35,13 @@ export function StudentCard({
         {/* Halos rouges */}
         <div className="pointer-events-none absolute -right-16 -top-20 h-56 w-56 rounded-full bg-ipmd-red/40 blur-3xl" />
         <div className="pointer-events-none absolute -bottom-24 -left-10 h-52 w-52 rounded-full bg-ipmd-red/20 blur-3xl" />
-        {/* Filigrane logo */}
+        {/* Filigrane logo — centré, très discret (ne gêne pas la lecture) */}
         <Image
           src="/logo-ipmd.png"
           alt=""
-          width={200}
-          height={200}
-          className="pointer-events-none absolute -bottom-6 right-24 h-44 w-44 object-contain opacity-[0.05]"
+          width={220}
+          height={220}
+          className="pointer-events-none absolute left-1/2 top-1/2 h-52 w-52 -translate-x-1/2 -translate-y-1/2 object-contain opacity-[0.04]"
         />
         {/* Liseré haut */}
         <div className="absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r from-ipmd-red via-white/70 to-ipmd-red" />
@@ -112,12 +112,12 @@ export function StudentCard({
                 <span className="rounded-md bg-white p-1">
                   <QrCode value={verifyHref} size={46} />
                 </span>
-                <span className="text-[7px] text-white/50">Scanner pour vérifier</span>
+                <span className="text-[8px] font-medium text-white/75">Scanner pour vérifier</span>
               </div>
             </div>
 
-            <div className="border-t border-white/10 pt-1 text-center text-[7px] leading-snug text-white/45">
-              <p className="font-semibold uppercase tracking-wide text-white/65">
+            <div className="border-t border-white/15 pt-1.5 text-center text-[8px] leading-snug text-white/70">
+              <p className="font-bold uppercase tracking-wide text-white/90">
                 Carte officielle IPMD — vérifiable par QR code
               </p>
               <p>IPMD — Cocody, Angré — Abidjan, Côte d&apos;Ivoire</p>
