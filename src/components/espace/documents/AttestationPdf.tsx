@@ -81,12 +81,11 @@ const s = StyleSheet.create({
   faitTxt: { fontSize: 9.5, color: MUTED },
   dateTxt: { fontSize: 9.5, fontWeight: 700, color: BLACK },
   mention: { fontSize: 8, fontStyle: "italic", color: MUTED, marginTop: 2 },
-  sigStamp: { marginTop: 8, width: 210, height: 100, position: "relative" },
-  // Cachet DERRIÈRE, agrandi et centré.
-  cachetImg: { position: "absolute", top: 2, left: 55, maxWidth: 100, maxHeight: 96, objectFit: "contain", opacity: 0.92 },
-  // Signature AU-DESSUS, dimensionnée (maxW/maxH → transparence respectée, cachet visible).
-  sigImg: { position: "absolute", top: 24, left: 28, maxWidth: 155, maxHeight: 58, objectFit: "contain" },
-  sigAuth: { position: "absolute", top: 42, left: 0, right: 0, textAlign: "center", fontSize: 9, fontStyle: "italic", color: MUTED },
+  // Signature + cachet côte à côte, tailles fixes (rendu fiable, les deux visibles).
+  sigStampRow: { marginTop: 8, height: 80, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6 },
+  sigImg: { width: 120, height: 54, objectFit: "contain" },
+  cachetImg: { width: 80, height: 80, objectFit: "contain", opacity: 0.92 },
+  sigAuth: { fontSize: 9, fontStyle: "italic", color: MUTED },
   sigTitle: { marginTop: 6, fontSize: 10, fontWeight: 700, color: BLACK, textAlign: "center" },
   sigName: { fontSize: 8.5, color: "#4b5563", textAlign: "center" },
   footer: { marginTop: 22, borderTopWidth: 1, borderTopColor: "#e5e7eb", paddingTop: 8, paddingHorizontal: 40, textAlign: "center" },
@@ -175,15 +174,13 @@ function AttestationDocument({ d }: { d: AttestationPdfData }) {
               <Text style={s.faitTxt}>Fait à Abidjan,</Text>
               <Text style={s.dateTxt}>le {d.longDate}</Text>
               {d.signatory.mention ? <Text style={s.mention}>{d.signatory.mention}</Text> : null}
-              <View style={s.sigStamp}>
-                {/* Cachet DERRIÈRE (dessiné en premier) */}
-                {d.cachetSrc ? <Image src={d.cachetSrc} style={s.cachetImg} /> : null}
-                {/* Signature AU-DESSUS (dessinée en dernier = premier plan) */}
+              <View style={s.sigStampRow}>
                 {d.signatureSrc ? (
                   <Image src={d.signatureSrc} style={s.sigImg} />
                 ) : (
                   <Text style={s.sigAuth}>Signature autorisée</Text>
                 )}
+                {d.cachetSrc ? <Image src={d.cachetSrc} style={s.cachetImg} /> : null}
               </View>
               <Text style={s.sigTitle}>{d.signatory.title}</Text>
               {d.signatory.name ? <Text style={s.sigName}>{d.signatory.name}</Text> : null}
