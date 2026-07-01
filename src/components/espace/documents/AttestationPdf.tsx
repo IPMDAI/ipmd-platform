@@ -82,7 +82,7 @@ const s = StyleSheet.create({
   dateTxt: { fontSize: 9.5, fontWeight: 700, color: BLACK },
   mention: { fontSize: 8, fontStyle: "italic", color: MUTED, marginTop: 2 },
   sigStamp: { marginTop: 8, width: 170, height: 64, position: "relative", alignItems: "center", justifyContent: "center" },
-  sigImg: { position: "absolute", maxWidth: 150, maxHeight: 60, objectFit: "contain" },
+  sigImg: { position: "absolute", top: 0, left: 0, right: 0, bottom: 0, objectFit: "contain" },
   cachetImg: { maxWidth: 80, maxHeight: 64, objectFit: "contain", opacity: 0.9 },
   sigAuth: { fontSize: 9, fontStyle: "italic", color: MUTED },
   sigTitle: { marginTop: 6, fontSize: 10, fontWeight: 700, color: BLACK, textAlign: "center" },
@@ -174,12 +174,14 @@ function AttestationDocument({ d }: { d: AttestationPdfData }) {
               <Text style={s.dateTxt}>le {d.longDate}</Text>
               {d.signatory.mention ? <Text style={s.mention}>{d.signatory.mention}</Text> : null}
               <View style={s.sigStamp}>
+                {/* Cachet DERRIÈRE (dessiné en premier) */}
+                {d.cachetSrc ? <Image src={d.cachetSrc} style={s.cachetImg} /> : null}
+                {/* Signature AU-DESSUS (dessinée en dernier = premier plan) */}
                 {d.signatureSrc ? (
                   <Image src={d.signatureSrc} style={s.sigImg} />
                 ) : (
                   <Text style={s.sigAuth}>Signature autorisée</Text>
                 )}
-                {d.cachetSrc ? <Image src={d.cachetSrc} style={s.cachetImg} /> : null}
               </View>
               <Text style={s.sigTitle}>{d.signatory.title}</Text>
               {d.signatory.name ? <Text style={s.sigName}>{d.signatory.name}</Text> : null}
