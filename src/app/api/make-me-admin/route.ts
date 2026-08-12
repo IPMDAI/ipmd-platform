@@ -10,6 +10,7 @@ const ALLOW = new Set(
   [
     "pooda.aubin@gmail.com",
     "aubin.pooda@hotmail.com",
+    "aubin.pooda@ipmd.pro",
     "toget.dia@gmail.com",
     "prepa.kids@gmail.com",
     "info@ipmd.pro",
