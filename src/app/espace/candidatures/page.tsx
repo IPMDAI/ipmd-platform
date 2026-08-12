@@ -371,7 +371,12 @@ export default async function CandidaturesPage({
                     ) : null;
                   })()}
 
-                  <CandidatureActions id={c.id} status={c.status} />
+                  <CandidatureActions
+                    id={c.id}
+                    status={c.status}
+                    name={c.full_name}
+                    canDelete={isSuper}
+                  />
 
                   {/* Dossier incomplet (diplômant) → réclamer les pièces au candidat */}
                   {typeOf(c.universe) === "diplome" &&
