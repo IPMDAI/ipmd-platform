@@ -8,6 +8,13 @@ import {
   sendNotification,
 } from "@/lib/email";
 import type { FormResult, UniverseId } from "@/types";
+import { universes } from "@/data/universes";
+
+// Type d'univers (diplome vs certificat/bootcamp) pour n'exiger les pièces
+// que sur les demandes diplômantes.
+const kindByUniverse: Record<string, string> = Object.fromEntries(
+  universes.map((u) => [u.id, u.kind])
+);
 
 /**
  * Server Actions des formulaires publics.
@@ -62,6 +69,21 @@ export async function submitInscription(
   }
   if (!isValidEmail(payload.email)) {
     return { ok: false, message: "L'adresse email semble invalide." };
+  }
+
+  // Demande diplômante : le dernier diplôme ET la pièce d'identité sont
+  // obligatoires (double sécurité : le navigateur bloque déjà l'envoi si
+  // l'upload d'une pièce obligatoire échoue). Les bootcamps n'en exigent pas.
+  if (
+    isSupabaseConfigured &&
+    kindByUniverse[payload.universe] === "diplome" &&
+    (!payload.doc_diploma || !payload.doc_id)
+  ) {
+    return {
+      ok: false,
+      message:
+        "Le dernier diplôme et la pièce d'identité sont obligatoires. Merci de les joindre (PDF, JPG ou PNG, 15 Mo max par fichier) avant d'envoyer votre demande.",
+    };
   }
 
   if (!isSupabaseConfigured) {

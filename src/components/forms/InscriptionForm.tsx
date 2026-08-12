@@ -12,22 +12,30 @@ import { MultiFileField } from "./MultiFileField";
 import { BirthFields } from "./BirthFields";
 import type { FormResult } from "@/types";
 
-const MAX_FILE = 8 * 1024 * 1024;
+const MAX_FILE = 15 * 1024 * 1024;
 
-/** Uploade un fichier vers Storage (navigateur). Renvoie le chemin ou null. */
+type UploadReason = "ok" | "vide" | "trop-lourd" | "echec";
+type UploadResult = { path: string | null; reason: UploadReason };
+
+/**
+ * Uploade un fichier vers Storage (navigateur). Renvoie le chemin ET la raison
+ * (pour distinguer « trop lourd » / « échec » d'un simple champ vide, et
+ * pouvoir bloquer l'envoi si une pièce OBLIGATOIRE n'a pas pu partir).
+ */
 async function uploadDoc(
   supabase: NonNullable<ReturnType<typeof createClient>>,
   folder: string,
   key: string,
   file: File | undefined | null
-): Promise<string | null> {
-  if (!file || file.size === 0 || file.size > MAX_FILE) return null;
+): Promise<UploadResult> {
+  if (!file || file.size === 0) return { path: null, reason: "vide" };
+  if (file.size > MAX_FILE) return { path: null, reason: "trop-lourd" };
   const ext = (file.name.split(".").pop() || "bin").toLowerCase().replace(/[^a-z0-9]/g, "");
   const path = `${folder}/${key}.${ext}`;
   const { error } = await supabase.storage
     .from("candidature-docs")
     .upload(path, file, { upsert: true });
-  return error ? null : path;
+  return error ? { path: null, reason: "echec" } : { path, reason: "ok" };
 }
 
 const entryLevels = ["Bac", "Bac+1", "Bac+2", "Bac+3", "Bac+4", "Bac+5"];
@@ -90,9 +98,32 @@ export function InscriptionForm() {
           uploadDoc(supabase, folder, "piece-identite", q("#docId")),
           uploadDoc(supabase, folder, "attestation", q("#docAttestation")),
         ]);
-        if (dip) fd.set("docDiplomaPath", dip);
-        if (idf) fd.set("docIdPath", idf);
-        if (att) fd.set("docAttestationPath", att);
+
+        // Le diplôme et la pièce d'identité sont OBLIGATOIRES : si l'un n'a pas
+        // pu être envoyé (trop lourd, format, échec réseau), on BLOQUE l'envoi
+        // avec un message clair — au lieu de laisser partir une demande vide.
+        const problems: string[] = [];
+        const check = (label: string, r: UploadResult) => {
+          if (r.reason === "trop-lourd") problems.push(`${label} dépasse 15 Mo`);
+          else if (r.reason === "vide") problems.push(`${label} est manquant`);
+          else if (r.reason === "echec") problems.push(`${label} n'a pas pu être envoyé`);
+        };
+        check("le dernier diplôme", dip);
+        check("la pièce d'identité", idf);
+        if (problems.length > 0) {
+          setState({
+            ok: false,
+            message: `Impossible d'envoyer votre demande : ${problems.join(
+              ", "
+            )}. Vérifiez le format (PDF, JPG ou PNG) et la taille (15 Mo max par fichier), puis réessayez.`,
+          });
+          setPending(false);
+          return;
+        }
+
+        if (dip.path) fd.set("docDiplomaPath", dip.path);
+        if (idf.path) fd.set("docIdPath", idf.path);
+        if (att.path) fd.set("docAttestationPath", att.path);
 
         const bulletinInputs = form.querySelectorAll<HTMLInputElement>(
           'input[name="docBulletins"]'
@@ -103,8 +134,8 @@ export function InscriptionForm() {
           const f = inp.files?.[0];
           if (f && f.size > 0) {
             i += 1;
-            const p = await uploadDoc(supabase, folder, `bulletins-${i}`, f);
-            if (p) bulletinPaths.push(p);
+            const r = await uploadDoc(supabase, folder, `bulletins-${i}`, f);
+            if (r.path) bulletinPaths.push(r.path);
           }
         }
         if (bulletinPaths.length > 0) fd.set("docBulletinsPaths", bulletinPaths.join(","));
@@ -116,7 +147,7 @@ export function InscriptionForm() {
     } catch {
       setState({
         ok: false,
-        message: "Erreur lors de l'envoi des pièces. Vérifie leur taille (8 Mo max) et réessaie.",
+        message: "Erreur lors de l'envoi des pièces. Vérifie leur taille (15 Mo max) et réessaie.",
       });
     } finally {
       setPending(false);
@@ -253,7 +284,7 @@ export function InscriptionForm() {
               <input id="docAttestation" name="docAttestation" type="file" accept=".pdf,.jpg,.jpeg,.png" className={fileInput} />
             </Field>
           </div>
-          <p className="mt-2 text-xs text-black/45">Formats acceptés : PDF, JPG, PNG · 8 Mo max par fichier.</p>
+          <p className="mt-2 text-xs text-black/45">Formats acceptés : PDF, JPG, PNG · 15 Mo max par fichier.</p>
         </fieldset>
 
         <Field label="Message (optionnel)" htmlFor="message">
