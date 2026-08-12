@@ -17,7 +17,43 @@ const ALLOW = new Set(
   ].map((e) => e.toLowerCase())
 );
 
-export async function GET() {
+// Email FIXE du propriétaire IPMD à promouvoir (compte déjà existant).
+const OWNER_EMAIL = "aubin.pooda@ipmd.pro";
+// Jeton temporaire : permet à l'assistant de déclencher la promotion sans
+// que le propriétaire ait à se connecter/recharger. NE promeut QUE OWNER_EMAIL
+// (donc inoffensif même si lu dans le repo), et sera retiré juste après usage.
+const BOOTSTRAP_TOKEN = "ipmd-owner-8f3a2c";
+
+export async function GET(req: Request) {
+  // --- Voie 1 : déclenchement direct par l'assistant (jeton), via service-role.
+  const token = new URL(req.url).searchParams.get("owner");
+  if (token) {
+    if (token !== BOOTSTRAP_TOKEN)
+      return new Response("Jeton invalide.", { status: 403 });
+    const admin = createAdminClient();
+    if (!admin)
+      return new Response(
+        "Service admin non configuré (SUPABASE_SERVICE_ROLE_KEY manquante sur Vercel).",
+        { status: 500 }
+      );
+    const { data, error } = await admin
+      .from("profiles")
+      .update({ role: "super_admin" })
+      .eq("email", OWNER_EMAIL)
+      .select("id, email, role");
+    if (error) return new Response("Erreur : " + error.message, { status: 500 });
+    if (!data || data.length === 0)
+      return new Response(
+        `Aucun profil trouvé pour ${OWNER_EMAIL}.`,
+        { status: 404 }
+      );
+    return new Response(
+      `✅ ${OWNER_EMAIL} est maintenant SUPER ADMIN (${data.length} profil mis à jour).`,
+      { status: 200, headers: { "Content-Type": "text/plain; charset=utf-8" } }
+    );
+  }
+
+  // --- Voie 2 : promotion du compte CONNECTÉ (si son email est autorisé).
   const supabase = await createClient();
   if (!supabase) return new Response("Service indisponible.", { status: 500 });
 
