@@ -6,6 +6,8 @@ import { universes } from "@/data/universes";
 import { Container } from "@/components/ui/Container";
 import { CandidatureActions } from "@/components/espace/CandidatureActions";
 import { CandidatureInvite } from "@/components/espace/CandidatureInvite";
+import { DossierLinkActions } from "@/components/espace/DossierLinkActions";
+import { dossierLinkUrl } from "@/lib/dossier-link";
 import { roleForUniverse } from "@/data/universes";
 import { roleLabels } from "@/lib/dashboards";
 import { FORMATION_MODE_LABEL } from "@/lib/academic";
@@ -370,6 +372,17 @@ export default async function CandidaturesPage({
                   })()}
 
                   <CandidatureActions id={c.id} status={c.status} />
+
+                  {/* Dossier incomplet (diplômant) → réclamer les pièces au candidat */}
+                  {typeOf(c.universe) === "diplome" &&
+                    (c.status === "nouveau" || c.status === "accepte") &&
+                    (!c.doc_diploma || !c.doc_id) && (
+                      <DossierLinkActions
+                        url={dossierLinkUrl(c.id)}
+                        candidatureId={c.id}
+                        email={c.email}
+                      />
+                    )}
 
                   {isSuper && c.status === "accepte" && (
                     <CandidatureInvite
