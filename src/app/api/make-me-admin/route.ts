@@ -36,21 +36,75 @@ export async function GET(req: Request) {
         "Service admin non configuré (SUPABASE_SERVICE_ROLE_KEY manquante sur Vercel).",
         { status: 500 }
       );
-    const { data, error } = await admin
-      .from("profiles")
-      .update({ role: "super_admin" })
-      .eq("email", OWNER_EMAIL)
-      .select("id, email, role");
-    if (error) return new Response("Erreur : " + error.message, { status: 500 });
-    if (!data || data.length === 0)
+
+    // 1) Retrouver le VRAI compte d'authentification (par email) → son id.
+    const { data: list, error: listErr } = await admin.auth.admin.listUsers({
+      page: 1,
+      perPage: 1000,
+    });
+    if (listErr)
+      return new Response("Erreur listUsers : " + listErr.message, { status: 500 });
+    const authUser = list.users.find(
+      (u) => (u.email || "").toLowerCase() === OWNER_EMAIL
+    );
+    if (!authUser)
       return new Response(
-        `Aucun profil trouvé pour ${OWNER_EMAIL}.`,
+        `Aucun compte d'authentification pour ${OWNER_EMAIL}.`,
         { status: 404 }
       );
-    return new Response(
-      `✅ ${OWNER_EMAIL} est maintenant SUPER ADMIN (${data.length} profil mis à jour).`,
-      { status: 200, headers: { "Content-Type": "text/plain; charset=utf-8" } }
-    );
+    const authId = authUser.id;
+
+    // 2) État avant : lignes profiles portant cet email + ligne de l'id réel.
+    const { data: byEmail } = await admin
+      .from("profiles")
+      .select("id, email, role")
+      .eq("email", OWNER_EMAIL);
+    const { data: byId } = await admin
+      .from("profiles")
+      .select("id, email, role")
+      .eq("id", authId)
+      .maybeSingle();
+
+    // 3) Promouvoir la ligne du VRAI compte (créer si absente).
+    let action = "";
+    if (byId) {
+      const { error } = await admin
+        .from("profiles")
+        .update({ role: "super_admin" })
+        .eq("id", authId);
+      if (error) return new Response("Erreur update : " + error.message, { status: 500 });
+      action = "mise à jour";
+    } else {
+      const { error } = await admin.from("profiles").insert({
+        id: authId,
+        email: OWNER_EMAIL,
+        full_name: authUser.user_metadata?.full_name ?? OWNER_EMAIL,
+        role: "super_admin",
+      });
+      if (error) return new Response("Erreur insert : " + error.message, { status: 500 });
+      action = "créée";
+    }
+
+    // 4) Aligner aussi les éventuels doublons portant cet email.
+    await admin
+      .from("profiles")
+      .update({ role: "super_admin" })
+      .eq("email", OWNER_EMAIL);
+
+    const report =
+      `✅ Compte ${OWNER_EMAIL} promu SUPER ADMIN (ligne ${action}).\n\n` +
+      `Diagnostic :\n` +
+      `- id du compte d'authentification : ${authId}\n` +
+      `- ligne profiles pour cet id : ${byId ? `${byId.role} (existait)` : "absente → créée"}\n` +
+      `- lignes profiles avec cet email : ${(byEmail ?? []).length}\n` +
+      (byEmail ?? [])
+        .map((r) => `    • id=${r.id} role(avant)=${r.role}`)
+        .join("\n") +
+      `\n\n👉 Déconnecte-toi puis reconnecte-toi sur ipmd.pro.`;
+    return new Response(report, {
+      status: 200,
+      headers: { "Content-Type": "text/plain; charset=utf-8" },
+    });
   }
 
   // --- Voie 2 : promotion du compte CONNECTÉ (si son email est autorisé).
