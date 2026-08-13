@@ -118,7 +118,7 @@ function buildBody(d: AttestationPdfData): string[] {
       const court = p?.court ?? levelStr;
       const sujet = d.civilite ? `${d.civilite.label} ${d.name}` : "l'intéressé(e)";
       return [
-        `a régulièrement suivi les enseignements de la ${annee}${filiere ? ` en ${filiere}` : ""} au sein de l'IPMD et a satisfait aux exigences académiques relatives aux enseignements et évaluations de son parcours de formation.`,
+        `a régulièrement suivi les enseignements de la ${annee}${filiere ? ` en ${filiere}` : ""} au sein de l'IPMD.`,
         `${sujet} a satisfait aux exigences académiques de la ${court}, sous réserve de la validation de sa soutenance de fin de cycle.`,
         `La validation définitive de la Licence et la délivrance du diplôme correspondant interviendront après la réussite de la soutenance et l'accomplissement des formalités académiques requises.`,
         `La présente attestation est délivrée pour servir et valoir ce que de droit.`,

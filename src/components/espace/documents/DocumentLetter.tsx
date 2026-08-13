@@ -136,9 +136,7 @@ export function DocumentLetter({
                     {anneePhrase}
                     {filiere ? ` en ${filiere}` : ""}
                   </strong>{" "}
-                  au sein de l&apos;IPMD et a satisfait aux exigences
-                  académiques relatives aux enseignements et évaluations de son
-                  parcours de formation.
+                  au sein de l&apos;IPMD.
                 </p>
                 <p>
                   {sujet}{" "}
