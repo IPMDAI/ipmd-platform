@@ -237,7 +237,7 @@ export default async function DocumentPage({
             </div>
           )}
 
-          {type === "attestation-reussite" && isAdmin && (
+          {type !== "carte" && isAdmin && (
             <DocOptionsBar
               civilite={civilite}
               matricule={matricule}
