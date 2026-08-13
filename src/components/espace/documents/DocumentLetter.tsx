@@ -61,7 +61,6 @@ export function DocumentLetter({
   const anneePhrase = phrases?.annee ?? levelStr;
   const courtPhrase = phrases?.court ?? levelStr;
   // Accord + tournure nominative (« Mademoiselle X est déclarée admise… »).
-  const declare = fem === true ? "déclarée admise" : fem === false ? "déclaré admis" : "déclaré(e) admis(e)";
   const sujet = civilite ? `${civilite.label} ${dossier.name}` : "l'intéressé(e)";
   const inscrit = fem === true ? "inscrite" : fem === false ? "inscrit" : "inscrit(e)";
   const interesse = fem === true ? "l'intéressée" : fem === false ? "l'intéressé" : "l'intéressé(e)";
@@ -142,13 +141,13 @@ export function DocumentLetter({
                   parcours de formation.
                 </p>
                 <p>
-                  En conséquence, {sujet} est{" "}
+                  {sujet}{" "}
                   <strong>
-                    {declare} en {courtPhrase}, sous réserve de la validation de
-                    sa soutenance de fin de cycle
+                    a satisfait aux exigences académiques de la {courtPhrase},
+                    sous réserve de la validation de sa soutenance de fin de
+                    cycle
                   </strong>
-                  , conformément aux dispositions académiques en vigueur au sein
-                  de l&apos;Institut.
+                  .
                 </p>
                 <p>
                   La validation définitive de la Licence et la délivrance du
