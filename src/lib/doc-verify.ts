@@ -24,6 +24,7 @@ export type DocPayload = {
   a?: number | null; // moyenne (réussite) OU montant (reçu)
   me?: string; // mention (réussite)
   d?: string; // date (reçu de paiement)
+  v?: string; // variante (ex. 'sous-reserve' pour l'attestation de réussite)
 };
 
 function b64urlEncode(input: string): string {

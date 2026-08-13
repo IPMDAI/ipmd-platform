@@ -73,16 +73,24 @@ export default async function VerifierPage({
                 <Row label="Titulaire" value={payload.n} />
                 <Row label="Matricule" value={payload.m} />
                 <Row label="Année académique" value={payload.y} />
-                {payload.t === "attestation-reussite" && (
-                  <Row
-                    label="Résultat"
-                    value={
-                      payload.a != null
-                        ? `${payload.a}/20 — ${payload.me ?? ""}`.trim()
-                        : "Validé"
-                    }
-                  />
-                )}
+                {payload.t === "attestation-reussite" &&
+                  payload.v === "sous-reserve" && (
+                    <Row
+                      label="Situation"
+                      value="Admise sous réserve de la validation de la soutenance"
+                    />
+                  )}
+                {payload.t === "attestation-reussite" &&
+                  payload.v !== "sous-reserve" && (
+                    <Row
+                      label="Résultat"
+                      value={
+                        payload.a != null
+                          ? `${payload.a}/20 — ${payload.me ?? ""}`.trim()
+                          : "Validé"
+                      }
+                    />
+                  )}
                 {(payload.t === "bulletin" || payload.t === "releve-notes") &&
                   payload.a != null && (
                     <Row label="Moyenne générale" value={`${payload.a}/20`} />

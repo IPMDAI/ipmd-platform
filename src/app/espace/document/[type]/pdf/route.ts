@@ -86,9 +86,10 @@ export async function GET(
       m: effectiveMatricule,
       n: dossier.name,
       y: dossier.year,
-      ...(type === "attestation-reussite"
+      ...(type === "attestation-reussite" && variant !== "sous-reserve"
         ? { a: dossier.average, me: dossier.mention }
         : {}),
+      ...(variant === "sous-reserve" ? { v: "sous-reserve" } : {}),
     })
   );
 
