@@ -129,32 +129,44 @@ export function Header({ isAuthenticated = false }: { isAuthenticated?: boolean 
           )}
         </div>
 
-        {/* Bouton menu mobile */}
-        <button
-          type="button"
-          aria-label="Ouvrir le menu"
-          aria-expanded={open}
-          onClick={() => setOpen((v) => !v)}
-          className="flex h-10 w-10 items-center justify-center rounded-lg text-ipmd-black lg:hidden"
-        >
-          <div className="space-y-1.5">
-            <span
-              className={`block h-0.5 w-6 bg-current transition-transform ${
-                open ? "translate-y-2 rotate-45" : ""
-              }`}
-            />
-            <span
-              className={`block h-0.5 w-6 bg-current transition-opacity ${
-                open ? "opacity-0" : ""
-              }`}
-            />
-            <span
-              className={`block h-0.5 w-6 bg-current transition-transform ${
-                open ? "-translate-y-2 -rotate-45" : ""
-              }`}
-            />
-          </div>
-        </button>
+        {/* Actions mobile : Connexion visible EN PERMANENCE + menu ☰ */}
+        <div className="flex items-center gap-2 lg:hidden">
+          {isAuthenticated ? (
+            <Button href="/espace">Mon espace</Button>
+          ) : (
+            <Link
+              href="/connexion"
+              className="rounded-full bg-ipmd-black px-4 py-2 text-sm font-semibold text-white transition-opacity hover:opacity-90"
+            >
+              Connexion
+            </Link>
+          )}
+          <button
+            type="button"
+            aria-label="Ouvrir le menu"
+            aria-expanded={open}
+            onClick={() => setOpen((v) => !v)}
+            className="flex h-10 w-10 items-center justify-center rounded-lg text-ipmd-black"
+          >
+            <div className="space-y-1.5">
+              <span
+                className={`block h-0.5 w-6 bg-current transition-transform ${
+                  open ? "translate-y-2 rotate-45" : ""
+                }`}
+              />
+              <span
+                className={`block h-0.5 w-6 bg-current transition-opacity ${
+                  open ? "opacity-0" : ""
+                }`}
+              />
+              <span
+                className={`block h-0.5 w-6 bg-current transition-transform ${
+                  open ? "-translate-y-2 -rotate-45" : ""
+                }`}
+              />
+            </div>
+          </button>
+        </div>
       </Container>
 
       {/* Menu mobile déroulant */}
