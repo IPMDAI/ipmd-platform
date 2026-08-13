@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { requireAdmin } from "@/lib/require-admin";
 import { Container } from "@/components/ui/Container";
+import { StudentSearchList } from "@/components/espace/StudentSearchList";
 
 export const metadata: Metadata = {
   title: "Bulletins",
@@ -40,28 +41,15 @@ export default async function BulletinsPage() {
               Aucun étudiant.
             </p>
           ) : (
-            <ul className="mt-8 divide-y divide-black/5 overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-black/5">
-              {list.map((s) => (
-                <li key={s.id}>
-                  <Link
-                    href={`/espace/bulletin/${s.id}`}
-                    className="flex items-center justify-between gap-3 p-4 transition-colors hover:bg-ipmd-light"
-                  >
-                    <div className="min-w-0">
-                      <p className="truncate font-semibold text-ipmd-black">
-                        {s.full_name || "—"}
-                      </p>
-                      <p className="truncate text-sm text-black/50">
-                        {s.email}
-                      </p>
-                    </div>
-                    <span className="shrink-0 text-xs font-semibold text-ipmd-red">
-                      Voir le bulletin →
-                    </span>
-                  </Link>
-                </li>
-              ))}
-            </ul>
+            <StudentSearchList
+              cta="Voir le bulletin →"
+              items={list.map((s) => ({
+                id: s.id,
+                name: s.full_name || "",
+                email: s.email || "",
+                href: `/espace/bulletin/${s.id}`,
+              }))}
+            />
           )}
         </div>
       </Container>

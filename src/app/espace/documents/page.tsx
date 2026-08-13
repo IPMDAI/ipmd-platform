@@ -11,6 +11,7 @@ import {
   SIGNATORIES,
 } from "@/lib/signatories";
 import { setDocumentGrant } from "@/lib/admin-actions";
+import { StudentSearchList } from "@/components/espace/StudentSearchList";
 import { LEARNER_ROLES } from "@/lib/dashboards";
 import { universes } from "@/data/universes";
 
@@ -75,28 +76,15 @@ export default async function DocumentsPage({
                 Aucun étudiant.
               </p>
             ) : (
-              <ul className="mt-8 divide-y divide-black/5 overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-black/5">
-                {list.map((s) => (
-                  <li key={s.id}>
-                    <Link
-                      href={`/espace/documents?student=${s.id}`}
-                      className="flex items-center justify-between gap-3 p-4 transition-colors hover:bg-ipmd-light"
-                    >
-                      <div className="min-w-0">
-                        <p className="truncate font-semibold text-ipmd-black">
-                          {s.full_name || "—"}
-                        </p>
-                        <p className="truncate text-sm text-black/50">
-                          {s.email}
-                        </p>
-                      </div>
-                      <span className="shrink-0 text-xs font-semibold text-ipmd-red">
-                        Documents →
-                      </span>
-                    </Link>
-                  </li>
-                ))}
-              </ul>
+              <StudentSearchList
+                cta="Documents →"
+                items={list.map((s) => ({
+                  id: s.id,
+                  name: s.full_name || "",
+                  email: s.email || "",
+                  href: `/espace/documents?student=${s.id}`,
+                }))}
+              />
             )}
           </div>
         </Container>
