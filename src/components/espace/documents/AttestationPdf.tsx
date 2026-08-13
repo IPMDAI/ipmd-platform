@@ -7,7 +7,7 @@ import {
   StyleSheet,
   renderToBuffer,
 } from "@react-pdf/renderer";
-import { OFFICIAL_LEGAL_LINES, NB_SHORT } from "@/lib/doc-format";
+import { OFFICIAL_LEGAL_LINES, NB_SHORT, levelPhrases } from "@/lib/doc-format";
 
 export type AttestationPdfData = {
   kind: "scolarite" | "certificat" | "reussite";
@@ -105,11 +105,15 @@ function buildBody(d: AttestationPdfData): string[] {
   if (d.kind === "reussite") {
     // Variante « sous réserve de soutenance » (documents diplômants).
     if (!isBC && d.variant === "sous-reserve") {
-      const progEn = d.programLine.replace(" — ", " en ");
-      const levelPart = d.programLine.split(" — ")[0];
+      const dashIdx = d.programLine.indexOf(" — ");
+      const filiere = dashIdx >= 0 ? d.programLine.slice(dashIdx + 3) : null;
+      const levelStr = dashIdx >= 0 ? d.programLine.slice(0, dashIdx) : d.programLine;
+      const p = levelPhrases(levelStr);
+      const annee = p?.annee ?? levelStr;
+      const court = p?.court ?? levelStr;
       return [
-        `a régulièrement suivi les enseignements de la ${progEn} au sein de l'IPMD et a satisfait aux exigences académiques relatives aux enseignements et évaluations de son parcours de formation.`,
-        `En conséquence, l'intéressé(e) est déclaré(e) admis(e) en ${levelPart}, sous réserve de la validation de sa soutenance de fin de cycle, conformément aux dispositions académiques en vigueur au sein de l'Institut.`,
+        `a régulièrement suivi les enseignements de la ${annee}${filiere ? ` en ${filiere}` : ""} au sein de l'IPMD et a satisfait aux exigences académiques relatives aux enseignements et évaluations de son parcours de formation.`,
+        `En conséquence, l'intéressé(e) est déclaré(e) admis(e) en ${court}, sous réserve de la validation de sa soutenance de fin de cycle, conformément aux dispositions académiques en vigueur au sein de l'Institut.`,
         `La validation définitive du diplôme interviendra après la réussite de la soutenance et l'accomplissement des formalités académiques requises.`,
         `La présente attestation est délivrée pour servir et valoir ce que de droit.`,
       ];

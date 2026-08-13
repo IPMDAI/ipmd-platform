@@ -72,6 +72,37 @@ export function programLine(d: Dossier): string {
   return filiere || level || "Formation IPMD";
 }
 
+const ORDINALS: Record<number, string> = {
+  1: "première",
+  2: "deuxième",
+  3: "troisième",
+  4: "quatrième",
+  5: "cinquième",
+  6: "sixième",
+};
+
+/**
+ * Décompose un niveau (« Licence 3 ») en formulations officielles :
+ * - `annee` : « troisième année de Licence (L3) »
+ * - `court` : « Licence 3 (L3) »
+ * Renvoie null si le niveau n'est pas de la forme « <Cycle> <chiffre> ».
+ */
+export function levelPhrases(
+  level: string | null
+): { annee: string; court: string } | null {
+  if (!level) return null;
+  const m = stripYear(level).match(/^([A-Za-zÀ-ÿ]+)\s*(\d)/);
+  if (!m) return null;
+  const cycle = m[1].charAt(0).toUpperCase() + m[1].slice(1).toLowerCase();
+  const num = parseInt(m[2], 10);
+  const code = `${cycle.charAt(0).toUpperCase()}${num}`;
+  const ord = ORDINALS[num] ?? `${num}e`;
+  return {
+    annee: `${ord} année de ${cycle} (${code})`,
+    court: `${cycle} ${num} (${code})`,
+  };
+}
+
 export type DocKind = "scolarite" | "certificat" | "reussite";
 
 /** Intitulé officiel du document selon le type (diplôme vs bootcamp). */

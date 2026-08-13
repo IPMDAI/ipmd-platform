@@ -1,6 +1,6 @@
 import Image from "next/image";
 import { longDate, type Dossier } from "@/lib/documents";
-import { programLine, birthLine } from "@/lib/doc-format";
+import { programLine, birthLine, levelPhrases } from "@/lib/doc-format";
 import { QrCode } from "@/components/espace/documents/QrCode";
 import { Cachet } from "@/components/espace/documents/Cachet";
 import { OfficialFooter } from "@/components/espace/documents/OfficialFooter";
@@ -47,8 +47,12 @@ export function DocumentLetter({
   const mat = matricule ?? dossier.matricule;
   const sousReserve = kind === "reussite" && variant === "sous-reserve";
   const prog = programLine(dossier);
-  const progEn = prog.replace(" — ", " en ");
-  const levelPart = prog.split(" — ")[0];
+  const dashIdx = prog.indexOf(" — ");
+  const filiere = dashIdx >= 0 ? prog.slice(dashIdx + 3) : null;
+  const levelStr = dossier.level ?? (dashIdx >= 0 ? prog.slice(0, dashIdx) : prog);
+  const phrases = levelPhrases(levelStr);
+  const anneePhrase = phrases?.annee ?? levelStr;
+  const courtPhrase = phrases?.court ?? levelStr;
 
   return (
     <div className="document-page relative overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-black/5 print:rounded-none print:shadow-none print:ring-0 print:mb-2 print:border-t-[6px] print:border-ipmd-red">
@@ -117,15 +121,19 @@ export function DocumentLetter({
               <>
                 <p>
                   a régulièrement suivi les enseignements de la{" "}
-                  <strong>{progEn}</strong>{" "}au sein de l&apos;IPMD et a
-                  satisfait aux exigences académiques relatives aux
-                  enseignements et évaluations de son parcours de formation.
+                  <strong>
+                    {anneePhrase}
+                    {filiere ? ` en ${filiere}` : ""}
+                  </strong>{" "}
+                  au sein de l&apos;IPMD et a satisfait aux exigences
+                  académiques relatives aux enseignements et évaluations de son
+                  parcours de formation.
                 </p>
                 <p>
                   En conséquence, l&apos;intéressé(e) est déclaré(e){" "}
                   <strong>
-                    admis(e) en {levelPart}, sous réserve de la validation de sa
-                    soutenance de fin de cycle
+                    admis(e) en {courtPhrase}, sous réserve de la validation de
+                    sa soutenance de fin de cycle
                   </strong>
                   , conformément aux dispositions académiques en vigueur au sein
                   de l&apos;Institut.
