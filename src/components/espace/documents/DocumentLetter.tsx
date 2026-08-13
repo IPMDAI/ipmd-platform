@@ -199,13 +199,13 @@ export function DocumentLetter({
               <p>
                 {isBC ? (
                   <>
-                    est régulièrement {inscrit} au bootcamp{" "}
+                    est régulièrement {inscrit}{" "}au bootcamp{" "}
                     <strong>{programLine(dossier)}</strong> à l&apos;IPMD, et y
                     suit assidûment la formation.
                   </>
                 ) : (
                   <>
-                    est régulièrement {inscrit} à l&apos;IPMD au titre de
+                    est régulièrement {inscrit}{" "}à l&apos;IPMD au titre de
                     l&apos;année académique <strong>{dossier.year}</strong>, en{" "}
                     <strong>{programLine(dossier)}</strong>, et y suit assidûment
                     les enseignements.
@@ -216,7 +216,7 @@ export function DocumentLetter({
                 {kind === "certificat"
                   ? "Le présent certificat est délivré"
                   : "La présente attestation est délivrée"}{" "}
-                à {interesse} pour servir et valoir ce que de droit.
+                à {interesse}{" "}pour servir et valoir ce que de droit.
               </p>
             </>
           )}
