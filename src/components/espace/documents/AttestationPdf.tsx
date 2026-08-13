@@ -17,6 +17,7 @@ export type AttestationPdfData = {
   title: string;
   name: string;
   matricule: string;
+  reference?: string;
   year: string;
   programLine: string;
   birthLine: string | null;
@@ -158,7 +159,7 @@ function AttestationDocument({ d }: { d: AttestationPdfData }) {
               </View>
             </View>
             <View style={s.headerRight}>
-              <Text style={s.num}>N° {d.matricule}</Text>
+              <Text style={s.num}>N° {d.reference ?? d.matricule}</Text>
               <Text style={s.yearTxt}>Année {d.year}</Text>
             </View>
           </View>

@@ -6,6 +6,7 @@ import { Container } from "@/components/ui/Container";
 import { PrintButton } from "@/components/espace/PrintButton";
 import { DocumentLetter } from "@/components/espace/documents/DocumentLetter";
 import { StudentCard } from "@/components/espace/documents/StudentCard";
+import { DocOptionsBar } from "@/components/espace/documents/DocOptionsBar";
 import { getDossier, isDocumentSlug, longDate } from "@/lib/documents";
 import { parseCivilite } from "@/lib/doc-format";
 import { signDoc, verifyUrl } from "@/lib/doc-verify";
@@ -233,6 +234,14 @@ export default async function DocumentPage({
                 );
               })}
             </div>
+          )}
+
+          {type === "attestation-reussite" && isAdmin && (
+            <DocOptionsBar
+              civilite={civilite}
+              matricule={matricule}
+              date={date}
+            />
           )}
 
           <div className="print-area mt-6">

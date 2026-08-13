@@ -108,6 +108,7 @@ export async function GET(
     title: documentTitle(kind, dossier.isBootcamp),
     name: dossier.name,
     matricule: effectiveMatricule,
+    reference: dossier.matricule,
     year: dossier.year,
     programLine: programLine(dossier),
     birthLine: birthLine(dossier, civilite?.fem ?? null),
