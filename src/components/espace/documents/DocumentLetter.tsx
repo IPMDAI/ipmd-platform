@@ -117,9 +117,9 @@ export function DocumentLetter({
               <>
                 <p>
                   a régulièrement suivi les enseignements de la{" "}
-                  <strong>{progEn}</strong> au sein de l&apos;IPMD et a satisfait
-                  aux exigences académiques relatives aux enseignements et
-                  évaluations de son parcours de formation.
+                  <strong>{progEn}</strong>{" "}au sein de l&apos;IPMD et a
+                  satisfait aux exigences académiques relatives aux
+                  enseignements et évaluations de son parcours de formation.
                 </p>
                 <p>
                   En conséquence, l&apos;intéressé(e) est déclaré(e){" "}
