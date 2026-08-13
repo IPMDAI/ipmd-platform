@@ -70,6 +70,7 @@ const s = StyleSheet.create({
   intro: { marginTop: 12 },
   nameBox: { marginTop: 8, backgroundColor: LIGHT, paddingVertical: 9, paddingHorizontal: 16, borderRadius: 6 },
   name: { fontSize: 14, fontWeight: 700, color: BLACK },
+  idLine: { fontSize: 12, color: BLACK },
   matricule: { fontSize: 9.5, color: MUTED, marginTop: 2 },
   birth: { fontSize: 9.5, color: MUTED, marginTop: 3 },
   para: { marginTop: 8 },
@@ -115,13 +116,12 @@ function buildBody(d: AttestationPdfData): string[] {
       const levelStr = dashIdx >= 0 ? d.programLine.slice(0, dashIdx) : d.programLine;
       const p = levelPhrases(levelStr);
       const annee = p?.annee ?? levelStr;
-      const court = p?.court ?? levelStr;
       const sujet = d.civilite ? `${d.civilite.label} ${d.name}` : "l'intéressé(e)";
       return [
-        `a régulièrement suivi les enseignements de la ${annee}${filiere ? ` en ${filiere}` : ""} au sein de l'IPMD.`,
-        `${sujet} a satisfait aux exigences académiques de la ${court}, sous réserve de la validation de sa soutenance de fin de cycle.`,
-        `La validation définitive de la Licence et la délivrance du diplôme correspondant interviendront après la réussite de la soutenance et l'accomplissement des formalités académiques requises.`,
-        `La présente attestation est délivrée pour servir et valoir ce que de droit.`,
+        `a régulièrement suivi les enseignements de la ${annee}${filiere ? ` en ${filiere}` : ""} au sein de l'Institut Polytechnique des Métiers du Digital (IPMD) et a satisfait aux exigences académiques relatives aux enseignements et évaluations de son parcours de formation.`,
+        `En conséquence, ${sujet} a satisfait aux exigences académiques de la ${annee}, sous réserve de la validation de sa soutenance de fin de cycle, conformément aux dispositions académiques en vigueur au sein de l'Institut.`,
+        `La validation définitive de la Licence et la délivrance du diplôme correspondant interviendront après la réussite de la soutenance et l'accomplissement de l'ensemble des formalités académiques requises.`,
+        `La présente attestation lui est délivrée pour servir et valoir ce que de droit.`,
       ];
     }
     return [
@@ -174,8 +174,10 @@ function AttestationDocument({ d }: { d: AttestationPdfData }) {
           </Text>
 
           <View style={s.nameBox}>
-            <Text style={s.name}>{d.name}</Text>
-            <Text style={s.matricule}>Matricule {d.matricule}</Text>
+            <Text style={s.idLine}>
+              Nom et Prénoms : <Text style={s.bold}>{d.name}</Text>
+            </Text>
+            <Text style={s.matricule}>Matricule : {d.matricule}</Text>
             {d.birthLine ? <Text style={s.birth}>{d.birthLine}</Text> : null}
           </View>
 

@@ -59,7 +59,6 @@ export function DocumentLetter({
   const levelStr = dossier.level ?? (dashIdx >= 0 ? prog.slice(0, dashIdx) : prog);
   const phrases = levelPhrases(levelStr);
   const anneePhrase = phrases?.annee ?? levelStr;
-  const courtPhrase = phrases?.court ?? levelStr;
   // Accord + tournure nominative (« Mademoiselle X est déclarée admise… »).
   const sujet = civilite ? `${civilite.label} ${dossier.name}` : "l'intéressé(e)";
   const inscrit = fem === true ? "inscrite" : fem === false ? "inscrit" : "inscrit(e)";
@@ -116,14 +115,15 @@ export function DocumentLetter({
           </p>
 
           <div className="rounded-xl bg-ipmd-light px-5 py-4">
-            <p className="text-lg font-extrabold text-ipmd-black">
-              {dossier.name}
+            <p className="text-base text-ipmd-black">
+              <span className="font-semibold">Nom et Prénoms :</span>{" "}
+              <span className="font-extrabold">{dossier.name}</span>
             </p>
-            <p className="text-sm text-black/55">
-              Matricule {mat}
+            <p className="mt-1 text-sm text-black/70">
+              <span className="font-semibold">Matricule :</span> {mat}
             </p>
             {birth && (
-              <p className="mt-1 text-sm text-black/55">{birth}</p>
+              <p className="mt-0.5 text-sm text-black/70">{birth}</p>
             )}
           </div>
 
@@ -136,26 +136,29 @@ export function DocumentLetter({
                     {anneePhrase}
                     {filiere ? ` en ${filiere}` : ""}
                   </strong>{" "}
-                  au sein de l&apos;IPMD.
+                  au sein de l&apos;Institut Polytechnique des Métiers du Digital
+                  (IPMD) et a satisfait aux exigences académiques relatives aux
+                  enseignements et évaluations de son parcours de formation.
                 </p>
                 <p>
-                  {sujet}{" "}
+                  En conséquence, {sujet}{" "}
                   <strong>
-                    a satisfait aux exigences académiques de la {courtPhrase},
+                    a satisfait aux exigences académiques de la {anneePhrase},
                     sous réserve de la validation de sa soutenance de fin de
                     cycle
                   </strong>
-                  .
+                  , conformément aux dispositions académiques en vigueur au sein
+                  de l&apos;Institut.
                 </p>
                 <p>
                   La validation définitive de la Licence et la délivrance du
                   diplôme correspondant interviendront après la réussite de la
-                  soutenance et l&apos;accomplissement des formalités académiques
-                  requises.
+                  soutenance et l&apos;accomplissement de l&apos;ensemble des
+                  formalités académiques requises.
                 </p>
                 <p>
-                  La présente attestation est délivrée pour servir et valoir ce
-                  que de droit.
+                  La présente attestation lui est délivrée pour servir et valoir
+                  ce que de droit.
                 </p>
               </>
             ) : (
