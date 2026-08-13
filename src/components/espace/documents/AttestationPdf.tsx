@@ -104,6 +104,9 @@ function buildBody(d: AttestationPdfData): string[] {
     d.average !== null
       ? `, avec une moyenne générale de ${d.average}/20, mention ${d.mention}`
       : "";
+  const fem = d.civilite?.fem;
+  const inscrit = fem === true ? "inscrite" : fem === false ? "inscrit" : "inscrit(e)";
+  const interesse = fem === true ? "l'intéressée" : fem === false ? "l'intéressé" : "l'intéressé(e)";
   if (d.kind === "reussite") {
     // Variante « sous réserve de soutenance » (documents diplômants).
     if (!isBC && d.variant === "sous-reserve") {
@@ -128,14 +131,14 @@ function buildBody(d: AttestationPdfData): string[] {
       isBC
         ? `a suivi et complété avec succès le bootcamp ${d.programLine} à l'IPMD${avg}.`
         : `a satisfait aux exigences pédagogiques de l'IPMD et validé son parcours en ${d.programLine}, au titre de l'année académique ${d.year}${avg}.`,
-      `${isBC ? "Le présent certificat" : "La présente attestation"} est délivré(e) pour servir et valoir ce que de droit.`,
+      `${isBC ? "Le présent certificat est délivré" : "La présente attestation est délivrée"} pour servir et valoir ce que de droit.`,
     ];
   }
   return [
     isBC
-      ? `est régulièrement inscrit(e) au bootcamp ${d.programLine} à l'IPMD, et y suit assidûment la formation.`
-      : `est régulièrement inscrit(e) à l'IPMD au titre de l'année académique ${d.year}, en ${d.programLine}, et y suit assidûment les enseignements.`,
-    `${d.kind === "certificat" ? "Le présent certificat" : "La présente attestation"} est délivré(e) à l'intéressé(e) pour servir et valoir ce que de droit.`,
+      ? `est régulièrement ${inscrit} au bootcamp ${d.programLine} à l'IPMD, et y suit assidûment la formation.`
+      : `est régulièrement ${inscrit} à l'IPMD au titre de l'année académique ${d.year}, en ${d.programLine}, et y suit assidûment les enseignements.`,
+    `${d.kind === "certificat" ? "Le présent certificat est délivré" : "La présente attestation est délivrée"} à ${interesse} pour servir et valoir ce que de droit.`,
   ];
 }
 

@@ -63,6 +63,8 @@ export function DocumentLetter({
   // Accord + tournure nominative (« Mademoiselle X est déclarée admise… »).
   const declare = fem === true ? "déclarée admise" : fem === false ? "déclaré admis" : "déclaré(e) admis(e)";
   const sujet = civilite ? `${civilite.label} ${dossier.name}` : "l'intéressé(e)";
+  const inscrit = fem === true ? "inscrite" : fem === false ? "inscrit" : "inscrit(e)";
+  const interesse = fem === true ? "l'intéressée" : fem === false ? "l'intéressé" : "l'intéressé(e)";
 
   return (
     <div className="document-page relative overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-black/5 print:rounded-none print:shadow-none print:ring-0 print:mb-2 print:border-t-[6px] print:border-ipmd-red">
@@ -185,8 +187,10 @@ export function DocumentLetter({
                 .
               </p>
               <p>
-                {isBC ? "Le présent certificat" : "La présente attestation"} est
-                délivré(e) pour servir et valoir ce que de droit.
+                {isBC
+                  ? "Le présent certificat est délivré"
+                  : "La présente attestation est délivrée"}{" "}
+                pour servir et valoir ce que de droit.
               </p>
             </>
             )
@@ -195,13 +199,13 @@ export function DocumentLetter({
               <p>
                 {isBC ? (
                   <>
-                    est régulièrement inscrit(e) au bootcamp{" "}
+                    est régulièrement {inscrit} au bootcamp{" "}
                     <strong>{programLine(dossier)}</strong> à l&apos;IPMD, et y
                     suit assidûment la formation.
                   </>
                 ) : (
                   <>
-                    est régulièrement inscrit(e) à l&apos;IPMD au titre de
+                    est régulièrement {inscrit} à l&apos;IPMD au titre de
                     l&apos;année académique <strong>{dossier.year}</strong>, en{" "}
                     <strong>{programLine(dossier)}</strong>, et y suit assidûment
                     les enseignements.
@@ -209,9 +213,10 @@ export function DocumentLetter({
                 )}
               </p>
               <p>
-                {kind === "certificat" ? "Le présent certificat" : "La présente attestation"}{" "}
-                est délivré(e) à l&apos;intéressé(e) pour servir et valoir ce
-                que de droit.
+                {kind === "certificat"
+                  ? "Le présent certificat est délivré"
+                  : "La présente attestation est délivrée"}{" "}
+                à {interesse} pour servir et valoir ce que de droit.
               </p>
             </>
           )}
