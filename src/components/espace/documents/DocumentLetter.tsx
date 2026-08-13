@@ -241,11 +241,7 @@ export function DocumentLetter({
                   alt={`Signature — ${signatory.name}`}
                   className="absolute inset-0 h-full w-full object-contain"
                 />
-              ) : (
-                <span className="absolute inset-0 flex items-center justify-center text-[10px] italic text-black/40">
-                  Signature autorisée
-                </span>
-              )}
+              ) : null}
             </div>
             <p className="mt-2 text-sm font-bold text-ipmd-black">
               {signatory.title}

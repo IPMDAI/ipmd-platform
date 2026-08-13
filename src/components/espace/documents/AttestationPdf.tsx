@@ -194,9 +194,7 @@ function AttestationDocument({ d }: { d: AttestationPdfData }) {
               <View style={s.sigStampRow}>
                 {d.signatureSrc ? (
                   <Image src={d.signatureSrc} style={s.sigImg} />
-                ) : (
-                  <Text style={s.sigAuth}>Signature autorisée</Text>
-                )}
+                ) : null}
                 {d.cachetSrc ? <Image src={d.cachetSrc} style={s.cachetImg} /> : null}
               </View>
               <Text style={s.sigTitle}>{d.signatory.title}</Text>
