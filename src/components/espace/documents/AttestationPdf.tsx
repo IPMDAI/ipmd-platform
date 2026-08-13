@@ -12,6 +12,7 @@ import { OFFICIAL_LEGAL_LINES, NB_SHORT, levelPhrases } from "@/lib/doc-format";
 export type AttestationPdfData = {
   kind: "scolarite" | "certificat" | "reussite";
   variant?: "definitive" | "sous-reserve";
+  civilite?: { label: string; fem: boolean } | null;
   isBootcamp: boolean;
   title: string;
   name: string;
@@ -111,10 +112,14 @@ function buildBody(d: AttestationPdfData): string[] {
       const p = levelPhrases(levelStr);
       const annee = p?.annee ?? levelStr;
       const court = p?.court ?? levelStr;
+      const fem = d.civilite?.fem;
+      const declare =
+        fem === true ? "déclarée admise" : fem === false ? "déclaré admis" : "déclaré(e) admis(e)";
+      const sujet = d.civilite ? `${d.civilite.label} ${d.name}` : "l'intéressé(e)";
       return [
         `a régulièrement suivi les enseignements de la ${annee}${filiere ? ` en ${filiere}` : ""} au sein de l'IPMD et a satisfait aux exigences académiques relatives aux enseignements et évaluations de son parcours de formation.`,
-        `En conséquence, l'intéressé(e) est déclaré(e) admis(e) en ${court}, sous réserve de la validation de sa soutenance de fin de cycle, conformément aux dispositions académiques en vigueur au sein de l'Institut.`,
-        `La validation définitive du diplôme interviendra après la réussite de la soutenance et l'accomplissement des formalités académiques requises.`,
+        `En conséquence, ${sujet} est ${declare} en ${court}, sous réserve de la validation de sa soutenance de fin de cycle, conformément aux dispositions académiques en vigueur au sein de l'Institut.`,
+        `La validation définitive de la Licence et la délivrance du diplôme correspondant interviendront après la réussite de la soutenance et l'accomplissement des formalités académiques requises.`,
         `La présente attestation est délivrée pour servir et valoir ce que de droit.`,
       ];
     }

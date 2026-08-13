@@ -3,7 +3,13 @@ import path from "node:path";
 import QRCode from "qrcode";
 import { requireUser } from "@/lib/require-user";
 import { getDossier, isDocumentSlug, longDate } from "@/lib/documents";
-import { programLine, birthLine, documentTitle, type DocKind } from "@/lib/doc-format";
+import {
+  programLine,
+  birthLine,
+  documentTitle,
+  parseCivilite,
+  type DocKind,
+} from "@/lib/doc-format";
 import { resolveSignatory } from "@/lib/signatories";
 import { officialAssetDataUri } from "@/lib/secure-assets";
 import { signDoc, verifyUrl } from "@/lib/doc-verify";
@@ -49,6 +55,8 @@ export async function GET(
   const signataire = url.searchParams.get("signataire") || undefined;
   const variante = url.searchParams.get("variante") || undefined;
   const matriculeOverride = url.searchParams.get("matricule")?.trim() || undefined;
+  const civilite = parseCivilite(url.searchParams.get("civilite"));
+  const dateParam = url.searchParams.get("date")?.trim() || undefined;
   const targetId = student || userId;
 
   const dossier = await getDossier(targetId);
@@ -60,6 +68,10 @@ export async function GET(
       ? ("sous-reserve" as const)
       : ("definitive" as const);
   const effectiveMatricule = matriculeOverride || dossier.matricule;
+  const docDate =
+    dateParam && /^\d{4}-\d{2}-\d{2}$/.test(dateParam)
+      ? longDate(new Date(dateParam + "T12:00:00Z"))
+      : longDate();
 
   const kind: DocKind =
     type === "certificat-scolarite"
@@ -91,16 +103,17 @@ export async function GET(
   const data: AttestationPdfData = {
     kind,
     variant,
+    civilite,
     isBootcamp: dossier.isBootcamp,
     title: documentTitle(kind, dossier.isBootcamp),
     name: dossier.name,
     matricule: effectiveMatricule,
     year: dossier.year,
     programLine: programLine(dossier),
-    birthLine: birthLine(dossier),
+    birthLine: birthLine(dossier, civilite?.fem ?? null),
     average: dossier.average,
     mention: dossier.mention,
-    longDate: longDate(),
+    longDate: docDate,
     signatory: {
       title: sig.title,
       name: sig.name,

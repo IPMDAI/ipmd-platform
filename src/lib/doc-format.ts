@@ -120,10 +120,25 @@ export function documentTitle(kind: DocKind, isBootcamp: boolean): string {
   return (isBootcamp ? bootcamp : diplome)[kind];
 }
 
-/** Ligne de naissance « Né(e) le : … à … » ou null si aucune info. */
-export function birthLine(d: Dossier): string | null {
+/** Ligne de naissance « Né(e) le : … à … ». `fem` accorde (Née / Né). */
+export function birthLine(
+  d: Dossier,
+  fem?: boolean | null
+): string | null {
   if (!d.birthDate && !d.birthPlace) return null;
-  const datePart = d.birthDate ? `Né(e) le : ${frBirth(d.birthDate)}` : "Né(e)";
+  const ne = fem === true ? "Née" : fem === false ? "Né" : "Né(e)";
+  const datePart = d.birthDate ? `${ne} le : ${frBirth(d.birthDate)}` : ne;
   const placePart = d.birthPlace ? ` à ${d.birthPlace}` : "";
   return `${datePart}${placePart}`;
+}
+
+/** Civilité choisie (pilote l'accord Madame/Mademoiselle/Monsieur). */
+export function parseCivilite(
+  s?: string | null
+): { label: string; fem: boolean } | null {
+  const v = (s ?? "").trim().toLowerCase();
+  if (v === "m" || v === "mr" || v === "monsieur") return { label: "Monsieur", fem: false };
+  if (v === "mme" || v === "madame") return { label: "Madame", fem: true };
+  if (v === "mlle" || v === "mademoiselle") return { label: "Mademoiselle", fem: true };
+  return null;
 }

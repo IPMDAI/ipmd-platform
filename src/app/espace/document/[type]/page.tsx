@@ -6,7 +6,8 @@ import { Container } from "@/components/ui/Container";
 import { PrintButton } from "@/components/espace/PrintButton";
 import { DocumentLetter } from "@/components/espace/documents/DocumentLetter";
 import { StudentCard } from "@/components/espace/documents/StudentCard";
-import { getDossier, isDocumentSlug } from "@/lib/documents";
+import { getDossier, isDocumentSlug, longDate } from "@/lib/documents";
+import { parseCivilite } from "@/lib/doc-format";
 import { signDoc, verifyUrl } from "@/lib/doc-verify";
 import { resolveSignatory, SIGNATORIES } from "@/lib/signatories";
 import { officialAssetDataUri } from "@/lib/secure-assets";
@@ -26,10 +27,13 @@ export default async function DocumentPage({
     signataire?: string;
     variante?: string;
     matricule?: string;
+    civilite?: string;
+    date?: string;
   }>;
 }) {
   const { type } = await params;
-  const { student, signataire, variante, matricule } = await searchParams;
+  const { student, signataire, variante, matricule, civilite, date } =
+    await searchParams;
   if (!isDocumentSlug(type)) notFound();
 
   const { supabase, userId } = await requireUser();
@@ -68,6 +72,11 @@ export default async function DocumentPage({
       ? ("sous-reserve" as const)
       : ("definitive" as const);
   const effectiveMatricule = matricule?.trim() || dossier.matricule;
+  const civ = parseCivilite(civilite);
+  const dateLabel =
+    date && /^\d{4}-\d{2}-\d{2}$/.test(date)
+      ? longDate(new Date(date + "T12:00:00Z"))
+      : undefined;
 
   const verifyHref = verifyUrl(
     signDoc({
@@ -104,6 +113,10 @@ export default async function DocumentPage({
     const qs = new URLSearchParams();
     if (student) qs.set("student", student);
     qs.set("signataire", key);
+    if (variante === "sous-reserve") qs.set("variante", "sous-reserve");
+    if (matricule) qs.set("matricule", matricule);
+    if (civilite) qs.set("civilite", civilite);
+    if (date) qs.set("date", date);
     return `?${qs.toString()}`;
   };
 
@@ -114,16 +127,20 @@ export default async function DocumentPage({
     if (signataire) qs.set("signataire", signataire);
     if (variante === "sous-reserve") qs.set("variante", "sous-reserve");
     if (matricule) qs.set("matricule", matricule);
+    if (civilite) qs.set("civilite", civilite);
+    if (date) qs.set("date", date);
     const q = qs.toString();
     return `/espace/document/${type}/pdf${q ? `?${q}` : ""}`;
   })();
 
-  // Liens du sélecteur de variante (conserve étudiant / signataire / matricule).
+  // Liens du sélecteur de variante (conserve les autres paramètres).
   const variantHref = (v: string) => {
     const qs = new URLSearchParams();
     if (student) qs.set("student", student);
     if (signataire) qs.set("signataire", signataire);
     if (matricule) qs.set("matricule", matricule);
+    if (civilite) qs.set("civilite", civilite);
+    if (date) qs.set("date", date);
     if (v === "sous-reserve") qs.set("variante", "sous-reserve");
     const q = qs.toString();
     return q ? `?${q}` : "?";
@@ -228,6 +245,8 @@ export default async function DocumentPage({
                 kind={kind}
                 variant={variant}
                 matricule={effectiveMatricule}
+                civilite={civ}
+                dateLabel={dateLabel}
                 signatory={{
                   title: sig.title,
                   name: sig.name,

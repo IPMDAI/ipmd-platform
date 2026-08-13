@@ -34,6 +34,8 @@ export function DocumentLetter({
   signatory,
   variant = "definitive",
   matricule,
+  civilite,
+  dateLabel,
 }: {
   dossier: Dossier;
   kind: Kind;
@@ -41,10 +43,15 @@ export function DocumentLetter({
   signatory: DocumentSignatory;
   variant?: "definitive" | "sous-reserve";
   matricule?: string;
+  civilite?: { label: string; fem: boolean } | null;
+  dateLabel?: string;
 }) {
   const isBC = dossier.isBootcamp;
   const title = (isBC ? TITLES_BOOTCAMP : TITLES)[kind];
   const mat = matricule ?? dossier.matricule;
+  const fem = civilite?.fem ?? null;
+  const birth = birthLine(dossier, fem);
+  const dateShown = dateLabel ?? longDate();
   const sousReserve = kind === "reussite" && variant === "sous-reserve";
   const prog = programLine(dossier);
   const dashIdx = prog.indexOf(" — ");
@@ -53,6 +60,9 @@ export function DocumentLetter({
   const phrases = levelPhrases(levelStr);
   const anneePhrase = phrases?.annee ?? levelStr;
   const courtPhrase = phrases?.court ?? levelStr;
+  // Accord + tournure nominative (« Mademoiselle X est déclarée admise… »).
+  const declare = fem === true ? "déclarée admise" : fem === false ? "déclaré admis" : "déclaré(e) admis(e)";
+  const sujet = civilite ? `${civilite.label} ${dossier.name}` : "l'intéressé(e)";
 
   return (
     <div className="document-page relative overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-black/5 print:rounded-none print:shadow-none print:ring-0 print:mb-2 print:border-t-[6px] print:border-ipmd-red">
@@ -111,8 +121,8 @@ export function DocumentLetter({
             <p className="text-sm text-black/55">
               Matricule {mat}
             </p>
-            {birthLine(dossier) && (
-              <p className="mt-1 text-sm text-black/55">{birthLine(dossier)}</p>
+            {birth && (
+              <p className="mt-1 text-sm text-black/55">{birth}</p>
             )}
           </div>
 
@@ -130,18 +140,19 @@ export function DocumentLetter({
                   parcours de formation.
                 </p>
                 <p>
-                  En conséquence, l&apos;intéressé(e) est déclaré(e){" "}
+                  En conséquence, {sujet} est{" "}
                   <strong>
-                    admis(e) en {courtPhrase}, sous réserve de la validation de
+                    {declare} en {courtPhrase}, sous réserve de la validation de
                     sa soutenance de fin de cycle
                   </strong>
                   , conformément aux dispositions académiques en vigueur au sein
                   de l&apos;Institut.
                 </p>
                 <p>
-                  La validation définitive du diplôme interviendra après la
-                  réussite de la soutenance et l&apos;accomplissement des
-                  formalités académiques requises.
+                  La validation définitive de la Licence et la délivrance du
+                  diplôme correspondant interviendront après la réussite de la
+                  soutenance et l&apos;accomplissement des formalités académiques
+                  requises.
                 </p>
                 <p>
                   La présente attestation est délivrée pour servir et valoir ce
@@ -223,7 +234,7 @@ export function DocumentLetter({
           <div className="text-center">
             <p className="text-sm text-black/60">Fait à Abidjan,</p>
             <p className="text-sm font-medium text-ipmd-black">
-              le {longDate()}
+              le {dateShown}
             </p>
             {signatory.mention && (
               <p className="mt-1 text-[11px] italic text-black/55">
