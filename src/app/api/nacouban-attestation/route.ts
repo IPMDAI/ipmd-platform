@@ -53,7 +53,7 @@ export async function GET(req: Request) {
     reference: "IPMD-CD4081E1",
     year,
     programLine: "Licence 3 — Marketing digital",
-    birthLine: "Née le : 17/06/2003 à Plateau (Côte d'Ivoire)",
+    birthLine: "Née le : 17/06/2003 au Plateau (Côte d'Ivoire)",
     average: null,
     mention: "",
     longDate: "13 août 2026",
