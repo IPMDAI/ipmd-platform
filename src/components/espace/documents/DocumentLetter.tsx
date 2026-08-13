@@ -32,14 +32,23 @@ export function DocumentLetter({
   kind,
   verifyHref,
   signatory,
+  variant = "definitive",
+  matricule,
 }: {
   dossier: Dossier;
   kind: Kind;
   verifyHref: string;
   signatory: DocumentSignatory;
+  variant?: "definitive" | "sous-reserve";
+  matricule?: string;
 }) {
   const isBC = dossier.isBootcamp;
   const title = (isBC ? TITLES_BOOTCAMP : TITLES)[kind];
+  const mat = matricule ?? dossier.matricule;
+  const sousReserve = kind === "reussite" && variant === "sous-reserve";
+  const prog = programLine(dossier);
+  const progEn = prog.replace(" — ", " en ");
+  const levelPart = prog.split(" — ")[0];
 
   return (
     <div className="document-page relative overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-black/5 print:rounded-none print:shadow-none print:ring-0 print:mb-2 print:border-t-[6px] print:border-ipmd-red">
@@ -73,7 +82,7 @@ export function DocumentLetter({
             </div>
           </div>
           <div className="text-right text-[11px] text-black/50">
-            <p className="font-semibold text-ipmd-black">N° {dossier.matricule}</p>
+            <p className="font-semibold text-ipmd-black">N° {mat}</p>
             <p>Année {dossier.year}</p>
           </div>
         </div>
@@ -96,7 +105,7 @@ export function DocumentLetter({
               {dossier.name}
             </p>
             <p className="text-sm text-black/55">
-              Matricule {dossier.matricule}
+              Matricule {mat}
             </p>
             {birthLine(dossier) && (
               <p className="mt-1 text-sm text-black/55">{birthLine(dossier)}</p>
@@ -104,6 +113,34 @@ export function DocumentLetter({
           </div>
 
           {kind === "reussite" ? (
+            sousReserve ? (
+              <>
+                <p>
+                  a régulièrement suivi les enseignements de la{" "}
+                  <strong>{progEn}</strong> au sein de l&apos;IPMD et a satisfait
+                  aux exigences académiques relatives aux enseignements et
+                  évaluations de son parcours de formation.
+                </p>
+                <p>
+                  En conséquence, l&apos;intéressé(e) est déclaré(e){" "}
+                  <strong>
+                    admis(e) en {levelPart}, sous réserve de la validation de sa
+                    soutenance de fin de cycle
+                  </strong>
+                  , conformément aux dispositions académiques en vigueur au sein
+                  de l&apos;Institut.
+                </p>
+                <p>
+                  La validation définitive du diplôme interviendra après la
+                  réussite de la soutenance et l&apos;accomplissement des
+                  formalités académiques requises.
+                </p>
+                <p>
+                  La présente attestation est délivrée pour servir et valoir ce
+                  que de droit.
+                </p>
+              </>
+            ) : (
             <>
               <p>
                 {isBC ? (
@@ -133,6 +170,7 @@ export function DocumentLetter({
                 délivré(e) pour servir et valoir ce que de droit.
               </p>
             </>
+            )
           ) : (
             <>
               <p>

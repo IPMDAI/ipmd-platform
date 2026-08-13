@@ -47,10 +47,19 @@ export async function GET(
   const url = new URL(req.url);
   const student = url.searchParams.get("student") || undefined;
   const signataire = url.searchParams.get("signataire") || undefined;
+  const variante = url.searchParams.get("variante") || undefined;
+  const matriculeOverride = url.searchParams.get("matricule")?.trim() || undefined;
   const targetId = student || userId;
 
   const dossier = await getDossier(targetId);
   if (!dossier) return new Response("Dossier introuvable.", { status: 404 });
+
+  // Variante « sous réserve » (attestation de réussite) + matricule affiché.
+  const variant =
+    type === "attestation-reussite" && variante === "sous-reserve"
+      ? ("sous-reserve" as const)
+      : ("definitive" as const);
+  const effectiveMatricule = matriculeOverride || dossier.matricule;
 
   const kind: DocKind =
     type === "certificat-scolarite"
@@ -62,7 +71,7 @@ export async function GET(
   const verifyHref = verifyUrl(
     signDoc({
       t: type,
-      m: dossier.matricule,
+      m: effectiveMatricule,
       n: dossier.name,
       y: dossier.year,
       ...(type === "attestation-reussite"
@@ -81,17 +90,22 @@ export async function GET(
 
   const data: AttestationPdfData = {
     kind,
+    variant,
     isBootcamp: dossier.isBootcamp,
     title: documentTitle(kind, dossier.isBootcamp),
     name: dossier.name,
-    matricule: dossier.matricule,
+    matricule: effectiveMatricule,
     year: dossier.year,
     programLine: programLine(dossier),
     birthLine: birthLine(dossier),
     average: dossier.average,
     mention: dossier.mention,
     longDate: longDate(),
-    signatory: { title: sig.title, name: sig.name, mention: sig.mention },
+    signatory: {
+      title: sig.title,
+      name: sig.name,
+      mention: variant === "sous-reserve" ? null : sig.mention,
+    },
     logoSrc: logoDataUri(),
     qrSrc,
     signatureSrc: signatureSrc ?? undefined,

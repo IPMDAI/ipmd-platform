@@ -21,10 +21,15 @@ export default async function DocumentPage({
   searchParams,
 }: {
   params: Promise<{ type: string }>;
-  searchParams: Promise<{ student?: string; signataire?: string }>;
+  searchParams: Promise<{
+    student?: string;
+    signataire?: string;
+    variante?: string;
+    matricule?: string;
+  }>;
 }) {
   const { type } = await params;
-  const { student, signataire } = await searchParams;
+  const { student, signataire, variante, matricule } = await searchParams;
   if (!isDocumentSlug(type)) notFound();
 
   const { supabase, userId } = await requireUser();
@@ -57,10 +62,17 @@ export default async function DocumentPage({
     if (!ready) notFound();
   }
 
+  // Variante « sous réserve » (attestation de réussite) + matricule affiché.
+  const variant =
+    type === "attestation-reussite" && variante === "sous-reserve"
+      ? ("sous-reserve" as const)
+      : ("definitive" as const);
+  const effectiveMatricule = matricule?.trim() || dossier.matricule;
+
   const verifyHref = verifyUrl(
     signDoc({
       t: type,
-      m: dossier.matricule,
+      m: effectiveMatricule,
       n: dossier.name,
       y: dossier.year,
       ...(type === "attestation-reussite"
@@ -100,9 +112,22 @@ export default async function DocumentPage({
     const qs = new URLSearchParams();
     if (student) qs.set("student", student);
     if (signataire) qs.set("signataire", signataire);
+    if (variante === "sous-reserve") qs.set("variante", "sous-reserve");
+    if (matricule) qs.set("matricule", matricule);
     const q = qs.toString();
     return `/espace/document/${type}/pdf${q ? `?${q}` : ""}`;
   })();
+
+  // Liens du sélecteur de variante (conserve étudiant / signataire / matricule).
+  const variantHref = (v: string) => {
+    const qs = new URLSearchParams();
+    if (student) qs.set("student", student);
+    if (signataire) qs.set("signataire", signataire);
+    if (matricule) qs.set("matricule", matricule);
+    if (v === "sous-reserve") qs.set("variante", "sous-reserve");
+    const q = qs.toString();
+    return q ? `?${q}` : "?";
+  };
 
   return (
     <section className="min-h-[70vh] bg-ipmd-light print:min-h-0">
@@ -146,6 +171,31 @@ export default async function DocumentPage({
             )}
           </p>
 
+          {type === "attestation-reussite" && isAdmin && (
+            <div className="mt-4 flex flex-wrap items-center gap-2 rounded-xl bg-white p-3 text-xs shadow-sm ring-1 ring-black/5 print:hidden">
+              <span className="font-semibold text-black/55">Type :</span>
+              {[
+                { v: "definitive", label: "Réussite définitive" },
+                { v: "sous-reserve", label: "Sous réserve de soutenance" },
+              ].map((opt) => {
+                const active = variant === opt.v;
+                return (
+                  <Link
+                    key={opt.v}
+                    href={variantHref(opt.v)}
+                    className={`rounded-full px-3 py-1 font-medium transition-colors ${
+                      active
+                        ? "bg-ipmd-red text-white"
+                        : "bg-ipmd-light text-black/70 hover:bg-black/10"
+                    }`}
+                  >
+                    {opt.label}
+                  </Link>
+                );
+              })}
+            </div>
+          )}
+
           {type !== "carte" && isAdmin && sig.allowed.length > 1 && (
             <div className="mt-4 flex flex-wrap items-center gap-2 rounded-xl bg-white p-3 text-xs shadow-sm ring-1 ring-black/5 print:hidden">
               <span className="font-semibold text-black/55">Signataire :</span>
@@ -176,10 +226,12 @@ export default async function DocumentPage({
                 dossier={dossier}
                 verifyHref={verifyHref}
                 kind={kind}
+                variant={variant}
+                matricule={effectiveMatricule}
                 signatory={{
                   title: sig.title,
                   name: sig.name,
-                  mention: sig.mention,
+                  mention: variant === "sous-reserve" ? null : sig.mention,
                   signature: signatureSrc,
                 }}
               />

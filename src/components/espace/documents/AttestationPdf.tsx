@@ -11,6 +11,7 @@ import { OFFICIAL_LEGAL_LINES, NB_SHORT } from "@/lib/doc-format";
 
 export type AttestationPdfData = {
   kind: "scolarite" | "certificat" | "reussite";
+  variant?: "definitive" | "sous-reserve";
   isBootcamp: boolean;
   title: string;
   name: string;
@@ -95,30 +96,41 @@ const s = StyleSheet.create({
   bandTxt: { fontSize: 8, color: "#ffffffb3", letterSpacing: 1.4, textTransform: "uppercase" },
 });
 
-function buildBody(d: AttestationPdfData): { p1: string; p2: string } {
+function buildBody(d: AttestationPdfData): string[] {
   const isBC = d.isBootcamp;
   const avg =
     d.average !== null
       ? `, avec une moyenne générale de ${d.average}/20, mention ${d.mention}`
       : "";
   if (d.kind === "reussite") {
-    return {
-      p1: isBC
+    // Variante « sous réserve de soutenance » (documents diplômants).
+    if (!isBC && d.variant === "sous-reserve") {
+      const progEn = d.programLine.replace(" — ", " en ");
+      const levelPart = d.programLine.split(" — ")[0];
+      return [
+        `a régulièrement suivi les enseignements de la ${progEn} au sein de l'IPMD et a satisfait aux exigences académiques relatives aux enseignements et évaluations de son parcours de formation.`,
+        `En conséquence, l'intéressé(e) est déclaré(e) admis(e) en ${levelPart}, sous réserve de la validation de sa soutenance de fin de cycle, conformément aux dispositions académiques en vigueur au sein de l'Institut.`,
+        `La validation définitive du diplôme interviendra après la réussite de la soutenance et l'accomplissement des formalités académiques requises.`,
+        `La présente attestation est délivrée pour servir et valoir ce que de droit.`,
+      ];
+    }
+    return [
+      isBC
         ? `a suivi et complété avec succès le bootcamp ${d.programLine} à l'IPMD${avg}.`
         : `a satisfait aux exigences pédagogiques de l'IPMD et validé son parcours en ${d.programLine}, au titre de l'année académique ${d.year}${avg}.`,
-      p2: `${isBC ? "Le présent certificat" : "La présente attestation"} est délivré(e) pour servir et valoir ce que de droit.`,
-    };
+      `${isBC ? "Le présent certificat" : "La présente attestation"} est délivré(e) pour servir et valoir ce que de droit.`,
+    ];
   }
-  return {
-    p1: isBC
+  return [
+    isBC
       ? `est régulièrement inscrit(e) au bootcamp ${d.programLine} à l'IPMD, et y suit assidûment la formation.`
       : `est régulièrement inscrit(e) à l'IPMD au titre de l'année académique ${d.year}, en ${d.programLine}, et y suit assidûment les enseignements.`,
-    p2: `${d.kind === "certificat" ? "Le présent certificat" : "La présente attestation"} est délivré(e) à l'intéressé(e) pour servir et valoir ce que de droit.`,
-  };
+    `${d.kind === "certificat" ? "Le présent certificat" : "La présente attestation"} est délivré(e) à l'intéressé(e) pour servir et valoir ce que de droit.`,
+  ];
 }
 
 function AttestationDocument({ d }: { d: AttestationPdfData }) {
-  const { p1, p2 } = buildBody(d);
+  const paras = buildBody(d);
   const verb = d.kind === "certificat" ? "certifie" : "atteste";
 
   return (
@@ -157,8 +169,9 @@ function AttestationDocument({ d }: { d: AttestationPdfData }) {
             {d.birthLine ? <Text style={s.birth}>{d.birthLine}</Text> : null}
           </View>
 
-          <Text style={s.para}>{p1}</Text>
-          <Text style={s.para}>{p2}</Text>
+          {paras.map((t, i) => (
+            <Text key={i} style={s.para}>{t}</Text>
+          ))}
 
           {/* Signature */}
           <View style={s.sigRow}>
