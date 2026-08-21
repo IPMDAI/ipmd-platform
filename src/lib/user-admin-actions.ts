@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient, canAdminUsers } from "@/lib/supabase/admin";
 import { VALID_ROLES } from "@/lib/dashboards";
 import { formatFCFA } from "@/lib/finance";
+import { hasAdmissionSnapshot, validateAdmissionSnapshot } from "@/lib/admission-snapshot";
 import {
   canSendEmail,
   emailDocument,
@@ -117,10 +118,21 @@ export async function inviteFromCandidature(
 
   const { data: cand } = await ctx.supabase
     .from("inscription_requests")
-    .select("full_name, email, universe, program_interest, entry_level")
+    .select("full_name, email, universe, program_interest, entry_level, status")
     .eq("id", candidatureId)
     .single();
   if (!cand) return { ok: false, message: "Candidature introuvable." };
+
+  // Garde WORKFLOW : le parcours d'invitation n'est valable qu'APRÈS « Confirmer
+  // l'admission » (statut « en attente de paiement »). Empêche d'inviter avant
+  // qu'un snapshot n'existe (ou après une réouverture qui a changé le statut).
+  if (cand.status !== "en_attente_paiement") {
+    return {
+      ok: false,
+      message:
+        "Invitation possible uniquement après « Confirmer l'admission » (statut « en attente de paiement »). Aucun compte créé.",
+    };
+  }
 
   const email = (cand.email || "").trim().toLowerCase();
   const fullName = (cand.full_name || "").trim();
@@ -128,7 +140,30 @@ export async function inviteFromCandidature(
 
   let role = str(formData, "role");
   if (!VALID_ROLES.includes(role)) role = "etudiant";
-  const classId = str(formData, "class_id");
+
+  // Réutilise le SNAPSHOT d'admission (classe + frais figés à « Confirmer l'admission »).
+  // S'il existe, on ne redemande NI niveau NI classe NI frais. Sinon (bootcamp/legacy
+  // sans snapshot), on retombe sur les valeurs du formulaire.
+  const { data: pack } = await ctx.supabase
+    .from("admission_packs")
+    .select("class_id, accepted_level, registration_fee, tuition_due, academic_year")
+    .eq("candidature_id", candidatureId)
+    .maybeSingle();
+  const snap = hasAdmissionSnapshot(pack) ? pack! : null;
+
+  // 🔒 SNAPSHOT PRÉSENT → validation STRICTE (complétude + cohérence réelle de la
+  // classe) AVANT toute création de compte / écriture finance. Aucun fallback.
+  if (snap) {
+    const { data: snapCls } = await ctx.supabase
+      .from("classes")
+      .select("id, filiere_id, level, academic_year, kind")
+      .eq("id", snap.class_id as string)
+      .maybeSingle();
+    const check = validateAdmissionSnapshot(snap, snapCls ?? null);
+    if (!check.ok) return { ok: false, message: check.message };
+  }
+
+  const classId = snap?.class_id ?? str(formData, "class_id");
 
   const admin = createAdminClient();
   if (!admin) return { ok: false, message: "Service indisponible." };
@@ -205,39 +240,63 @@ export async function inviteFromCandidature(
   }
 
   // 4. Frais pré-remplis (étudiants) + email d'acceptation avec lien mot de passe.
-  const level = str(formData, "level");
+  //    Priorité au SNAPSHOT d'admission (figé) ; sinon calcul depuis niveau/classe.
+  const level = snap?.accepted_level ?? str(formData, "level");
   const isStudent = role === "etudiant";
   let emailed = 0;
   let proformaBlock = "";
 
   if (isStudent) {
-    const [{ data: settings }, lvlRes, classRes] = await Promise.all([
-      ctx.supabase
-        .from("finance_settings")
-        .select("registration_fee, academic_year")
-        .eq("id", 1)
-        .maybeSingle(),
-      level
-        ? ctx.supabase.from("tuition_levels").select("amount").eq("level", level).maybeSingle()
-        : Promise.resolve({ data: null }),
-      classId
-        ? ctx.supabase
-            .from("classes")
-            .select("tuition_amount, registration_fee, installments, mode")
-            .eq("id", classId)
-            .maybeSingle()
-        : Promise.resolve({ data: null }),
-    ]);
-    const cls = classRes?.data as
-      | { tuition_amount: number | null; registration_fee: number | null; installments: number | null; mode: string | null }
-      | null;
+    const { data: settings } = await ctx.supabase
+      .from("finance_settings")
+      .select("registration_fee, academic_year")
+      .eq("id", 1)
+      .maybeSingle();
     const globalReg = Number(settings?.registration_fee ?? 300000);
-    // Frais d'inscription propres à la session (bootcamp) prioritaires, sinon frais global.
-    const registrationFee = cls?.registration_fee != null ? Number(cls.registration_fee) : globalReg;
-    // Tarif de la classe/session prioritaire s'il est défini, sinon tarif du niveau.
-    const classTuition = cls?.tuition_amount;
-    const tuitionDue =
-      classTuition != null ? Number(classTuition) : Number(lvlRes?.data?.amount ?? 0);
+
+    let registrationFee: number;
+    let tuitionDue: number;
+    let academicYear: string | null;
+    let installmentsVal: number | null = null;
+    let modeVal: string | null = null;
+
+    if (snap) {
+      // Montants figés à l'admission — aucun recalcul.
+      registrationFee = snap.registration_fee != null ? Number(snap.registration_fee) : globalReg;
+      tuitionDue = snap.tuition_due != null ? Number(snap.tuition_due) : 0;
+      academicYear = (snap.academic_year as string) ?? (settings?.academic_year ?? null);
+      if (classId) {
+        const { data: cls } = await ctx.supabase
+          .from("classes")
+          .select("installments, mode")
+          .eq("id", classId)
+          .maybeSingle();
+        installmentsVal = cls?.installments != null ? Number(cls.installments) : null;
+        modeVal = (cls?.mode as string) ?? null;
+      }
+    } else {
+      // Legacy (bootcamp / cas sans snapshot) : classe prioritaire, sinon niveau.
+      const [lvlRes, classRes] = await Promise.all([
+        level
+          ? ctx.supabase.from("tuition_levels").select("amount").eq("level", level).maybeSingle()
+          : Promise.resolve({ data: null }),
+        classId
+          ? ctx.supabase
+              .from("classes")
+              .select("tuition_amount, registration_fee, installments, mode")
+              .eq("id", classId)
+              .maybeSingle()
+          : Promise.resolve({ data: null }),
+      ]);
+      const cls = classRes?.data as
+        | { tuition_amount: number | null; registration_fee: number | null; installments: number | null; mode: string | null }
+        | null;
+      registrationFee = cls?.registration_fee != null ? Number(cls.registration_fee) : globalReg;
+      tuitionDue = cls?.tuition_amount != null ? Number(cls.tuition_amount) : Number(lvlRes?.data?.amount ?? 0);
+      academicYear = settings?.academic_year ?? null;
+      installmentsVal = cls?.installments != null ? Number(cls.installments) : null;
+      modeVal = (cls?.mode as string) ?? null;
+    }
     const totalDue = registrationFee + tuitionDue;
 
     const financeRow: Record<string, unknown> = {
@@ -246,14 +305,14 @@ export async function inviteFromCandidature(
       tuition_due: tuitionDue,
       discount_rate: 0,
       level: level || null,
-      academic_year: settings?.academic_year ?? null,
+      academic_year: academicYear,
       total_due: totalDue,
       // Accès en pause tant que les frais d'inscription ne sont pas réglés.
       access_state: "pause",
       updated_at: new Date().toISOString(),
     };
-    if (cls?.installments != null) financeRow.installments = Number(cls.installments);
-    if (cls?.mode) financeRow.mode = cls.mode;
+    if (installmentsVal != null) financeRow.installments = installmentsVal;
+    if (modeVal) financeRow.mode = modeVal;
 
     await ctx.supabase.from("student_finance").upsert(financeRow, { onConflict: "student_id" });
 

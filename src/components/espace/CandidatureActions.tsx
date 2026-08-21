@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import Link from "next/link";
 import {
   setCandidatureStatus,
   deleteCandidature,
@@ -13,6 +14,23 @@ import {
   RESERVED_TARGETS,
   isHistoricalDecision,
 } from "@/lib/candidatures";
+import { formatFCFA } from "@/lib/finance";
+
+export type LevelOption = { level: string; amount: number | null };
+export type FiliereOption = { id: string; name: string };
+export type ClassOption = {
+  id: string;
+  name: string;
+  kind?: string | null;
+  level?: string | null;
+  filiere_id?: string | null;
+  academic_year?: string | null;
+  tuition_amount: number | null;
+  registration_fee: number | null;
+};
+
+/** Niveaux réservés aux parcours non-diplômants (exclus du sélecteur diplôme). */
+const NON_DIPLOMA_LEVELS = ["Bootcamp", "Executive"];
 
 const STEP_LABEL: Record<string, string> = {
   en_etude: "🔎 Mettre en étude",
@@ -40,6 +58,13 @@ export function CandidatureActions({
   refusalSentAt = null,
   lettersEnabled = false,
   testMode = false,
+  isDiplome = false,
+  levels = [],
+  classes = [],
+  filieres = [],
+  registrationFee = 300000,
+  academicYear = null,
+  defaultFiliereId = null,
 }: {
   id: string;
   status: string;
@@ -49,10 +74,21 @@ export function CandidatureActions({
   refusalSentAt?: string | null;
   lettersEnabled?: boolean;
   testMode?: boolean;
+  isDiplome?: boolean;
+  levels?: LevelOption[];
+  classes?: ClassOption[];
+  filieres?: FiliereOption[];
+  registrationFee?: number;
+  academicYear?: string | null;
+  defaultFiliereId?: string | null;
 }) {
   const [current, setCurrent] = useState(status);
   const [decided, setDecided] = useState<string | null>(decidedAt);
   const [refSent, setRefSent] = useState<string | null>(refusalSentAt);
+  const [acceptFiliere, setAcceptFiliere] = useState<string>(
+    defaultFiliereId && filieres.some((f) => f.id === defaultFiliereId) ? defaultFiliereId : ""
+  );
+  const [acceptLevel, setAcceptLevel] = useState<string>("");
   const [pending, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [note, setNote] = useState<string | null>(null);
@@ -61,6 +97,43 @@ export function CandidatureActions({
   const label = name ? `« ${name} »` : "cette candidature";
   const nowIso = () => new Date().toISOString();
   const historical = isHistoricalDecision(current, decided);
+
+  const diplomaLevels = levels.filter((l) => !NON_DIPLOMA_LEVELS.includes(l.level));
+
+  // Résolution ACADÉMIQUE côté client (aperçu) — miroir exact de resolveAcademic serveur :
+  // classes de l'année active, filiere_id + level. 0 → manquante · 1 → OK · >1 → doublon.
+  const candidates =
+    acceptFiliere && acceptLevel
+      ? classes.filter(
+          (c) =>
+            c.kind !== "bootcamp" &&
+            c.filiere_id === acceptFiliere &&
+            c.academic_year === academicYear &&
+            c.level === acceptLevel
+        )
+      : [];
+  const resolveState: "none" | "ok" | "missing" | "duplicate" =
+    !acceptFiliere || !acceptLevel
+      ? "none"
+      : candidates.length === 0
+      ? "missing"
+      : candidates.length > 1
+      ? "duplicate"
+      : "ok";
+  const resolvedClass = resolveState === "ok" ? candidates[0] : null;
+  const previewReg = resolvedClass
+    ? resolvedClass.registration_fee != null
+      ? resolvedClass.registration_fee
+      : registrationFee
+    : registrationFee;
+  const previewTuition = resolvedClass
+    ? resolvedClass.tuition_amount != null
+      ? resolvedClass.tuition_amount
+      : diplomaLevels.find((l) => l.level === acceptLevel)?.amount ?? null
+    : null;
+  const tuitionKnown = previewTuition != null;
+  // Envoi possible : classe résolue, et (mode test OU scolarité connue).
+  const canConfirm = resolveState === "ok" && (testMode || tuitionKnown);
 
   const changeStatus = (to: string, confirmMsg?: string) => {
     if (pending) return;
@@ -100,6 +173,7 @@ export function CandidatureActions({
 
   const confirmAdmission = () => {
     if (pending) return;
+    if (isDiplome && !canConfirm) return;
     let msg: string;
     if (testMode)
       msg = `MODE TEST actif : l'email ne partira QUE vers l'adresse de test autorisée — AUCUN vrai candidat n'est contacté.\n\nEnvoyer la lettre d'admission (test) ?`;
@@ -111,7 +185,12 @@ export function CandidatureActions({
     setError(null);
     setNote(null);
     start(async () => {
-      const res = await sendAdmission(id, historical);
+      const res = await sendAdmission(
+        id,
+        isDiplome
+          ? { filiereId: acceptFiliere, level: acceptLevel, force: historical }
+          : { force: historical }
+      );
       if (res.ok) {
         setCurrent("en_attente_paiement");
         if (!decided) setDecided(nowIso());
@@ -261,12 +340,101 @@ export function CandidatureActions({
           <p className="text-[11px] font-bold uppercase tracking-wider text-blue-700/80">
             Décision : accepté {testBadge}
           </p>
+
+          {lettersEnabled && isDiplome && (
+            <div className="mt-2 rounded-lg bg-white/70 p-2.5 ring-1 ring-blue-100">
+              <p className="text-[11px] font-semibold text-black/55">
+                Filière + niveau acceptés — la classe et les frais sont déterminés
+                automatiquement pour l&apos;année {academicYear ?? "active"}.
+              </p>
+              <div className="mt-1.5 flex flex-wrap gap-2">
+                <select
+                  value={acceptFiliere}
+                  onChange={(e) => setAcceptFiliere(e.target.value)}
+                  disabled={pending}
+                  className="rounded-lg border border-black/10 bg-white px-2 py-1 text-xs text-black/70"
+                >
+                  <option value="">Filière…</option>
+                  {filieres.map((f) => (
+                    <option key={f.id} value={f.id}>
+                      {f.name}
+                    </option>
+                  ))}
+                </select>
+                <select
+                  value={acceptLevel}
+                  onChange={(e) => setAcceptLevel(e.target.value)}
+                  disabled={pending}
+                  className="rounded-lg border border-black/10 bg-white px-2 py-1 text-xs text-black/70"
+                >
+                  <option value="">Niveau…</option>
+                  {diplomaLevels.map((l) => (
+                    <option key={l.level} value={l.level}>
+                      {l.level}
+                    </option>
+                  ))}
+                </select>
+                <span className="inline-flex items-center rounded-lg bg-black/[0.04] px-2 py-1 text-[11px] text-black/50">
+                  Année : <strong className="ml-1">{academicYear ?? "—"}</strong>
+                </span>
+              </div>
+
+              {/* Aperçu lecture seule */}
+              {resolveState === "ok" && (
+                <div className="mt-2 flex flex-wrap gap-1.5 text-[11px]">
+                  <span className="rounded-full bg-black/[0.04] px-2 py-0.5 text-black/60">
+                    Classe : <strong>{resolvedClass?.name}</strong>
+                  </span>
+                  <span className="rounded-full bg-black/[0.04] px-2 py-0.5 text-black/60">
+                    Inscription : <strong>{formatFCFA(previewReg)}</strong>
+                  </span>
+                  <span className="rounded-full bg-black/[0.04] px-2 py-0.5 text-black/60">
+                    Scolarité :{" "}
+                    <strong>{tuitionKnown ? formatFCFA(previewTuition as number) : "À confirmer"}</strong>
+                  </span>
+                  <span
+                    className={`rounded-full px-2 py-0.5 ${
+                      tuitionKnown ? "bg-blue-100 text-blue-800" : "bg-amber-100 text-amber-800"
+                    }`}
+                  >
+                    Total :{" "}
+                    <strong>
+                      {tuitionKnown ? formatFCFA(previewReg + (previewTuition as number)) : "À confirmer"}
+                    </strong>
+                  </span>
+                </div>
+              )}
+              {resolveState === "missing" && (
+                <p className="mt-2 text-[11px] font-medium text-ipmd-red">
+                  ⚠ Configuration académique manquante : aucune classe pour cette filière + ce niveau en{" "}
+                  {academicYear ?? "l'année active"}.{" "}
+                  <Link href="/espace/classes" className="underline">
+                    Configurer dans Classes &amp; filières
+                  </Link>
+                </p>
+              )}
+              {resolveState === "duplicate" && (
+                <p className="mt-2 text-[11px] font-medium text-ipmd-red">
+                  ⚠ Doublon de classe : {candidates.length} classes pour cette filière + ce niveau.{" "}
+                  <Link href="/espace/classes" className="underline">
+                    Corriger dans Classes &amp; filières
+                  </Link>
+                </p>
+              )}
+              {resolveState === "ok" && !testMode && !tuitionKnown && (
+                <p className="mt-1.5 text-[11px] font-medium text-amber-700">
+                  ⚠ Mode réel : renseigne le tarif de scolarité de cette classe/niveau pour pouvoir envoyer.
+                </p>
+              )}
+            </div>
+          )}
+
           <div className="mt-2 flex flex-wrap items-center gap-2">
             {lettersEnabled ? (
               <button
                 type="button"
                 onClick={confirmAdmission}
-                disabled={pending}
+                disabled={pending || (isDiplome && !canConfirm)}
                 className={`${pill} bg-blue-600 text-white hover:bg-blue-700`}
               >
                 📩 Confirmer l&apos;admission
@@ -290,7 +458,7 @@ export function CandidatureActions({
           <p className="mt-1.5 text-[11px] text-black/45">
             {testMode
               ? "Mode test : l'email ne part que vers l'adresse de test autorisée (aucun vrai candidat)."
-              : "Envoie la lettre d'admission et passe « En attente de paiement »."}
+              : "Envoie la lettre d'admission (classe + frais figés) et passe « En attente de paiement »."}
           </p>
         </div>
       )}

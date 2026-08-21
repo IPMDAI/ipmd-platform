@@ -130,29 +130,83 @@ export async function setCandidatureStatus(
   return { ok: true, message: "Statut mis à jour." };
 }
 
-/** Snapshot des frais prévisionnels au moment de l'admission (affichage seul). */
-async function feeSnapshot(
+type AcademicResolution =
+  | {
+      ok: true;
+      classId: string | null;
+      acceptedLevel: string | null;
+      academicYear: string | null;
+      registrationFee: number;
+      tuitionDue: number | null;
+    }
+  | { ok: false; code: "CONFIG_MISSING" | "DUPLICATE_CLASS"; message: string };
+
+/**
+ * Résolution ACADÉMIQUE automatique (diplôme) : à partir de la filière + du
+ * niveau réellement acceptés, l'année active (`finance_settings.academic_year`)
+ * détermine la classe et les frais — l'admin ne saisit AUCUN montant.
+ *
+ *   0 classe  → « Configuration académique manquante »
+ *   1 classe  → OK (frais figés)
+ *  >1 classe  → « Doublon de classe »
+ *
+ * Frais d'inscription : `classes.registration_fee` sinon global.
+ * Scolarité : `classes.tuition_amount` sinon `tuition_levels.amount` (peut rester null).
+ */
+async function resolveAcademic(
   supabase: NonNullable<Awaited<ReturnType<typeof createClient>>>,
-  entryLevel: string | null
-): Promise<{ registrationFee: number; tuitionDue: number | null; academicYear: string | null }> {
+  opts: { filiereId: string; level: string }
+): Promise<AcademicResolution> {
   const { data: settings } = await supabase
     .from("finance_settings")
     .select("registration_fee, academic_year")
     .eq("id", 1)
     .maybeSingle();
-  let tuitionDue: number | null = null;
-  if (entryLevel) {
+  const globalReg = Number(settings?.registration_fee ?? 300000);
+  const academicYear = (settings?.academic_year as string) ?? null;
+
+  const { data: rows } = await supabase
+    .from("classes")
+    .select("id, name, tuition_amount, registration_fee")
+    .eq("filiere_id", opts.filiereId)
+    .eq("level", opts.level)
+    .eq("academic_year", academicYear ?? "")
+    .eq("kind", "diplome");
+  const list = rows ?? [];
+
+  if (list.length === 0) {
+    return {
+      ok: false,
+      code: "CONFIG_MISSING",
+      message: `Configuration académique manquante : aucune classe pour cette filière + « ${opts.level} » en ${academicYear ?? "l'année active"}. Crée-la dans Classes & filières.`,
+    };
+  }
+  if (list.length > 1) {
+    return {
+      ok: false,
+      code: "DUPLICATE_CLASS",
+      message: `Doublon de classe : ${list.length} classes pour cette filière + « ${opts.level} » en ${academicYear ?? "l'année active"}. Corrige dans Classes & filières.`,
+    };
+  }
+
+  const cls = list[0];
+  const registrationFee = cls.registration_fee != null ? Number(cls.registration_fee) : globalReg;
+  let tuitionDue = cls.tuition_amount != null ? Number(cls.tuition_amount) : null;
+  if (tuitionDue == null) {
     const { data: lvl } = await supabase
       .from("tuition_levels")
       .select("amount")
-      .eq("level", entryLevel)
+      .eq("level", opts.level)
       .maybeSingle();
-    if (lvl?.amount != null) tuitionDue = Number(lvl.amount);
+    tuitionDue = lvl?.amount != null ? Number(lvl.amount) : null;
   }
   return {
-    registrationFee: Number(settings?.registration_fee ?? 300000),
+    ok: true,
+    classId: cls.id as string,
+    acceptedLevel: opts.level,
+    academicYear,
+    registrationFee,
     tuitionDue,
-    academicYear: (settings?.academic_year as string) ?? null,
   };
 }
 
@@ -168,8 +222,9 @@ async function feeSnapshot(
  */
 export async function sendAdmission(
   id: string,
-  force = false
+  opts: { filiereId?: string; level?: string; force?: boolean } = {}
 ): Promise<FormResult> {
+  const force = opts.force ?? false;
   const ctx = await getAdmin();
   if (!ctx) return { ok: false, message: "Action réservée à l'administration." };
   if (!LETTERS_ENABLED) return { ok: false, message: "Envoi des lettres désactivé." };
@@ -206,7 +261,51 @@ export async function sendAdmission(
     return { ok: false, message: "Envoi d'email non configuré (RESEND_API_KEY manquante)." };
   }
 
-  const snap = await feeSnapshot(ctx.supabase, (c.entry_level as string) ?? null);
+  // Résolution ACADÉMIQUE : filière + niveau accepté → classe + frais (année active
+  // automatique). Jamais depuis entry_level (diplôme antérieur). Pour un parcours
+  // sans filière (bootcamp / cas manuel), pas de résolution : frais globaux + tarif
+  // du niveau si fourni.
+  let classId: string | null = null;
+  let acceptedLevel: string | null = opts.level ?? null;
+  let academicYear: string | null = null;
+  let registrationFee: number;
+  let tuitionDue: number | null = null;
+
+  if (opts.filiereId && opts.level) {
+    const r = await resolveAcademic(ctx.supabase, { filiereId: opts.filiereId, level: opts.level });
+    if (!r.ok) return { ok: false, code: r.code, message: r.message };
+    classId = r.classId;
+    acceptedLevel = r.acceptedLevel;
+    academicYear = r.academicYear;
+    registrationFee = r.registrationFee;
+    tuitionDue = r.tuitionDue;
+  } else {
+    const { data: fs } = await ctx.supabase
+      .from("finance_settings")
+      .select("registration_fee, academic_year")
+      .eq("id", 1)
+      .maybeSingle();
+    registrationFee = Number(fs?.registration_fee ?? 300000);
+    academicYear = (fs?.academic_year as string) ?? null;
+    if (opts.level) {
+      const { data: lvl } = await ctx.supabase
+        .from("tuition_levels")
+        .select("amount")
+        .eq("level", opts.level)
+        .maybeSingle();
+      tuitionDue = lvl?.amount != null ? Number(lvl.amount) : null;
+    }
+  }
+
+  // 🔒 MODE RÉEL — bloquer l'envoi si la scolarité requise est absente.
+  if (!rr.testMode && tuitionDue == null) {
+    return {
+      ok: false,
+      message:
+        "Scolarité inconnue pour cette filière/niveau : renseigne le tarif dans Classes & filières avant d'envoyer l'admission (mode réel).",
+    };
+  }
+
   const now = new Date().toISOString();
 
   // 1. Pack d'admission (upsert, 1 par candidature) → id, puis lien de l'espace
@@ -219,10 +318,11 @@ export async function sendAdmission(
         {
           candidature_id: id,
           status: "sent",
-          accepted_level: (c.entry_level as string) ?? null,
-          registration_fee: snap.registrationFee,
-          tuition_due: snap.tuitionDue,
-          academic_year: snap.academicYear,
+          class_id: classId,
+          accepted_level: acceptedLevel,
+          registration_fee: registrationFee,
+          tuition_due: tuitionDue,
+          academic_year: academicYear,
           sent_at: now,
           sent_count: 1,
           updated_at: now,
@@ -244,10 +344,10 @@ export async function sendAdmission(
   const { subject, html } = buildAdmissionEmail({
     name: (c.full_name as string) ?? "",
     program: (c.program_interest as string) ?? null,
-    level: (c.entry_level as string) ?? null,
-    academicYear: snap.academicYear,
-    registrationFee: snap.registrationFee,
-    tuitionDue: snap.tuitionDue,
+    level: acceptedLevel,
+    academicYear: academicYear,
+    registrationFee: registrationFee,
+    tuitionDue: tuitionDue,
     testMode: rr.testMode,
     packUrl,
   });
@@ -257,10 +357,10 @@ export async function sendAdmission(
     const pdf = await buildAdmissionPdf({
       name: (c.full_name as string) ?? "",
       program: (c.program_interest as string) ?? null,
-      level: (c.entry_level as string) ?? null,
-      academicYear: snap.academicYear,
-      registrationFee: snap.registrationFee,
-      tuitionDue: snap.tuitionDue,
+      level: acceptedLevel,
+      academicYear: academicYear,
+      registrationFee: registrationFee,
+      tuitionDue: tuitionDue,
       testMode: rr.testMode,
     });
     attachments = [

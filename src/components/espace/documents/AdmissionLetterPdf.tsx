@@ -1,4 +1,4 @@
-import {
+﻿import {
   Document,
   Page,
   Text,
@@ -8,8 +8,16 @@ import {
   renderToBuffer,
 } from "@react-pdf/renderer";
 import { OFFICIAL_LEGAL_LINES } from "@/lib/doc-format";
-import { formatFCFA } from "@/lib/finance";
 import { SCHEDULE_DISCLAIMER } from "@/lib/admission-letter";
+
+/**
+ * Format monétaire sûr pour @react-pdf : le séparateur de milliers fr-FR est un
+ * U+202F (espace fine insécable) que le moteur PDF rend « / » (« 300/000 »). On
+ * le remplace (ainsi que l'insécable U+00A0) par une espace normale → « 300 000 FCFA ».
+ */
+function fcfaPdf(n: number): string {
+  return `${Number(n).toLocaleString("fr-FR").replace(/[\u202f\u00a0]/g, " ")} FCFA`;
+}
 
 export type AdmissionLetterPdfData = {
   name: string;
@@ -103,7 +111,7 @@ const s = StyleSheet.create({
   qrText: { fontSize: 8, color: "#9ca3af", maxWidth: 200 },
   sigRight: { alignItems: "center", maxWidth: 210 },
   faitTxt: { fontSize: 9.5, color: MUTED },
-  sigStampRow: { marginTop: 4, height: 46, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6 },
+  sigStampRow: { marginTop: 4, minHeight: 58, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6 },
   sigImg: { width: 104, height: 42, objectFit: "contain" },
   cachetImg: { width: 56, height: 56, objectFit: "contain", opacity: 0.92 },
   sigTitle: { marginTop: 4, fontSize: 10, fontWeight: 700, color: BLACK, textAlign: "center" },
@@ -115,14 +123,20 @@ const s = StyleSheet.create({
 });
 
 function AdmissionDocument({ d }: { d: AdmissionLetterPdfData }) {
-  const total = d.registrationFee + (d.tuitionDue ?? 0);
+  const tuitionKnown = d.tuitionDue != null;
   const rows: Array<[string, string]> = [
     ["Formation", d.program ?? "—"],
     ["Niveau", d.level ?? "—"],
     ["Année académique", d.academicYear ?? "—"],
-    ["Frais d'inscription", formatFCFA(d.registrationFee)],
-    ["Frais de scolarité (prévisionnel)", d.tuitionDue != null ? formatFCFA(d.tuitionDue) : "à préciser"],
-    ["Total prévisionnel", formatFCFA(total)],
+    ["Frais d'inscription", fcfaPdf(d.registrationFee)],
+    [
+      "Frais de scolarité (prévisionnel)",
+      tuitionKnown ? fcfaPdf(d.tuitionDue as number) : "À confirmer par la Scolarité",
+    ],
+    [
+      "Total prévisionnel",
+      tuitionKnown ? fcfaPdf(d.registrationFee + (d.tuitionDue as number)) : "À confirmer",
+    ],
   ];
 
   return (

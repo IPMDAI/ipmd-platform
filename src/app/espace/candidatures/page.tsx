@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+﻿import type { Metadata } from "next";
 import Link from "next/link";
 import { requireAdmin } from "@/lib/require-admin";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -62,7 +62,7 @@ export default async function CandidaturesPage({
       .order("created_at", { ascending: false }),
     supabase
       .from("classes")
-      .select("id, name, kind, tuition_amount, registration_fee, installments, mode")
+      .select("id, name, kind, level, filiere_id, academic_year, tuition_amount, registration_fee, installments, mode")
       .order("name"),
     supabase.from("tuition_levels").select("level, amount").order("sort_order"),
   ]);
@@ -70,6 +70,9 @@ export default async function CandidaturesPage({
     id: c.id,
     name: c.name,
     kind: (c.kind as string) ?? "diplome",
+    level: (c.level as string) ?? null,
+    filiere_id: (c.filiere_id as string) ?? null,
+    academic_year: (c.academic_year as string) ?? null,
     tuition_amount: c.tuition_amount != null ? Number(c.tuition_amount) : null,
     registration_fee: c.registration_fee != null ? Number(c.registration_fee) : null,
     installments: c.installments != null ? Number(c.installments) : 1,
@@ -81,10 +84,33 @@ export default async function CandidaturesPage({
   }));
   const { data: settings } = await supabase
     .from("finance_settings")
-    .select("registration_fee")
+    .select("registration_fee, academic_year")
     .eq("id", 1)
     .maybeSingle();
   const registrationFee = Number(settings?.registration_fee ?? 300000);
+  const academicYear = (settings?.academic_year as string) ?? null;
+
+  // Filières actives (pour le sélecteur d'admission diplôme). Déduplication faite,
+  // on ne propose que les statuts exploitables.
+  const { data: filiereRows } = await supabase
+    .from("filieres")
+    .select("id, name, status")
+    .order("name");
+  const filieres = (filiereRows ?? [])
+    .filter((f) => f.status !== "archive" && f.status !== "en_attente")
+    .map((f) => ({ id: f.id as string, name: f.name as string }));
+  // Rapproche le texte libre `program_interest` d'une filière (normalisé) → pré-sélection.
+  const normFil = (s: string) =>
+    (s ?? "")
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/&/g, "et")
+      .replace(/\s+/g, " ")
+      .trim();
+  const filiereByNorm = new Map(filieres.map((f) => [normFil(f.name), f.id]));
+  const suggestFiliereId = (program: string | null): string | null =>
+    program ? filiereByNorm.get(normFil(program)) ?? null : null;
 
   const all = (rows ?? []).map((c) => ({ ...c, status: c.status ?? "nouveau" }));
 
@@ -125,13 +151,19 @@ export default async function CandidaturesPage({
     conventionStatus: string | null;
     signatureMethod: string | null;
     evidencePath: string | null;
+    // Snapshot académique figé à « Confirmer l'admission » (réutilisé par Créer & inviter).
+    classId: string | null;
+    acceptedLevel: string | null;
+    registrationFee: number | null;
+    tuitionDue: number | null;
+    packAcademicYear: string | null;
   };
   const packMap = new Map<string, PackDetail>();
   {
     const { data: packRows, error: packErr } = await supabase
       .from("admission_packs")
       .select(
-        "candidature_id, sent_at, first_viewed_at, reglement_accepted_at, convention_status, signature_method, signature_evidence_url"
+        "candidature_id, sent_at, first_viewed_at, reglement_accepted_at, convention_status, signature_method, signature_evidence_url, class_id, accepted_level, registration_fee, tuition_due, academic_year"
       );
     if (!packErr && packRows) {
       for (const p of packRows as Array<{
@@ -142,6 +174,11 @@ export default async function CandidaturesPage({
         convention_status: string | null;
         signature_method: string | null;
         signature_evidence_url: string | null;
+        class_id: string | null;
+        accepted_level: string | null;
+        registration_fee: number | null;
+        tuition_due: number | null;
+        academic_year: string | null;
       }>) {
         packMap.set(p.candidature_id, {
           sentAt: p.sent_at,
@@ -150,6 +187,11 @@ export default async function CandidaturesPage({
           conventionStatus: p.convention_status,
           signatureMethod: p.signature_method,
           evidencePath: p.signature_evidence_url,
+          classId: p.class_id,
+          acceptedLevel: p.accepted_level,
+          registrationFee: p.registration_fee != null ? Number(p.registration_fee) : null,
+          tuitionDue: p.tuition_due != null ? Number(p.tuition_due) : null,
+          packAcademicYear: p.academic_year,
         });
       }
     }
@@ -467,6 +509,13 @@ export default async function CandidaturesPage({
                     refusalSentAt={wf.get(c.id)?.refusal_sent_at ?? null}
                     lettersEnabled={LETTERS_ENABLED}
                     testMode={TEST_MODE}
+                    isDiplome={typeOf(c.universe) === "diplome"}
+                    levels={levels}
+                    classes={classes}
+                    filieres={filieres}
+                    registrationFee={registrationFee}
+                    academicYear={academicYear}
+                    defaultFiliereId={suggestFiliereId(c.program_interest)}
                   />
 
                   {/* Espace d'admission (Lot C2/C5) : états + actions lien */}
@@ -500,8 +549,7 @@ export default async function CandidaturesPage({
                       />
                     )}
 
-                  {isSuper &&
-                    (c.status === "accepte" || c.status === "en_attente_paiement") && (
+                  {isSuper && c.status === "en_attente_paiement" && (
                     <CandidatureInvite
                       candidatureId={c.id}
                       defaultRole={c.desired_role || roleForUniverse(c.universe)}
@@ -510,6 +558,19 @@ export default async function CandidaturesPage({
                       classes={classes}
                       levels={levels}
                       registrationFee={registrationFee}
+                      snapshot={
+                        packMap.get(c.id)?.classId
+                          ? {
+                              className:
+                                classes.find((cl) => cl.id === packMap.get(c.id)!.classId)?.name ??
+                                null,
+                              acceptedLevel: packMap.get(c.id)!.acceptedLevel,
+                              registrationFee: packMap.get(c.id)!.registrationFee,
+                              tuitionDue: packMap.get(c.id)!.tuitionDue,
+                              academicYear: packMap.get(c.id)!.packAcademicYear,
+                            }
+                          : null
+                      }
                     />
                   )}
                 </li>

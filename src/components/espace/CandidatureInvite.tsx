@@ -18,6 +18,14 @@ type ClassOption = {
   mode: string | null;
 };
 
+type AdmissionSnapshot = {
+  className: string | null;
+  acceptedLevel: string | null;
+  registrationFee: number | null;
+  tuitionDue: number | null;
+  academicYear: string | null;
+};
+
 export function CandidatureInvite({
   candidatureId,
   defaultRole,
@@ -26,6 +34,7 @@ export function CandidatureInvite({
   classes,
   levels = [],
   registrationFee = 300000,
+  snapshot = null,
 }: {
   candidatureId: string;
   defaultRole: string;
@@ -34,6 +43,7 @@ export function CandidatureInvite({
   classes: ClassOption[];
   levels?: { level: string; amount: number }[];
   registrationFee?: number;
+  snapshot?: AdmissionSnapshot | null;
 }) {
   const bound = inviteFromCandidature.bind(null, candidatureId);
   const [state, action, pending] = useActionState<FormResult | null, FormData>(bound, null);
@@ -66,6 +76,64 @@ export function CandidatureInvite({
     hasFee = !!level || !!selectedClass;
   }
   const total = reg + tuition;
+
+  // MODE SNAPSHOT : l'admission a été confirmée → classe + frais déjà figés dans
+  // admission_packs. On ne redemande NI niveau NI classe NI frais : le serveur les
+  // relit du snapshot. Seul le rôle reste (info compte, pas académique).
+  if (snapshot) {
+    const sReg = snapshot.registrationFee ?? 0;
+    const sTuition = snapshot.tuitionDue;
+    const sTuitionKnown = sTuition != null;
+    const chip = "rounded-full bg-white px-2.5 py-1 text-black/60 ring-1 ring-black/10";
+    return (
+      <form action={action} className="mt-4 rounded-xl bg-ipmd-light p-4">
+        <p className="mb-2 text-xs font-bold uppercase tracking-wider text-black/45">
+          Créer le compte &amp; inviter — Diplôme
+        </p>
+        <div className="rounded-lg bg-white/70 p-2.5 text-[11px] ring-1 ring-black/10">
+          <p className="font-semibold text-black/55">
+            Admission confirmée — niveau, classe et frais figés (aucun choix à refaire) :
+          </p>
+          <div className="mt-1.5 flex flex-wrap gap-1.5 font-semibold">
+            <span className={chip}>Niveau : {snapshot.acceptedLevel ?? "—"}</span>
+            <span className={chip}>Classe : {snapshot.className ?? "—"}</span>
+            <span className={chip}>Année : {snapshot.academicYear ?? "—"}</span>
+            <span className={chip}>Inscription : {formatFCFA(sReg)}</span>
+            <span className={chip}>
+              Scolarité : {sTuitionKnown ? formatFCFA(sTuition as number) : "à préciser"}
+            </span>
+            <span className="rounded-full bg-ipmd-black px-2.5 py-1 text-white">
+              Total : {sTuitionKnown ? formatFCFA(sReg + (sTuition as number)) : "à préciser"}
+            </span>
+          </div>
+        </div>
+        <div className="mt-3 flex flex-wrap items-end gap-2">
+          <label className="text-xs font-semibold text-black/55">
+            Rôle
+            <select name="role" defaultValue={defaultRole} className={`${inputBase} mt-1 py-1.5 text-sm`}>
+              {ROLE_OPTIONS.map((r) => (
+                <option key={r.value} value={r.value}>
+                  {r.label}
+                </option>
+              ))}
+            </select>
+          </label>
+          <button
+            type="submit"
+            disabled={pending}
+            className="rounded-full bg-ipmd-black px-4 py-2 text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-50"
+          >
+            {pending ? "Envoi…" : "✉️ Créer & inviter"}
+          </button>
+        </div>
+        {state && (
+          <p className={`mt-2 text-sm font-medium ${state.ok ? "text-green-600" : "text-ipmd-red"}`}>
+            {state.message}
+          </p>
+        )}
+      </form>
+    );
+  }
 
   return (
     <form action={action} className="mt-4 rounded-xl bg-ipmd-light p-4">

@@ -38,7 +38,7 @@ export function buildAdmissionEmail(d: AdmissionLetterData): {
   subject: string;
   html: string;
 } {
-  const total = d.registrationFee + (d.tuitionDue ?? 0);
+  const tuitionKnown = d.tuitionDue != null;
   const rows = buildRows([
     ["Formation", d.program],
     ["Niveau", d.level],
@@ -46,9 +46,12 @@ export function buildAdmissionEmail(d: AdmissionLetterData): {
     ["Frais d'inscription", formatFCFA(d.registrationFee)],
     [
       "Frais de scolarité (prévisionnel)",
-      d.tuitionDue != null ? formatFCFA(d.tuitionDue) : "à préciser",
+      tuitionKnown ? formatFCFA(d.tuitionDue as number) : "À confirmer par la Scolarité",
     ],
-    ["Total prévisionnel", formatFCFA(total)],
+    [
+      "Total prévisionnel",
+      tuitionKnown ? formatFCFA(d.registrationFee + (d.tuitionDue as number)) : "À confirmer",
+    ],
   ]);
 
   const body = `
