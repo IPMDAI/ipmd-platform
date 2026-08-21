@@ -8,6 +8,7 @@ import { CandidatureActions } from "@/components/espace/CandidatureActions";
 import { CandidatureInvite } from "@/components/espace/CandidatureInvite";
 import { DossierLinkActions } from "@/components/espace/DossierLinkActions";
 import { CandidatureSearch } from "@/components/espace/CandidatureSearch";
+import { AdmissionPackAdmin } from "@/components/espace/AdmissionPackAdmin";
 import { LETTERS_ENABLED, TEST_MODE } from "@/lib/admission-config";
 import { dossierLinkUrl } from "@/lib/dossier-link";
 import { roleForUniverse } from "@/data/universes";
@@ -111,6 +112,20 @@ export default async function CandidaturesPage({
           admission_sent_at: r.admission_sent_at ?? null,
           refusal_sent_at: r.refusal_sent_at ?? null,
         });
+      }
+    }
+  }
+
+  // Présence d'un pack d'admission (Lot C2) — best-effort : la page fonctionne
+  // même si la table n'existe pas encore. Sert à afficher les actions « lien ».
+  const packSet = new Set<string>();
+  {
+    const { data: packRows, error: packErr } = await supabase
+      .from("admission_packs")
+      .select("candidature_id");
+    if (!packErr && packRows) {
+      for (const p of packRows as Array<{ candidature_id: string }>) {
+        packSet.add(p.candidature_id);
       }
     }
   }
@@ -427,6 +442,11 @@ export default async function CandidaturesPage({
                     lettersEnabled={LETTERS_ENABLED}
                     testMode={TEST_MODE}
                   />
+
+                  {/* Espace d'admission (Lot C2) : actions lien — dès qu'un pack existe */}
+                  {packSet.has(c.id) && (
+                    <AdmissionPackAdmin candidatureId={c.id} email={c.email} />
+                  )}
 
                   {/* Dossier incomplet (diplômant) → réclamer les pièces au candidat */}
                   {typeOf(c.universe) === "diplome" &&

@@ -11,6 +11,7 @@ import {
 import { LETTERS_ENABLED, resolveRecipients } from "@/lib/admission-config";
 import { buildAdmissionEmail, buildRefusalEmail } from "@/lib/admission-letter";
 import { buildAdmissionPdf } from "@/lib/admission-pdf";
+import { generatePackLink, packLinkUrl } from "@/lib/admission-pack-link";
 import { sendScolariteEmail, canSendEmail, type EmailAttachment } from "@/lib/email";
 import type { FormResult } from "@/types";
 
@@ -206,6 +207,40 @@ export async function sendAdmission(
   }
 
   const snap = await feeSnapshot(ctx.supabase, (c.entry_level as string) ?? null);
+  const now = new Date().toISOString();
+
+  // 1. Pack d'admission (upsert, 1 par candidature) → id, puis lien de l'espace
+  //    sécurisé. Best-effort : si la table n'existe pas, on continue sans lien.
+  let packUrl: string | undefined;
+  try {
+    const { data: packRow } = await ctx.supabase
+      .from("admission_packs")
+      .upsert(
+        {
+          candidature_id: id,
+          status: "sent",
+          accepted_level: (c.entry_level as string) ?? null,
+          registration_fee: snap.registrationFee,
+          tuition_due: snap.tuitionDue,
+          academic_year: snap.academicYear,
+          sent_at: now,
+          sent_count: 1,
+          updated_at: now,
+          created_by: ctx.userId,
+        },
+        { onConflict: "candidature_id" }
+      )
+      .select("id")
+      .single();
+    if (packRow?.id) {
+      const token = await generatePackLink(packRow.id as string, ctx.userId);
+      if (token) packUrl = packLinkUrl(token);
+    }
+  } catch {
+    // table admission_packs pas encore créée : on continue sans lien
+  }
+
+  // 2. Email (avec lien de l'espace) + PDF signé joint (best-effort).
   const { subject, html } = buildAdmissionEmail({
     name: (c.full_name as string) ?? "",
     program: (c.program_interest as string) ?? null,
@@ -214,9 +249,9 @@ export async function sendAdmission(
     registrationFee: snap.registrationFee,
     tuitionDue: snap.tuitionDue,
     testMode: rr.testMode,
+    packUrl,
   });
 
-  // PDF signé (source unique : buildAdmissionPdf) — best-effort : à défaut, email seul.
   let attachments: EmailAttachment[] | undefined;
   try {
     const pdf = await buildAdmissionPdf({
@@ -245,30 +280,7 @@ export async function sendAdmission(
     return { ok: false, message: "L'email n'a pas pu être envoyé. Réessayez." };
   }
 
-  const now = new Date().toISOString();
-
-  // Pack d'admission — 1 par candidature (upsert). Best-effort : ne bloque pas
-  // si la table n'est pas encore créée (lettre déjà envoyée).
-  try {
-    await ctx.supabase.from("admission_packs").upsert(
-      {
-        candidature_id: id,
-        status: "sent",
-        accepted_level: (c.entry_level as string) ?? null,
-        registration_fee: snap.registrationFee,
-        tuition_due: snap.tuitionDue,
-        academic_year: snap.academicYear,
-        sent_at: now,
-        sent_count: 1,
-        updated_at: now,
-        created_by: ctx.userId,
-      },
-      { onConflict: "candidature_id" }
-    );
-  } catch {
-    // table admission_packs pas encore créée : on continue (lettre déjà envoyée)
-  }
-
+  // 3. Statut → en attente de paiement.
   const update: Record<string, unknown> = {
     status: "en_attente_paiement",
     admission_sent_at: now,

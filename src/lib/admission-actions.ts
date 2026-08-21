@@ -1,0 +1,160 @@
+"use server";
+
+import { revalidatePath } from "next/cache";
+import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
+import {
+  generatePackLink,
+  packLinkUrl,
+  revokePackLinks,
+} from "@/lib/admission-pack-link";
+import { resolveRecipients } from "@/lib/admission-config";
+import {
+  sendScolariteEmail,
+  canSendEmail,
+  emailDocument,
+  escapeHtml,
+} from "@/lib/email";
+import type { FormResult } from "@/types";
+
+async function getAdmin() {
+  const supabase = await createClient();
+  if (!supabase) return null;
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return null;
+  const { data: me } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .single();
+  if (me?.role !== "admin" && me?.role !== "super_admin") return null;
+  return { userId: user.id };
+}
+
+async function packIdFor(
+  admin: NonNullable<ReturnType<typeof createAdminClient>>,
+  candidatureId: string
+): Promise<string | null> {
+  const { data } = await admin
+    .from("admission_packs")
+    .select("id")
+    .eq("candidature_id", candidatureId)
+    .maybeSingle();
+  return (data as { id: string } | null)?.id ?? null;
+}
+
+/**
+ * Génère un NOUVEAU lien du pack (révoque l'ancien) et renvoie l'URL.
+ * Sert pour « Copier le lien » et « Régénérer » (le token brut n'étant jamais
+ * restocké, obtenir un lien = en créer un nouveau).
+ */
+export async function createPackLink(
+  candidatureId: string
+): Promise<FormResult & { url?: string }> {
+  const ctx = await getAdmin();
+  if (!ctx) return { ok: false, message: "Action réservée à l'administration." };
+  const admin = createAdminClient();
+  if (!admin) return { ok: false, message: "Service admin non configuré." };
+
+  const packId = await packIdFor(admin, candidatureId);
+  if (!packId)
+    return { ok: false, message: "Aucun pack : confirme d'abord l'admission." };
+
+  const token = await generatePackLink(packId, ctx.userId);
+  if (!token) return { ok: false, message: "Échec de génération du lien." };
+
+  revalidatePath("/espace/candidatures");
+  return {
+    ok: true,
+    message: "Nouveau lien généré (l'ancien est révoqué).",
+    url: packLinkUrl(token),
+  };
+}
+
+/** Révoque tous les liens actifs du pack (le candidat n'y accède plus). */
+export async function revokePackLink(
+  candidatureId: string
+): Promise<FormResult> {
+  const ctx = await getAdmin();
+  if (!ctx) return { ok: false, message: "Action réservée à l'administration." };
+  const admin = createAdminClient();
+  if (!admin) return { ok: false, message: "Service admin non configuré." };
+
+  const packId = await packIdFor(admin, candidatureId);
+  if (!packId) return { ok: false, message: "Aucun pack." };
+
+  const ok = await revokePackLinks(packId);
+  if (!ok) return { ok: false, message: "Échec de la révocation." };
+
+  revalidatePath("/espace/candidatures");
+  return { ok: true, message: "Lien révoqué. Le candidat n'y a plus accès." };
+}
+
+/**
+ * Envoie au candidat le lien de son espace d'admission (nouveau lien généré).
+ * ⚠️ Respecte la GARDE MODE TEST : en test, n'envoie qu'à l'adresse de test et
+ * uniquement pour la candidature de test.
+ */
+export async function sendPackLink(
+  candidatureId: string
+): Promise<FormResult> {
+  const ctx = await getAdmin();
+  if (!ctx) return { ok: false, message: "Action réservée à l'administration." };
+  const admin = createAdminClient();
+  if (!admin) return { ok: false, message: "Service admin non configuré." };
+
+  const { data: cand } = await admin
+    .from("inscription_requests")
+    .select("full_name, email")
+    .eq("id", candidatureId)
+    .single();
+  if (!cand) return { ok: false, message: "Candidature introuvable." };
+
+  const rr = resolveRecipients((cand.email as string) ?? "");
+  if (!rr.ok) return { ok: false, message: rr.reason };
+  if (!canSendEmail)
+    return { ok: false, message: "Envoi d'email non configuré (RESEND_API_KEY manquante)." };
+
+  const packId = await packIdFor(admin, candidatureId);
+  if (!packId)
+    return { ok: false, message: "Aucun pack : confirme d'abord l'admission." };
+
+  const token = await generatePackLink(packId, ctx.userId);
+  if (!token) return { ok: false, message: "Échec de génération du lien." };
+  const url = packLinkUrl(token);
+
+  const prenom = ((cand.full_name as string) || "").split(" ")[0] || "Bonjour";
+  const html = emailDocument(
+    "Votre espace d'admission",
+    `<p style="margin:0 0 12px;color:#0b0b0d;font-size:14px">Bonjour ${escapeHtml(prenom)},</p>
+     <p style="margin:0 0 16px;color:#374151;font-size:14px;line-height:1.6">
+       Accédez à votre espace d'admission sécurisé pour consulter et télécharger
+       votre lettre d'admission et vos documents :
+     </p>
+     <p style="margin:0 0 20px">
+       <a href="${url}" style="display:inline-block;background:#e01228;color:#fff;
+          text-decoration:none;font-weight:700;font-size:14px;padding:12px 20px;
+          border-radius:9999px">Accéder à mon espace d'admission</a>
+     </p>
+     <p style="margin:0;color:#9ca3af;font-size:12px;line-height:1.5">
+       Ce lien vous est personnel. S'il ne fonctionne pas, copiez cette adresse :<br/>${escapeHtml(url)}
+     </p>`
+  );
+
+  const sent = await sendScolariteEmail(
+    rr.to,
+    (rr.testMode ? "[TEST] " : "") + "IPMD — Votre espace d'admission",
+    html
+  );
+  if (sent < 1) return { ok: false, message: "L'email n'a pas pu être envoyé." };
+
+  revalidatePath("/espace/candidatures");
+  return {
+    ok: true,
+    message: rr.testMode
+      ? `MODE TEST : lien envoyé à ${rr.to[0]} (aucun vrai candidat).`
+      : `Lien envoyé à ${cand.email}.`,
+  };
+}

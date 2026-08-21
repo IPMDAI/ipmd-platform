@@ -28,6 +28,7 @@ export type AdmissionLetterData = {
   registrationFee: number;
   tuitionDue: number | null;
   testMode: boolean;
+  packUrl?: string | null;
 };
 
 const TEST_BANNER = `<p style="margin:16px 0 0;padding:8px 12px;background:#fef2f2;border:1px solid #fecaca;border-radius:8px;color:#b91c1c;font-size:12px;font-weight:600">— EMAIL DE TEST — modèle en cours de validation, ne pas tenir compte. —</p>`;
@@ -68,6 +69,11 @@ export function buildAdmissionEmail(d: AdmissionLetterData): {
       modalités de paiement.
     </p>
     <p style="margin:0 0 12px;color:#374151;font-size:14px">Votre lettre d'admission officielle est jointe à cet email (PDF).</p>
+    ${
+      d.packUrl
+        ? `<p style="margin:0 0 16px"><a href="${escapeHtml(d.packUrl)}" style="display:inline-block;background:#e01228;color:#fff;text-decoration:none;font-weight:700;font-size:14px;padding:12px 20px;border-radius:9999px">Accéder à mon espace d'admission</a></p>`
+        : ""
+    }
     ${signatureBlock()}
     <p style="margin:8px 0 0;color:#9ca3af;font-size:12px">scolarite@ipmd.pro · www.ipmd.pro</p>
     ${d.testMode ? TEST_BANNER : ""}
