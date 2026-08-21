@@ -24,6 +24,7 @@ const ADMIN_NAV: NavGroup[] = [
     title: "Pédagogie & planning",
     items: [
       { label: "Classes & filières", href: "/espace/classes", icon: "🏫" },
+      { label: "Années & Rentrées", href: "/espace/annees-rentrees", icon: "📅" },
       { label: "Salles", href: "/espace/salles", icon: "🚪" },
       { label: "Planning", href: "/espace/planning", icon: "🗓️" },
       { label: "Séances", href: "/espace/seances", icon: "📅" },
