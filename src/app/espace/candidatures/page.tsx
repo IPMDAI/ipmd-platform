@@ -77,6 +77,34 @@ export default async function CandidaturesPage({
 
   const all = (rows ?? []).map((c) => ({ ...c, status: c.status ?? "nouveau" }));
 
+  // Colonnes workflow (Lot A) — requête best-effort SÉPARÉE : la page continue
+  // de fonctionner même si la migration `candidatures-workflow.sql` n'a pas
+  // encore été exécutée (colonnes absentes → tout est null → statuts de décision
+  // traités comme « historiques », comportement voulu avant refonte).
+  const wf = new Map<
+    string,
+    { decided_at: string | null; admission_sent_at: string | null; refusal_sent_at: string | null }
+  >();
+  {
+    const { data: wfRows, error: wfErr } = await supabase
+      .from("inscription_requests")
+      .select("id, decided_at, admission_sent_at, refusal_sent_at");
+    if (!wfErr && wfRows) {
+      for (const r of wfRows as Array<{
+        id: string;
+        decided_at: string | null;
+        admission_sent_at: string | null;
+        refusal_sent_at: string | null;
+      }>) {
+        wf.set(r.id, {
+          decided_at: r.decided_at ?? null,
+          admission_sent_at: r.admission_sent_at ?? null,
+          refusal_sent_at: r.refusal_sent_at ?? null,
+        });
+      }
+    }
+  }
+
   // Compteurs par statut.
   const counts: Record<string, number> = {};
   for (const c of all) counts[c.status] = (counts[c.status] ?? 0) + 1;
@@ -376,11 +404,12 @@ export default async function CandidaturesPage({
                     status={c.status}
                     name={c.full_name}
                     canDelete={isSuper}
+                    decidedAt={wf.get(c.id)?.decided_at ?? null}
                   />
 
                   {/* Dossier incomplet (diplômant) → réclamer les pièces au candidat */}
                   {typeOf(c.universe) === "diplome" &&
-                    (c.status === "nouveau" || c.status === "accepte") &&
+                    ["nouveau", "en_etude", "pieces_a_completer"].includes(c.status) &&
                     (!c.doc_diploma || !c.doc_id) && (
                       <DossierLinkActions
                         url={dossierLinkUrl(c.id)}
@@ -389,7 +418,8 @@ export default async function CandidaturesPage({
                       />
                     )}
 
-                  {isSuper && c.status === "accepte" && (
+                  {isSuper &&
+                    (c.status === "accepte" || c.status === "en_attente_paiement") && (
                     <CandidatureInvite
                       candidatureId={c.id}
                       defaultRole={c.desired_role || roleForUniverse(c.universe)}
