@@ -113,10 +113,77 @@ export async function submitInscription(
     };
   }
 
+  // RENTRÉE (Lot 2) — les demandes diplômantes se rattachent à une rentrée OUVERTE.
+  // L'année académique est DÉRIVÉE de la rentrée (jamais de finance_settings),
+  // et la rentrée est revalidée « open » côté serveur (anti-tampering / fraîcheur).
+  let intakeId: string | null = null;
+  let academicYear: string | null = null;
+  let filiereId: string | null = null;
+  let offeredLevel: string | null = null;
+  if (kindByUniverse[payload.universe] === "diplome") {
+    intakeId = getString(formData, "intakeId") || null;
+    if (!intakeId) {
+      return {
+        ok: false,
+        message:
+          "Veuillez choisir une rentrée pour votre inscription. Si aucune n'est proposée, les inscriptions ne sont pas ouvertes pour le moment.",
+      };
+    }
+    const { data: intake } = await supabase
+      .from("intakes")
+      .select("academic_year, status")
+      .eq("id", intakeId)
+      .maybeSingle();
+    if (!intake || intake.status !== "open") {
+      return {
+        ok: false,
+        message:
+          "La rentrée choisie n'est plus ouverte. Merci de rafraîchir la page et de sélectionner une rentrée disponible.",
+      };
+    }
+    academicYear = intake.academic_year as string;
+
+    // GARDE D'OFFRE (Lot 2.5) : la formation choisie doit être une offre OUVERTE
+    // de CETTE rentrée. On ne se fie pas au libellé texte program_interest.
+    filiereId = getString(formData, "filiereId") || null;
+    offeredLevel = getString(formData, "offeredLevel") || null;
+    if (!filiereId || !offeredLevel) {
+      return {
+        ok: false,
+        message: "Veuillez choisir une formation (filière + niveau) proposée pour cette rentrée.",
+      };
+    }
+    const { data: offer } = await supabase
+      .from("intake_offerings")
+      .select("id")
+      .eq("intake_id", intakeId)
+      .eq("filiere_id", filiereId)
+      .eq("level", offeredLevel)
+      .eq("status", "open")
+      .maybeSingle();
+    if (!offer) {
+      return {
+        ok: false,
+        message:
+          "La formation choisie n'est pas ouverte pour cette rentrée. Merci de rafraîchir la page et de sélectionner une formation proposée.",
+      };
+    }
+  }
+
   // Colonnes optionnelles ajoutées seulement si présentes, pour rester compatible
   // même si les migrations (candidature-cv.sql / candidature-mode.sql) ne sont pas
   // encore exécutées.
   const insertData: Record<string, unknown> = { ...payload };
+  // Rentrée + année figées au dépôt (les deux ensemble, jamais l'une sans l'autre).
+  if (intakeId && academicYear) {
+    insertData.intake_id = intakeId;
+    insertData.academic_year = academicYear;
+  }
+  // Formation figée (filière + niveau de l'offre) → cohérence académique à l'admission.
+  if (filiereId && offeredLevel) {
+    insertData.filiere_id = filiereId;
+    insertData.offered_level = offeredLevel;
+  }
   const docCv = getString(formData, "docCvPath");
   if (docCv) insertData.doc_cv = docCv;
   const mode = getString(formData, "mode");

@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import { PageHero } from "@/components/sections/PageHero";
 import { Section } from "@/components/ui/Section";
-import { InscriptionForm } from "@/components/forms/InscriptionForm";
+import { InscriptionForm, type OpenIntake } from "@/components/forms/InscriptionForm";
+import { createClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = {
   title: "Admission / Inscription",
@@ -32,7 +33,48 @@ const steps = [
   },
 ];
 
-export default function AdmissionPage() {
+export default async function AdmissionPage() {
+  // Rentrées ouvertes + leurs OFFRES ouvertes (filière + niveau réels).
+  // Lisibles en anon via les policies « open ». L'année de candidature vient de la
+  // rentrée choisie (jamais de finance_settings), et la formation vient de l'offre.
+  let openIntakes: OpenIntake[] = [];
+  const supabase = await createClient();
+  if (supabase) {
+    const [{ data: intakeData }, { data: offerData }, { data: filiereData }] = await Promise.all([
+      supabase
+        .from("intakes")
+        .select("id, label, academic_year, start_date, sort_order")
+        .eq("status", "open")
+        .order("academic_year", { ascending: false })
+        .order("sort_order"),
+      supabase.from("intake_offerings").select("intake_id, filiere_id, level").eq("status", "open"),
+      supabase.from("filieres").select("id, name"),
+    ]);
+    const filiereName = new Map((filiereData ?? []).map((f) => [f.id as string, f.name as string]));
+    const offersByIntake = new Map<string, { filiereId: string; filiereName: string; level: string }[]>();
+    for (const o of offerData ?? []) {
+      const arr = offersByIntake.get(o.intake_id as string) ?? [];
+      arr.push({
+        filiereId: o.filiere_id as string,
+        filiereName: filiereName.get(o.filiere_id as string) ?? "(filière)",
+        level: o.level as string,
+      });
+      offersByIntake.set(o.intake_id as string, arr);
+    }
+    openIntakes = (intakeData ?? [])
+      .map((i) => ({
+        id: i.id as string,
+        label: i.label as string,
+        academicYear: i.academic_year as string,
+        startDate: (i.start_date as string) ?? null,
+        offerings: (offersByIntake.get(i.id as string) ?? []).sort((a, b) =>
+          (a.filiereName + a.level).localeCompare(b.filiereName + b.level)
+        ),
+      }))
+      // Une rentrée sans offre ouverte n'est pas proposable (cohérence funnel).
+      .filter((i) => i.offerings.length > 0);
+  }
+
   return (
     <>
       <PageHero
@@ -73,7 +115,7 @@ export default function AdmissionPage() {
               sont obligatoires.
             </p>
             <div className="mt-6">
-              <InscriptionForm />
+              <InscriptionForm openIntakes={openIntakes} />
             </div>
           </div>
         </div>

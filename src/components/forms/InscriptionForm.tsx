@@ -5,7 +5,6 @@ import { submitInscription } from "@/lib/actions";
 import { createUploadTicket } from "@/lib/upload-actions";
 import { createClient } from "@/lib/supabase/client";
 import { universes } from "@/data/universes";
-import { programs } from "@/data/programs";
 import { ActionButton } from "@/components/ui/Button";
 import { Field, inputBase } from "./FormField";
 import { PhoneField } from "./PhoneField";
@@ -46,15 +45,6 @@ async function uploadDoc(
 
 const entryLevels = ["Bac", "Bac+1", "Bac+2", "Bac+3", "Bac+4", "Bac+5"];
 
-// Filières proposées selon l'univers (dérivées des programmes réels).
-const filieresByUniverse: Record<string, string[]> = {};
-for (const p of programs) {
-  (filieresByUniverse[p.universe] ||= []);
-  if (!filieresByUniverse[p.universe].includes(p.title))
-    filieresByUniverse[p.universe].push(p.title);
-}
-const allFilieres = [...new Set(programs.map((p) => p.title))];
-
 const diplomas = [
   "Baccalauréat",
   "BTS",
@@ -73,12 +63,28 @@ const diplomaUniverses = universes.filter((u) => u.kind === "diplome");
 const fileInput =
   "block w-full cursor-pointer rounded-xl border border-dashed border-black/25 bg-white px-3 py-3 text-sm text-black/55 shadow-sm transition-colors hover:border-ipmd-red/50 file:mr-3 file:cursor-pointer file:rounded-full file:border-0 file:bg-ipmd-red file:px-3 file:py-1.5 file:text-sm file:font-semibold file:text-white";
 
-export function InscriptionForm() {
+export type OfferOption = { filiereId: string; filiereName: string; level: string };
+export type OpenIntake = {
+  id: string;
+  label: string;
+  academicYear: string;
+  startDate: string | null;
+  offerings: OfferOption[];
+};
+
+const offerValue = (o: OfferOption) => `${o.filiereId}::${o.level}`;
+
+export function InscriptionForm({ openIntakes = [] }: { openIntakes?: OpenIntake[] }) {
   const [state, setState] = useState<FormResult | null>(null);
   const [pending, setPending] = useState(false);
   const [universe, setUniverse] = useState("");
-  const filiereOptions =
-    universe && filieresByUniverse[universe] ? filieresByUniverse[universe] : allFilieres;
+
+  // Rentrée : aucune ouverte → dépôt impossible ; une seule → auto ; plusieurs → choix.
+  const noOpenIntake = openIntakes.length === 0;
+  const singleIntake = openIntakes.length === 1 ? openIntakes[0] : null;
+  const [intakeId, setIntakeId] = useState(singleIntake ? singleIntake.id : "");
+  const currentIntake = openIntakes.find((i) => i.id === intakeId) ?? null;
+  const offerings = currentIntake?.offerings ?? [];
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -87,6 +93,19 @@ export function InscriptionForm() {
     setPending(true);
     try {
       const fd = new FormData(form);
+
+      // Formation choisie = une OFFRE de la rentrée (filière + niveau réels).
+      // On dérive filiere_id + niveau + libellé lisible (program_interest).
+      const offering = String(fd.get("offering") || "");
+      const [fid, lvl] = offering.split("::");
+      const off = offerings.find((o) => o.filiereId === fid && o.level === lvl);
+      if (fid && lvl) {
+        fd.set("filiereId", fid);
+        fd.set("offeredLevel", lvl);
+        if (off) fd.set("programInterest", off.filiereName);
+      }
+      fd.set("intakeId", intakeId);
+
       // Ne pas envoyer les fichiers via l'action (limite de taille) :
       // on les uploade d'abord vers Storage, puis on transmet leurs chemins.
       fd.delete("docDiploma");
@@ -228,23 +247,68 @@ export function InscriptionForm() {
           </Field>
         </div>
 
-        <div className="grid gap-5 sm:grid-cols-2">
-          <Field label="Filière / formation souhaitée" htmlFor="programInterest" required>
+        {/* Rentrée (Lot 2) — pilotée par les rentrées ouvertes au recrutement. */}
+        {noOpenIntake ? (
+          <div className="rounded-xl bg-amber-50 p-4 text-sm text-amber-800 ring-1 ring-amber-200">
+            ⚠️ Les inscriptions ne sont <strong>pas ouvertes</strong> pour le moment. Revenez
+            bientôt : une rentrée sera prochainement ouverte aux candidatures.
+          </div>
+        ) : singleIntake ? (
+          <Field label="Rentrée" htmlFor="intakeInfo">
+            <input type="hidden" name="intakeId" value={singleIntake.id} />
+            <div
+              id="intakeInfo"
+              className="flex items-center gap-2 rounded-xl bg-emerald-50 px-3 py-2.5 text-sm font-semibold text-emerald-900 ring-1 ring-emerald-200"
+            >
+              📅 {singleIntake.label} · {singleIntake.academicYear}
+              <span className="ml-auto text-[11px] font-normal text-emerald-700/80">
+                Rentrée ouverte
+              </span>
+            </div>
+          </Field>
+        ) : (
+          <Field label="Rentrée souhaitée" htmlFor="intakeId" required>
             <select
-              key={universe}
-              id="programInterest"
-              name="programInterest"
+              id="intakeId"
+              name="intakeId"
               required
-              defaultValue=""
+              value={intakeId}
+              onChange={(e) => setIntakeId(e.target.value)}
               className={inputBase}
             >
-              <option value="">— Sélectionner —</option>
-              {filiereOptions.map((f) => (
-                <option key={f} value={f}>
-                  {f}
+              <option value="">— Choisir une rentrée —</option>
+              {openIntakes.map((i) => (
+                <option key={i.id} value={i.id}>
+                  {i.label} · {i.academicYear}
                 </option>
               ))}
-              <option value="Autre">Autre</option>
+            </select>
+          </Field>
+        )}
+
+        <div className="grid gap-5 sm:grid-cols-2">
+          <Field label="Formation souhaitée (filière · niveau)" htmlFor="offering" required>
+            <select
+              key={intakeId}
+              id="offering"
+              name="offering"
+              required
+              defaultValue=""
+              disabled={noOpenIntake || !intakeId}
+              className={inputBase}
+            >
+              <option value="" disabled>
+                {noOpenIntake
+                  ? "Aucune formation ouverte"
+                  : !intakeId
+                  ? "Choisissez d'abord une rentrée"
+                  : "— Sélectionner —"}
+              </option>
+              {offerings.map((o) => (
+                <option key={offerValue(o)} value={offerValue(o)}>
+                  {o.filiereName} · {o.level}
+                </option>
+              ))}
             </select>
           </Field>
           <Field label="Dernier diplôme obtenu" htmlFor="lastDiploma" required>
@@ -298,8 +362,12 @@ export function InscriptionForm() {
         </Field>
 
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-          <ActionButton type="submit" size="lg" disabled={pending}>
-            {pending ? "Envoi en cours…" : "Envoyer ma demande d'admission"}
+          <ActionButton type="submit" size="lg" disabled={pending || noOpenIntake}>
+            {pending
+              ? "Envoi en cours…"
+              : noOpenIntake
+              ? "Inscriptions fermées"
+              : "Envoyer ma demande d'admission"}
           </ActionButton>
           {state && !state.ok && (
             <p
