@@ -74,6 +74,17 @@ export function buildAdmissionEmail(d: AdmissionLetterData): {
         ? `<p style="margin:0 0 16px"><a href="${escapeHtml(d.packUrl)}" style="display:inline-block;background:#e01228;color:#fff;text-decoration:none;font-weight:700;font-size:14px;padding:12px 20px;border-radius:9999px">Accéder à mon espace d'admission</a></p>`
         : ""
     }
+    <p style="margin:0 0 6px;color:#6b7280;font-size:12px;line-height:1.5">
+      Documents d'admission : lettre d'admission, proforma/frais et échéancier,
+      règlement intérieur, convention de formation, conditions financières,
+      politique de remboursement et confidentialité ; documents complémentaires
+      selon le parcours ou la situation du candidat.
+    </p>
+    <p style="margin:0 0 14px;color:#9ca3af;font-size:11px;font-style:italic;line-height:1.5">
+      Ces documents font partie de votre dossier d'admission et doivent être
+      consultés avant l'inscription définitive. Si l'un d'eux est indisponible dans
+      votre espace, contactez l'IPMD avant de finaliser votre inscription.
+    </p>
     ${signatureBlock()}
     <p style="margin:8px 0 0;color:#9ca3af;font-size:12px">scolarite@ipmd.pro · www.ipmd.pro</p>
     ${d.testMode ? TEST_BANNER : ""}
