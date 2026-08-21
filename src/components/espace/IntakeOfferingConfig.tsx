@@ -58,21 +58,37 @@ export function IntakeOfferingConfig({
     () => filieres.flatMap((f) => levels.map((l) => ({ filiere_id: f.id, level: l }))),
     [filieres, levels]
   );
+  // Signature STABLE des offres (valeur, pas référence) → évite les relances du
+  // preview dues uniquement à un nouveau tableau `offerings` à chaque rendu parent.
+  const offeringsSig = useMemo(
+    () => offerings.map((o) => `${o.filiereId}|${o.level}|${o.status}`).sort().join(","),
+    [offerings]
+  );
+  // PREVIEW auto des 40 combinaisons — CRASH-PROOF : hors useTransition + try/catch.
+  // Toute erreur reste LOCALE (message dans la checklist) et ne remonte jamais à
+  // error.tsx : la page /espace/annees-rentrees ne peut plus tomber à cause du preview.
   useEffect(() => {
     let active = true;
     setLoading(true);
-    start(async () => {
-      const r = await previewIntakeConfig(intakeId, catalogSel);
-      if (!active) return;
-      if (r.ok && r.plan) setCatalog(r.plan);
-      else setMsg({ ok: false, text: r.message ?? "Preview impossible." });
-      setLoading(false);
-    });
+    setMsg(null);
+    (async () => {
+      try {
+        const r = await previewIntakeConfig(intakeId, catalogSel);
+        if (!active) return;
+        if (r.ok && r.plan) setCatalog(r.plan);
+        else setMsg({ ok: false, text: `Aperçu indisponible : ${r.message ?? "erreur inconnue"}` });
+      } catch (e) {
+        if (!active) return;
+        setMsg({ ok: false, text: `Aperçu indisponible : ${e instanceof Error ? e.message : String(e)}` });
+      } finally {
+        if (active) setLoading(false);
+      }
+    })();
     return () => {
       active = false;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [intakeId, offerings]);
+  }, [intakeId, offeringsSig]);
 
   const planByKey = useMemo(() => {
     const m = new Map<string, ConfigPlan["rows"][number]>();
