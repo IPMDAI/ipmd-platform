@@ -1,5 +1,7 @@
 "use server";
 
+import fs from "node:fs";
+import path from "node:path";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -9,9 +11,27 @@ import {
   canTransition,
 } from "@/lib/candidatures";
 import { LETTERS_ENABLED, resolveRecipients } from "@/lib/admission-config";
-import { buildAdmissionEmail, buildRefusalEmail } from "@/lib/admission-letter";
-import { sendScolariteEmail, canSendEmail } from "@/lib/email";
+import {
+  buildAdmissionEmail,
+  buildRefusalEmail,
+  SIGNATORY,
+} from "@/lib/admission-letter";
+import { renderAdmissionLetterPdf } from "@/components/espace/documents/AdmissionLetterPdf";
+import { sendScolariteEmail, canSendEmail, type EmailAttachment } from "@/lib/email";
+import QRCode from "qrcode";
+import { signDoc, verifyUrl } from "@/lib/doc-verify";
+import { officialAssetDataUri } from "@/lib/secure-assets";
 import type { FormResult } from "@/types";
+
+/** Logo IPMD (public) en data URI pour l'incruster dans le PDF (runtime Node). */
+function logoDataUri(): string {
+  try {
+    const buf = fs.readFileSync(path.join(process.cwd(), "public", "logo-ipmd.png"));
+    return `data:image/png;base64,${buf.toString("base64")}`;
+  } catch {
+    return "";
+  }
+}
 
 async function getAdmin() {
   const supabase = await createClient();
@@ -215,7 +235,57 @@ export async function sendAdmission(
     testMode: rr.testMode,
   });
 
-  const sent = await sendScolariteEmail(rr.to, subject, html);
+  // PDF signé de la lettre d'admission (best-effort : à défaut, email seul).
+  let attachments: EmailAttachment[] | undefined;
+  try {
+    const longDate = new Date().toLocaleDateString("fr-FR", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    });
+    // QR de vérification (signé HMAC → /verifier) + signature/cachet (bucket privé).
+    const verifyHref = verifyUrl(
+      signDoc({
+        t: "admission",
+        m: "",
+        n: (c.full_name as string) ?? "",
+        y: snap.academicYear ?? "",
+      })
+    );
+    const [qrSrc, signatureSrc, cachetSrc] = await Promise.all([
+      QRCode.toDataURL(verifyHref, { margin: 0, errorCorrectionLevel: "M", width: 220 }),
+      officialAssetDataUri("signatures/admin-general.png"),
+      officialAssetDataUri("stamps/cachet-ipmd.png"),
+    ]);
+    const pdf = await renderAdmissionLetterPdf({
+      name: (c.full_name as string) ?? "",
+      program: (c.program_interest as string) ?? null,
+      level: (c.entry_level as string) ?? null,
+      academicYear: snap.academicYear,
+      registrationFee: snap.registrationFee,
+      tuitionDue: snap.tuitionDue,
+      longDate,
+      logoSrc: logoDataUri(),
+      signatoryTitle: SIGNATORY.title,
+      signatoryName: SIGNATORY.name,
+      testMode: rr.testMode,
+      qrSrc,
+      signatureSrc: signatureSrc ?? undefined,
+      cachetSrc: cachetSrc ?? undefined,
+    });
+    attachments = [
+      {
+        filename: rr.testMode
+          ? "TEST-lettre-admission-ipmd.pdf"
+          : "lettre-admission-ipmd.pdf",
+        content: pdf.toString("base64"),
+      },
+    ];
+  } catch {
+    // génération PDF échouée : on enverra au moins l'email HTML
+  }
+
+  const sent = await sendScolariteEmail(rr.to, subject, html, attachments);
   if (sent < 1) {
     return { ok: false, message: "L'email n'a pas pu être envoyé. Réessayez." };
   }

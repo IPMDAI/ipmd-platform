@@ -67,6 +67,7 @@ export function buildAdmissionEmail(d: AdmissionLetterData): {
       d'admission complet, avec les documents à consulter/valider et les
       modalités de paiement.
     </p>
+    <p style="margin:0 0 12px;color:#374151;font-size:14px">Votre lettre d'admission officielle est jointe à cet email (PDF).</p>
     ${signatureBlock()}
     <p style="margin:8px 0 0;color:#9ca3af;font-size:12px">scolarite@ipmd.pro · www.ipmd.pro</p>
     ${d.testMode ? TEST_BANNER : ""}

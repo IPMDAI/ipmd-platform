@@ -13,6 +13,7 @@ const TYPE_LABELS: Record<string, string> = {
   "attestation-scolarite": "Attestation de scolarité",
   "certificat-scolarite": "Certificat de scolarité",
   "attestation-reussite": "Attestation de réussite",
+  admission: "Lettre d'admission",
   carte: "Carte étudiant",
   recu: "Reçu de paiement",
   contrat: "Contrat de vacataire",
@@ -71,8 +72,11 @@ export default async function VerifierPage({
               <dl className="divide-y divide-black/5 px-6 py-2 text-sm">
                 <Row label="Type de document" value={TYPE_LABELS[payload.t] ?? payload.t} />
                 <Row label="Titulaire" value={payload.n} />
-                <Row label="Matricule" value={payload.m} />
-                <Row label="Année académique" value={payload.y} />
+                {payload.m && <Row label="Matricule" value={payload.m} />}
+                {payload.y && <Row label="Année académique" value={payload.y} />}
+                {payload.t === "admission" && (
+                  <Row label="Situation" value="Candidature acceptée" />
+                )}
                 {payload.t === "attestation-reussite" &&
                   payload.v === "sous-reserve" && (
                     <Row

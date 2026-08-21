@@ -124,13 +124,17 @@ const SCOLARITE_REPLY_TO =
  * Envoie un email au nom de la Scolarité (reçus, proforma, relances).
  * Best-effort : ne lève jamais. Renvoie le nombre d'envois réussis.
  */
+export type EmailAttachment = { filename: string; content: string }; // content = base64
+
 export async function sendScolariteEmail(
   recipients: string[],
   subject: string,
-  html: string
+  html: string,
+  attachments?: EmailAttachment[]
 ): Promise<number> {
   if (!canSendEmail) return 0;
   const valid = [...new Set(recipients.filter((e) => e && e.includes("@")))];
+  const hasAtt = Array.isArray(attachments) && attachments.length > 0;
 
   const results = await Promise.allSettled(
     valid.map((to) =>
@@ -146,6 +150,7 @@ export async function sendScolariteEmail(
           subject,
           html,
           reply_to: SCOLARITE_REPLY_TO,
+          ...(hasAtt ? { attachments } : {}),
         }),
       }).then((r) => {
         if (!r.ok) throw new Error(String(r.status));
