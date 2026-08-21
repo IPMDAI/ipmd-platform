@@ -8,6 +8,7 @@ import { CandidatureActions } from "@/components/espace/CandidatureActions";
 import { CandidatureInvite } from "@/components/espace/CandidatureInvite";
 import { DossierLinkActions } from "@/components/espace/DossierLinkActions";
 import { CandidatureSearch } from "@/components/espace/CandidatureSearch";
+import { LETTERS_ENABLED, TEST_MODE } from "@/lib/admission-config";
 import { dossierLinkUrl } from "@/lib/dossier-link";
 import { roleForUniverse } from "@/data/universes";
 import { roleLabels } from "@/lib/dashboards";
@@ -422,6 +423,9 @@ export default async function CandidaturesPage({
                     name={c.full_name}
                     canDelete={isSuper}
                     decidedAt={wf.get(c.id)?.decided_at ?? null}
+                    refusalSentAt={wf.get(c.id)?.refusal_sent_at ?? null}
+                    lettersEnabled={LETTERS_ENABLED}
+                    testMode={TEST_MODE}
                   />
 
                   {/* Dossier incomplet (diplômant) → réclamer les pièces au candidat */}

@@ -8,6 +8,9 @@ import {
   RESERVED_TARGETS,
   canTransition,
 } from "@/lib/candidatures";
+import { LETTERS_ENABLED, resolveRecipients } from "@/lib/admission-config";
+import { buildAdmissionEmail, buildRefusalEmail } from "@/lib/admission-letter";
+import { sendScolariteEmail, canSendEmail } from "@/lib/email";
 import type { FormResult } from "@/types";
 
 async function getAdmin() {
@@ -35,9 +38,8 @@ type CandRow = {
 
 /**
  * Lit l'état de la candidature. `wf` indique si les colonnes de workflow (Lot A)
- * existent déjà en base : si la migration `candidatures-workflow.sql` n'a pas
- * encore été exécutée, on retombe sur le seul `status` (et les horodatages sont
- * traités comme null) afin que le changement de statut continue de fonctionner.
+ * existent déjà en base : si la migration n'a pas encore été exécutée, on retombe
+ * sur le seul `status` afin que le changement de statut continue de fonctionner.
  */
 async function readCandidature(
   supabase: NonNullable<Awaited<ReturnType<typeof createClient>>>,
@@ -70,14 +72,6 @@ async function readCandidature(
 const MIGRATION_REQUISE =
   "Action indisponible : exécute d'abord la migration candidatures-workflow.sql dans Supabase.";
 
-// Correction pré-production : tant que le Lot C n'envoie pas réellement les
-// lettres/emails, les actions d'envoi sont DÉSACTIVÉES. On ne pose donc PAS
-// admission_sent_at / refusal_sent_at et on ne prétend jamais « envoyé ».
-// → passer à `true` au Lot C (une fois l'envoi réel branché).
-const LOT_C_LETTERS_ENABLED = false;
-const LOT_C_PENDING =
-  "Disponible après le Lot C (l'envoi des lettres n'est pas encore actif).";
-
 function revalidate() {
   revalidatePath("/espace/candidatures");
   revalidatePath("/espace");
@@ -86,10 +80,8 @@ function revalidate() {
 /**
  * Fait évoluer le statut d'une candidature via les boutons de l'interface
  * (transitions « manuelles » de la machine à états). Les statuts réservés
- * (`en_attente_paiement`, `inscrit`) NE peuvent PAS être posés ici : ils
- * passent par leurs actions dédiées (Confirmer l'admission / Créer & inviter).
- *
- * Aucun email n'est envoyé (les décisions accepte/refuse restent silencieuses).
+ * (`en_attente_paiement`, `inscrit`) passent par leurs actions dédiées.
+ * Aucun email n'est envoyé (décisions accepte/refuse silencieuses).
  */
 export async function setCandidatureStatus(
   id: string,
@@ -121,16 +113,10 @@ export async function setCandidatureStatus(
   }
 
   const update: Record<string, unknown> = { status };
-  // En posant une décision, on horodate qui a décidé et quand (base de la
-  // traçabilité — la timeline complète viendra au Lot E). Uniquement si les
-  // colonnes de workflow existent (sinon le changement de statut reste possible).
   if (cand.wf && (status === "accepte" || status === "refuse")) {
     update.decided_at = new Date().toISOString();
     update.decided_by = ctx.userId;
   }
-  // Réouverture / révision : on repasse par en_etude. On NE touche PAS aux
-  // horodatages d'envoi déjà posés (admission_sent_at / refusal_sent_at) →
-  // toute la traçabilité est conservée.
 
   const { error } = await ctx.supabase
     .from("inscription_requests")
@@ -142,24 +128,49 @@ export async function setCandidatureStatus(
   return { ok: true, message: "Statut mis à jour." };
 }
 
+/** Snapshot des frais prévisionnels au moment de l'admission (affichage seul). */
+async function feeSnapshot(
+  supabase: NonNullable<Awaited<ReturnType<typeof createClient>>>,
+  entryLevel: string | null
+): Promise<{ registrationFee: number; tuitionDue: number | null; academicYear: string | null }> {
+  const { data: settings } = await supabase
+    .from("finance_settings")
+    .select("registration_fee, academic_year")
+    .eq("id", 1)
+    .maybeSingle();
+  let tuitionDue: number | null = null;
+  if (entryLevel) {
+    const { data: lvl } = await supabase
+      .from("tuition_levels")
+      .select("amount")
+      .eq("level", entryLevel)
+      .maybeSingle();
+    if (lvl?.amount != null) tuitionDue = Number(lvl.amount);
+  }
+  return {
+    registrationFee: Number(settings?.registration_fee ?? 300000),
+    tuitionDue,
+    academicYear: (settings?.academic_year as string) ?? null,
+  };
+}
+
 /**
- * « Confirmer l'admission » : envoi officiel de l'admission (action SÉPARÉE de
- * la décision). Enregistre l'envoi (admission_sent_at) et fait passer la
- * candidature de `accepte` → `en_attente_paiement`.
+ * « Confirmer l'admission » : envoi officiel (SÉPARÉ de la décision).
+ * Envoie la lettre d'admission, crée le pack (snapshot frais), pose
+ * `admission_sent_at` et passe `accepte` → `en_attente_paiement`.
  *
- * ⚠️ Lot A : n'envoie PAS encore l'email. La LETTRE officielle (contenu + PDF)
- * est le Lot C — le point d'insertion est marqué ci-dessous.
- *
- * Sécurité candidatures historiques : si la candidature a été décidée avant la
- * refonte (decided_at NULL), on exige une confirmation explicite (force=true).
+ * ⚠️ GARDE MODE TEST : tant que le modèle n'est pas validé, l'email ne part que
+ * vers l'adresse de test, UNIQUEMENT si la candidature EST celle de test.
+ * Sinon l'action est refusée AVANT toute modification → aucun vrai candidat
+ * contacté ni modifié.
  */
 export async function sendAdmission(
   id: string,
   force = false
 ): Promise<FormResult> {
-  if (!LOT_C_LETTERS_ENABLED) return { ok: false, message: LOT_C_PENDING };
   const ctx = await getAdmin();
   if (!ctx) return { ok: false, message: "Action réservée à l'administration." };
+  if (!LETTERS_ENABLED) return { ok: false, message: "Envoi des lettres désactivé." };
 
   const cand = await readCandidature(ctx.supabase, id);
   if (!cand) return { ok: false, message: "Candidature introuvable." };
@@ -179,44 +190,88 @@ export async function sendAdmission(
     };
   }
 
+  const { data: c } = await ctx.supabase
+    .from("inscription_requests")
+    .select("full_name, email, program_interest, entry_level")
+    .eq("id", id)
+    .single();
+  if (!c) return { ok: false, message: "Candidature introuvable." };
+
+  // ⚠️ GARDE MODE TEST — refuse AVANT toute modification si non autorisé.
+  const rr = resolveRecipients(c.email ?? "");
+  if (!rr.ok) return { ok: false, message: rr.reason };
+  if (!canSendEmail) {
+    return { ok: false, message: "Envoi d'email non configuré (RESEND_API_KEY manquante)." };
+  }
+
+  const snap = await feeSnapshot(ctx.supabase, (c.entry_level as string) ?? null);
+  const { subject, html } = buildAdmissionEmail({
+    name: (c.full_name as string) ?? "",
+    program: (c.program_interest as string) ?? null,
+    level: (c.entry_level as string) ?? null,
+    academicYear: snap.academicYear,
+    registrationFee: snap.registrationFee,
+    tuitionDue: snap.tuitionDue,
+    testMode: rr.testMode,
+  });
+
+  const sent = await sendScolariteEmail(rr.to, subject, html);
+  if (sent < 1) {
+    return { ok: false, message: "L'email n'a pas pu être envoyé. Réessayez." };
+  }
+
   const now = new Date().toISOString();
+
+  // Pack d'admission — 1 par candidature (upsert). Best-effort : ne bloque pas
+  // si la table n'est pas encore créée (lettre déjà envoyée).
+  try {
+    await ctx.supabase.from("admission_packs").upsert(
+      {
+        candidature_id: id,
+        status: "sent",
+        accepted_level: (c.entry_level as string) ?? null,
+        registration_fee: snap.registrationFee,
+        tuition_due: snap.tuitionDue,
+        academic_year: snap.academicYear,
+        sent_at: now,
+        sent_count: 1,
+        updated_at: now,
+        created_by: ctx.userId,
+      },
+      { onConflict: "candidature_id" }
+    );
+  } catch {
+    // table admission_packs pas encore créée : on continue (lettre déjà envoyée)
+  }
+
   const update: Record<string, unknown> = {
     status: "en_attente_paiement",
     admission_sent_at: now,
   };
-  if (!cand.row.decided_at) update.decided_at = now; // assainit l'historique
-
-  // TODO Lot C : composer et envoyer ici la LETTRE d'admission officielle
-  // (email + PDF signé + proforma). Le Lot A ne fait que la transition d'état.
-
-  const { error } = await ctx.supabase
-    .from("inscription_requests")
-    .update(update)
-    .eq("id", id);
-  if (error) return { ok: false, message: error.message };
+  if (!cand.row.decided_at) update.decided_at = now;
+  await ctx.supabase.from("inscription_requests").update(update).eq("id", id);
 
   revalidate();
   return {
     ok: true,
-    message: "Admission confirmée → en attente de paiement. (Lettre email : Lot C)",
+    message: rr.testMode
+      ? `MODE TEST : lettre d'admission envoyée à ${rr.to[0]} (aucun vrai candidat contacté). Statut → en attente de paiement.`
+      : "Admission envoyée → en attente de paiement.",
   };
 }
 
 /**
- * « Confirmer le refus » : envoi officiel du refus (action SÉPARÉE de la
- * décision). Enregistre l'envoi (refusal_sent_at). La candidature RESTE
- * `refuse` mais devient VERROUILLÉE (réouverture exceptionnelle via
- * setCandidatureStatus → en_etude, confirmée côté UI, traçabilité conservée).
- *
- * ⚠️ Lot A : n'envoie PAS encore l'email (lettre de refus = Lot C).
+ * « Confirmer le refus » : envoi officiel (SÉPARÉ de la décision).
+ * Envoie la lettre de refus et pose `refusal_sent_at` (verrouillage).
+ * Même GARDE MODE TEST que l'admission.
  */
 export async function sendRefusal(
   id: string,
   force = false
 ): Promise<FormResult> {
-  if (!LOT_C_LETTERS_ENABLED) return { ok: false, message: LOT_C_PENDING };
   const ctx = await getAdmin();
   if (!ctx) return { ok: false, message: "Action réservée à l'administration." };
+  if (!LETTERS_ENABLED) return { ok: false, message: "Envoi des lettres désactivé." };
 
   const cand = await readCandidature(ctx.supabase, id);
   if (!cand) return { ok: false, message: "Candidature introuvable." };
@@ -236,36 +291,53 @@ export async function sendRefusal(
     };
   }
 
+  const { data: c } = await ctx.supabase
+    .from("inscription_requests")
+    .select("full_name, email, program_interest, refusal_reason")
+    .eq("id", id)
+    .single();
+  if (!c) return { ok: false, message: "Candidature introuvable." };
+
+  const rr = resolveRecipients(c.email ?? "");
+  if (!rr.ok) return { ok: false, message: rr.reason };
+  if (!canSendEmail) {
+    return { ok: false, message: "Envoi d'email non configuré (RESEND_API_KEY manquante)." };
+  }
+
+  const { subject, html } = buildRefusalEmail({
+    name: (c.full_name as string) ?? "",
+    program: (c.program_interest as string) ?? null,
+    reason: (c.refusal_reason as string) ?? null,
+    testMode: rr.testMode,
+  });
+
+  const sent = await sendScolariteEmail(rr.to, subject, html);
+  if (sent < 1) {
+    return { ok: false, message: "L'email n'a pas pu être envoyé. Réessayez." };
+  }
+
   const now = new Date().toISOString();
   const update: Record<string, unknown> = { refusal_sent_at: now };
   if (!cand.row.decided_at) update.decided_at = now;
-
-  // TODO Lot C : composer et envoyer ici la LETTRE de refus officielle.
-
-  const { error } = await ctx.supabase
-    .from("inscription_requests")
-    .update(update)
-    .eq("id", id);
-  if (error) return { ok: false, message: error.message };
+  await ctx.supabase.from("inscription_requests").update(update).eq("id", id);
 
   revalidate();
   return {
     ok: true,
-    message: "Refus confirmé (verrouillé). (Lettre email : Lot C)",
+    message: rr.testMode
+      ? `MODE TEST : lettre de refus envoyée à ${rr.to[0]} (aucun vrai candidat contacté).`
+      : "Refus confirmé (verrouillé).",
   };
 }
 
 /**
  * « Marquer comme déjà notifiée » (assainissement des candidatures historiques) :
- * pose l'horodatage d'envoi SANS envoyer d'email et SANS changer le statut.
- * Permet de faire disparaître le rappel d'envoi sur d'anciens dossiers déjà
- * traités manuellement, sans re-solliciter le candidat.
+ * pose l'horodatage d'envoi SANS email et SANS changer le statut.
  */
 export async function markAsNotified(
   id: string,
   kind: "admission" | "refus"
 ): Promise<FormResult> {
-  if (!LOT_C_LETTERS_ENABLED) return { ok: false, message: LOT_C_PENDING };
   const ctx = await getAdmin();
   if (!ctx) return { ok: false, message: "Action réservée à l'administration." };
 
@@ -295,8 +367,6 @@ export async function markAsNotified(
 
 /**
  * Supprime définitivement une candidature (réservé au super admin).
- * Utilisé pour retirer les tests / doublons. Suppression via service-role
- * (aucune policy DELETE sur inscription_requests) après vérification du rôle.
  */
 export async function deleteCandidature(id: string): Promise<FormResult> {
   const supabase = await createClient();
