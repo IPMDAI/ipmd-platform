@@ -1,0 +1,119 @@
+import type { UniverseId } from "@/types";
+
+/**
+ * Étape 2 — « Votre parcours actuel ».
+ *
+ * ⚠️ Décrit UNIQUEMENT ce que le candidat a DÉJÀ atteint (études / diplômes /
+ * activité). Le niveau ou programme VISÉ à l'IPMD relève de l'Étape 3 (Projet).
+ * On n'emploie jamais l'expression « niveau d'entrée » ici. Le CV n'est PAS
+ * demandé ici : il viendra à l'Étape 4 (Pièces).
+ *
+ * Quatre variantes, dérivées du parcours choisi à l'Étape 0 :
+ *  - campus     : académique seul (niveau + diplôme requis).
+ *  - pro        : académique requis + situation professionnelle FACULTATIVE.
+ *  - executive  : académique requis + fonction professionnelle OBLIGATOIRE.
+ *  - certificat : version allégée, tout facultatif (UltraJobs/Boost/Executive/SeniorsHub).
+ */
+export type Background = {
+  lastLevel: string; // Dernier niveau d'études atteint
+  lastDiploma: string; // Dernier diplôme obtenu
+  graduationYear: string; // Année d'obtention (facultatif)
+  institution: string; // Établissement d'origine (facultatif)
+  currentSituation: string; // Situation / fonction actuelle (selon variante)
+};
+
+export const EMPTY_BACKGROUND: Background = {
+  lastLevel: "",
+  lastDiploma: "",
+  graduationYear: "",
+  institution: "",
+  currentSituation: "",
+};
+
+export type BackgroundVariant = "campus" | "pro" | "executive" | "certificat";
+
+/** Variante dérivée de l'univers choisi à l'Étape 0. */
+export function variantForUniverse(id: UniverseId | null): BackgroundVariant {
+  if (id === "campus") return "campus";
+  if (id === "professionnel") return "pro";
+  if (id === "gouvernance") return "executive";
+  return "certificat"; // ultrajobs / ultraboost / ultraexecutive / seniorshub
+}
+
+/** Niveaux d'études DÉJÀ ATTEINTS (jamais « niveau d'entrée »). */
+export const EDUCATION_LEVELS = [
+  "Niveau Terminale (Bac non obtenu)",
+  "Baccalauréat",
+  "Bac+1",
+  "Bac+2 (BTS, DUT, DEUG…)",
+  "Bac+3 (Licence, Bachelor…)",
+  "Bac+4 (Maîtrise, M1…)",
+  "Bac+5 (Master, MBA, Ingénieur…)",
+  "Bac+8 (Doctorat, DBA…)",
+  "Autre",
+];
+
+/** Le bloc académique (niveau + diplôme) est-il obligatoire pour cette variante ? */
+export const academicRequired = (v: BackgroundVariant): boolean => v !== "certificat";
+
+/** Spécification du champ « situation / fonction actuelle » selon la variante. */
+export type SituationSpec = {
+  show: boolean;
+  required: boolean;
+  label: string;
+  placeholder: string;
+  hint?: string;
+};
+
+export function situationSpec(v: BackgroundVariant): SituationSpec {
+  switch (v) {
+    case "pro":
+      return {
+        show: true,
+        required: false,
+        label: "Situation actuelle / activité professionnelle",
+        placeholder: "Ex. Salarié, entrepreneur, en reconversion…",
+        hint: "Facultatif",
+      };
+    case "executive":
+      return {
+        show: true,
+        required: true,
+        label: "Fonction actuelle / activité professionnelle",
+        placeholder: "Ex. Directeur, manager, entrepreneur, consultant…",
+      };
+    case "certificat":
+      return {
+        show: true,
+        required: false,
+        label: "Situation actuelle / activité professionnelle",
+        placeholder: "Ex. Étudiant, en recherche d'emploi, salarié, entrepreneur…",
+        hint: "Facultatif — aide à mieux vous orienter.",
+      };
+    default: // campus : pas de champ professionnel
+      return { show: false, required: false, label: "", placeholder: "" };
+  }
+}
+
+/**
+ * Erreurs par champ (message court), calculées selon la variante :
+ * académique requis pour campus/pro/executive ; situation requise uniquement
+ * pour executive.
+ */
+export function backgroundErrors(
+  v: Background,
+  variant: BackgroundVariant,
+): Partial<Record<keyof Background, string>> {
+  const e: Partial<Record<keyof Background, string>> = {};
+  if (academicRequired(variant)) {
+    if (!v.lastLevel.trim()) e.lastLevel = "Champ obligatoire.";
+    if (!v.lastDiploma.trim()) e.lastDiploma = "Champ obligatoire.";
+  }
+  const sit = situationSpec(variant);
+  if (sit.show && sit.required && !v.currentSituation.trim())
+    e.currentSituation = "Champ obligatoire.";
+  return e;
+}
+
+export const isBackgroundValid = (v: Background, variant: BackgroundVariant): boolean =>
+  Object.keys(backgroundErrors(v, variant)).length === 0;

@@ -1,0 +1,244 @@
+"use client";
+
+import { useRef, useState } from "react";
+import type { UniverseId } from "@/types";
+import { getUniverse } from "@/data/universes";
+import { WIZARD_STEPS, STEP_COUNT } from "./steps";
+import { Step0Parcours } from "./Step0Parcours";
+import { Step1Identite } from "./Step1Identite";
+import { EMPTY_IDENTITY, isIdentityValid, type Identity } from "./identity";
+import { Step2Parcours } from "./Step2Parcours";
+import {
+  EMPTY_BACKGROUND,
+  isBackgroundValid,
+  variantForUniverse,
+  type Background,
+} from "./background";
+import { Step3Projet } from "./Step3Projet";
+import {
+  activeDocProfileKey,
+  areRequiredDocsUploaded,
+  EMPTY_PROJECT,
+  isProjectValid,
+  type Project,
+  type Uploads,
+  type WizardCatalog,
+} from "./project";
+import { Step4Pieces } from "./Step4Pieces";
+import { Step5Recap } from "./Step5Recap";
+
+/**
+ * Coquille du wizard d'admission (étapes 0→5).
+ *
+ * ⚠️ ISOLÉ : ce composant vit sur /admission/wizard et NE remplace PAS le
+ * formulaire public /admission (toujours actif en production). Les étapes 0→4
+ * sont fonctionnelles ; l'étape 5 affiche un placeholder tant qu'elle n'est pas
+ * validée. Les Étapes 3 et 4 lisent le catalogue réel (`catalog`, chargé serveur).
+ */
+export function AdmissionWizard({ catalog }: { catalog: WizardCatalog }) {
+  const [step, setStep] = useState(0);
+  const [universe, setUniverse] = useState<UniverseId | null>(null);
+  const [identity, setIdentity] = useState<Identity>(EMPTY_IDENTITY);
+  const [background, setBackground] = useState<Background>(EMPTY_BACKGROUND);
+  const [project, setProject] = useState<Project>(EMPTY_PROJECT);
+  const [uploads, setUploads] = useState<Uploads>({});
+  const [confirmed, setConfirmed] = useState(false);
+
+  // Dossier Storage unique par session wizard : généré à la 1re pièce (côté
+  // client uniquement → pas de souci d'hydratation), réutilisé pour toutes les
+  // pièces du candidat.
+  const folderRef = useRef<string>("");
+  const getFolder = () => {
+    if (!folderRef.current) folderRef.current = crypto.randomUUID();
+    return folderRef.current;
+  };
+
+  // Variante du parcours choisi (campus / pro / executive / certificat) : pilote
+  // les champs de l'Étape 2 et les options de l'Étape 3.
+  const variant = variantForUniverse(universe);
+
+  const canNext =
+    step === 0
+      ? universe !== null
+      : step === 1
+        ? isIdentityValid(identity)
+        : step === 2
+          ? isBackgroundValid(background, variant)
+          : step === 3
+            ? isProjectValid(project, universe, variant, catalog)
+            : step === 4
+              ? areRequiredDocsUploaded(
+                  activeDocProfileKey(project, universe, variant, catalog),
+                  catalog,
+                  uploads,
+                )
+              : true;
+  const atFirst = step === 0;
+  const atLast = step === STEP_COUNT - 1;
+
+  const goNext = () => {
+    if (!canNext || atLast) return;
+    setStep((s) => Math.min(s + 1, STEP_COUNT - 1));
+  };
+  const goPrev = () => {
+    if (atFirst) return;
+    setStep((s) => Math.max(s - 1, 0));
+  };
+
+  const current = WIZARD_STEPS[step];
+  const selectedName = universe ? getUniverse(universe)?.name : null;
+
+  return (
+    <div className="mx-auto max-w-4xl">
+      {/* Fil d'Ariane — pastilles compactes (mobile) → libellés (desktop) */}
+      <nav aria-label="Progression" className="mb-6">
+        {/* Mobile : « Étape n/6 · Titre » + barre de progression */}
+        <div className="sm:hidden">
+          <div className="flex items-baseline justify-between">
+            <span className="text-xs font-bold uppercase tracking-wider text-ipmd-red">
+              Étape {step + 1}/{STEP_COUNT}
+            </span>
+            <span className="text-sm font-semibold text-ipmd-black">{current.label}</span>
+          </div>
+          <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-black/10">
+            <div
+              className="h-full rounded-full bg-ipmd-red transition-all"
+              style={{ width: `${((step + 1) / STEP_COUNT) * 100}%` }}
+            />
+          </div>
+        </div>
+
+        {/* Desktop : stepper à pastilles + libellés */}
+        <ol className="hidden items-center gap-1 sm:flex">
+          {WIZARD_STEPS.map((s, i) => {
+            const done = i < step;
+            const active = i === step;
+            return (
+              <li key={s.key} className="flex flex-1 items-center gap-1">
+                <div className="flex items-center gap-2">
+                  <span
+                    className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-bold transition ${
+                      active
+                        ? "bg-ipmd-red text-white"
+                        : done
+                          ? "bg-ipmd-red/15 text-ipmd-red"
+                          : "bg-black/10 text-black/40"
+                    }`}
+                  >
+                    {done ? "✓" : i}
+                  </span>
+                  <span
+                    className={`whitespace-nowrap text-xs font-semibold ${
+                      active ? "text-ipmd-black" : "text-black/40"
+                    }`}
+                  >
+                    {s.short}
+                  </span>
+                </div>
+                {i < STEP_COUNT - 1 && (
+                  <span className={`h-px flex-1 ${done ? "bg-ipmd-red/40" : "bg-black/10"}`} />
+                )}
+              </li>
+            );
+          })}
+        </ol>
+      </nav>
+
+      {/* Contenu de l'étape */}
+      <div className="rounded-3xl bg-white p-5 shadow-sm ring-1 ring-black/5 sm:p-8">
+        {step === 0 ? (
+          <Step0Parcours selected={universe} onSelect={setUniverse} />
+        ) : step === 1 ? (
+          <Step1Identite value={identity} onChange={setIdentity} />
+        ) : step === 2 ? (
+          <Step2Parcours value={background} variant={variant} onChange={setBackground} />
+        ) : step === 3 ? (
+          <Step3Projet
+            universe={universe}
+            variant={variant}
+            catalog={catalog}
+            value={project}
+            onChange={setProject}
+          />
+        ) : step === 4 ? (
+          <Step4Pieces
+            universe={universe}
+            variant={variant}
+            catalog={catalog}
+            project={project}
+            uploads={uploads}
+            onUploadsChange={setUploads}
+            getFolder={getFolder}
+          />
+        ) : step === 5 ? (
+          <Step5Recap
+            universe={universe}
+            variant={variant}
+            catalog={catalog}
+            identity={identity}
+            background={background}
+            project={project}
+            uploads={uploads}
+            confirmed={confirmed}
+            onConfirm={setConfirmed}
+            onEdit={setStep}
+          />
+        ) : (
+          <div className="py-10 text-center">
+            <p className="text-xs font-bold uppercase tracking-wider text-ipmd-red">
+              Étape {step + 1} · {current.label}
+            </p>
+            <h2 className="mt-2 text-xl font-extrabold text-ipmd-black">{current.hint}</h2>
+            <p className="mx-auto mt-3 max-w-md text-sm text-black/55">
+              Cette étape est en cours de préparation. La structure du wizard est en
+              place ; le contenu sera activé après validation de l'Étape 0.
+            </p>
+            {selectedName && (
+              <p className="mt-4 inline-block rounded-full bg-ipmd-light px-3 py-1 text-xs font-semibold text-black/60">
+                Parcours choisi : {selectedName}
+              </p>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Navigation précédent / suivant */}
+      <div className="mt-5 flex items-center justify-between gap-3">
+        <button
+          type="button"
+          onClick={goPrev}
+          disabled={atFirst}
+          className="rounded-full border border-black/15 bg-white px-5 py-2.5 text-sm font-semibold text-ipmd-black transition hover:bg-black/[0.03] disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          ← Précédent
+        </button>
+
+        <span className="hidden text-xs text-black/40 sm:block">
+          {step === 0 && !universe
+            ? "Sélectionnez un parcours pour continuer"
+            : (step === 1 || step === 2) && !canNext
+              ? "Complétez les champs obligatoires pour continuer"
+              : step === 3 && !canNext
+                ? "Choisissez une formation ouverte pour continuer"
+                : step === 4 && !canNext
+                  ? "Téléversez les pièces obligatoires pour continuer"
+                  : " "}
+        </span>
+
+        {atLast ? (
+          // Dernière étape : l'envoi vit dans le récapitulatif (Étape 5).
+          <span className="w-[120px]" aria-hidden="true" />
+        ) : (
+          <button
+            type="button"
+            onClick={goNext}
+            disabled={!canNext}
+            className="rounded-full bg-ipmd-red px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-ipmd-red-dark disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            Suivant →
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
