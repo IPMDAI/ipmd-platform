@@ -5,8 +5,6 @@ import {
   createAcademicYear,
   activateYear,
   createIntake,
-  addOffering,
-  setOfferingStatus,
   openIntake,
   closeIntake,
 } from "@/lib/academic-year-actions";
@@ -46,55 +44,6 @@ const badge = (status: string) => {
   };
   return `rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${map[status] ?? "bg-black/10 text-black/50"}`;
 };
-
-function AddOfferingForm({
-  intakeId,
-  filieres,
-  levels,
-}: {
-  intakeId: string;
-  filieres: FiliereRow[];
-  levels: string[];
-}) {
-  const [state, action, pending] = useActionState<FormResult | null, FormData>(addOffering, null);
-  return (
-    <form action={action} className="mt-2 flex flex-wrap items-end gap-2">
-      <input type="hidden" name="intake_id" value={intakeId} />
-      <select name="filiere_id" required className={`${inputBase} py-1 text-xs`} defaultValue="">
-        <option value="" disabled>
-          Filière…
-        </option>
-        {filieres.map((f) => (
-          <option key={f.id} value={f.id}>
-            {f.name}
-          </option>
-        ))}
-      </select>
-      <select name="level" required className={`${inputBase} py-1 text-xs`} defaultValue="">
-        <option value="" disabled>
-          Niveau…
-        </option>
-        {levels.map((l) => (
-          <option key={l} value={l}>
-            {l}
-          </option>
-        ))}
-      </select>
-      <button
-        type="submit"
-        disabled={pending}
-        className="rounded-full bg-ipmd-black px-3 py-1 text-xs font-semibold text-white hover:opacity-90 disabled:opacity-50"
-      >
-        + Offre
-      </button>
-      {state && (
-        <span className={`text-[11px] font-medium ${state.ok ? "text-green-600" : "text-ipmd-red"}`}>
-          {state.message}
-        </span>
-      )}
-    </form>
-  );
-}
 
 export function AnneesRentrees({
   years,
@@ -358,55 +307,9 @@ export function AnneesRentrees({
                     </div>
                   </div>
 
-                  {/* Offres */}
-                  <div className="mt-3 space-y-1.5">
-                    {it.offerings.length === 0 && (
-                      <p className="text-[11px] text-black/40">Aucune offre déclarée.</p>
-                    )}
-                    {it.offerings.map((o) => (
-                      <div
-                        key={o.id}
-                        className="flex flex-wrap items-center gap-2 rounded-lg bg-white px-3 py-1.5 ring-1 ring-black/5"
-                      >
-                        <span className="text-xs font-medium text-black/70">
-                          {o.filiereName} — {o.level}
-                        </span>
-                        <span className={badge(o.status)}>{o.status}</span>
-                        <span
-                          className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${
-                            o.hasClass ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-ipmd-red"
-                          }`}
-                        >
-                          {o.hasClass ? "classe ✓" : "classe manquante"}
-                        </span>
-                        <div className="ml-auto flex gap-1.5">
-                          {o.status !== "open" ? (
-                            <button
-                              type="button"
-                              onClick={() => run(() => setOfferingStatus(o.id, "open"))}
-                              disabled={pending}
-                              className="rounded-full bg-emerald-600/90 px-2 py-0.5 text-[10px] font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
-                              title={o.hasClass ? "Ouvrir l'offre" : "Nécessite 1 classe configurée"}
-                            >
-                              Ouvrir
-                            </button>
-                          ) : (
-                            <button
-                              type="button"
-                              onClick={() => run(() => setOfferingStatus(o.id, "closed"))}
-                              disabled={pending}
-                              className="rounded-full bg-black/10 px-2 py-0.5 text-[10px] font-semibold text-black/60 hover:bg-black/20 disabled:opacity-50"
-                            >
-                              Fermer
-                            </button>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-
-                  <AddOfferingForm intakeId={it.id} filieres={filieres} levels={levels} />
-
+                  {/* Gestion des offres : interface UNIQUE = la checklist ci-dessous
+                      (créer / réutiliser / ouvrir / fermer). L'ancien bloc manuel
+                      Filière+Niveau + « + Offre » et la liste Ouvrir/Fermer ont été retirés. */}
                   <IntakeOfferingConfig
                     intakeId={it.id}
                     filieres={filieres}
