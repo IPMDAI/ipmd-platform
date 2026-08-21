@@ -68,6 +68,20 @@ export async function activateYear(year: string): Promise<FormResult> {
   if (ctx.role !== "super_admin")
     return { ok: false, message: "Activer une année est réservé au Super Admin." };
 
+  // Seule une année en PRÉPARATION peut devenir l'année de fonctionnement.
+  // (On ne réactive jamais une archive ni ne « ré-active » l'année déjà active.)
+  const { data: target } = await ctx.supabase
+    .from("academic_years")
+    .select("status")
+    .eq("year", year)
+    .maybeSingle();
+  if (!target) return { ok: false, message: `Année ${year} introuvable.` };
+  if (target.status !== "preparation")
+    return {
+      ok: false,
+      message: `Seule une année en préparation peut être activée (statut actuel : ${target.status}).`,
+    };
+
   const { error } = await ctx.supabase.rpc("activate_academic_year", { p_year: year });
   if (error) return { ok: false, message: error.message };
   revalidate();

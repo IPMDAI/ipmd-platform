@@ -201,7 +201,7 @@ export function AnneesRentrees({
             >
               <span className="font-semibold text-ipmd-black">{y.year}</span>
               <span className={badge(y.status)}>{y.status}</span>
-              {y.status !== "active" && isSuper && (
+              {y.status === "preparation" && isSuper && (
                 <button
                   type="button"
                   onClick={() =>
