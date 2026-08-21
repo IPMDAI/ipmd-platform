@@ -7,17 +7,54 @@ import {
   revokePackLink,
 } from "@/lib/admission-actions";
 
+function fmt(iso?: string | null): string {
+  if (!iso) return "";
+  return new Date(iso).toLocaleDateString("fr-FR", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  });
+}
+
+export type PackState = {
+  sentAt: string | null;
+  viewedAt: string | null;
+  reglementAt: string | null;
+  conventionStatus: string | null;
+  signatureMethod: string | null;
+};
+
+function conventionBadge(
+  status: string | null,
+  method: string | null
+): { label: string; cls: string } {
+  if (status === "signee")
+    return { label: "✍️ Convention signée", cls: "bg-emerald-50 text-emerald-700 ring-emerald-200" };
+  if (method === "accord_principe_non_contraignant")
+    return {
+      label: "✍️ Accord de principe (non contraignant)",
+      cls: "bg-black/5 text-black/55 ring-black/10",
+    };
+  return { label: "✍️ Convention en attente", cls: "bg-amber-50 text-amber-700 ring-amber-200" };
+}
+
+const badge = "rounded-full px-2 py-0.5 text-[11px] font-semibold ring-1";
+
 /**
- * Actions admin sur l'espace d'admission d'un candidat : copier/régénérer le
- * lien, l'envoyer par email (mode test respecté), ou le révoquer.
- * Visible dès qu'un pack existe (admission confirmée).
+ * Actions admin + états de l'espace d'admission d'un candidat. Affiche
+ * l'avancement (envoyé / consulté / règlement / convention) et les actions
+ * lien (copier/régénérer, envoyer, révoquer). Visible dès qu'un pack existe.
  */
 export function AdmissionPackAdmin({
   candidatureId,
   email,
+  pack = null,
+  conventionUrl = null,
 }: {
   candidatureId: string;
   email: string | null;
+  pack?: PackState | null;
+  conventionUrl?: string | null;
 }) {
   const [pending, start] = useTransition();
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
@@ -75,6 +112,50 @@ export function AdmissionPackAdmin({
       <p className="text-[11px] font-bold uppercase tracking-wider text-indigo-700">
         🔗 Espace d&apos;admission
       </p>
+
+      {/* États d'avancement (C5) */}
+      {pack && (
+        <div className="mt-2 flex flex-wrap gap-1.5">
+          {pack.sentAt && (
+            <span className={`${badge} bg-blue-50 text-blue-700 ring-blue-200`}>
+              📤 Envoyé {fmt(pack.sentAt)}
+            </span>
+          )}
+          <span
+            className={`${badge} ${
+              pack.viewedAt
+                ? "bg-emerald-50 text-emerald-700 ring-emerald-200"
+                : "bg-black/5 text-black/45 ring-black/10"
+            }`}
+          >
+            {pack.viewedAt ? `👀 Consulté ${fmt(pack.viewedAt)}` : "👀 Non consulté"}
+          </span>
+          <span
+            className={`${badge} ${
+              pack.reglementAt
+                ? "bg-emerald-50 text-emerald-700 ring-emerald-200"
+                : "bg-amber-50 text-amber-700 ring-amber-200"
+            }`}
+          >
+            {pack.reglementAt ? `📜 Règlement ${fmt(pack.reglementAt)}` : "📜 Règlement en attente"}
+          </span>
+          {(() => {
+            const cb = conventionBadge(pack.conventionStatus, pack.signatureMethod);
+            return <span className={`${badge} ${cb.cls}`}>{cb.label}</span>;
+          })()}
+          {conventionUrl && (
+            <a
+              href={conventionUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={`${badge} bg-white text-ipmd-black ring-black/15 hover:ring-ipmd-red/40`}
+            >
+              📎 Voir la convention signée
+            </a>
+          )}
+        </div>
+      )}
+
       <div className="mt-2 flex flex-wrap items-center gap-2">
         <button
           type="button"

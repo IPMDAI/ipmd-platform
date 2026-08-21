@@ -116,16 +116,41 @@ export default async function CandidaturesPage({
     }
   }
 
-  // Présence d'un pack d'admission (Lot C2) — best-effort : la page fonctionne
-  // même si la table n'existe pas encore. Sert à afficher les actions « lien ».
-  const packSet = new Set<string>();
+  // Détails des packs d'admission (Lot C2/C5) — best-effort : la page fonctionne
+  // même si la table n'existe pas encore. Sert aux actions « lien » + états.
+  type PackDetail = {
+    sentAt: string | null;
+    viewedAt: string | null;
+    reglementAt: string | null;
+    conventionStatus: string | null;
+    signatureMethod: string | null;
+    evidencePath: string | null;
+  };
+  const packMap = new Map<string, PackDetail>();
   {
     const { data: packRows, error: packErr } = await supabase
       .from("admission_packs")
-      .select("candidature_id");
+      .select(
+        "candidature_id, sent_at, first_viewed_at, reglement_accepted_at, convention_status, signature_method, signature_evidence_url"
+      );
     if (!packErr && packRows) {
-      for (const p of packRows as Array<{ candidature_id: string }>) {
-        packSet.add(p.candidature_id);
+      for (const p of packRows as Array<{
+        candidature_id: string;
+        sent_at: string | null;
+        first_viewed_at: string | null;
+        reglement_accepted_at: string | null;
+        convention_status: string | null;
+        signature_method: string | null;
+        signature_evidence_url: string | null;
+      }>) {
+        packMap.set(p.candidature_id, {
+          sentAt: p.sent_at,
+          viewedAt: p.first_viewed_at,
+          reglementAt: p.reglement_accepted_at,
+          conventionStatus: p.convention_status,
+          signatureMethod: p.signature_method,
+          evidencePath: p.signature_evidence_url,
+        });
       }
     }
   }
@@ -196,6 +221,7 @@ export default async function CandidaturesPage({
         c.doc_id,
         c.doc_attestation,
         c.doc_cv,
+        packMap.get(c.id)?.evidencePath ?? null,
       ])
       .filter(Boolean) as string[];
     if (paths.length > 0) {
@@ -443,9 +469,24 @@ export default async function CandidaturesPage({
                     testMode={TEST_MODE}
                   />
 
-                  {/* Espace d'admission (Lot C2) : actions lien — dès qu'un pack existe */}
-                  {packSet.has(c.id) && (
-                    <AdmissionPackAdmin candidatureId={c.id} email={c.email} />
+                  {/* Espace d'admission (Lot C2/C5) : états + actions lien */}
+                  {packMap.has(c.id) && (
+                    <AdmissionPackAdmin
+                      candidatureId={c.id}
+                      email={c.email}
+                      pack={{
+                        sentAt: packMap.get(c.id)!.sentAt,
+                        viewedAt: packMap.get(c.id)!.viewedAt,
+                        reglementAt: packMap.get(c.id)!.reglementAt,
+                        conventionStatus: packMap.get(c.id)!.conventionStatus,
+                        signatureMethod: packMap.get(c.id)!.signatureMethod,
+                      }}
+                      conventionUrl={
+                        packMap.get(c.id)!.evidencePath
+                          ? docUrls.get(packMap.get(c.id)!.evidencePath as string) ?? null
+                          : null
+                      }
+                    />
                   )}
 
                   {/* Dossier incomplet (diplômant) → réclamer les pièces au candidat */}
