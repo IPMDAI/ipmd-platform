@@ -7,6 +7,7 @@ import { Container } from "@/components/ui/Container";
 import { CandidatureActions } from "@/components/espace/CandidatureActions";
 import { CandidatureInvite } from "@/components/espace/CandidatureInvite";
 import { DossierLinkActions } from "@/components/espace/DossierLinkActions";
+import { CandidatureSearch } from "@/components/espace/CandidatureSearch";
 import { dossierLinkUrl } from "@/lib/dossier-link";
 import { roleForUniverse } from "@/data/universes";
 import { roleLabels } from "@/lib/dashboards";
@@ -31,6 +32,14 @@ function formatDate(iso: string): string {
     month: "long",
     year: "numeric",
   });
+}
+
+/** Minuscule + sans accents, pour l'attribut de recherche des fiches. */
+function norm(s: string): string {
+  return s
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .toLowerCase();
 }
 
 export default async function CandidaturesPage({
@@ -235,6 +244,9 @@ export default async function CandidaturesPage({
             Inscrit.
           </p>
 
+          {/* Recherche (nom, email, téléphone, filière) — se combine aux filtres */}
+          <CandidatureSearch />
+
           {/* Filtre par TYPE : Diplômes vs Bootcamps (ne pas mélanger) */}
           <div className="mt-5 flex flex-wrap gap-2">
             {chip("Tout", !activeType, buildHref({ type: "", univers: "" }))}
@@ -272,6 +284,11 @@ export default async function CandidaturesPage({
               {candidatures.map((c) => (
                 <li
                   key={c.id}
+                  data-search={norm(
+                    `${c.full_name ?? ""} ${c.email ?? ""} ${c.phone ?? ""} ${
+                      c.whatsapp ?? ""
+                    } ${c.program_interest ?? ""} ${universeNames[c.universe] ?? ""}`
+                  )}
                   className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-black/5"
                 >
                   <div className="flex flex-wrap items-start justify-between gap-2">
