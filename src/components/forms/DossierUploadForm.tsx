@@ -2,6 +2,7 @@
 
 import { useState, type FormEvent } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { createUploadTicket } from "@/lib/upload-actions";
 import { completeDossier } from "@/lib/dossier-actions";
 import { ActionButton } from "@/components/ui/Button";
 import { Field } from "./FormField";
@@ -22,9 +23,13 @@ async function uploadDoc(
   if (file.size > MAX_FILE) return { path: null, reason: "trop-lourd" };
   const ext = (file.name.split(".").pop() || "bin").toLowerCase().replace(/[^a-z0-9]/g, "");
   const path = `${folder}/${key}.${ext}`;
+  // Ticket d'upload signé (serveur, clé service_role) → envoi direct au stockage,
+  // contourne la RLS sans faire transiter le fichier par le serveur.
+  const token = await createUploadTicket(path);
+  if (!token) return { path: null, reason: "echec" };
   const { error } = await supabase.storage
     .from("candidature-docs")
-    .upload(path, file, { upsert: true });
+    .uploadToSignedUrl(path, token, file, { upsert: true });
   return error ? { path: null, reason: "echec" } : { path, reason: "ok" };
 }
 
