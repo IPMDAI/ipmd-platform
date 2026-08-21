@@ -1,5 +1,6 @@
 import Image from "next/image";
 import { formatFCFA } from "@/lib/finance";
+import { ReglementConsent } from "@/components/admission/ReglementConsent";
 
 /**
  * Vue publique (sans compte) du pack d'admission. Mobile-first : lisible dès
@@ -14,6 +15,7 @@ export function PackView({
   registrationFee,
   tuitionDue,
   token,
+  reglementAcceptedAt = null,
 }: {
   name: string;
   program: string | null;
@@ -22,6 +24,7 @@ export function PackView({
   registrationFee: number;
   tuitionDue: number | null;
   token: string;
+  reglementAcceptedAt?: string | null;
 }) {
   const total = registrationFee + (tuitionDue ?? 0);
   const rows: Array<[string, string]> = [
@@ -81,15 +84,23 @@ export function PackView({
               ⬇ Télécharger ma lettre d&apos;admission (PDF)
             </a>
 
-            {/* À venir : règlement (C3) + convention (C4) */}
-            <div className="mt-5 rounded-xl bg-ipmd-light px-4 py-3 text-xs text-black/55">
-              <p className="font-semibold text-black/70">Prochaines étapes dans votre espace :</p>
+            {/* Règlement intérieur (C3) */}
+            <div className="mt-6">
+              <p className="text-[11px] font-bold uppercase tracking-wider text-ipmd-red">
+                1. Règlement intérieur
+              </p>
+              <div className="mt-2">
+                <ReglementConsent token={token} acceptedAt={reglementAcceptedAt} />
+              </div>
+            </div>
+
+            {/* Convention (C4) + paiement (Lot D) — à venir */}
+            <div className="mt-4 rounded-xl bg-ipmd-light px-4 py-3 text-xs text-black/55">
+              <p className="font-semibold text-black/70">À venir dans votre espace :</p>
               <ul className="mt-1 list-inside list-disc space-y-0.5">
-                <li>Lecture et acceptation du règlement intérieur</li>
                 <li>Signature de la convention de formation</li>
                 <li>Modalités de paiement</li>
               </ul>
-              <p className="mt-2 italic text-black/45">Ces sections seront activées prochainement.</p>
             </div>
           </div>
         </div>

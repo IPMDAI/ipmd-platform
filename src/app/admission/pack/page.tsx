@@ -49,7 +49,7 @@ export default async function PackPage({
   const { data: pack } = await admin
     .from("admission_packs")
     .select(
-      "id, candidature_id, accepted_level, registration_fee, tuition_due, academic_year, first_viewed_at"
+      "id, candidature_id, accepted_level, registration_fee, tuition_due, academic_year, first_viewed_at, reglement_accepted_at"
     )
     .eq("id", link.packId)
     .single();
@@ -80,6 +80,7 @@ export default async function PackPage({
       registrationFee={Number(pack.registration_fee ?? 0)}
       tuitionDue={pack.tuition_due != null ? Number(pack.tuition_due) : null}
       token={t as string}
+      reglementAcceptedAt={pack.reglement_accepted_at ?? null}
     />
   );
 }

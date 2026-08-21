@@ -7,8 +7,10 @@ import {
   generatePackLink,
   packLinkUrl,
   revokePackLinks,
+  verifyPackToken,
 } from "@/lib/admission-pack-link";
 import { resolveRecipients } from "@/lib/admission-config";
+import { REGLEMENT_VERSION } from "@/data/reglement";
 import {
   sendScolariteEmail,
   canSendEmail,
@@ -157,4 +159,31 @@ export async function sendPackLink(
       ? `MODE TEST : lien envoyé à ${rr.to[0]} (aucun vrai candidat).`
       : `Lien envoyé à ${cand.email}.`,
   };
+}
+
+/**
+ * ACCEPTATION électronique du règlement intérieur par le candidat (C3).
+ * Action PUBLIQUE token-gated (candidat non connecté) : vérifie le lien, puis
+ * enregistre le consentement (date + version) sur le pack via service-role.
+ * C'est un CONSENTEMENT (case + horodatage + version) — pas une signature.
+ */
+export async function acceptPackReglement(token: string): Promise<FormResult> {
+  const link = await verifyPackToken(token);
+  if (!link) return { ok: false, message: "Lien invalide ou expiré." };
+
+  const admin = createAdminClient();
+  if (!admin) return { ok: false, message: "Service momentanément indisponible." };
+
+  const now = new Date().toISOString();
+  const { error } = await admin
+    .from("admission_packs")
+    .update({
+      reglement_accepted_at: now,
+      reglement_version: REGLEMENT_VERSION,
+      updated_at: now,
+    })
+    .eq("id", link.packId);
+  if (error) return { ok: false, message: "Une erreur est survenue. Réessayez." };
+
+  return { ok: true, message: "Règlement intérieur accepté. Merci !" };
 }
