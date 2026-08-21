@@ -187,3 +187,66 @@ export async function acceptPackReglement(token: string): Promise<FormResult> {
 
   return { ok: true, message: "Règlement intérieur accepté. Merci !" };
 }
+
+/**
+ * ACCORD DE PRINCIPE sur la convention (C4) — NON CONTRAIGNANT.
+ * ⚠️ Ce n'est PAS une signature juridique. Le statut reste « en_attente_signature ».
+ * La signature réelle = dépôt d'un scan signé (ci-dessous) ou prestataire externe.
+ */
+export async function recordConventionPrinciple(token: string): Promise<FormResult> {
+  const link = await verifyPackToken(token);
+  if (!link) return { ok: false, message: "Lien invalide ou expiré." };
+  const admin = createAdminClient();
+  if (!admin) return { ok: false, message: "Service momentanément indisponible." };
+
+  const now = new Date().toISOString();
+  const { error } = await admin
+    .from("admission_packs")
+    .update({
+      convention_status: "en_attente_signature",
+      signature_method: "accord_principe_non_contraignant",
+      updated_at: now,
+    })
+    .eq("id", link.packId);
+  if (error) return { ok: false, message: "Une erreur est survenue. Réessayez." };
+
+  return {
+    ok: true,
+    message:
+      "Accord de principe enregistré (non contraignant). La convention reste à signer officiellement.",
+  };
+}
+
+/**
+ * Dépôt d'une CONVENTION SIGNÉE (scan) par le candidat (C4). Le fichier a déjà
+ * été téléversé (bucket candidature-docs, ticket signé) au chemin `<packId>/…`.
+ * On enregistre la référence → convention « signee » (méthode scan manuscrit).
+ */
+export async function uploadConventionScan(
+  token: string,
+  filePath: string
+): Promise<FormResult> {
+  const link = await verifyPackToken(token);
+  if (!link) return { ok: false, message: "Lien invalide ou expiré." };
+  // Le fichier doit appartenir au dossier du pack (anti-abus).
+  if (!filePath || !filePath.startsWith(`${link.packId}/`)) {
+    return { ok: false, message: "Fichier invalide." };
+  }
+  const admin = createAdminClient();
+  if (!admin) return { ok: false, message: "Service momentanément indisponible." };
+
+  const now = new Date().toISOString();
+  const { error } = await admin
+    .from("admission_packs")
+    .update({
+      convention_status: "signee",
+      signature_method: "scan_manuscrit",
+      signature_evidence_url: filePath,
+      convention_signed_at: now,
+      updated_at: now,
+    })
+    .eq("id", link.packId);
+  if (error) return { ok: false, message: "Une erreur est survenue. Réessayez." };
+
+  return { ok: true, message: "Convention signée reçue. Merci !" };
+}

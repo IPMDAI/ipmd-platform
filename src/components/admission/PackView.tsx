@@ -1,6 +1,7 @@
 import Image from "next/image";
 import { formatFCFA } from "@/lib/finance";
 import { ReglementConsent } from "@/components/admission/ReglementConsent";
+import { ConventionStep } from "@/components/admission/ConventionStep";
 
 /**
  * Vue publique (sans compte) du pack d'admission. Mobile-first : lisible dès
@@ -15,7 +16,10 @@ export function PackView({
   registrationFee,
   tuitionDue,
   token,
+  packId,
   reglementAcceptedAt = null,
+  conventionStatus = "non_envoyee",
+  signatureMethod = null,
 }: {
   name: string;
   program: string | null;
@@ -24,7 +28,10 @@ export function PackView({
   registrationFee: number;
   tuitionDue: number | null;
   token: string;
+  packId: string;
   reglementAcceptedAt?: string | null;
+  conventionStatus?: string;
+  signatureMethod?: string | null;
 }) {
   const total = registrationFee + (tuitionDue ?? 0);
   const rows: Array<[string, string]> = [
@@ -94,11 +101,25 @@ export function PackView({
               </div>
             </div>
 
-            {/* Convention (C4) + paiement (Lot D) — à venir */}
+            {/* Convention de formation (C4) */}
+            <div className="mt-4">
+              <p className="text-[11px] font-bold uppercase tracking-wider text-ipmd-red">
+                2. Convention de formation
+              </p>
+              <div className="mt-2">
+                <ConventionStep
+                  token={token}
+                  packId={packId}
+                  conventionStatus={conventionStatus}
+                  signatureMethod={signatureMethod}
+                />
+              </div>
+            </div>
+
+            {/* Paiement (Lot D) — à venir */}
             <div className="mt-4 rounded-xl bg-ipmd-light px-4 py-3 text-xs text-black/55">
-              <p className="font-semibold text-black/70">À venir dans votre espace :</p>
+              <p className="font-semibold text-black/70">À venir :</p>
               <ul className="mt-1 list-inside list-disc space-y-0.5">
-                <li>Signature de la convention de formation</li>
                 <li>Modalités de paiement</li>
               </ul>
             </div>
