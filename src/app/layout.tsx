@@ -4,6 +4,7 @@ import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { WhatsAppFloat } from "@/components/layout/WhatsAppFloat";
 import { AdmissionsChat } from "@/components/layout/AdmissionsChat";
+import { SiteChrome } from "@/components/layout/SiteChrome";
 import { createClient } from "@/lib/supabase/server";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.ipmd.pro";
@@ -62,11 +63,18 @@ export default async function RootLayout({
   return (
     <html lang="fr">
       <body className="flex min-h-screen flex-col">
-        <Header isAuthenticated={isAuthenticated} />
-        <main className="flex-1">{children}</main>
-        <Footer />
-        <WhatsAppFloat />
-        <AdmissionsChat />
+        <SiteChrome
+          header={<Header isAuthenticated={isAuthenticated} />}
+          footer={<Footer />}
+          floats={
+            <>
+              <WhatsAppFloat />
+              <AdmissionsChat />
+            </>
+          }
+        >
+          {children}
+        </SiteChrome>
       </body>
     </html>
   );
