@@ -188,3 +188,80 @@ export async function closeIntake(intakeId: string): Promise<FormResult> {
   revalidate();
   return { ok: true, message: "Rentrée fermée." };
 }
+
+export type ConfigSelection = { filiere_id: string; level: string }[];
+export type ConfigPlan = {
+  ok: boolean;
+  summary: { selected: number; to_create: number; ready: number; blocking: number };
+  rows: Array<{
+    filiere_id: string;
+    filiere_name: string;
+    level: string;
+    status: string;
+    class_id: string | null;
+    registration_fee: number | null;
+    tuition_due: number | null;
+    action: string;
+  }>;
+};
+export type ConfigResult = { ok: boolean; message?: string; plan?: ConfigPlan };
+
+/**
+ * PREVIEW (p_apply=false) — 100% lecture seule via la RPC partagée. Renvoie le plan
+ * exact (statuts, frais, compteurs) qui sera appliqué. Aucune mutation.
+ */
+export async function previewIntakeConfig(
+  intakeId: string,
+  selection: ConfigSelection
+): Promise<ConfigResult> {
+  const ctx = await getAdmin();
+  if (!ctx) return { ok: false, message: "Action réservée à l'administration." };
+  const { data, error } = await ctx.supabase.rpc("configure_intake_offerings", {
+    p_intake_id: intakeId,
+    p_selection: selection,
+    p_apply: false,
+  });
+  if (error) return { ok: false, message: error.message };
+  return { ok: true, plan: data as ConfigPlan };
+}
+
+/**
+ * APPLY (p_apply=true) — crée les classes manquantes + ouvre les offres SÉLECTIONNÉES,
+ * dans UNE transaction (atomique). Additive : ne ferme aucune offre hors sélection.
+ */
+export async function applyIntakeConfig(
+  intakeId: string,
+  selection: ConfigSelection
+): Promise<ConfigResult> {
+  const ctx = await getAdmin();
+  if (!ctx) return { ok: false, message: "Action réservée à l'administration." };
+  const { data, error } = await ctx.supabase.rpc("configure_intake_offerings", {
+    p_intake_id: intakeId,
+    p_selection: selection,
+    p_apply: true,
+  });
+  if (error) return { ok: false, message: error.message };
+  revalidate();
+  const plan = data as ConfigPlan;
+  return {
+    ok: true,
+    plan,
+    message: `Configuration appliquée : ${plan.summary.to_create} classe(s) créée(s), ${plan.summary.selected} offre(s) ouverte(s).`,
+  };
+}
+
+/**
+ * Ferme UNE offre (action explicite et séparée — jamais un effet de bord de la
+ * configuration). N'affecte aucune classe ni candidature.
+ */
+export async function closeOffering(offeringId: string): Promise<FormResult> {
+  const ctx = await getAdmin();
+  if (!ctx) return { ok: false, message: "Action réservée à l'administration." };
+  const { error } = await ctx.supabase
+    .from("intake_offerings")
+    .update({ status: "closed" })
+    .eq("id", offeringId);
+  if (error) return { ok: false, message: error.message };
+  revalidate();
+  return { ok: true, message: "Offre fermée." };
+}

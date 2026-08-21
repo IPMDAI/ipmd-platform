@@ -11,6 +11,7 @@ import {
   closeIntake,
 } from "@/lib/academic-year-actions";
 import { inputBase } from "@/components/forms/FormField";
+import { IntakeOfferingConfig } from "@/components/espace/IntakeOfferingConfig";
 import type { FormResult } from "@/types";
 
 export type YearRow = { year: string; status: string; activatedAt: string | null };
@@ -405,6 +406,18 @@ export function AnneesRentrees({
                   </div>
 
                   <AddOfferingForm intakeId={it.id} filieres={filieres} levels={levels} />
+
+                  <IntakeOfferingConfig
+                    intakeId={it.id}
+                    filieres={filieres}
+                    levels={levels}
+                    offerings={it.offerings.map((o) => ({
+                      id: o.id,
+                      filiereId: o.filiereId,
+                      level: o.level,
+                      status: o.status,
+                    }))}
+                  />
                 </div>
                 );
               })}
