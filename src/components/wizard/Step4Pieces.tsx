@@ -9,6 +9,7 @@ import {
   activeDocProfileKey,
   docSlug,
   documentLinesForProfile,
+  type DocLine,
   type DocRequirement,
   type Project,
   type Uploads,
@@ -25,8 +26,12 @@ const badge: Record<DocRequirement, { c: string; t: string }> = {
   conditional: { c: "bg-amber-100 text-amber-800", t: "Selon votre dossier" },
 };
 
-const fileInputClass =
-  "block w-full cursor-pointer rounded-xl border border-dashed border-black/25 bg-white px-3 py-2.5 text-[13px] text-black/55 transition hover:border-ipmd-red/50 file:mr-3 file:cursor-pointer file:rounded-full file:border-0 file:bg-ipmd-red file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-white";
+// Bouton « pill » rouge (Choisir / Remplacer / + Ajouter) — l'input fichier est masqué dans le label.
+const pickBtnClass =
+  "inline-flex cursor-pointer items-center gap-1.5 rounded-full bg-ipmd-red px-4 py-2 text-xs font-semibold text-white transition hover:bg-ipmd-red-dark";
+// Bouton désactivé (limite de fichiers atteinte).
+const pickBtnDisabledClass =
+  "inline-flex cursor-not-allowed items-center gap-1.5 rounded-full bg-black/10 px-4 py-2 text-xs font-semibold text-black/40";
 
 const baseName = (path: string) => path.split("/").pop() ?? path;
 
@@ -93,10 +98,14 @@ export function Step4Pieces({
       return next;
     });
 
-  const handleFile = async (docKey: string, input: HTMLInputElement) => {
+  const handleFile = async (line: DocLine, input: HTMLInputElement) => {
+    const { docKey, maxFiles } = line;
     const file = input.files?.[0];
     input.value = ""; // réautorise le même fichier plus tard
     if (!file) return;
+    const existing = uploads[docKey] ?? [];
+    // Garde : jamais plus que max_files pour les pièces multiples (single = remplacement).
+    if (maxFiles > 1 && existing.length >= maxFiles) return;
     setErr(docKey, null);
     setBusy(docKey);
     const r = await uploadDoc(getFolder(), docKey, file);
@@ -105,7 +114,9 @@ export function Step4Pieces({
       setErr(docKey, r.error);
       return;
     }
-    onUploadsChange({ ...uploads, [docKey]: [...(uploads[docKey] ?? []), r.path] });
+    // max_files === 1 → remplace la pièce ; sinon → ajoute (plafonné, jamais dépassé).
+    const next = maxFiles === 1 ? [r.path] : [...existing, r.path].slice(0, maxFiles);
+    onUploadsChange({ ...uploads, [docKey]: next });
   };
 
   const removeFile = (docKey: string, path: string) => {
@@ -137,6 +148,10 @@ export function Step4Pieces({
             const has = files.length > 0;
             const isReq = d.requirement === "required";
             const satisfied = has || !isReq;
+            const multiple = d.maxFiles > 1;
+            const atLimit = files.length >= d.maxFiles;
+            const busyHere = busy === d.docKey;
+            const addLabel = d.docKey === "bulletins" ? "Ajouter un bulletin / relevé" : "Ajouter un fichier";
             return (
               <div
                 key={d.docKey}
@@ -181,25 +196,61 @@ export function Step4Pieces({
                   </ul>
                 )}
 
-                {/* Ajout / remplacement */}
-                <div className="mt-2 pl-6">
-                  <label className="sr-only" htmlFor={`file-${d.docKey}`}>
-                    {has ? `Ajouter un fichier pour ${d.label}` : `Téléverser ${d.label}`}
-                  </label>
-                  <input
-                    id={`file-${d.docKey}`}
-                    type="file"
-                    accept={ACCEPT}
-                    disabled={busy === d.docKey}
-                    onChange={(e) => handleFile(d.docKey, e.currentTarget)}
-                    className={fileInputClass}
-                  />
-                  {busy === d.docKey && <p className="mt-1 text-[11px] text-black/45">Envoi en cours…</p>}
-                  {errors[d.docKey] && (
-                    <p className="mt-1 text-[11px] font-medium text-ipmd-red">{errors[d.docKey]}</p>
+                {/* Ajout / remplacement — piloté par max_files (single = Remplacer, multiple = + Ajouter) */}
+                <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 pl-6">
+                  {multiple ? (
+                    atLimit ? (
+                      <button type="button" disabled className={pickBtnDisabledClass}>
+                        Limite atteinte
+                      </button>
+                    ) : (
+                      <label className={`${pickBtnClass} ${busyHere ? "pointer-events-none opacity-50" : ""}`}>
+                        <span aria-hidden="true">＋</span> {addLabel}
+                        <input
+                          type="file"
+                          accept={ACCEPT}
+                          disabled={busyHere}
+                          onChange={(e) => handleFile(d, e.currentTarget)}
+                          aria-label={`${addLabel} pour ${d.label}`}
+                          className="hidden"
+                        />
+                      </label>
+                    )
+                  ) : (
+                    <label className={`${pickBtnClass} ${busyHere ? "pointer-events-none opacity-50" : ""}`}>
+                      {has ? "Remplacer" : "Choisir un fichier"}
+                      <input
+                        type="file"
+                        accept={ACCEPT}
+                        disabled={busyHere}
+                        onChange={(e) => handleFile(d, e.currentTarget)}
+                        aria-label={has ? `Remplacer ${d.label}` : `Téléverser ${d.label}`}
+                        className="hidden"
+                      />
+                    </label>
                   )}
-                  {!satisfied && !errors[d.docKey] && busy !== d.docKey && (
-                    <p className="mt-1 text-[11px] text-ipmd-red">Ce document est obligatoire.</p>
+
+                  {multiple && (
+                    <span className="text-[11px] font-medium text-black/45">
+                      {files.length} / {d.maxFiles} fichiers
+                    </span>
+                  )}
+
+                  {busyHere && <span className="text-[11px] text-black/45">Envoi en cours…</span>}
+                </div>
+
+                {/* Messages sous la zone de contrôle */}
+                <div className="mt-1 pl-6">
+                  {errors[d.docKey] && (
+                    <p className="text-[11px] font-medium text-ipmd-red">{errors[d.docKey]}</p>
+                  )}
+                  {multiple && atLimit && !errors[d.docKey] && (
+                    <p className="text-[11px] text-black/45">
+                      Nombre maximum de fichiers atteint ({d.maxFiles}). Supprimez-en un pour en ajouter un autre.
+                    </p>
+                  )}
+                  {!satisfied && !errors[d.docKey] && !busyHere && (
+                    <p className="text-[11px] text-ipmd-red">Ce document est obligatoire.</p>
                   )}
                 </div>
               </div>

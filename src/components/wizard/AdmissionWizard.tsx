@@ -178,6 +178,7 @@ export function AdmissionWizard({ catalog }: { catalog: WizardCatalog }) {
           exec_offering_id: project.execOfferingId,
           cert_item_id: project.certItemId,
         },
+        mode: project.mode,
         documents,
       });
       if (res.ok) setSuccessId(res.requestId);

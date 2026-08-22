@@ -1,11 +1,16 @@
 "use client";
 
 import { useState } from "react";
+import { KNOWN_INSTITUTIONS } from "@/data/institutions";
 import type { Background, BackgroundVariant } from "./background";
 import {
+  ACADEMIC_DIPLOMAS,
   academicRequired,
   backgroundErrors,
   EDUCATION_LEVELS,
+  graduationYearOptions,
+  isOtherDiploma,
+  OTHER_DIPLOMA,
   situationSpec,
 } from "./background";
 
@@ -108,6 +113,135 @@ function BgLevelSelect({ value, onChange, onBlur, error, required }: BgLevelProp
   );
 }
 
+type BgDiplomaProps = {
+  value: string;
+  onChange: (v: string) => void;
+  onBlur: () => void;
+  error?: string;
+  required?: boolean;
+  hint?: string;
+};
+
+/** Diplôme obtenu — select structuré ; « Autre diplôme… » révèle une saisie libre. */
+function BgDiplomaSelect({ value, onChange, onBlur, error, required, hint }: BgDiplomaProps) {
+  const id = "bg-lastDiploma";
+  const [other, setOther] = useState(() => isOtherDiploma(value));
+  const selectValue = other ? OTHER_DIPLOMA : ACADEMIC_DIPLOMAS.includes(value) ? value : "";
+  return (
+    <div>
+      <FieldLabel id={id} label="Dernier diplôme obtenu" required={required} />
+      <select
+        id={id}
+        value={selectValue}
+        onChange={(e) => {
+          const v = e.target.value;
+          if (v === OTHER_DIPLOMA) {
+            setOther(true);
+            onChange("");
+          } else {
+            setOther(false);
+            onChange(v);
+          }
+        }}
+        onBlur={onBlur}
+        aria-invalid={!!error}
+        aria-describedby={error ? `${id}-err` : undefined}
+        className={controlClass(!!error && !other)}
+      >
+        <option value="">— Sélectionnez —</option>
+        {ACADEMIC_DIPLOMAS.map((d) => (
+          <option key={d} value={d}>
+            {d}
+          </option>
+        ))}
+        <option value={OTHER_DIPLOMA}>Autre diplôme…</option>
+      </select>
+      {other && (
+        <input
+          id={`${id}-other`}
+          type="text"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          onBlur={onBlur}
+          placeholder="Précisez votre diplôme"
+          aria-label="Précisez votre diplôme"
+          aria-invalid={!!error}
+          className={`${controlClass(!!error)} mt-2`}
+        />
+      )}
+      <FieldMsg id={id} error={error} hint={hint} />
+    </div>
+  );
+}
+
+/** Année d'obtention — select dynamique (année courante → −60 ans). Facultatif. */
+function BgYearSelect({
+  value,
+  onChange,
+  onBlur,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  onBlur: () => void;
+}) {
+  const id = "bg-graduationYear";
+  return (
+    <div>
+      <FieldLabel id={id} label="Année d'obtention" />
+      <select
+        id={id}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        onBlur={onBlur}
+        className={controlClass(false)}
+      >
+        <option value="">— Sélectionnez —</option>
+        {graduationYearOptions().map((y) => (
+          <option key={y} value={y}>
+            {y}
+          </option>
+        ))}
+      </select>
+      <FieldMsg id={id} hint="Facultatif" />
+    </div>
+  );
+}
+
+/** Établissement d'origine — recherche assistée (datalist) + saisie libre (« Autre »). */
+function BgInstitutionCombo({
+  value,
+  onChange,
+  onBlur,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  onBlur: () => void;
+}) {
+  const id = "bg-institution";
+  return (
+    <div>
+      <FieldLabel id={id} label="Établissement d'origine" />
+      <input
+        id={id}
+        type="text"
+        list="bg-institution-list"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        onBlur={onBlur}
+        placeholder="Rechercher ou saisir votre établissement…"
+        autoComplete="off"
+        className={controlClass(false)}
+      />
+      <datalist id="bg-institution-list">
+        {KNOWN_INSTITUTIONS.map((n) => (
+          <option key={n} value={n} />
+        ))}
+      </datalist>
+      <FieldMsg id={id} hint="Choisissez dans la liste ou saisissez librement (« Autre établissement »)." />
+    </div>
+  );
+}
+
 /**
  * Étape 2 — Votre parcours actuel. Rendu piloté par la `variant`.
  * Décrit uniquement l'acquis — jamais le niveau visé à l'IPMD.
@@ -163,15 +297,15 @@ export function Step2Parcours({
         {isCert ? (
           <>
             <BgLevelSelect value={value.lastLevel} onChange={set("lastLevel")} onBlur={blur("lastLevel")} error={err("lastLevel")} />
-            <BgText id="bg-lastDiploma" label="Dernier diplôme obtenu" placeholder="Ex. Baccalauréat série D" hint="Facultatif" value={value.lastDiploma} onChange={set("lastDiploma")} onBlur={blur("lastDiploma")} error={err("lastDiploma")} />
+            <BgDiplomaSelect hint="Facultatif" value={value.lastDiploma} onChange={set("lastDiploma")} onBlur={blur("lastDiploma")} error={err("lastDiploma")} />
             {situationField}
           </>
         ) : (
           <>
             <BgLevelSelect required={acad} value={value.lastLevel} onChange={set("lastLevel")} onBlur={blur("lastLevel")} error={err("lastLevel")} />
-            <BgText id="bg-lastDiploma" label="Dernier diplôme obtenu" required={acad} placeholder="Ex. Licence en informatique" value={value.lastDiploma} onChange={set("lastDiploma")} onBlur={blur("lastDiploma")} error={err("lastDiploma")} />
-            <BgText id="bg-graduationYear" label="Année d'obtention" inputMode="numeric" placeholder="Ex. 2023" hint="Facultatif" value={value.graduationYear} onChange={set("graduationYear")} onBlur={blur("graduationYear")} error={err("graduationYear")} />
-            <BgText id="bg-institution" label="Établissement d'origine" placeholder="Ex. Université Félix Houphouët-Boigny" hint="Facultatif" value={value.institution} onChange={set("institution")} onBlur={blur("institution")} error={err("institution")} />
+            <BgDiplomaSelect required={acad} value={value.lastDiploma} onChange={set("lastDiploma")} onBlur={blur("lastDiploma")} error={err("lastDiploma")} />
+            <BgYearSelect value={value.graduationYear} onChange={set("graduationYear")} onBlur={blur("graduationYear")} />
+            <BgInstitutionCombo value={value.institution} onChange={set("institution")} onBlur={blur("institution")} />
             {situationField}
           </>
         )}

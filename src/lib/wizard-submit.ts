@@ -39,6 +39,8 @@ export type WizardSubmitPayload = {
     exec_offering_id: string;
     cert_item_id: string;
   };
+  /** Mode de formation (FORMATION_MODES) — persisté dans inscription_requests.mode. */
+  mode: string;
   /** Aplati depuis `Record<doc_key, path[]>` côté client. */
   documents: { doc_key: string; path: string }[];
 };

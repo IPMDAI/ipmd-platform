@@ -2,11 +2,13 @@
 
 import { useEffect } from "react";
 import type { UniverseId } from "@/types";
+import { FORMATION_MODES } from "@/lib/academic";
 import type { BackgroundVariant } from "./background";
 import {
   campusDiplomaForLevel,
+  campusFilieresForLevel,
+  campusLevels,
   offeringKey,
-  sortLevels,
   type CatalogProgram,
   type Project,
   type WizardCatalog,
@@ -36,6 +38,42 @@ const optionClass = (active: boolean) =>
       ? "border-ipmd-red bg-ipmd-red/[0.04] ring-2 ring-ipmd-red/30"
       : "border-black/10 bg-white hover:border-black/25"
   }`;
+
+/** Mode de formation — obligatoire, source canonique FORMATION_MODES (3 choix). */
+function ModeField({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  return (
+    <div className="mt-6">
+      <p className="text-sm font-semibold text-ipmd-black">
+        Mode de formation <span className="text-ipmd-red">*</span>
+      </p>
+      <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-3">
+        {FORMATION_MODES.map((m) => {
+          const active = value === m.value;
+          return (
+            <button
+              key={m.value}
+              type="button"
+              onClick={() => onChange(m.value)}
+              className={`flex items-center gap-2 rounded-xl border p-3 text-left text-sm font-medium transition ${
+                active
+                  ? "border-ipmd-red bg-ipmd-red/[0.04] ring-2 ring-ipmd-red/30 text-ipmd-black"
+                  : "border-black/15 bg-white text-black/70 hover:border-black/30"
+              }`}
+            >
+              <span
+                className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full border ${active ? "border-ipmd-red" : "border-black/25"}`}
+                aria-hidden="true"
+              >
+                {active && <span className="h-2 w-2 rounded-full bg-ipmd-red" />}
+              </span>
+              {m.label}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
 
 function Radio({ active }: { active: boolean }) {
   return (
@@ -92,82 +130,133 @@ export function Step3Projet({
     </>
   );
 
-  // ─────────────────────────── CAMPUS ───────────────────────────
+  // ─────────────────────────── CAMPUS (cascade) ───────────────────────────
   if (variant === "campus") {
     if (!campusIntake) return <div>{title}<EmptyState label="le parcours Campus" /></div>;
 
-    const byFiliere = new Map<string, { name: string; levels: string[] }>();
-    for (const o of campusIntake.offerings) {
-      const e = byFiliere.get(o.filiereId) ?? { name: o.filiereName, levels: [] };
-      e.levels.push(o.level);
-      byFiliere.set(o.filiereId, e);
-    }
+    // Niveau/filière dérivés UNIQUEMENT des offres réellement ouvertes.
+    const levels = campusLevels(campusIntake);
+    const selectedLevel =
+      value.campusLevel || (value.campusOfferingKey ? value.campusOfferingKey.split("::")[1] : "");
+    const selectedFiliereId = value.campusOfferingKey ? value.campusOfferingKey.split("::")[0] : "";
+    const filieres = selectedLevel ? campusFilieresForLevel(campusIntake, selectedLevel) : [];
 
+    // Changer la rentrée/le niveau réinitialise la sélection en aval (jamais de combo invalide).
     const selectIntake = (id: string) =>
-      onChange({ ...value, campusIntakeId: id, campusOfferingKey: "" });
+      onChange({ ...value, campusIntakeId: id, campusLevel: "", campusOfferingKey: "" });
+    const selectLevel = (lvl: string) =>
+      onChange({ ...value, campusLevel: lvl, campusOfferingKey: "" });
+    const selectFiliere = (fid: string) =>
+      onChange({ ...value, campusOfferingKey: offeringKey(fid, selectedLevel) });
 
     return (
       <div>
         {title}
 
-        {catalog.campusIntakes.length > 1 ? (
-          <div className="mt-5">
-            <label htmlFor="pj-intake" className="text-sm font-semibold text-ipmd-black">
-              Rentrée <span className="text-ipmd-red">*</span>
-            </label>
-            <select
-              id="pj-intake"
-              value={campusIntake.id}
-              onChange={(e) => selectIntake(e.target.value)}
-              className="mt-1 w-full rounded-xl border border-black/15 bg-white px-3.5 py-2.5 text-sm outline-none focus:border-ipmd-red focus:ring-2 focus:ring-ipmd-red/20"
-            >
-              {catalog.campusIntakes.map((i) => (
-                <option key={i.id} value={i.id}>
-                  {i.label} — {i.academicYear}
-                </option>
-              ))}
-            </select>
-          </div>
-        ) : (
-          <div className="mt-5 inline-flex items-center gap-2 rounded-full bg-ipmd-light px-3 py-1 text-xs font-semibold text-black/60">
-            Rentrée : {campusIntake.label} — {campusIntake.academicYear}
-          </div>
-        )}
-
-        <p className="mt-5 text-sm font-semibold text-ipmd-black">
-          Formation visée <span className="text-ipmd-red">*</span>
-        </p>
-        <div className="mt-2 space-y-4">
-          {[...byFiliere.entries()].map(([fid, f]) => (
-            <div key={fid}>
-              <p className="text-[13px] font-bold text-black/70">{f.name}</p>
-              <div className="mt-1.5 grid grid-cols-1 gap-2 sm:grid-cols-2">
-                {[...f.levels].sort(sortLevels).map((lvl) => {
-                  const k = offeringKey(fid, lvl);
-                  const active = value.campusOfferingKey === k;
-                  return (
-                    <button
-                      key={k}
-                      type="button"
-                      onClick={() => onChange({ ...value, campusOfferingKey: k })}
-                      className={optionClass(active)}
-                    >
-                      <Radio active={active} />
-                      <span>
-                        <span className="text-sm font-semibold text-ipmd-black">
-                          {f.name} · {lvl}
-                        </span>
-                        <span className="mt-0.5 block text-[11px] text-black/50">
-                          Diplôme visé : {campusDiplomaForLevel(lvl)}
-                        </span>
-                      </span>
-                    </button>
-                  );
-                })}
+        {/* 1) Rentrée souhaitée — présélectionnée si unique, mais toujours visible. */}
+        <div className="mt-5">
+          {catalog.campusIntakes.length > 1 ? (
+            <>
+              <label htmlFor="pj-intake" className="text-sm font-semibold text-ipmd-black">
+                Rentrée souhaitée <span className="text-ipmd-red">*</span>
+              </label>
+              <select
+                id="pj-intake"
+                value={campusIntake.id}
+                onChange={(e) => selectIntake(e.target.value)}
+                className="mt-1 w-full rounded-xl border border-black/15 bg-white px-3.5 py-2.5 text-sm outline-none focus:border-ipmd-red focus:ring-2 focus:ring-ipmd-red/20"
+              >
+                {catalog.campusIntakes.map((i) => (
+                  <option key={i.id} value={i.id}>
+                    {i.label} — {i.academicYear}
+                  </option>
+                ))}
+              </select>
+            </>
+          ) : (
+            <>
+              <p className="text-sm font-semibold text-ipmd-black">
+                Rentrée souhaitée <span className="text-ipmd-red">*</span>
+              </p>
+              <div className="mt-1.5 inline-flex items-center gap-2 rounded-xl border border-ipmd-red/30 bg-ipmd-red/[0.04] px-3.5 py-2.5 text-sm font-semibold text-ipmd-black">
+                <span
+                  className="flex h-4 w-4 items-center justify-center rounded-full border border-ipmd-red"
+                  aria-hidden="true"
+                >
+                  <span className="h-2 w-2 rounded-full bg-ipmd-red" />
+                </span>
+                {campusIntake.label} — {campusIntake.academicYear}
               </div>
-            </div>
-          ))}
+            </>
+          )}
         </div>
+
+        {/* 2) Niveau visé — uniquement les niveaux réellement proposés. */}
+        <div className="mt-6">
+          <p className="text-sm font-semibold text-ipmd-black">
+            Niveau visé <span className="text-ipmd-red">*</span>
+          </p>
+          <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-5">
+            {levels.map((lvl) => {
+              const active = selectedLevel === lvl;
+              return (
+                <button
+                  key={lvl}
+                  type="button"
+                  onClick={() => selectLevel(lvl)}
+                  className={`rounded-xl border p-3 text-center text-sm font-medium transition ${
+                    active
+                      ? "border-ipmd-red bg-ipmd-red/[0.04] ring-2 ring-ipmd-red/30 text-ipmd-black"
+                      : "border-black/15 bg-white text-black/70 hover:border-black/30"
+                  }`}
+                >
+                  {lvl}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* 3) Formation / Filière — filtrée par le niveau choisi (offres ouvertes). */}
+        <div className="mt-6">
+          <p className="text-sm font-semibold text-ipmd-black">
+            Formation / Filière <span className="text-ipmd-red">*</span>
+          </p>
+          {!selectedLevel ? (
+            <p className="mt-2 rounded-xl border border-dashed border-black/15 bg-black/[0.015] p-3 text-[13px] text-black/50">
+              Choisissez d'abord un niveau visé pour afficher les filières disponibles.
+            </p>
+          ) : filieres.length === 0 ? (
+            <p className="mt-2 rounded-xl border border-amber-200 bg-amber-50 p-3 text-[13px] font-semibold text-amber-900">
+              Aucune filière n'est ouverte pour ce niveau à cette rentrée.
+            </p>
+          ) : (
+            <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
+              {filieres.map((f) => {
+                const active = selectedFiliereId === f.filiereId;
+                return (
+                  <button
+                    key={f.filiereId}
+                    type="button"
+                    onClick={() => selectFiliere(f.filiereId)}
+                    className={optionClass(active)}
+                  >
+                    <Radio active={active} />
+                    <span>
+                      <span className="text-sm font-semibold text-ipmd-black">{f.filiereName}</span>
+                      <span className="mt-0.5 block text-[11px] text-black/50">
+                        {f.filiereName} · {selectedLevel} — Diplôme visé : {campusDiplomaForLevel(selectedLevel)}
+                      </span>
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        {/* 4) Mode de formation */}
+        <ModeField value={value.mode} onChange={(m) => onChange({ ...value, mode: m })} />
       </div>
     );
   }
@@ -217,6 +306,7 @@ export function Step3Projet({
             );
           })}
         </div>
+        <ModeField value={value.mode} onChange={(m) => onChange({ ...value, mode: m })} />
       </div>
     );
   }
@@ -254,6 +344,7 @@ export function Step3Projet({
           );
         })}
       </div>
+      <ModeField value={value.mode} onChange={(m) => onChange({ ...value, mode: m })} />
     </div>
   );
 }

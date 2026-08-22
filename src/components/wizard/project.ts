@@ -1,5 +1,6 @@
 import type { UniverseId } from "@/types";
 import type { BackgroundVariant } from "./background";
+import { FORMATION_MODES } from "@/lib/academic";
 
 /**
  * Étape 3 — « Votre projet à l'IPMD ».
@@ -50,6 +51,8 @@ export type DocLine = {
   docKey: string;
   label: string;
   requirement: DocRequirement;
+  /** Nombre max de fichiers pour ce type (1 = pièce unique → « Remplacer »). */
+  maxFiles: number;
 };
 
 export type WizardCatalog = {
@@ -60,6 +63,9 @@ export type WizardCatalog = {
   certByUniverse: Record<string, CertificatItem[]>;
   /** doc_key → libellé (document_types). */
   documentTypes: Record<string, string>;
+  /** doc_key → nombre max de fichiers (document_types.max_files). Vide tant que la
+   *  colonne n'est pas déployée → `maxFilesForDoc` applique le repli. */
+  documentMaxFiles: Record<string, number>;
   /** profile_key → lignes (document_profiles). */
   documentProfiles: Record<string, DocProfileRow[]>;
 };
@@ -70,28 +76,68 @@ export const EMPTY_CATALOG: WizardCatalog = {
   execPrograms: [],
   certByUniverse: {},
   documentTypes: {},
+  documentMaxFiles: {},
   documentProfiles: {},
 };
+
+/**
+ * Repli de cardinalité tant que `document_types.max_files` n'est pas encore
+ * déployé (Lot B). Une fois la colonne en base, `documentMaxFiles` prime.
+ */
+export const FALLBACK_MAX_FILES: Record<string, number> = { bulletins: 10 };
+
+/** Nombre max de fichiers pour un `doc_key` : base si dispo, sinon repli (défaut 1). */
+export function maxFilesForDoc(docKey: string, catalog: WizardCatalog): number {
+  const fromDb = catalog.documentMaxFiles[docKey];
+  if (typeof fromDb === "number" && fromDb > 0) return fromDb;
+  return FALLBACK_MAX_FILES[docKey] ?? 1;
+}
 
 /** Sélection du projet (persistée dans la coquille). Un seul slot est pertinent
  *  selon la variante — les autres restent vides. */
 export type Project = {
   campusIntakeId: string;
-  campusOfferingKey: string; // `${filiereId}::${level}`
+  campusLevel: string; // Niveau visé Campus (ex. « Licence 2 ») — étape intermédiaire de la cascade
+  campusOfferingKey: string; // `${filiereId}::${level}` (résolu une fois la filière choisie)
   proOfferingId: string;
   execOfferingId: string;
   certItemId: string;
+  mode: string; // FORMATION_MODES: presentiel | distance | hybride (obligatoire)
 };
 
 export const EMPTY_PROJECT: Project = {
   campusIntakeId: "",
+  campusLevel: "",
   campusOfferingKey: "",
   proOfferingId: "",
   execOfferingId: "",
   certItemId: "",
+  mode: "",
 };
 
+/** Mode de formation valide (source canonique FORMATION_MODES). */
+export const isValidMode = (mode: string) => FORMATION_MODES.some((m) => m.value === mode);
+
 export const offeringKey = (filiereId: string, level: string) => `${filiereId}::${level}`;
+
+/** Niveaux Campus réellement proposés pour une rentrée (dérivés des offres), triés. */
+export function campusLevels(intake: CampusIntake): string[] {
+  return [...new Set(intake.offerings.map((o) => o.level))].sort(sortLevels);
+}
+
+/** Filières Campus réellement ouvertes POUR un niveau donné (dédupliquées), triées. */
+export function campusFilieresForLevel(
+  intake: CampusIntake,
+  level: string,
+): { filiereId: string; filiereName: string }[] {
+  const byId = new Map<string, string>();
+  for (const o of intake.offerings) {
+    if (o.level === level) byId.set(o.filiereId, o.filiereName);
+  }
+  return [...byId.entries()]
+    .map(([filiereId, filiereName]) => ({ filiereId, filiereName }))
+    .sort((a, b) => a.filiereName.localeCompare(b.filiereName));
+}
 
 /** Rang d'un niveau, robuste aux libellés réels (« Licence 1 » comme « L1 »). */
 function levelRank(s: string): number {
@@ -122,8 +168,8 @@ export function hasProjectOptions(
   return (catalog.certByUniverse[universe ?? ""] ?? []).length > 0;
 }
 
-/** La sélection courante est-elle valide (existe réellement dans le catalogue) ? */
-export function isProjectValid(
+/** Le programme/offre choisi existe-t-il réellement dans le catalogue ? (hors mode) */
+export function isProgramSelected(
   p: Project,
   universe: UniverseId | null,
   variant: BackgroundVariant,
@@ -138,6 +184,16 @@ export function isProjectValid(
   if (variant === "executive")
     return catalog.execPrograms.some((x) => x.offeringId === p.execOfferingId);
   return (catalog.certByUniverse[universe ?? ""] ?? []).some((x) => x.id === p.certItemId);
+}
+
+/** Sélection valide = programme choisi ET mode de formation obligatoire choisi. */
+export function isProjectValid(
+  p: Project,
+  universe: UniverseId | null,
+  variant: BackgroundVariant,
+  catalog: WizardCatalog,
+): boolean {
+  return isProgramSelected(p, universe, variant, catalog) && isValidMode(p.mode);
 }
 
 /**
@@ -166,6 +222,10 @@ export function activeDocProfileKey(
 export type ProjectSummary = {
   /** Rentrée (Campus/Pro/Executive) — absent pour les certificats. */
   rentree?: string;
+  /** Niveau visé (Campus uniquement, ex. « Licence 2 »). */
+  niveau?: string;
+  /** Filière visée (Campus uniquement). */
+  filiere?: string;
   /** Formation / programme choisi (libellé lisible). */
   formation: string;
   /** Diplôme/credential visé, dérivé de l'offre (jamais saisi). */
@@ -186,6 +246,8 @@ export function describeProject(
     if (!off) return null;
     return {
       rentree: `${intake.label} — ${intake.academicYear}`,
+      niveau: off.level,
+      filiere: off.filiereName,
       formation: `${off.filiereName} · ${off.level}`,
       credential: `Diplôme visé : ${campusDiplomaForLevel(off.level)}`,
     };
@@ -219,6 +281,7 @@ export function documentLinesForProfile(
       docKey: r.docKey,
       label: catalog.documentTypes[r.docKey] ?? r.docKey,
       requirement: r.requirement,
+      maxFiles: maxFilesForDoc(r.docKey, catalog),
     }));
 }
 

@@ -53,6 +53,49 @@ export const EDUCATION_LEVELS = [
   "Autre",
 ];
 
+/**
+ * Diplômes DÉJÀ OBTENUS — liste structurée (contexte ivoirien + international),
+ * proposée en select à l'Étape 2. « Autre diplôme » ouvre une saisie libre.
+ * Volontairement compacte et maintenable (pas un référentiel exhaustif).
+ */
+export const ACADEMIC_DIPLOMAS = [
+  "Aucun diplôme",
+  "BEPC",
+  "CAP",
+  "BT (Brevet de Technicien)",
+  "Baccalauréat général",
+  "Baccalauréat technique",
+  "BTS (Brevet de Technicien Supérieur)",
+  "DUT",
+  "DEUG",
+  "Licence",
+  "Licence professionnelle",
+  "Bachelor",
+  "Maîtrise",
+  "Master 1",
+  "Master 2 / Master",
+  "MBA",
+  "Diplôme d'ingénieur",
+  "Doctorat / PhD",
+  "DBA",
+];
+
+/** Valeur sentinelle du select diplôme déclenchant la saisie libre. */
+export const OTHER_DIPLOMA = "__autre__";
+
+/** Un diplôme saisi correspond-il à « Autre » (hors liste, non vide) ? */
+export const isOtherDiploma = (diploma: string): boolean =>
+  diploma.trim() !== "" && !ACADEMIC_DIPLOMAS.includes(diploma);
+
+/**
+ * Années d'obtention proposées (select dynamique) : de l'année courante jusqu'à
+ * ~60 ans en arrière. Calculé au runtime — aucune liste figée.
+ */
+export function graduationYearOptions(span = 60): string[] {
+  const current = new Date().getFullYear();
+  return Array.from({ length: span + 1 }, (_, i) => String(current - i));
+}
+
 /** Le bloc académique (niveau + diplôme) est-il obligatoire pour cette variante ? */
 export const academicRequired = (v: BackgroundVariant): boolean => v !== "certificat";
 

@@ -14,11 +14,14 @@ import {
   describeProject,
   documentLinesForProfile,
   isProjectValid,
+  isProgramSelected,
+  isValidMode,
   type DocRequirement,
   type Project,
   type Uploads,
   type WizardCatalog,
 } from "./project";
+import { FORMATION_MODE_LABEL } from "@/lib/academic";
 
 const IDENTITY_LABELS: Partial<Record<keyof Identity, string>> = {
   lastName: "Nom",
@@ -144,12 +147,13 @@ export function Step5Recap({
         k === "currentSituation" ? sit.label : k === "lastLevel" ? "Dernier niveau d'études atteint" : "Dernier diplôme obtenu",
       ),
     });
-  if (!isProjectValid(project, universe, variant, catalog))
-    missing.push({
-      section: "Projet à l'IPMD",
-      step: 3,
-      items: ["Formation / programme non sélectionné (ou aucun ouvert)"],
-    });
+  if (!isProjectValid(project, universe, variant, catalog)) {
+    const projItems: string[] = [];
+    if (!isProgramSelected(project, universe, variant, catalog))
+      projItems.push("Formation / programme non sélectionné (ou aucun ouvert)");
+    if (!isValidMode(project.mode)) projItems.push("Mode de formation");
+    missing.push({ section: "Projet à l'IPMD", step: 3, items: projItems });
+  }
   if (!docsOk)
     missing.push({
       section: "Pièces justificatives",
@@ -237,9 +241,22 @@ export function Step5Recap({
         <SectionCard title="Projet à l'IPMD" onEdit={() => onEdit(3)}>
           {summary ? (
             <>
-              {summary.rentree && <Row label="Rentrée" value={summary.rentree} />}
-              <Row label="Formation / programme" value={summary.formation} />
-              {summary.credential && <Row label="Diplôme / certificat visé" value={summary.credential} />}
+              {variant === "campus" ? (
+                <>
+                  <Row label="Rentrée" value={summary.rentree} />
+                  <Row label="Niveau visé" value={summary.niveau} />
+                  <Row label="Filière" value={summary.filiere} />
+                </>
+              ) : variant === "certificat" ? (
+                <Row label="Programme / certificat" value={summary.formation} />
+              ) : (
+                <>
+                  {summary.rentree && <Row label="Rentrée" value={summary.rentree} />}
+                  <Row label="Programme" value={summary.formation} />
+                  {summary.credential && <Row label="Diplôme / certificat visé" value={summary.credential} />}
+                </>
+              )}
+              <Row label="Mode de formation" value={project.mode ? FORMATION_MODE_LABEL[project.mode] : ""} />
             </>
           ) : (
             <p className="text-sm text-ipmd-red">Aucune formation sélectionnée.</p>

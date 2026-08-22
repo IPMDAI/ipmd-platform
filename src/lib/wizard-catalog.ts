@@ -46,7 +46,7 @@ export async function loadWizardCatalog(): Promise<WizardCatalog> {
     supabase.from("filieres").select("id,name"),
     supabase.from("catalog_items").select("id,universe,name,credential,doc_profile").eq("status", "open"),
     supabase.from("catalog_offerings").select("id,item_id,intake_id").eq("status", "open"),
-    supabase.from("document_types").select("doc_key,label"),
+    supabase.from("document_types").select("doc_key,label,max_files"),
     supabase.from("document_profiles").select("profile_key,doc_key,requirement,sort_order"),
   ]);
 
@@ -124,7 +124,12 @@ export async function loadWizardCatalog(): Promise<WizardCatalog> {
 
   // ── Profils documentaires (Étape 4) ──
   const documentTypes: Record<string, string> = {};
-  for (const t of docTypeData ?? []) documentTypes[t.doc_key as string] = t.label as string;
+  const documentMaxFiles: Record<string, number> = {};
+  for (const t of docTypeData ?? []) {
+    documentTypes[t.doc_key as string] = t.label as string;
+    const mf = t.max_files as number | null;
+    if (typeof mf === "number" && mf > 0) documentMaxFiles[t.doc_key as string] = mf;
+  }
 
   const documentProfiles: Record<string, DocProfileRow[]> = {};
   for (const r of docProfileData ?? []) {
@@ -135,5 +140,15 @@ export async function loadWizardCatalog(): Promise<WizardCatalog> {
     });
   }
 
-  return { campusIntakes, proPrograms, execPrograms, certByUniverse, documentTypes, documentProfiles };
+  // documentMaxFiles : lu depuis document_types.max_files (Lot B appliqué).
+  // maxFilesForDoc applique le repli uniquement si un doc_key n'a pas de valeur.
+  return {
+    campusIntakes,
+    proPrograms,
+    execPrograms,
+    certByUniverse,
+    documentTypes,
+    documentMaxFiles,
+    documentProfiles,
+  };
 }
