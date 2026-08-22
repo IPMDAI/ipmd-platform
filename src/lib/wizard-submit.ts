@@ -70,6 +70,7 @@ export type WizardErrorCode =
   | "STATUT_PRO_INVALIDE"
   | "POSTE_MANQUANT"
   | "FONCTION_MANQUANTE"
+  | "CERT_TIER_MANQUANT"
   | "NIVEAU_INVALIDE"
   | "PRIX_MANQUANT"
   | "EXPERIENCE_INVALIDE"
@@ -94,6 +95,8 @@ const MESSAGES: Record<WizardErrorCode, string> = {
     "Votre fonction / poste actuel est obligatoire. Revenez à l'étape « Parcours actuel ».",
   FONCTION_MANQUANTE:
     "Votre fonction actuelle / responsabilités est obligatoire. Revenez à l'étape « Parcours actuel ».",
+  CERT_TIER_MANQUANT:
+    "Cette formation n'est pas encore disponible. Revenez à l'étape « Projet » pour en choisir une autre.",
   NIVEAU_INVALIDE:
     "Le niveau visé est invalide. Revenez à l'étape « Projet » pour le resélectionner.",
   PRIX_MANQUANT:
@@ -124,6 +127,7 @@ function codeFromError(msg: string): WizardErrorCode {
     "STATUT_PRO_INVALIDE",
     "POSTE_MANQUANT",
     "FONCTION_MANQUANTE",
+    "CERT_TIER_MANQUANT",
     "NIVEAU_INVALIDE",
     "PRIX_MANQUANT",
     "EXPERIENCE_INVALIDE",

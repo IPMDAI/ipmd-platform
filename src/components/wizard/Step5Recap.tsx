@@ -287,7 +287,13 @@ export function Step5Recap({
                   <Row label="Filière Executive" value={summary.filiere} />
                 </>
               ) : variant === "certificat" ? (
-                <Row label="Programme / certificat" value={summary.formation} />
+                <>
+                  <Row label="Session" value={summary.rentree} />
+                  <Row label="Formation" value={summary.formation} />
+                  <Row label="Catégorie" value={summary.category} />
+                  <Row label="Certificat" value={summary.credential} />
+                  <Row label="Durée" value={summary.durationMonths ? `${summary.durationMonths} mois` : ""} />
+                </>
               ) : (
                 <>
                   {summary.rentree && <Row label="Rentrée" value={summary.rentree} />}

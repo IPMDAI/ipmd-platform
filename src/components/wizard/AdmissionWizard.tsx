@@ -112,6 +112,25 @@ export function AdmissionWizard({ catalog }: { catalog: WizardCatalog }) {
     return () => window.removeEventListener("popstate", onPop);
   }, []);
 
+  // Présélection depuis une carte formation : /admission?u=<univers>&item=<catalog_item_id>.
+  // Si valide → univers + formation présélectionnés, arrivée directe à l'Étape 1.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const sp = new URLSearchParams(window.location.search);
+    const u = sp.get("u");
+    const item = sp.get("item");
+    if (!u || !item || !getUniverse(u)) return;
+    if (variantForUniverse(u as UniverseId) === "certificat") {
+      // Univers présélectionné ; formation présélectionnée si l'item existe pour cet univers.
+      const found = !!item && (catalog.certByUniverse[u] ?? []).some((x) => x.itemId === item);
+      setUniverse(u as UniverseId);
+      setProject(found ? { ...EMPTY_PROJECT, certItemId: item as string } : { ...EMPTY_PROJECT });
+      setStep(1);
+      window.history.pushState({ wizardStep: 1 }, "");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // Avance vers une étape en empilant une entrée d'historique (navigation « avant »).
   const goToStep = (n: number) => {
     setStep(n);
@@ -179,7 +198,12 @@ export function AdmissionWizard({ catalog }: { catalog: WizardCatalog }) {
         project: {
           campus_intake_id: project.campusIntakeId,
           campus_offering_key: project.campusOfferingKey,
-          catalog_offering_id: variant === "executive" ? project.execOfferingId : project.proOfferingId,
+          catalog_offering_id:
+            variant === "executive"
+              ? project.execOfferingId
+              : variant === "certificat"
+                ? project.certOfferingId
+                : project.proOfferingId,
           pro_offering_id: project.proOfferingId,
           exec_offering_id: project.execOfferingId,
           cert_item_id: project.certItemId,

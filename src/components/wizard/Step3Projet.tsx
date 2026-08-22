@@ -8,6 +8,8 @@ import {
   campusDiplomaForLevel,
   campusFilieresForLevel,
   campusLevels,
+  certProgrammesForSession,
+  certSessions,
   offeringKey,
   proFilieresForSessionLevel,
   proLevelsForSession,
@@ -15,6 +17,8 @@ import {
   programFilieresForSessionLevel,
   programLevelsForSession,
   programSessions,
+  resolveCertOffering,
+  type CatalogProgram,
   type Project,
   type WizardCatalog,
 } from "./project";
@@ -140,6 +144,22 @@ export function Step3Projet({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [variant, value.execIntakeId]);
+
+  // Certificats : auto-session unique + résolution de l'offering pour un programme
+  // présélectionné (arrivée depuis une carte /admission?u=&item=).
+  useEffect(() => {
+    if (variant !== "certificat" || !universe) return;
+    const sessions = certSessions(catalog, universe);
+    let intakeId = value.certIntakeId;
+    let patch: Partial<Project> = {};
+    if (!intakeId && sessions.length === 1) { intakeId = sessions[0].intakeId; patch.certIntakeId = intakeId; }
+    if (intakeId && value.certItemId && !value.certOfferingId) {
+      const off = resolveCertOffering(catalog, universe, intakeId, value.certItemId);
+      if (off) patch.certOfferingId = off.offeringId;
+    }
+    if (Object.keys(patch).length > 0) onChange({ ...value, ...patch });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [variant, universe, value.certIntakeId, value.certItemId, value.certOfferingId]);
 
   const title = (
     <>
@@ -550,39 +570,129 @@ export function Step3Projet({
     );
   }
 
-  // ─────────────────────────── CERTIFICATS ───────────────────────────
-  const items = catalog.certByUniverse[universe ?? ""] ?? [];
-  if (items.length === 0) return <div>{title}<EmptyState label="ce parcours" /></div>;
+  // ─────────────────────────── CERTIFICATS (cascade) ───────────────────────────
+  const certUni = universe ?? "";
+  const certSess = certSessions(catalog, certUni);
+  if (certSess.length === 0) return <div>{title}<EmptyState label="ce parcours" /></div>;
+
+  const selectedCertSession = value.certIntakeId || (certSess.length === 1 ? certSess[0].intakeId : "");
+  const certProgrammes = selectedCertSession
+    ? certProgrammesForSession(catalog, certUni, selectedCertSession)
+    : [];
+  const preProgramme = value.certItemId
+    ? (catalog.certByUniverse[certUni] ?? []).find((x) => x.itemId === value.certItemId)
+    : undefined;
+
+  const selectCertSession = (id: string) => {
+    const off = value.certItemId ? resolveCertOffering(catalog, certUni, id, value.certItemId) : undefined;
+    onChange({ ...value, certIntakeId: id, certOfferingId: off ? off.offeringId : "" });
+  };
+  const selectCertProgramme = (p: CatalogProgram) =>
+    onChange({ ...value, certItemId: p.itemId, certOfferingId: p.offeringId });
+
+  // Groupement par catégorie pour un affichage clair.
+  const certByCat = new Map<string, CatalogProgram[]>();
+  for (const p of certProgrammes) {
+    const c = p.category ?? "Autres";
+    if (!certByCat.has(c)) certByCat.set(c, []);
+    certByCat.get(c)!.push(p);
+  }
 
   return (
     <div>
       {title}
-      <p className="mt-5 text-sm font-semibold text-ipmd-black">
-        Programme / certificat visé <span className="text-ipmd-red">*</span>
-      </p>
-      <div className="mt-2 space-y-2">
-        {items.map((it) => {
-          const active = value.certItemId === it.id;
-          return (
-            <button
-              key={it.id}
-              type="button"
-              onClick={() => onChange({ ...value, certItemId: it.id })}
-              className={optionClass(active)}
+
+      {preProgramme && (
+        <div className="mt-4 rounded-xl border border-ipmd-red/30 bg-ipmd-red/[0.04] p-3">
+          <p className="text-sm font-semibold text-ipmd-black">Formation choisie : {preProgramme.name}</p>
+          <p className="mt-0.5 text-[12px] text-black/55">
+            {preProgramme.category ? `${preProgramme.category} · ` : ""}
+            {preProgramme.credential ?? "Certificat"}
+            {preProgramme.durationMonths ? ` · ${preProgramme.durationMonths} mois` : ""}
+            {preProgramme.price ? ` · ${preProgramme.price.toLocaleString("fr-FR")} FCFA` : ""}
+          </p>
+        </div>
+      )}
+
+      {/* 1) Session certificat */}
+      <div className="mt-5">
+        {certSess.length > 1 ? (
+          <>
+            <label htmlFor="pj-cert-session" className="text-sm font-semibold text-ipmd-black">
+              Session <span className="text-ipmd-red">*</span>
+            </label>
+            <select
+              id="pj-cert-session"
+              value={selectedCertSession}
+              onChange={(e) => selectCertSession(e.target.value)}
+              className="mt-1 w-full rounded-xl border border-black/15 bg-white px-3.5 py-2.5 text-sm outline-none focus:border-ipmd-red focus:ring-2 focus:ring-ipmd-red/20"
             >
-              <Radio active={active} />
-              <span>
-                <span className="text-sm font-semibold text-ipmd-black">{it.name}</span>
-                {it.credential && (
-                  <span className="ml-2 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-800">
-                    {it.credential}
-                  </span>
-                )}
+              <option value="">— Sélectionnez —</option>
+              {certSess.map((s) => (
+                <option key={s.intakeId} value={s.intakeId}>
+                  {s.intakeLabel} — {s.academicYear}
+                </option>
+              ))}
+            </select>
+          </>
+        ) : (
+          <>
+            <p className="text-sm font-semibold text-ipmd-black">
+              Session <span className="text-ipmd-red">*</span>
+            </p>
+            <div className="mt-1.5 inline-flex items-center gap-2 rounded-xl border border-ipmd-red/30 bg-ipmd-red/[0.04] px-3.5 py-2.5 text-sm font-semibold text-ipmd-black">
+              <span className="flex h-4 w-4 items-center justify-center rounded-full border border-ipmd-red" aria-hidden="true">
+                <span className="h-2 w-2 rounded-full bg-ipmd-red" />
               </span>
-            </button>
-          );
-        })}
+              {certSess[0].intakeLabel} — {certSess[0].academicYear}
+            </div>
+          </>
+        )}
       </div>
+
+      {/* 2) Programme / formation (groupé par catégorie) */}
+      <div className="mt-6">
+        <p className="text-sm font-semibold text-ipmd-black">
+          Programme / formation <span className="text-ipmd-red">*</span>
+        </p>
+        {!selectedCertSession ? (
+          <p className="mt-2 rounded-xl border border-dashed border-black/15 bg-black/[0.015] p-3 text-[13px] text-black/50">
+            Choisissez d'abord une session pour afficher les formations disponibles.
+          </p>
+        ) : certProgrammes.length === 0 ? (
+          <p className="mt-2 rounded-xl border border-amber-200 bg-amber-50 p-3 text-[13px] font-semibold text-amber-900">
+            Aucune formation ouverte pour cette session.
+          </p>
+        ) : (
+          <div className="mt-2 space-y-4">
+            {[...certByCat.entries()].map(([cat, progs]) => (
+              <div key={cat}>
+                <p className="text-[13px] font-bold text-black/70">{cat}</p>
+                <div className="mt-1.5 grid grid-cols-1 gap-2 sm:grid-cols-2">
+                  {progs.map((p) => {
+                    const active = value.certOfferingId === p.offeringId;
+                    return (
+                      <button key={p.offeringId} type="button" onClick={() => selectCertProgramme(p)} className={optionClass(active)}>
+                        <Radio active={active} />
+                        <span>
+                          <span className="text-sm font-semibold text-ipmd-black">{p.name}</span>
+                          <span className="mt-0.5 block text-[11px] text-black/50">
+                            {p.credential ?? "Certificat"}
+                            {p.durationMonths ? ` · ${p.durationMonths} mois` : ""}
+                            {p.price ? ` · ${p.price.toLocaleString("fr-FR")} FCFA` : ""}
+                          </span>
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* 3) Mode de formation */}
       <ModeField value={value.mode} onChange={(m) => onChange({ ...value, mode: m })} />
     </div>
   );

@@ -7,6 +7,8 @@ import { CtaBanner } from "@/components/sections/CtaBanner";
 import { UltraJobsCatalog } from "@/components/ultrajobs/UltraJobsCatalog";
 import { ExperienceWorkspace } from "@/components/sections/ExperienceWorkspace";
 import { getUniverse } from "@/data/universes";
+import { loadWizardCatalog } from "@/lib/wizard-catalog";
+import { certUniqueItems } from "@/components/wizard/project";
 
 export const metadata: Metadata = {
   title: "UltraJobs — Bootcamps métiers à l'ère de l'IA",
@@ -14,8 +16,10 @@ export const metadata: Metadata = {
     "Des bootcamps certifiants et 100% pratiques pour les jeunes de 18 à 30 ans, organisés par métier : marketing, design, dev, IA, data, e-commerce, support et transformation digitale.",
 };
 
-export default function UltraJobsPage() {
+export default async function UltraJobsPage() {
   const u = getUniverse("ultrajobs");
+  const catalog = await loadWizardCatalog();
+  const items = certUniqueItems(catalog, "ultrajobs");
 
   return (
     <>
@@ -28,7 +32,7 @@ export default function UltraJobsPage() {
         }
       >
         <div className="mt-2">
-          <Button href="/inscription-bootcamp?u=ultrajobs">Demander une admission</Button>
+          <Button href="/admission?u=ultrajobs">Demander une admission</Button>
         </div>
       </PageHero>
 
@@ -44,14 +48,14 @@ export default function UltraJobsPage() {
           Des formats courts, intensifs et orientés résultats — un métier concret, prêt pour l&apos;emploi.
         </p>
         <div className="mt-10">
-          <UltraJobsCatalog />
+          <UltraJobsCatalog items={items} />
         </div>
       </Section>
 
       <CtaBanner
         title="Prêt à décrocher votre métier digital ?"
         description="Choisissez votre bootcamp et déposez votre demande d'admission — formation courte, certifiante et orientée employabilité."
-        primary={{ label: "Demander une admission", href: "/inscription-bootcamp?u=ultrajobs" }}
+        primary={{ label: "Demander une admission", href: "/admission?u=ultrajobs" }}
       />
     </>
   );

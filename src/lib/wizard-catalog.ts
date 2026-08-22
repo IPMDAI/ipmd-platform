@@ -4,7 +4,6 @@ import {
   sortLevels,
   type CampusIntake,
   type CatalogProgram,
-  type CertificatItem,
   type DocProfileRow,
   type DocRequirement,
   type WizardCatalog,
@@ -31,7 +30,6 @@ export async function loadWizardCatalog(): Promise<WizardCatalog> {
     { data: intakeData },
     { data: offerData },
     { data: filiereData },
-    { data: certData },
     { data: catOfferData },
     { data: docTypeData },
     { data: docProfileData },
@@ -44,7 +42,6 @@ export async function loadWizardCatalog(): Promise<WizardCatalog> {
       .order("sort_order"),
     supabase.from("intake_offerings").select("intake_id,filiere_id,level").eq("status", "open"),
     supabase.from("filieres").select("id,name"),
-    supabase.from("catalog_items").select("id,universe,name,credential,doc_profile").eq("status", "open"),
     supabase.from("catalog_offerings").select("id,item_id,intake_id,level").eq("status", "open"),
     supabase.from("document_types").select("doc_key,label,max_files"),
     supabase.from("document_profiles").select("profile_key,doc_key,requirement,sort_order"),
@@ -74,21 +71,10 @@ export async function loadWizardCatalog(): Promise<WizardCatalog> {
     }))
     .filter((i) => i.offerings.length > 0);
 
-  // ── Certificats : items ouverts groupés par univers ──
-  const certByUniverse: Record<string, CertificatItem[]> = {};
-  for (const it of certData ?? []) {
-    const u = it.universe as string;
-    (certByUniverse[u] ??= []).push({
-      id: it.id as string,
-      name: it.name as string,
-      credential: (it.credential as string) ?? null,
-      docProfile: (it.doc_profile as string) ?? null,
-    });
-  }
-
-  // ── Pro / Executive : via catalog_offerings ouverts, résolus par items/rentrées ──
+  // ── Pro / Executive / Certificats : via catalog_offerings ouverts (offering-based) ──
   const proPrograms: CatalogProgram[] = [];
   const execPrograms: CatalogProgram[] = [];
+  const certByUniverse: Record<string, CatalogProgram[]> = {};
   const offers = catOfferData ?? [];
   if (offers.length) {
     const itemIds = [...new Set(offers.map((o) => o.item_id as string))];
@@ -96,7 +82,7 @@ export async function loadWizardCatalog(): Promise<WizardCatalog> {
     const [{ data: items }, { data: ints }] = await Promise.all([
       supabase
         .from("catalog_items")
-        .select("id,name,credential,universe,doc_profile")
+        .select("id,name,credential,universe,doc_profile,category,cert_tier,duration_months,price")
         .in("id", itemIds)
         .eq("status", "open"),
       supabase.from("intakes").select("id,label,academic_year").in("id", intakeIds).eq("status", "open"),
@@ -117,9 +103,14 @@ export async function loadWizardCatalog(): Promise<WizardCatalog> {
         credential: (it.credential as string) ?? null,
         docProfile: (it.doc_profile as string) ?? null,
         level: (o.level as string) ?? null,
+        category: (it.category as string) ?? null,
+        certTier: (it.cert_tier as string) ?? null,
+        durationMonths: (it.duration_months as number) ?? null,
+        price: (it.price as number) ?? null,
       };
       if (it.universe === "professionnel") proPrograms.push(prog);
       else if (it.universe === "gouvernance") execPrograms.push(prog);
+      else (certByUniverse[it.universe as string] ??= []).push(prog);
     }
   }
 

@@ -38,6 +38,11 @@ export type CatalogProgram = {
   docProfile: string | null;
   /** Niveau de l'offre (Pro : Licence 1..Master 2). NULL si l'offre n'a pas de niveau. */
   level: string | null;
+  /** Certificats : domaine, tier, durée, prix (NULL hors certificats configurés). */
+  category?: string | null;
+  certTier?: string | null;
+  durationMonths?: number | null;
+  price?: number | null;
 };
 export type CertificatItem = {
   id: string;
@@ -61,8 +66,9 @@ export type WizardCatalog = {
   campusIntakes: CampusIntake[];
   proPrograms: CatalogProgram[];
   execPrograms: CatalogProgram[];
-  /** Items certifiants ouverts, groupés par univers (ultrajobs, ultraboost, …). */
-  certByUniverse: Record<string, CertificatItem[]>;
+  /** Offres certifiantes ouvertes (offering-based, avec session), groupées par univers.
+   *  Un item offert sur 2 sessions apparaît en 2 entrées (offeringId distinct). */
+  certByUniverse: Record<string, CatalogProgram[]>;
   /** doc_key → libellé (document_types). */
   documentTypes: Record<string, string>;
   /** doc_key → nombre max de fichiers (document_types.max_files). Vide tant que la
@@ -107,7 +113,9 @@ export type Project = {
   execIntakeId: string; // Session Executive choisie — étape intermédiaire
   execLevel: string; // Niveau visé Executive (Licence 3/Master 1/Master 2) — étape intermédiaire
   execOfferingId: string; // catalog_offering_id résolu Executive
-  certItemId: string;
+  certItemId: string; // Programme/formation certificat choisi (ou présélectionné via URL)
+  certIntakeId: string; // Session certificat choisie (Octobre/Février) — étape intermédiaire
+  certOfferingId: string; // catalog_offering_id résolu (item × session)
   mode: string; // FORMATION_MODES: presentiel | distance | hybride (obligatoire)
 };
 
@@ -122,6 +130,8 @@ export const EMPTY_PROJECT: Project = {
   execLevel: "",
   execOfferingId: "",
   certItemId: "",
+  certIntakeId: "",
+  certOfferingId: "",
   mode: "",
 };
 
@@ -190,6 +200,47 @@ export const proLevelsForSession = (catalog: WizardCatalog, intakeId: string) =>
 export const proFilieresForSessionLevel = (catalog: WizardCatalog, intakeId: string, level: string) =>
   programFilieresForSessionLevel(catalog.proPrograms, intakeId, level);
 
+// ── Certificats : Session → Programme (offering-based, sans niveau) ──
+/** Sessions certificat d'un univers (dérivées des offres). */
+export const certSessions = (catalog: WizardCatalog, universe: string) =>
+  programSessions(catalog.certByUniverse[universe] ?? []);
+
+/** Programmes (offres) certificat pour une session donnée, triés par catégorie puis nom. */
+export function certProgrammesForSession(
+  catalog: WizardCatalog,
+  universe: string,
+  intakeId: string,
+): CatalogProgram[] {
+  return (catalog.certByUniverse[universe] ?? [])
+    .filter((p) => p.intakeId === intakeId)
+    .sort((a, b) => (a.category ?? "").localeCompare(b.category ?? "") || a.name.localeCompare(b.name));
+}
+
+/** Résout l'offering certificat pour (item, session). */
+export function resolveCertOffering(
+  catalog: WizardCatalog,
+  universe: string,
+  intakeId: string,
+  itemId: string,
+): CatalogProgram | undefined {
+  return (catalog.certByUniverse[universe] ?? []).find(
+    (p) => p.intakeId === intakeId && p.itemId === itemId,
+  );
+}
+
+/** Items certificat uniques (dédupliqués par itemId) — pour l'affichage catalogue public. */
+export function certUniqueItems(catalog: WizardCatalog, universe: string): CatalogProgram[] {
+  const seen = new Set<string>();
+  const out: CatalogProgram[] = [];
+  for (const p of catalog.certByUniverse[universe] ?? []) {
+    if (!seen.has(p.itemId)) {
+      seen.add(p.itemId);
+      out.push(p);
+    }
+  }
+  return out.sort((a, b) => (a.category ?? "").localeCompare(b.category ?? "") || a.name.localeCompare(b.name));
+}
+
 /** Rang d'un niveau, robuste aux libellés réels (« Licence 1 » comme « L1 »). */
 function levelRank(s: string): number {
   const l = s.trim().toLowerCase();
@@ -234,7 +285,7 @@ export function isProgramSelected(
   if (variant === "pro") return catalog.proPrograms.some((x) => x.offeringId === p.proOfferingId);
   if (variant === "executive")
     return catalog.execPrograms.some((x) => x.offeringId === p.execOfferingId);
-  return (catalog.certByUniverse[universe ?? ""] ?? []).some((x) => x.id === p.certItemId);
+  return (catalog.certByUniverse[universe ?? ""] ?? []).some((x) => x.offeringId === p.certOfferingId);
 }
 
 /** Sélection valide = programme choisi ET mode de formation obligatoire choisi. */
@@ -267,7 +318,10 @@ export function activeDocProfileKey(
       catalog.execPrograms.find((x) => x.offeringId === p.execOfferingId)?.docProfile ??
       "executive"
     );
-  return (catalog.certByUniverse[universe ?? ""] ?? []).find((x) => x.id === p.certItemId)?.docProfile ?? null;
+  return (
+    (catalog.certByUniverse[universe ?? ""] ?? []).find((x) => x.offeringId === p.certOfferingId)?.docProfile ??
+    "cert-light"
+  );
 }
 
 export type ProjectSummary = {
@@ -281,6 +335,9 @@ export type ProjectSummary = {
   formation: string;
   /** Diplôme/credential visé, dérivé de l'offre (jamais saisi). */
   credential?: string;
+  /** Certificats : catégorie (domaine) + durée en mois. */
+  category?: string;
+  durationMonths?: number;
 };
 
 /** Résumé lisible du projet choisi, ou null si la sélection est invalide. */
@@ -316,9 +373,15 @@ export function describeProject(
       credential: prog.credential ?? undefined,
     };
   }
-  const it = (catalog.certByUniverse[universe ?? ""] ?? []).find((x) => x.id === p.certItemId);
-  if (!it) return null;
-  return { formation: it.name, credential: it.credential ?? undefined };
+  const off = (catalog.certByUniverse[universe ?? ""] ?? []).find((x) => x.offeringId === p.certOfferingId);
+  if (!off) return null;
+  return {
+    rentree: `${off.intakeLabel} — ${off.academicYear}`,
+    formation: off.name,
+    credential: off.credential ?? undefined,
+    category: off.category ?? undefined,
+    durationMonths: off.durationMonths ?? undefined,
+  };
 }
 
 /** Lignes documentaires (libellé + exigence) d'un profil, triées. */
