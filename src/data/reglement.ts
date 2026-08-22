@@ -1,13 +1,13 @@
 // ──────────────────────────────────────────────────────────────
-// IPMD — Règlement intérieur (cursus Diplôme) 2025-2026.
-// Source : « règlement intérieur étudiants IPMD 2025-2026.doc ».
-// ⚠️ Texte importé à RELIRE / corriger par l'administration.
+// IPMD — Règlement intérieur (cursus Diplôme) 2026-2027.
+// Texte générique reconduit depuis 2025-2026 (aucune clause figée sur l'année).
+// ⚠️ Texte à RELIRE / valider par l'administration pour 2026-2027.
 // Pour modifier : éditer ce fichier (un article = { n, title, body[] }).
 // ──────────────────────────────────────────────────────────────
 
-export const REGLEMENT_VERSION = "diplome-2025-2026";
+export const REGLEMENT_VERSION = "diplome-2026-2027";
 export const REGLEMENT_TITLE = "Règlement intérieur — Étudiants (Diplôme)";
-export const REGLEMENT_YEAR = "2025-2026";
+export const REGLEMENT_YEAR = "2026-2027";
 
 export type Article = { n: number; title: string; body: string[] };
 

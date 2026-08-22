@@ -54,8 +54,32 @@ export default async function EspacePage() {
     profile?.full_name || (user.user_metadata?.full_name as string) || "—";
   const role = profile?.role ?? "etudiant";
   const sections = dashboardSections[role];
-  const tiles = dashboardTiles[role] ?? dashboardTiles.etudiant;
+  let tiles = dashboardTiles[role] ?? dashboardTiles.etudiant;
   const showTutor = LEARNER_ROLES.has(role);
+
+  // Tuile « Réinscription 2026-2027 » : visible uniquement si un dossier
+  // reenrollments 'prepared' existe pour l'étudiant connecté (Phase B).
+  if (LEARNER_ROLES.has(role)) {
+    const { data: reenr } = await supabase
+      .from("reenrollments")
+      .select("id")
+      .eq("student_id", user.id)
+      .eq("academic_year", "2026-2027")
+      .eq("status", "prepared")
+      .maybeSingle();
+    if (reenr) {
+      tiles = [
+        {
+          title: "Réinscription 2026-2027",
+          icon: "🔄",
+          status: "ready",
+          href: "/espace/ma-reinscription",
+          description: "Confirmez votre passage en classe supérieure.",
+        },
+        ...tiles,
+      ];
+    }
+  }
   const isAdmin = role === "admin" || role === "super_admin";
 
   // Panneau « à traiter » (admins) : compteurs rapides.
