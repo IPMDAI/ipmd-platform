@@ -39,6 +39,11 @@ export const EMPTY_IDENTITY: Identity = {
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const digits = (s: string) => (s.match(/\d/g) ?? []).length;
+// Numéro national valide : uniquement chiffres + séparateurs raisonnables
+// (espaces, parenthèses, tirets, points) ET au moins 6 chiffres. Toute lettre
+// (ou autre caractère) rend le numéro invalide — jamais composé en E.164.
+const PHONE_ALLOWED = /^[\d\s().\-]*$/;
+const isValidNationalNumber = (s: string) => PHONE_ALLOWED.test(s) && digits(s) >= 6;
 
 /** Âge minimum requis selon le parcours (jamais dérivé du client). */
 export function minAgeForVariant(variant: BackgroundVariant): number {
@@ -129,12 +134,13 @@ export function identityErrors(v: Identity, minAge: number): Partial<Record<keyo
 
   if (!v.phoneCountry || !isCountry(v.phoneCountry)) e.phoneCountry = "Sélectionnez l'indicatif.";
   if (!v.phone.trim()) e.phone = "Champ obligatoire.";
-  else if (digits(v.phone) < 6) e.phone = "Numéro de téléphone invalide.";
+  else if (!isValidNationalNumber(v.phone)) e.phone = "Numéro de téléphone invalide.";
 
-  // WhatsApp facultatif : si un numéro est saisi, l'indicatif devient requis.
+  // WhatsApp facultatif : dès qu'un numéro est saisi, indicatif + numéro valide
+  // deviennent obligatoires (mêmes règles que le téléphone, aucune lettre).
   if (v.whatsapp.trim()) {
     if (!v.whatsappCountry || !isCountry(v.whatsappCountry)) e.whatsappCountry = "Sélectionnez l'indicatif.";
-    if (digits(v.whatsapp) < 6) e.whatsapp = "Numéro WhatsApp invalide.";
+    if (!isValidNationalNumber(v.whatsapp)) e.whatsapp = "Numéro WhatsApp invalide.";
   }
 
   return e;

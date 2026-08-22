@@ -21,6 +21,9 @@ export type WizardSubmitPayload = {
     whatsapp: string;
     birth_date: string;
     birth_place: string;
+    birth_country: string;
+    phone_country: string;
+    whatsapp_country: string;
   };
   background: {
     last_level: string;

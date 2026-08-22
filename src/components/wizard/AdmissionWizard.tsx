@@ -160,6 +160,9 @@ export function AdmissionWizard({ catalog }: { catalog: WizardCatalog }) {
           whatsapp: whatsappE164(identity) ?? "",
           birth_date: composeBirthDate(identity) ?? "",
           birth_place: identity.birthPlace,
+          birth_country: identity.birthCountry,
+          phone_country: identity.phoneCountry,
+          whatsapp_country: identity.whatsappCountry,
         },
         background: {
           last_level: background.lastLevel,

@@ -115,9 +115,11 @@ function PhoneField(p: {
         <input
           id={`${p.idBase}-num`}
           type="tel"
-          inputMode="tel"
+          inputMode="numeric"
           value={p.number}
-          onChange={(e) => p.onNumber(e.target.value)}
+          // Saisie nettoyée : chiffres + séparateurs raisonnables ( espace ( ) - . )
+          // uniquement. Toute lettre (tapée ou collée) est retirée immédiatement.
+          onChange={(e) => p.onNumber(e.target.value.replace(/[^\d\s().\-]/g, ""))}
           onBlur={p.onBlur}
           placeholder="Numéro (sans indicatif)"
           aria-invalid={!!p.errorNumber}
@@ -135,7 +137,12 @@ const MONTHS = [
 ];
 const DAYS = Array.from({ length: 31 }, (_, i) => String(i + 1).padStart(2, "0"));
 const NOW_YEAR = new Date().getFullYear();
-const YEARS = Array.from({ length: 101 }, (_, i) => String(NOW_YEAR - i));
+// Années de naissance : plafonnées à (année courante − âge minimum du parcours),
+// donc jamais l'année en cours/future ni une année d'âge insuffisant.
+function birthYears(minAge: number): string[] {
+  const max = NOW_YEAR - minAge;
+  return Array.from({ length: 100 - minAge + 1 }, (_, i) => String(max - i));
+}
 
 /**
  * Étape 1 — Votre identité (internationale). État dans la coquille (persistant).
@@ -152,6 +159,7 @@ export function Step1Identite({
 }) {
   const [touched, setTouched] = useState<Partial<Record<Field, boolean>>>({});
   const errors = identityErrors(value, minAge);
+  const years = birthYears(minAge);
 
   const set = (k: Field) => (v: string) => onChange({ ...value, [k]: v });
   const blur = (k: Field) => () => setTouched((t) => ({ ...t, [k]: true }));
@@ -189,7 +197,7 @@ export function Step1Identite({
             </select>
             <select id="id-birthYear" value={value.birthYear} onChange={(e) => set("birthYear")(e.target.value)} onBlur={dateBlur} aria-invalid={!!dateErr} className={`${ctrl(!!dateErr)} !mt-0`}>
               <option value="">Année</option>
-              {YEARS.map((y) => <option key={y} value={y}>{y}</option>)}
+              {years.map((y) => <option key={y} value={y}>{y}</option>)}
             </select>
           </div>
           <Err id="id-birthDay" error={dateErr} hint={`Âge minimum pour ce parcours : ${minAge} ans.`} />
