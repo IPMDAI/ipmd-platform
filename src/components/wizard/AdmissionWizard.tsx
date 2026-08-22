@@ -26,6 +26,7 @@ import {
 } from "./project";
 import { Step4Pieces } from "./Step4Pieces";
 import { Step5Recap } from "./Step5Recap";
+import { submitWizardCandidature } from "@/lib/wizard-submit";
 
 /**
  * Coquille du wizard d'admission (étapes 0→5).
@@ -43,6 +44,11 @@ export function AdmissionWizard({ catalog }: { catalog: WizardCatalog }) {
   const [project, setProject] = useState<Project>(EMPTY_PROJECT);
   const [uploads, setUploads] = useState<Uploads>({});
   const [confirmed, setConfirmed] = useState(false);
+
+  // Envoi réel (Étape 5)
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [successId, setSuccessId] = useState<string | null>(null);
 
   // Dossier Storage unique par session wizard : généré à la 1re pièce (côté
   // client uniquement → pas de souci d'hydratation), réutilisé pour toutes les
@@ -85,8 +91,80 @@ export function AdmissionWizard({ catalog }: { catalog: WizardCatalog }) {
     setStep((s) => Math.max(s - 1, 0));
   };
 
+  // Envoi réel : assemble le payload et appelle la RPC transactionnelle.
+  // Anti-double-submit via `submitting` ; les données du wizard restent
+  // intactes en cas d'échec (aucun reset).
+  const handleSubmit = async () => {
+    if (submitting || !universe) return;
+    setSubmitting(true);
+    setSubmitError(null);
+    try {
+      const documents = Object.entries(uploads).flatMap(([doc_key, paths]) =>
+        (paths ?? []).map((path) => ({ doc_key, path })),
+      );
+      const res = await submitWizardCandidature({
+        universe,
+        identity: {
+          last_name: identity.lastName,
+          first_name: identity.firstName,
+          email: identity.email,
+          phone: identity.phone,
+          whatsapp: identity.whatsapp,
+          birth_date: identity.birthDate,
+          birth_place: identity.birthPlace,
+        },
+        background: {
+          last_level: background.lastLevel,
+          last_diploma: background.lastDiploma,
+          graduation_year: background.graduationYear,
+          institution: background.institution,
+          current_situation: background.currentSituation,
+        },
+        project: {
+          campus_intake_id: project.campusIntakeId,
+          campus_offering_key: project.campusOfferingKey,
+          pro_offering_id: project.proOfferingId,
+          exec_offering_id: project.execOfferingId,
+          cert_item_id: project.certItemId,
+        },
+        documents,
+      });
+      if (res.ok) setSuccessId(res.requestId);
+      else setSubmitError(res.message);
+    } catch {
+      setSubmitError("Une erreur réseau est survenue. Vos données sont conservées — réessayez.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   const current = WIZARD_STEPS[step];
   const selectedName = universe ? getUniverse(universe)?.name : null;
+
+  // Écran final de confirmation après un envoi réussi.
+  if (successId) {
+    return (
+      <div className="mx-auto max-w-xl text-center">
+        <div className="rounded-3xl bg-white p-8 shadow-sm ring-1 ring-black/5">
+          <p className="text-4xl" aria-hidden="true">
+            ✅
+          </p>
+          <h2 className="mt-3 text-2xl font-black text-ipmd-black">Candidature envoyée</h2>
+          <p className="mt-2 text-sm text-black/60">
+            Merci {identity.firstName || ""} ! Votre demande d'admission a bien été transmise à
+            l'IPMD. Notre équipe vous recontactera.
+          </p>
+          <p className="mt-4 inline-block rounded-full bg-ipmd-light px-4 py-2 text-xs font-semibold text-black/70">
+            Référence de votre candidature :{" "}
+            <span className="font-mono text-ipmd-black">{successId}</span>
+          </p>
+          <p className="mt-4 text-[12px] text-black/45">
+            Conservez cette référence pour tout échange avec l'administration.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto max-w-4xl">
@@ -182,6 +260,9 @@ export function AdmissionWizard({ catalog }: { catalog: WizardCatalog }) {
             confirmed={confirmed}
             onConfirm={setConfirmed}
             onEdit={setStep}
+            onSubmit={handleSubmit}
+            submitting={submitting}
+            submitError={submitError}
           />
         ) : (
           <div className="py-10 text-center">

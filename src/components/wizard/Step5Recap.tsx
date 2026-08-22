@@ -1,7 +1,6 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { useState } from "react";
 import type { UniverseId } from "@/types";
 import { getUniverse } from "@/data/universes";
 import type { Background, BackgroundVariant } from "./background";
@@ -75,7 +74,8 @@ function Row({ label, value }: { label: string; value: ReactNode }) {
  * Étape 5 — Récapitulatif & envoi. Récap structuré (parcours, identité, parcours
  * actuel, projet, pièces) + « Modifier » par section, liste des champs
  * obligatoires manquants, case de confirmation et bouton final désactivé tant
- * que le dossier n'est pas valide. ⚠️ L'envoi réel n'est PAS branché ici.
+ * que le dossier n'est pas valide. L'envoi réel est délégué à la coquille
+ * (`onSubmit`) qui appelle la RPC transactionnelle.
  */
 export function Step5Recap({
   universe,
@@ -88,6 +88,9 @@ export function Step5Recap({
   confirmed,
   onConfirm,
   onEdit,
+  onSubmit,
+  submitting,
+  submitError,
 }: {
   universe: UniverseId | null;
   variant: BackgroundVariant;
@@ -99,8 +102,10 @@ export function Step5Recap({
   confirmed: boolean;
   onConfirm: (v: boolean) => void;
   onEdit: (step: number) => void;
+  onSubmit: () => void;
+  submitting: boolean;
+  submitError: string | null;
 }) {
-  const [notice, setNotice] = useState<string | null>(null);
 
   const uni = universe ? getUniverse(universe) : undefined;
   const idErr = identityErrors(identity);
@@ -281,24 +286,27 @@ export function Step5Recap({
       <div className="mt-4">
         <button
           type="button"
-          disabled={!canSubmit}
-          onClick={() =>
-            setNotice(
-              "🚧 L'envoi n'est pas encore activé (récapitulatif de validation uniquement). Le dépôt réel sera branché prochainement.",
-            )
-          }
+          disabled={!canSubmit || submitting}
+          onClick={() => {
+            if (!canSubmit || submitting) return;
+            onSubmit();
+          }}
           className="w-full rounded-full bg-ipmd-red px-6 py-3 text-sm font-bold text-white transition hover:bg-ipmd-red-dark disabled:cursor-not-allowed disabled:opacity-40 sm:w-auto"
         >
-          Envoyer ma candidature
+          {submitting ? "Envoi en cours…" : "Envoyer ma candidature"}
         </button>
-        {!canSubmit && (
+        {!canSubmit && !submitting && (
           <p className="mt-2 text-[12px] text-black/45">
             {complete
               ? "Cochez la case de confirmation pour activer l'envoi."
               : "Complétez les éléments obligatoires manquants pour activer l'envoi."}
           </p>
         )}
-        {notice && <p className="mt-3 text-[13px] font-medium text-amber-700">{notice}</p>}
+        {submitError && (
+          <p className="mt-3 rounded-xl bg-ipmd-red/10 px-4 py-3 text-[13px] font-medium text-ipmd-red">
+            {submitError}
+          </p>
+        )}
       </div>
     </div>
   );
