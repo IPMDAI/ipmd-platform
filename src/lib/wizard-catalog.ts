@@ -77,15 +77,15 @@ export async function loadWizardCatalog(): Promise<WizardCatalog> {
   const certByUniverse: Record<string, CatalogProgram[]> = {};
   const offers = catOfferData ?? [];
   if (offers.length) {
-    const itemIds = [...new Set(offers.map((o) => o.item_id as string))];
-    const intakeIds = [...new Set(offers.map((o) => o.intake_id as string))];
+    // NB : on lit TOUS les items ouverts (pas de `.in(id, [...])`) — une longue liste
+    // d'UUID dépasse la limite d'URL et tronque le résultat de façon non déterministe.
+    // Les items ouverts anon = exactement ceux ayant une offre ouverte (policy dédiée).
     const [{ data: items }, { data: ints }] = await Promise.all([
       supabase
         .from("catalog_items")
         .select("id,name,credential,universe,doc_profile,category,cert_tier,duration_months,price")
-        .in("id", itemIds)
         .eq("status", "open"),
-      supabase.from("intakes").select("id,label,academic_year").in("id", intakeIds).eq("status", "open"),
+      supabase.from("intakes").select("id,label,academic_year").eq("status", "open"),
     ]);
     const itemById = new Map((items ?? []).map((i) => [i.id as string, i]));
     const intById = new Map((ints ?? []).map((i) => [i.id as string, i]));

@@ -23,16 +23,24 @@ const REGISTRATION_FEE = 185000;
 const fcfa = (n: number | null) => (n != null ? `${n.toLocaleString("fr-FR")} FCFA` : "");
 
 /**
- * Catalogue UltraJobs — 100% data-driven depuis la base (catalog_items ouverts).
+ * Catalogue certifiant — 100% data-driven depuis la base (catalog_items ouverts).
  * Cartes par catégorie ; CTA « Admission » → wizard avec la formation présélectionnée.
+ * Générique par `universe` (ultrajobs, ultraboost, …).
  */
-export function UltraJobsCatalog({ items }: { items: CatalogProgram[] }) {
+export function UltraJobsCatalog({
+  items,
+  universe = "ultrajobs",
+}: {
+  items: CatalogProgram[];
+  universe?: string;
+}) {
   const [selected, setSelected] = useState<Card | null>(null);
+  const admissionHref = (itemId: string) => `/admission?u=${universe}&item=${itemId}`;
 
   if (!items.length) {
     return (
       <p className="rounded-2xl border border-amber-200 bg-amber-50 p-5 text-sm font-semibold text-amber-900">
-        Aucune formation UltraJobs n'est ouverte pour le moment. Revenez bientôt.
+        Aucune formation n'est ouverte pour le moment. Revenez bientôt.
       </p>
     );
   }
@@ -87,7 +95,7 @@ export function UltraJobsCatalog({ items }: { items: CatalogProgram[] }) {
                     Programme
                   </button>
                   <Link
-                    href={`/admission?u=ultrajobs&item=${m.itemId}`}
+                    href={admissionHref(m.itemId)}
                     className="rounded-full bg-ipmd-red px-4 py-2 text-sm font-bold text-white transition-opacity hover:opacity-90"
                   >
                     Admission
@@ -164,7 +172,7 @@ export function UltraJobsCatalog({ items }: { items: CatalogProgram[] }) {
 
             <div className="mt-5 flex gap-2">
               <Link
-                href={`/admission?u=ultrajobs&item=${selected.itemId}`}
+                href={admissionHref(selected.itemId)}
                 className="flex-1 rounded-full bg-ipmd-red px-6 py-3 text-center text-sm font-bold text-white transition-opacity hover:opacity-90"
               >
                 Demande d&apos;admission

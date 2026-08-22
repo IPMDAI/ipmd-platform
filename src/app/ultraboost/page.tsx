@@ -4,9 +4,11 @@ import { UniverseVideo } from "@/components/sections/UniverseVideo";
 import { Section } from "@/components/ui/Section";
 import { Button } from "@/components/ui/Button";
 import { CtaBanner } from "@/components/sections/CtaBanner";
-import { UltraBoostCatalog } from "@/components/ultraboost/UltraBoostCatalog";
+import { UltraJobsCatalog } from "@/components/ultrajobs/UltraJobsCatalog";
 import { ExperienceWorkspace } from "@/components/sections/ExperienceWorkspace";
 import { getUniverse } from "@/data/universes";
+import { loadWizardCatalog } from "@/lib/wizard-catalog";
+import { certUniqueItems } from "@/components/wizard/project";
 
 export const metadata: Metadata = {
   title: "UltraBoost — Executive Bootcamps",
@@ -14,8 +16,10 @@ export const metadata: Metadata = {
     "Bootcamps certifiants UltraBoost pour cadres, dirigeants, managers et professionnels : management & IA, finance, data, RH, marketing, cybersécurité, no-code… Formats présentiel, distance, hybride et sur-mesure.",
 };
 
-export default function UltraBoostPage() {
+export default async function UltraBoostPage() {
   const u = getUniverse("ultraboost");
+  const catalog = await loadWizardCatalog();
+  const items = certUniqueItems(catalog, "ultraboost");
 
   return (
     <>
@@ -28,7 +32,7 @@ export default function UltraBoostPage() {
         }
       >
         <div className="mt-2">
-          <Button href="/inscription-bootcamp?u=ultraboost">Demander une admission</Button>
+          <Button href="/admission?u=ultraboost">Demander une admission</Button>
         </div>
       </PageHero>
 
@@ -50,14 +54,14 @@ export default function UltraBoostPage() {
           professionnels.
         </p>
         <div className="mt-10">
-          <UltraBoostCatalog />
+          <UltraJobsCatalog items={items} universe="ultraboost" />
         </div>
       </Section>
 
       <CtaBanner
         title="Prêt à booster votre carrière ?"
         description="Choisissez votre bootcamp et déposez votre demande d'admission — notre équipe vous recontacte rapidement."
-        primary={{ label: "Demander une admission", href: "/inscription-bootcamp?u=ultraboost" }}
+        primary={{ label: "Demander une admission", href: "/admission?u=ultraboost" }}
       />
     </>
   );
