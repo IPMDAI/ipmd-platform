@@ -18,10 +18,99 @@ const controlClass = (invalid: boolean) =>
       : "border-black/15 focus:border-ipmd-red focus:ring-ipmd-red/20"
   }`;
 
+// ── Sous-composants au NIVEAU MODULE (identité stable → aucun remount d'input) ──
+
+function FieldLabel({ id, label, required }: { id: string; label: string; required?: boolean }) {
+  return (
+    <label htmlFor={id} className="text-sm font-semibold text-ipmd-black">
+      {label}
+      {required && <span className="text-ipmd-red"> *</span>}
+    </label>
+  );
+}
+
+function FieldMsg({ id, error, hint }: { id: string; error?: string; hint?: string }) {
+  if (error)
+    return (
+      <p id={`${id}-err`} className="mt-1 text-[11px] font-medium text-ipmd-red">
+        {error}
+      </p>
+    );
+  if (hint) return <p className="mt-1 text-[11px] text-black/45">{hint}</p>;
+  return null;
+}
+
+type BgTextProps = {
+  id: string;
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  onBlur: () => void;
+  error?: string;
+  required?: boolean;
+  placeholder?: string;
+  hint?: string;
+  inputMode?: "text" | "numeric";
+};
+
+function BgText({ id, label, value, onChange, onBlur, error, required, placeholder, hint, inputMode }: BgTextProps) {
+  return (
+    <div>
+      <FieldLabel id={id} label={label} required={required} />
+      <input
+        id={id}
+        type="text"
+        inputMode={inputMode}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        onBlur={onBlur}
+        placeholder={placeholder}
+        aria-invalid={!!error}
+        aria-describedby={error ? `${id}-err` : undefined}
+        className={controlClass(!!error)}
+      />
+      <FieldMsg id={id} error={error} hint={hint} />
+    </div>
+  );
+}
+
+type BgLevelProps = {
+  value: string;
+  onChange: (v: string) => void;
+  onBlur: () => void;
+  error?: string;
+  required?: boolean;
+};
+
+function BgLevelSelect({ value, onChange, onBlur, error, required }: BgLevelProps) {
+  const id = "bg-lastLevel";
+  return (
+    <div>
+      <FieldLabel id={id} label="Dernier niveau d'études atteint" required={required} />
+      <select
+        id={id}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        onBlur={onBlur}
+        aria-invalid={!!error}
+        aria-describedby={error ? `${id}-err` : undefined}
+        className={controlClass(!!error)}
+      >
+        <option value="">— Sélectionnez —</option>
+        {EDUCATION_LEVELS.map((l) => (
+          <option key={l} value={l}>
+            {l}
+          </option>
+        ))}
+      </select>
+      <FieldMsg id={id} error={error} hint="Le niveau que vous avez déjà obtenu, pas celui visé à l'IPMD." />
+    </div>
+  );
+}
+
 /**
- * Étape 2 — Votre parcours actuel. Composant contrôlé (état dans la coquille).
- * Rendu et obligations pilotés par la `variant` (campus / pro / executive /
- * certificat). Décrit uniquement l'acquis — jamais le niveau visé à l'IPMD.
+ * Étape 2 — Votre parcours actuel. Rendu piloté par la `variant`.
+ * Décrit uniquement l'acquis — jamais le niveau visé à l'IPMD.
  */
 export function Step2Parcours({
   value,
@@ -35,100 +124,26 @@ export function Step2Parcours({
   const [touched, setTouched] = useState<Partial<Record<Field, boolean>>>({});
   const errors = backgroundErrors(value, variant);
 
-  const set =
-    (k: Field) =>
-    (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
-      onChange({ ...value, [k]: e.target.value });
+  const set = (k: Field) => (v: string) => onChange({ ...value, [k]: v });
   const blur = (k: Field) => () => setTouched((t) => ({ ...t, [k]: true }));
   const err = (k: Field) => (touched[k] ? errors[k] : undefined);
 
-  const Label = ({ k, label, required }: { k: Field; label: string; required?: boolean }) => (
-    <label htmlFor={`bg-${k}`} className="text-sm font-semibold text-ipmd-black">
-      {label}
-      {required && <span className="text-ipmd-red"> *</span>}
-    </label>
-  );
-
-  const Msg = ({ k, hint }: { k: Field; hint?: string }) => {
-    const m = err(k);
-    if (m)
-      return (
-        <p id={`bg-${k}-err`} className="mt-1 text-[11px] font-medium text-ipmd-red">
-          {m}
-        </p>
-      );
-    if (hint) return <p className="mt-1 text-[11px] text-black/45">{hint}</p>;
-    return null;
-  };
-
-  const Text = ({
-    k,
-    label,
-    required,
-    placeholder,
-    hint,
-    inputMode,
-  }: {
-    k: Field;
-    label: string;
-    required?: boolean;
-    placeholder?: string;
-    hint?: string;
-    inputMode?: "text" | "numeric";
-  }) => (
-    <div>
-      <Label k={k} label={label} required={required} />
-      <input
-        id={`bg-${k}`}
-        type="text"
-        inputMode={inputMode}
-        value={value[k]}
-        onChange={set(k)}
-        onBlur={blur(k)}
-        placeholder={placeholder}
-        aria-invalid={!!err(k)}
-        aria-describedby={err(k) ? `bg-${k}-err` : undefined}
-        className={controlClass(!!err(k))}
-      />
-      <Msg k={k} hint={hint} />
-    </div>
-  );
-
-  const LevelSelect = ({ required }: { required?: boolean }) => (
-    <div>
-      <Label k="lastLevel" label="Dernier niveau d'études atteint" required={required} />
-      <select
-        id="bg-lastLevel"
-        value={value.lastLevel}
-        onChange={set("lastLevel")}
-        onBlur={blur("lastLevel")}
-        aria-invalid={!!err("lastLevel")}
-        aria-describedby={err("lastLevel") ? "bg-lastLevel-err" : undefined}
-        className={controlClass(!!err("lastLevel"))}
-      >
-        <option value="">— Sélectionnez —</option>
-        {EDUCATION_LEVELS.map((l) => (
-          <option key={l} value={l}>
-            {l}
-          </option>
-        ))}
-      </select>
-      <Msg k="lastLevel" hint="Le niveau que vous avez déjà obtenu, pas celui visé à l'IPMD." />
-    </div>
-  );
-
   const isCert = variant === "certificat";
-  const acad = academicRequired(variant); // true pour campus/pro/executive
+  const acad = academicRequired(variant);
   const sit = situationSpec(variant);
 
   const situationField = sit.show ? (
     <div className="sm:col-span-2">
-      <Text
-        k="currentSituation"
+      <BgText
+        id="bg-currentSituation"
         label={sit.label}
         required={sit.required}
         placeholder={sit.placeholder}
         hint={sit.hint}
+        value={value.currentSituation}
+        onChange={set("currentSituation")}
+        onBlur={blur("currentSituation")}
+        error={err("currentSituation")}
       />
     </div>
   ) : null;
@@ -147,32 +162,16 @@ export function Step2Parcours({
       <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
         {isCert ? (
           <>
-            <LevelSelect />
-            <Text k="lastDiploma" label="Dernier diplôme obtenu" placeholder="Ex. Baccalauréat série D" hint="Facultatif" />
+            <BgLevelSelect value={value.lastLevel} onChange={set("lastLevel")} onBlur={blur("lastLevel")} error={err("lastLevel")} />
+            <BgText id="bg-lastDiploma" label="Dernier diplôme obtenu" placeholder="Ex. Baccalauréat série D" hint="Facultatif" value={value.lastDiploma} onChange={set("lastDiploma")} onBlur={blur("lastDiploma")} error={err("lastDiploma")} />
             {situationField}
           </>
         ) : (
           <>
-            <LevelSelect required={acad} />
-            <Text
-              k="lastDiploma"
-              label="Dernier diplôme obtenu"
-              required={acad}
-              placeholder="Ex. Licence en informatique"
-            />
-            <Text
-              k="graduationYear"
-              label="Année d'obtention"
-              inputMode="numeric"
-              placeholder="Ex. 2023"
-              hint="Facultatif"
-            />
-            <Text
-              k="institution"
-              label="Établissement d'origine"
-              placeholder="Ex. Université Félix Houphouët-Boigny"
-              hint="Facultatif"
-            />
+            <BgLevelSelect required={acad} value={value.lastLevel} onChange={set("lastLevel")} onBlur={blur("lastLevel")} error={err("lastLevel")} />
+            <BgText id="bg-lastDiploma" label="Dernier diplôme obtenu" required={acad} placeholder="Ex. Licence en informatique" value={value.lastDiploma} onChange={set("lastDiploma")} onBlur={blur("lastDiploma")} error={err("lastDiploma")} />
+            <BgText id="bg-graduationYear" label="Année d'obtention" inputMode="numeric" placeholder="Ex. 2023" hint="Facultatif" value={value.graduationYear} onChange={set("graduationYear")} onBlur={blur("graduationYear")} error={err("graduationYear")} />
+            <BgText id="bg-institution" label="Établissement d'origine" placeholder="Ex. Université Félix Houphouët-Boigny" hint="Facultatif" value={value.institution} onChange={set("institution")} onBlur={blur("institution")} error={err("institution")} />
             {situationField}
           </>
         )}

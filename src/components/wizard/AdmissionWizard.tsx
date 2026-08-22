@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { UniverseId } from "@/types";
 import { getUniverse } from "@/data/universes";
 import { WIZARD_STEPS, STEP_COUNT } from "./steps";
@@ -86,21 +86,47 @@ export function AdmissionWizard({ catalog }: { catalog: WizardCatalog }) {
   const atFirst = step === 0;
   const atLast = step === STEP_COUNT - 1;
 
-  const goNext = () => {
-    if (!canNext || atLast) return;
-    setStep((s) => Math.min(s + 1, STEP_COUNT - 1));
-  };
-  const goPrev = () => {
-    if (atFirst) return;
-    setStep((s) => Math.max(s - 1, 0));
+  // ── Synchronisation avec l'historique navigateur ──
+  // Chaque avancée d'étape empile une entrée d'historique ; le bouton « retour »
+  // du navigateur (popstate) recule d'une étape (4→3→2→1→0). À l'Étape 0, un
+  // retour supplémentaire quitte /admission (entrée de base). Les données ne sont
+  // jamais perdues : seul `step` change, l'état du dossier reste dans la coquille.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    // Entrée de base = Étape 0 (remplace, ne quitte pas la page).
+    window.history.replaceState({ wizardStep: 0 }, "");
+    const onPop = (e: PopStateEvent) => {
+      const s = (e.state as { wizardStep?: number } | null)?.wizardStep;
+      if (typeof s === "number") setStep(s);
+    };
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+  }, []);
+
+  // Avance vers une étape en empilant une entrée d'historique (navigation « avant »).
+  const goToStep = (n: number) => {
+    setStep(n);
+    if (typeof window !== "undefined") window.history.pushState({ wizardStep: n }, "");
   };
 
-  // Étape 0 : cliquer une carte enregistre le parcours ET avance directement à
-  // l'Étape 1. La sélection reste conservée si le candidat revient (universe
-  // persiste). Le bouton Suivant global reste disponible et fonctionnel.
+  const goNext = () => {
+    if (!canNext || atLast) return;
+    goToStep(Math.min(step + 1, STEP_COUNT - 1));
+  };
+  // Le bouton « Précédent » du wizard passe par l'historique → cohérent avec le
+  // bouton retour du navigateur (une seule source de vérité). À l'Étape 0 il est
+  // désactivé, donc jamais de sortie involontaire par ce bouton.
+  const goPrev = () => {
+    if (atFirst) return;
+    if (typeof window !== "undefined") window.history.back();
+    else setStep((s) => Math.max(s - 1, 0));
+  };
+
+  // Étape 0 : cliquer une carte enregistre le parcours ET avance à l'Étape 1
+  // (avec entrée d'historique). La sélection persiste si le candidat revient.
   const selectParcours = (id: UniverseId) => {
     setUniverse(id);
-    setStep(1);
+    goToStep(1);
   };
 
   // Envoi réel : assemble le payload et appelle la RPC transactionnelle.
@@ -273,7 +299,7 @@ export function AdmissionWizard({ catalog }: { catalog: WizardCatalog }) {
             uploads={uploads}
             confirmed={confirmed}
             onConfirm={setConfirmed}
-            onEdit={setStep}
+            onEdit={goToStep}
             onSubmit={handleSubmit}
             submitting={submitting}
             submitError={submitError}

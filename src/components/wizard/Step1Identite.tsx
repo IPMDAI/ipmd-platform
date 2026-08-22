@@ -14,9 +14,72 @@ const fieldClass = (invalid: boolean) =>
   }`;
 
 /**
+ * Champ contrôlé au NIVEAU MODULE (identité de composant stable).
+ * ⚠️ Ne jamais définir ce composant à l'intérieur du rendu d'un autre composant :
+ * cela recréerait son type à chaque frappe → React remonterait l'<input> →
+ * perte de focus et de caractères. Ici il est stable → aucun remount.
+ */
+type IdentityFieldProps = {
+  id: string;
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  onBlur: () => void;
+  error?: string;
+  type?: string;
+  required?: boolean;
+  placeholder?: string;
+  hint?: string;
+  inputMode?: "text" | "tel" | "email";
+  autoComplete?: string;
+};
+
+function IdentityField({
+  id,
+  label,
+  value,
+  onChange,
+  onBlur,
+  error,
+  type = "text",
+  required = false,
+  placeholder,
+  hint,
+  inputMode,
+  autoComplete,
+}: IdentityFieldProps) {
+  return (
+    <div>
+      <label htmlFor={id} className="text-sm font-semibold text-ipmd-black">
+        {label}
+        {required && <span className="text-ipmd-red"> *</span>}
+      </label>
+      <input
+        id={id}
+        type={type}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        onBlur={onBlur}
+        placeholder={placeholder}
+        autoComplete={autoComplete}
+        inputMode={inputMode}
+        aria-invalid={!!error}
+        aria-describedby={error ? `${id}-err` : undefined}
+        className={fieldClass(!!error)}
+      />
+      {hint && !error && <p className="mt-1 text-[11px] text-black/45">{hint}</p>}
+      {error && (
+        <p id={`${id}-err`} className="mt-1 text-[11px] font-medium text-ipmd-red">
+          {error}
+        </p>
+      )}
+    </div>
+  );
+}
+
+/**
  * Étape 1 — Votre identité. Composant contrôlé : l'état vit dans la coquille
- * (persistance à la navigation). Les erreurs n'apparaissent qu'après que le
- * champ a été « touché » (blur) — validation simple, non intrusive.
+ * (persistance à la navigation). Erreurs affichées après « toucher » (blur).
  */
 export function Step1Identite({
   value,
@@ -28,59 +91,9 @@ export function Step1Identite({
   const [touched, setTouched] = useState<Partial<Record<Field, boolean>>>({});
   const errors = identityErrors(value);
 
-  const set = (k: Field) => (e: React.ChangeEvent<HTMLInputElement>) =>
-    onChange({ ...value, [k]: e.target.value });
+  const set = (k: Field) => (v: string) => onChange({ ...value, [k]: v });
   const blur = (k: Field) => () => setTouched((t) => ({ ...t, [k]: true }));
   const err = (k: Field) => (touched[k] ? errors[k] : undefined);
-
-  const F = ({
-    k,
-    label,
-    type = "text",
-    required = false,
-    placeholder,
-    autoComplete,
-    inputMode,
-    hint,
-  }: {
-    k: Field;
-    label: string;
-    type?: string;
-    required?: boolean;
-    placeholder?: string;
-    autoComplete?: string;
-    inputMode?: "text" | "tel" | "email";
-    hint?: string;
-  }) => {
-    const message = err(k);
-    return (
-      <div>
-        <label htmlFor={`id-${k}`} className="text-sm font-semibold text-ipmd-black">
-          {label}
-          {required && <span className="text-ipmd-red"> *</span>}
-        </label>
-        <input
-          id={`id-${k}`}
-          type={type}
-          value={value[k]}
-          onChange={set(k)}
-          onBlur={blur(k)}
-          placeholder={placeholder}
-          autoComplete={autoComplete}
-          inputMode={inputMode}
-          aria-invalid={!!message}
-          aria-describedby={message ? `id-${k}-err` : undefined}
-          className={fieldClass(!!message)}
-        />
-        {hint && !message && <p className="mt-1 text-[11px] text-black/45">{hint}</p>}
-        {message && (
-          <p id={`id-${k}-err`} className="mt-1 text-[11px] font-medium text-ipmd-red">
-            {message}
-          </p>
-        )}
-      </div>
-    );
-  };
 
   return (
     <div>
@@ -93,21 +106,14 @@ export function Step1Identite({
       </p>
 
       <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <F k="lastName" label="Nom" required autoComplete="family-name" placeholder="Ex. KOUAMÉ" />
-        <F k="firstName" label="Prénoms" required autoComplete="given-name" placeholder="Ex. Amani Grâce" />
-        <F k="birthDate" label="Date de naissance" type="date" required autoComplete="bday" />
-        <F k="birthPlace" label="Lieu de naissance" required placeholder="Ex. Abidjan, Côte d'Ivoire" hint="Ville, pays" />
-        <F k="email" label="Email" type="email" required inputMode="email" autoComplete="email" placeholder="vous@exemple.com" />
-        <F k="phone" label="Téléphone" type="tel" required inputMode="tel" autoComplete="tel" placeholder="+225 07 00 00 00 00" hint="Format international, ex. +225 07 00 00 00 00" />
+        <IdentityField id="id-lastName" label="Nom" required autoComplete="family-name" placeholder="Ex. KOUAMÉ" value={value.lastName} onChange={set("lastName")} onBlur={blur("lastName")} error={err("lastName")} />
+        <IdentityField id="id-firstName" label="Prénoms" required autoComplete="given-name" placeholder="Ex. Amani Grâce" value={value.firstName} onChange={set("firstName")} onBlur={blur("firstName")} error={err("firstName")} />
+        <IdentityField id="id-birthDate" label="Date de naissance" type="date" required autoComplete="bday" value={value.birthDate} onChange={set("birthDate")} onBlur={blur("birthDate")} error={err("birthDate")} />
+        <IdentityField id="id-birthPlace" label="Lieu de naissance" required placeholder="Ex. Abidjan, Côte d'Ivoire" hint="Ville, pays" value={value.birthPlace} onChange={set("birthPlace")} onBlur={blur("birthPlace")} error={err("birthPlace")} />
+        <IdentityField id="id-email" label="Email" type="email" required inputMode="email" autoComplete="email" placeholder="vous@exemple.com" value={value.email} onChange={set("email")} onBlur={blur("email")} error={err("email")} />
+        <IdentityField id="id-phone" label="Téléphone" type="tel" required inputMode="tel" autoComplete="tel" placeholder="+225 07 00 00 00 00" hint="Format international, ex. +225 07 00 00 00 00" value={value.phone} onChange={set("phone")} onBlur={blur("phone")} error={err("phone")} />
         <div className="sm:col-span-2">
-          <F
-            k="whatsapp"
-            label="WhatsApp"
-            type="tel"
-            inputMode="tel"
-            placeholder="Ex. +225 07 00 00 00 00"
-            hint="Facultatif — pour un échange plus rapide avec un conseiller."
-          />
+          <IdentityField id="id-whatsapp" label="WhatsApp" type="tel" inputMode="tel" placeholder="Ex. +225 07 00 00 00 00" hint="Facultatif — pour un échange plus rapide avec un conseiller." value={value.whatsapp} onChange={set("whatsapp")} onBlur={blur("whatsapp")} error={err("whatsapp")} />
         </div>
       </div>
     </div>

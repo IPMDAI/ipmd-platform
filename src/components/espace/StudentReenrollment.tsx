@@ -6,6 +6,16 @@ import { formatFCFA } from "@/lib/finance";
 import { confirmMyReenrollment } from "@/lib/student-reenrollment-actions";
 import type { StudentReenrollmentView } from "@/lib/student-reenrollment";
 
+// Sous-composant d'affichage au NIVEAU MODULE (identité stable).
+function Row({ label, value }: { label: string; value: React.ReactNode }) {
+  return (
+    <div className="flex flex-wrap justify-between gap-x-4 gap-y-0.5 border-b border-black/5 py-1.5 last:border-0">
+      <span className="text-[13px] text-black/50">{label}</span>
+      <span className="text-[13px] font-medium text-ipmd-black">{value || <em className="font-normal text-black/30">—</em>}</span>
+    </div>
+  );
+}
+
 /**
  * Phase B — écran étudiant de confirmation de réinscription.
  * Affiche le dossier 'prepared', fait accepter règlement + avenant, puis
@@ -46,13 +56,6 @@ export function StudentReenrollment({ data }: { data: StudentReenrollmentView })
       </div>
     );
   }
-
-  const Row = ({ label, value }: { label: string; value: React.ReactNode }) => (
-    <div className="flex flex-wrap justify-between gap-x-4 gap-y-0.5 border-b border-black/5 py-1.5 last:border-0">
-      <span className="text-[13px] text-black/50">{label}</span>
-      <span className="text-[13px] font-medium text-ipmd-black">{value || <em className="font-normal text-black/30">—</em>}</span>
-    </div>
-  );
 
   return (
     <div className="space-y-4">
