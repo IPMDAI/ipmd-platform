@@ -24,11 +24,10 @@ export function Step0Parcours({
   return (
     <div>
       <h2 className="text-xl font-extrabold tracking-tight text-ipmd-black sm:text-2xl">
-        Quel parcours vous correspond ?
+        Quel parcours souhaitez-vous suivre ?
       </h2>
       <p className="mt-1 text-sm text-black/55">
-        Choisissez l'univers de formation qui vous concerne. Vous pourrez préciser
-        le programme à l'étape suivante.
+        Choisissez la formule qui correspond à votre situation et à votre objectif.
       </p>
 
       <div
@@ -46,10 +45,10 @@ export function Step0Parcours({
               role="radio"
               aria-checked={active}
               onClick={() => onSelect(u.id)}
-              className={`group relative flex flex-col rounded-2xl border p-4 text-left transition ${
+              className={`group relative flex flex-col rounded-2xl border-2 p-4 text-left transition ${
                 active
                   ? "border-ipmd-red bg-ipmd-red/[0.04] ring-2 ring-ipmd-red/40"
-                  : "border-black/10 bg-white hover:border-black/25 hover:shadow-sm"
+                  : "border-black/20 bg-white hover:border-ipmd-red/60 hover:shadow-sm"
               }`}
             >
               <span
@@ -71,7 +70,9 @@ export function Step0Parcours({
                 </span>
               </span>
               <span className="mt-1 text-[13px] font-medium text-black/70">{u.tagline}</span>
-              <span className="mt-2 text-[12px] leading-snug text-black/50">{u.target}</span>
+              <span className="mt-2 inline-flex items-center gap-1 self-start rounded-full bg-ipmd-light px-2.5 py-1 text-[11px] font-semibold text-ipmd-black ring-1 ring-black/10">
+                <span aria-hidden="true">👤</span> {u.target}
+              </span>
             </button>
           );
         })}

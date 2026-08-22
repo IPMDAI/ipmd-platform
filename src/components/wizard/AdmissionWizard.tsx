@@ -95,6 +95,14 @@ export function AdmissionWizard({ catalog }: { catalog: WizardCatalog }) {
     setStep((s) => Math.max(s - 1, 0));
   };
 
+  // Étape 0 : cliquer une carte enregistre le parcours ET avance directement à
+  // l'Étape 1. La sélection reste conservée si le candidat revient (universe
+  // persiste). Le bouton Suivant global reste disponible et fonctionnel.
+  const selectParcours = (id: UniverseId) => {
+    setUniverse(id);
+    setStep(1);
+  };
+
   // Envoi réel : assemble le payload et appelle la RPC transactionnelle.
   // Anti-double-submit via `submitting` ; les données du wizard restent
   // intactes en cas d'échec (aucun reset).
@@ -231,7 +239,7 @@ export function AdmissionWizard({ catalog }: { catalog: WizardCatalog }) {
       {/* Contenu de l'étape */}
       <div className="rounded-3xl bg-white p-5 shadow-sm ring-1 ring-black/5 sm:p-8">
         {step === 0 ? (
-          <Step0Parcours selected={universe} onSelect={setUniverse} />
+          <Step0Parcours selected={universe} onSelect={selectParcours} />
         ) : step === 1 ? (
           <Step1Identite value={identity} onChange={setIdentity} />
         ) : step === 2 ? (
