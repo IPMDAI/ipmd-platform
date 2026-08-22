@@ -167,8 +167,8 @@ export function situationSpec(v: BackgroundVariant): SituationSpec {
       return {
         show: true,
         required: true,
-        label: "Fonction actuelle / activité professionnelle",
-        placeholder: "Ex. Directeur, manager, entrepreneur, consultant…",
+        label: "Fonction actuelle / responsabilités",
+        placeholder: "Ex. Directeur, DAF, chef de département, dirigeant…",
       };
     case "certificat":
       return {
@@ -205,9 +205,14 @@ export function backgroundErrors(
     if (!v.professionalStatus.trim()) e.professionalStatus = "Champ obligatoire.";
     else if (positionRequiredFor(v.professionalStatus) && !v.currentPosition.trim())
       e.currentPosition = "Champ obligatoire.";
-    if (v.experienceYears.trim() && !/^\d{1,2}$/.test(v.experienceYears.trim()))
-      e.experienceYears = "Nombre d'années invalide.";
   }
+  // Années d'expérience (facultatif) : format numérique si renseigné (Pro + Executive).
+  if (
+    (variant === "pro" || variant === "executive") &&
+    v.experienceYears.trim() &&
+    !/^\d{1,2}$/.test(v.experienceYears.trim())
+  )
+    e.experienceYears = "Nombre d'années invalide.";
   return e;
 }
 

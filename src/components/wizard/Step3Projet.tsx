@@ -12,7 +12,9 @@ import {
   proFilieresForSessionLevel,
   proLevelsForSession,
   proSessions,
-  type CatalogProgram,
+  programFilieresForSessionLevel,
+  programLevelsForSession,
+  programSessions,
   type Project,
   type WizardCatalog,
 } from "./project";
@@ -129,6 +131,15 @@ export function Step3Projet({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [variant, value.proIntakeId]);
+
+  // Auto-sélection de l'unique session Executive (persistée).
+  useEffect(() => {
+    if (variant === "executive" && !value.execIntakeId) {
+      const sessions = programSessions(catalog.execPrograms);
+      if (sessions.length === 1) onChange({ ...value, execIntakeId: sessions[0].intakeId });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [variant, value.execIntakeId]);
 
   const title = (
     <>
@@ -405,46 +416,135 @@ export function Step3Projet({
     );
   }
 
-  // ─────────────────────── EXECUTIVE (liste plate) ───────────────────────
+  // ─────────────────────────── EXECUTIVE (cascade) ───────────────────────────
   if (variant === "executive") {
-    const programs: CatalogProgram[] = catalog.execPrograms;
-    if (programs.length === 0) return <div>{title}<EmptyState label="le parcours IPMD Executive" /></div>;
+    const sessions = programSessions(catalog.execPrograms);
+    if (sessions.length === 0) return <div>{title}<EmptyState label="le parcours IPMD Executive" /></div>;
 
-    const selectedId = value.execOfferingId;
-    const pick = (id: string) => onChange({ ...value, execOfferingId: id });
+    const selectedSession = value.execIntakeId || (sessions.length === 1 ? sessions[0].intakeId : "");
+    const selectedLevel = value.execLevel;
+    const selectedOfferingId = value.execOfferingId;
+    const levels = selectedSession ? programLevelsForSession(catalog.execPrograms, selectedSession) : [];
+    const filieres =
+      selectedSession && selectedLevel
+        ? programFilieresForSessionLevel(catalog.execPrograms, selectedSession, selectedLevel)
+        : [];
+
+    const selectSession = (id: string) => onChange({ ...value, execIntakeId: id, execLevel: "", execOfferingId: "" });
+    const selectLevel = (lvl: string) => onChange({ ...value, execLevel: lvl, execOfferingId: "" });
+    const selectFiliere = (offId: string) => onChange({ ...value, execOfferingId: offId });
 
     return (
       <div>
         {title}
-        <p className="mt-5 text-sm font-semibold text-ipmd-black">
-          Programme visé <span className="text-ipmd-red">*</span>
-        </p>
-        <div className="mt-2 space-y-2">
-          {programs.map((p) => {
-            const active = selectedId === p.offeringId;
-            return (
-              <button
-                key={p.offeringId}
-                type="button"
-                onClick={() => pick(p.offeringId)}
-                className={optionClass(active)}
+
+        {/* 1) Session Executive */}
+        <div className="mt-5">
+          {sessions.length > 1 ? (
+            <>
+              <label htmlFor="pj-exec-session" className="text-sm font-semibold text-ipmd-black">
+                Session Executive <span className="text-ipmd-red">*</span>
+              </label>
+              <select
+                id="pj-exec-session"
+                value={selectedSession}
+                onChange={(e) => selectSession(e.target.value)}
+                className="mt-1 w-full rounded-xl border border-black/15 bg-white px-3.5 py-2.5 text-sm outline-none focus:border-ipmd-red focus:ring-2 focus:ring-ipmd-red/20"
               >
-                <Radio active={active} />
-                <span>
-                  <span className="text-sm font-semibold text-ipmd-black">{p.name}</span>
-                  {p.credential && (
-                    <span className="ml-2 rounded-full bg-ipmd-red/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-ipmd-red">
-                      {p.credential}
-                    </span>
-                  )}
-                  <span className="mt-0.5 block text-[11px] text-black/50">
-                    Rentrée : {p.intakeLabel} — {p.academicYear}
-                  </span>
+                <option value="">— Sélectionnez —</option>
+                {sessions.map((s) => (
+                  <option key={s.intakeId} value={s.intakeId}>
+                    {s.intakeLabel} — {s.academicYear}
+                  </option>
+                ))}
+              </select>
+            </>
+          ) : (
+            <>
+              <p className="text-sm font-semibold text-ipmd-black">
+                Session Executive <span className="text-ipmd-red">*</span>
+              </p>
+              <div className="mt-1.5 inline-flex items-center gap-2 rounded-xl border border-ipmd-red/30 bg-ipmd-red/[0.04] px-3.5 py-2.5 text-sm font-semibold text-ipmd-black">
+                <span className="flex h-4 w-4 items-center justify-center rounded-full border border-ipmd-red" aria-hidden="true">
+                  <span className="h-2 w-2 rounded-full bg-ipmd-red" />
                 </span>
-              </button>
-            );
-          })}
+                {sessions[0].intakeLabel} — {sessions[0].academicYear}
+              </div>
+            </>
+          )}
         </div>
+
+        {/* 2) Niveau visé (L3 / M1 / M2) */}
+        <div className="mt-6">
+          <p className="text-sm font-semibold text-ipmd-black">
+            Niveau visé <span className="text-ipmd-red">*</span>
+          </p>
+          {!selectedSession ? (
+            <p className="mt-2 rounded-xl border border-dashed border-black/15 bg-black/[0.015] p-3 text-[13px] text-black/50">
+              Choisissez d'abord une session pour afficher les niveaux disponibles.
+            </p>
+          ) : (
+            <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-3">
+              {levels.map((lvl) => {
+                const active = selectedLevel === lvl;
+                return (
+                  <button
+                    key={lvl}
+                    type="button"
+                    onClick={() => selectLevel(lvl)}
+                    className={`rounded-xl border p-3 text-center text-sm font-medium transition ${
+                      active
+                        ? "border-ipmd-red bg-ipmd-red/[0.04] ring-2 ring-ipmd-red/30 text-ipmd-black"
+                        : "border-black/15 bg-white text-black/70 hover:border-black/30"
+                    }`}
+                  >
+                    {lvl}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        {/* 3) Filière Executive — filtrée par session + niveau */}
+        <div className="mt-6">
+          <p className="text-sm font-semibold text-ipmd-black">
+            Filière Executive <span className="text-ipmd-red">*</span>
+          </p>
+          {!selectedLevel ? (
+            <p className="mt-2 rounded-xl border border-dashed border-black/15 bg-black/[0.015] p-3 text-[13px] text-black/50">
+              Choisissez d'abord un niveau visé pour afficher les filières disponibles.
+            </p>
+          ) : filieres.length === 0 ? (
+            <p className="mt-2 rounded-xl border border-amber-200 bg-amber-50 p-3 text-[13px] font-semibold text-amber-900">
+              Aucune filière n'est ouverte pour ce niveau à cette session.
+            </p>
+          ) : (
+            <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
+              {filieres.map((f) => {
+                const active = selectedOfferingId === f.offeringId;
+                return (
+                  <button
+                    key={f.offeringId}
+                    type="button"
+                    onClick={() => selectFiliere(f.offeringId)}
+                    className={optionClass(active)}
+                  >
+                    <Radio active={active} />
+                    <span>
+                      <span className="text-sm font-semibold text-ipmd-black">{f.name}</span>
+                      <span className="mt-0.5 block text-[11px] text-black/50">
+                        {f.name} · {selectedLevel}
+                      </span>
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        {/* 4) Mode de formation */}
         <ModeField value={value.mode} onChange={(m) => onChange({ ...value, mode: m })} />
       </div>
     );

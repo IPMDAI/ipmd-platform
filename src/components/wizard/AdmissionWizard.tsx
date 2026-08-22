@@ -179,7 +179,7 @@ export function AdmissionWizard({ catalog }: { catalog: WizardCatalog }) {
         project: {
           campus_intake_id: project.campusIntakeId,
           campus_offering_key: project.campusOfferingKey,
-          catalog_offering_id: project.proOfferingId,
+          catalog_offering_id: variant === "executive" ? project.execOfferingId : project.proOfferingId,
           pro_offering_id: project.proOfferingId,
           exec_offering_id: project.execOfferingId,
           cert_item_id: project.certItemId,

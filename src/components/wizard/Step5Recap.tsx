@@ -255,6 +255,13 @@ export function Step5Recap({
             </>
           )}
           {showSituation && <Row label={sit.label} value={background.currentSituation} />}
+          {variant === "executive" && (
+            <>
+              <Row label="Organisation / entreprise" value={background.organization} />
+              <Row label="Secteur d'activité" value={background.sector} />
+              <Row label="Années d'expérience" value={background.experienceYears} />
+            </>
+          )}
         </SectionCard>
 
         {/* Projet à l'IPMD */}
@@ -272,6 +279,12 @@ export function Step5Recap({
                   <Row label="Session" value={summary.rentree} />
                   <Row label="Niveau visé" value={summary.niveau} />
                   <Row label="Filière" value={summary.filiere} />
+                </>
+              ) : variant === "executive" ? (
+                <>
+                  <Row label="Session" value={summary.rentree} />
+                  <Row label="Niveau visé" value={summary.niveau} />
+                  <Row label="Filière Executive" value={summary.filiere} />
                 </>
               ) : variant === "certificat" ? (
                 <Row label="Programme / certificat" value={summary.formation} />

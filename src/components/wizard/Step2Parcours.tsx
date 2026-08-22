@@ -404,6 +404,24 @@ export function Step2Parcours({
             <BgSectorCombo value={value.sector} onChange={set("sector")} onBlur={blur("sector")} />
             <BgText id="bg-experienceYears" label="Années d'expérience" inputMode="numeric" hint="Facultatif" placeholder="Ex. 5" value={value.experienceYears} onChange={set("experienceYears")} onBlur={blur("experienceYears")} error={err("experienceYears")} />
           </>
+        ) : variant === "executive" ? (
+          <>
+            <BgLevelSelect required value={value.lastLevel} onChange={set("lastLevel")} onBlur={blur("lastLevel")} error={err("lastLevel")} />
+            <BgDiplomaSelect required value={value.lastDiploma} onChange={set("lastDiploma")} onBlur={blur("lastDiploma")} error={err("lastDiploma")} />
+            <BgYearSelect value={value.graduationYear} onChange={set("graduationYear")} onBlur={blur("graduationYear")} />
+            <BgInstitutionCombo value={value.institution} onChange={set("institution")} onBlur={blur("institution")} />
+
+            <div className="sm:col-span-2 mt-1 border-t border-black/5 pt-4">
+              <p className="text-sm font-bold text-ipmd-black">Fonction &amp; responsabilités</p>
+              <p className="mt-0.5 text-[12px] text-black/50">
+                IPMD Executive s'adresse aux dirigeants et cadres en responsabilité.
+              </p>
+            </div>
+            {situationField}
+            <BgText id="bg-organization" label="Organisation / entreprise" hint="Facultatif" placeholder="Ex. Groupe XYZ, cabinet, administration…" value={value.organization} onChange={set("organization")} onBlur={blur("organization")} />
+            <BgSectorCombo value={value.sector} onChange={set("sector")} onBlur={blur("sector")} />
+            <BgText id="bg-experienceYears" label="Années d'expérience" inputMode="numeric" hint="Facultatif" placeholder="Ex. 12" value={value.experienceYears} onChange={set("experienceYears")} onBlur={blur("experienceYears")} error={err("experienceYears")} />
+          </>
         ) : (
           <>
             <BgLevelSelect required={acad} value={value.lastLevel} onChange={set("lastLevel")} onBlur={blur("lastLevel")} error={err("lastLevel")} />

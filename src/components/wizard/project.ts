@@ -104,7 +104,9 @@ export type Project = {
   proIntakeId: string; // Session Pro choisie — étape intermédiaire de la cascade
   proLevel: string; // Niveau visé Pro (Licence 1..Master 2) — étape intermédiaire
   proOfferingId: string; // catalog_offering_id résolu (session × niveau × filière)
-  execOfferingId: string;
+  execIntakeId: string; // Session Executive choisie — étape intermédiaire
+  execLevel: string; // Niveau visé Executive (Licence 3/Master 1/Master 2) — étape intermédiaire
+  execOfferingId: string; // catalog_offering_id résolu Executive
   certItemId: string;
   mode: string; // FORMATION_MODES: presentiel | distance | hybride (obligatoire)
 };
@@ -116,6 +118,8 @@ export const EMPTY_PROJECT: Project = {
   proIntakeId: "",
   proLevel: "",
   proOfferingId: "",
+  execIntakeId: "",
+  execLevel: "",
   execOfferingId: "",
   certItemId: "",
   mode: "",
@@ -145,40 +149,46 @@ export function campusFilieresForLevel(
     .sort((a, b) => a.filiereName.localeCompare(b.filiereName));
 }
 
-// ── Pro : cascade Session → Niveau → Filière (dérivée des catalog_offerings ouverts) ──
+// ── Cascade Session → Niveau → Filière (générique, dérivée des catalog_offerings ouverts) ──
+// Partagée par Pro (catalog.proPrograms) et Executive (catalog.execPrograms).
 
-/** Sessions Pro distinctes (dérivées des offres Pro ouvertes). */
-export function proSessions(
-  catalog: WizardCatalog,
+/** Sessions distinctes dérivées d'une liste d'offres. */
+export function programSessions(
+  programs: CatalogProgram[],
 ): { intakeId: string; intakeLabel: string; academicYear: string }[] {
   const byId = new Map<string, { intakeId: string; intakeLabel: string; academicYear: string }>();
-  for (const p of catalog.proPrograms) {
+  for (const p of programs) {
     if (!byId.has(p.intakeId))
       byId.set(p.intakeId, { intakeId: p.intakeId, intakeLabel: p.intakeLabel, academicYear: p.academicYear });
   }
   return [...byId.values()].sort((a, b) => a.intakeLabel.localeCompare(b.intakeLabel));
 }
 
-/** Niveaux Pro réellement proposés pour une session (dérivés des offres), triés. */
-export function proLevelsForSession(catalog: WizardCatalog, intakeId: string): string[] {
+/** Niveaux réellement proposés pour une session (dérivés des offres), triés. */
+export function programLevelsForSession(programs: CatalogProgram[], intakeId: string): string[] {
   return [
-    ...new Set(
-      catalog.proPrograms.filter((p) => p.intakeId === intakeId && p.level).map((p) => p.level as string),
-    ),
+    ...new Set(programs.filter((p) => p.intakeId === intakeId && p.level).map((p) => p.level as string)),
   ].sort(sortLevels);
 }
 
-/** Filières Pro (offres) réellement ouvertes pour une session + un niveau, triées. */
-export function proFilieresForSessionLevel(
-  catalog: WizardCatalog,
+/** Filières (offres) réellement ouvertes pour une session + un niveau, triées. */
+export function programFilieresForSessionLevel(
+  programs: CatalogProgram[],
   intakeId: string,
   level: string,
 ): { offeringId: string; name: string }[] {
-  return catalog.proPrograms
+  return programs
     .filter((p) => p.intakeId === intakeId && p.level === level)
     .map((p) => ({ offeringId: p.offeringId, name: p.name }))
     .sort((a, b) => a.name.localeCompare(b.name));
 }
+
+// Wrappers Pro (conservés pour lisibilité côté Étape 3).
+export const proSessions = (catalog: WizardCatalog) => programSessions(catalog.proPrograms);
+export const proLevelsForSession = (catalog: WizardCatalog, intakeId: string) =>
+  programLevelsForSession(catalog.proPrograms, intakeId);
+export const proFilieresForSessionLevel = (catalog: WizardCatalog, intakeId: string, level: string) =>
+  programFilieresForSessionLevel(catalog.proPrograms, intakeId, level);
 
 /** Rang d'un niveau, robuste aux libellés réels (« Licence 1 » comme « L1 »). */
 function levelRank(s: string): number {
@@ -300,8 +310,8 @@ export function describeProject(
     if (!prog) return null;
     return {
       rentree: `${prog.intakeLabel} — ${prog.academicYear}`,
-      niveau: variant === "pro" ? (prog.level ?? undefined) : undefined,
-      filiere: variant === "pro" ? prog.name : undefined,
+      niveau: prog.level ?? undefined,
+      filiere: prog.name,
       formation: prog.name,
       credential: prog.credential ?? undefined,
     };
