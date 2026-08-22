@@ -6,7 +6,8 @@ import { getUniverse } from "@/data/universes";
 import type { Background, BackgroundVariant } from "./background";
 import { backgroundErrors, isBackgroundValid, situationSpec } from "./background";
 import type { Identity } from "./identity";
-import { identityErrors, isIdentityValid } from "./identity";
+import { identityErrors, isIdentityValid, minAgeForVariant, composeBirthDate, phoneE164, whatsappE164 } from "./identity";
+import { countryName } from "@/data/countries";
 import {
   activeDocProfileKey,
   areRequiredDocsUploaded,
@@ -19,13 +20,18 @@ import {
   type WizardCatalog,
 } from "./project";
 
-const IDENTITY_LABELS: Record<keyof Identity, string> = {
+const IDENTITY_LABELS: Partial<Record<keyof Identity, string>> = {
   lastName: "Nom",
   firstName: "Prénoms",
-  birthDate: "Date de naissance",
-  birthPlace: "Lieu de naissance",
+  birthDay: "Date de naissance",
+  birthMonth: "Date de naissance",
+  birthYear: "Date de naissance",
+  birthCountry: "Pays de naissance",
+  birthPlace: "Ville de naissance",
   email: "Email",
+  phoneCountry: "Indicatif téléphone",
   phone: "Téléphone",
+  whatsappCountry: "Indicatif WhatsApp",
   whatsapp: "WhatsApp",
 };
 
@@ -108,7 +114,8 @@ export function Step5Recap({
 }) {
 
   const uni = universe ? getUniverse(universe) : undefined;
-  const idErr = identityErrors(identity);
+  const minAge = minAgeForVariant(variant);
+  const idErr = identityErrors(identity, minAge);
   const bgErr = backgroundErrors(background, variant);
   const sit = situationSpec(variant);
   const summary = describeProject(project, universe, variant, catalog);
@@ -119,11 +126,15 @@ export function Step5Recap({
   // ── Champs obligatoires manquants (par section) ──
   const missing: { section: string; step: number; items: string[] }[] = [];
   if (!universe) missing.push({ section: "Parcours IPMD", step: 0, items: ["Parcours non choisi"] });
-  if (!isIdentityValid(identity))
+  if (!isIdentityValid(identity, minAge))
     missing.push({
       section: "Identité",
       step: 1,
-      items: (Object.keys(idErr) as (keyof Identity)[]).map((k) => IDENTITY_LABELS[k]),
+      items: [
+        ...new Set(
+          (Object.keys(idErr) as (keyof Identity)[]).map((k) => IDENTITY_LABELS[k] ?? k),
+        ),
+      ],
     });
   if (!isBackgroundValid(background, variant))
     missing.push({
@@ -201,11 +212,12 @@ export function Step5Recap({
         <SectionCard title="Identité" onEdit={() => onEdit(1)}>
           <Row label="Nom" value={identity.lastName} />
           <Row label="Prénoms" value={identity.firstName} />
-          <Row label="Né(e) le" value={identity.birthDate} />
-          <Row label="Lieu de naissance" value={identity.birthPlace} />
+          <Row label="Né(e) le" value={composeBirthDate(identity)} />
+          <Row label="Pays de naissance" value={identity.birthCountry ? countryName(identity.birthCountry) : ""} />
+          <Row label="Ville de naissance" value={identity.birthPlace} />
           <Row label="Email" value={identity.email} />
-          <Row label="Téléphone" value={identity.phone} />
-          <Row label="WhatsApp" value={identity.whatsapp} />
+          <Row label="Téléphone" value={phoneE164(identity)} />
+          <Row label="WhatsApp" value={whatsappE164(identity)} />
         </SectionCard>
 
         {/* Parcours actuel */}

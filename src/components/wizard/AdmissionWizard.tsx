@@ -6,7 +6,15 @@ import { getUniverse } from "@/data/universes";
 import { WIZARD_STEPS, STEP_COUNT } from "./steps";
 import { Step0Parcours } from "./Step0Parcours";
 import { Step1Identite } from "./Step1Identite";
-import { EMPTY_IDENTITY, isIdentityValid, type Identity } from "./identity";
+import {
+  EMPTY_IDENTITY,
+  isIdentityValid,
+  minAgeForVariant,
+  composeBirthDate,
+  phoneE164,
+  whatsappE164,
+  type Identity,
+} from "./identity";
 import { Step2Parcours } from "./Step2Parcours";
 import {
   EMPTY_BACKGROUND,
@@ -66,12 +74,13 @@ export function AdmissionWizard({ catalog }: { catalog: WizardCatalog }) {
   // Variante du parcours choisi (campus / pro / executive / certificat) : pilote
   // les champs de l'Étape 2 et les options de l'Étape 3.
   const variant = variantForUniverse(universe);
+  const minAge = minAgeForVariant(variant);
 
   const canNext =
     step === 0
       ? universe !== null
       : step === 1
-        ? isIdentityValid(identity)
+        ? isIdentityValid(identity, minAge)
         : step === 2
           ? isBackgroundValid(background, variant)
           : step === 3
@@ -147,9 +156,9 @@ export function AdmissionWizard({ catalog }: { catalog: WizardCatalog }) {
           last_name: identity.lastName,
           first_name: identity.firstName,
           email: identity.email,
-          phone: identity.phone,
-          whatsapp: identity.whatsapp,
-          birth_date: identity.birthDate,
+          phone: phoneE164(identity) ?? "",
+          whatsapp: whatsappE164(identity) ?? "",
+          birth_date: composeBirthDate(identity) ?? "",
           birth_place: identity.birthPlace,
         },
         background: {
@@ -267,7 +276,7 @@ export function AdmissionWizard({ catalog }: { catalog: WizardCatalog }) {
         {step === 0 ? (
           <Step0Parcours selected={universe} onSelect={selectParcours} />
         ) : step === 1 ? (
-          <Step1Identite value={identity} onChange={setIdentity} />
+          <Step1Identite value={identity} minAge={minAge} onChange={setIdentity} />
         ) : step === 2 ? (
           <Step2Parcours value={background} variant={variant} onChange={setBackground} />
         ) : step === 3 ? (

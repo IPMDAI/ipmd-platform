@@ -1,56 +1,144 @@
+import type { BackgroundVariant } from "./background";
+import { dialOf, isCountry } from "@/data/countries";
+
 /**
- * Étape 1 — « Votre identité ».
- * Modèle + validation SIMPLE (champs obligatoires non vides + email plausible).
- * Aucun « Profil souhaité » ici : le programme visé relève de l'Étape 3 (Projet).
+ * Étape 1 — « Votre identité » (internationale).
+ * Champs granulaires : naissance J/M/A + pays + ville ; téléphone/WhatsApp avec
+ * pays d'indicatif + numéro national. Stockage préparé : ISO-2 (pays) + E.164
+ * (numéro). L'âge minimum dépend du PARCOURS (dérivé côté serveur aussi).
  */
 export type Identity = {
-  lastName: string; // Nom *
-  firstName: string; // Prénoms *
-  birthDate: string; // Date de naissance * (YYYY-MM-DD)
-  birthPlace: string; // Lieu de naissance *
-  email: string; // Email *
-  phone: string; // Téléphone *
-  whatsapp: string; // WhatsApp (facultatif)
+  lastName: string;
+  firstName: string;
+  birthDay: string; // "01".."31"
+  birthMonth: string; // "01".."12"
+  birthYear: string; // "AAAA"
+  birthCountry: string; // ISO-2
+  birthPlace: string; // ville
+  email: string;
+  phoneCountry: string; // ISO-2 (indicatif)
+  phone: string; // numéro national
+  whatsappCountry: string; // ISO-2 (facultatif)
+  whatsapp: string; // numéro national (facultatif)
 };
 
 export const EMPTY_IDENTITY: Identity = {
   lastName: "",
   firstName: "",
-  birthDate: "",
+  birthDay: "",
+  birthMonth: "",
+  birthYear: "",
+  birthCountry: "",
   birthPlace: "",
   email: "",
+  phoneCountry: "",
   phone: "",
+  whatsappCountry: "",
   whatsapp: "",
 };
 
-/** Champs obligatoires de l'Étape 1. */
-export const IDENTITY_REQUIRED: (keyof Identity)[] = [
-  "lastName",
-  "firstName",
-  "birthDate",
-  "birthPlace",
-  "email",
-  "phone",
-];
-
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const DIGITS_RE = /\d/g;
+const digits = (s: string) => (s.match(/\d/g) ?? []).length;
+
+/** Âge minimum requis selon le parcours (jamais dérivé du client). */
+export function minAgeForVariant(variant: BackgroundVariant): number {
+  switch (variant) {
+    case "pro":
+    case "executive":
+      return 18;
+    case "campus":
+    case "certificat":
+    default:
+      return 16;
+  }
+}
+
+/** La date (Y,M,D) est-elle une date réelle valide ? */
+function isRealDate(y: number, m: number, d: number): boolean {
+  if (!y || !m || !d) return false;
+  const dt = new Date(y, m - 1, d);
+  return dt.getFullYear() === y && dt.getMonth() === m - 1 && dt.getDate() === d;
+}
+
+/** Date de naissance composée "YYYY-MM-DD", ou null si incomplète/invalide. */
+export function composeBirthDate(v: Identity): string | null {
+  const y = parseInt(v.birthYear, 10);
+  const m = parseInt(v.birthMonth, 10);
+  const d = parseInt(v.birthDay, 10);
+  if (!isRealDate(y, m, d)) return null;
+  return `${y.toString().padStart(4, "0")}-${m.toString().padStart(2, "0")}-${d.toString().padStart(2, "0")}`;
+}
+
+/** Âge (années révolues) à aujourd'hui, ou null si date invalide. */
+export function ageFromBirth(v: Identity): number | null {
+  const iso = composeBirthDate(v);
+  if (!iso) return null;
+  const [y, m, d] = iso.split("-").map(Number);
+  const today = new Date();
+  let age = today.getFullYear() - y;
+  const beforeBirthday =
+    today.getMonth() + 1 < m || (today.getMonth() + 1 === m && today.getDate() < d);
+  if (beforeBirthday) age -= 1;
+  return age;
+}
+
+/** Numéro E.164 (indicatif + national), ou null si incomplet. */
+export function toE164(countryCode: string, national: string): string | null {
+  const dial = dialOf(countryCode);
+  const n = (national.match(/\d/g) ?? []).join("");
+  if (!dial || n.length < 6) return null;
+  return `${dial}${n}`;
+}
+export const phoneE164 = (v: Identity) => toE164(v.phoneCountry, v.phone);
+export const whatsappE164 = (v: Identity) => toE164(v.whatsappCountry, v.whatsapp);
 
 /**
- * Erreurs par champ (message court). Un champ absent de l'objet = valide.
- * Validation volontairement légère : obligatoire non vide, email au bon format,
- * téléphone contenant au moins 6 chiffres.
+ * Erreurs par champ. `minAge` vient du parcours (via minAgeForVariant).
+ * Naissance : date réelle, pas dans le futur, âge ≥ minAge.
  */
-export function identityErrors(v: Identity): Partial<Record<keyof Identity, string>> {
+export function identityErrors(v: Identity, minAge: number): Partial<Record<keyof Identity, string>> {
   const e: Partial<Record<keyof Identity, string>> = {};
-  for (const k of IDENTITY_REQUIRED) {
-    if (!v[k].trim()) e[k] = "Champ obligatoire.";
+
+  if (!v.lastName.trim()) e.lastName = "Champ obligatoire.";
+  if (!v.firstName.trim()) e.firstName = "Champ obligatoire.";
+  if (!v.birthCountry || !isCountry(v.birthCountry)) e.birthCountry = "Sélectionnez un pays.";
+  if (!v.birthPlace.trim()) e.birthPlace = "Champ obligatoire.";
+
+  // Date de naissance
+  if (!v.birthDay || !v.birthMonth || !v.birthYear) {
+    e.birthYear = "Date de naissance incomplète.";
+  } else {
+    const iso = composeBirthDate(v);
+    if (!iso) {
+      e.birthYear = "Date de naissance invalide.";
+    } else {
+      const [y, m, d] = iso.split("-").map(Number);
+      const today = new Date();
+      const dt = new Date(y, m - 1, d);
+      if (dt.getTime() > today.getTime()) {
+        e.birthYear = "La date de naissance ne peut pas être dans le futur.";
+      } else {
+        const age = ageFromBirth(v);
+        if (age != null && age < minAge) e.birthYear = `Âge minimum requis : ${minAge} ans.`;
+      }
+    }
   }
-  if (v.email.trim() && !EMAIL_RE.test(v.email.trim())) e.email = "Adresse email invalide.";
-  if (v.phone.trim() && (v.phone.match(DIGITS_RE)?.length ?? 0) < 6)
-    e.phone = "Numéro de téléphone invalide.";
+
+  if (!v.email.trim()) e.email = "Champ obligatoire.";
+  else if (!EMAIL_RE.test(v.email.trim())) e.email = "Adresse email invalide.";
+
+  if (!v.phoneCountry || !isCountry(v.phoneCountry)) e.phoneCountry = "Sélectionnez l'indicatif.";
+  if (!v.phone.trim()) e.phone = "Champ obligatoire.";
+  else if (digits(v.phone) < 6) e.phone = "Numéro de téléphone invalide.";
+
+  // WhatsApp facultatif : si un numéro est saisi, l'indicatif devient requis.
+  if (v.whatsapp.trim()) {
+    if (!v.whatsappCountry || !isCountry(v.whatsappCountry)) e.whatsappCountry = "Sélectionnez l'indicatif.";
+    if (digits(v.whatsapp) < 6) e.whatsapp = "Numéro WhatsApp invalide.";
+  }
+
   return e;
 }
 
-export const isIdentityValid = (v: Identity): boolean =>
-  Object.keys(identityErrors(v)).length === 0;
+export const isIdentityValid = (v: Identity, minAge: number): boolean =>
+  Object.keys(identityErrors(v, minAge)).length === 0;
