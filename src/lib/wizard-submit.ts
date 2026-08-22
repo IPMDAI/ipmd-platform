@@ -31,10 +31,18 @@ export type WizardSubmitPayload = {
     graduation_year: string;
     institution: string;
     current_situation: string;
+    /** Profil professionnel (variante « pro »). */
+    professional_status: string;
+    current_position: string;
+    organization: string;
+    sector: string;
+    experience_years: string;
   };
   project: {
     campus_intake_id: string;
     campus_offering_key: string;
+    /** Offre Pro non ambiguë (session × niveau × filière) → RPC v4. */
+    catalog_offering_id: string;
     pro_offering_id: string;
     exec_offering_id: string;
     cert_item_id: string;
@@ -53,10 +61,17 @@ export type WizardErrorCode =
   | "OFFRE_FERMEE"
   | "PROGRAMME_FERME"
   | "PIECES_MANQUANTES"
+  | "PIECE_TROP_NOMBREUSE"
   | "DOC_HORS_PROFIL"
   | "CHEMIN_VIDE"
   | "IDENTITE_INCOMPLETE"
   | "UNIVERS_INVALIDE"
+  | "STATUT_PRO_MANQUANT"
+  | "STATUT_PRO_INVALIDE"
+  | "POSTE_MANQUANT"
+  | "NIVEAU_INVALIDE"
+  | "PRIX_MANQUANT"
+  | "EXPERIENCE_INVALIDE"
   | "SERVICE_INDISPONIBLE"
   | "ERREUR";
 
@@ -68,6 +83,20 @@ const MESSAGES: Record<WizardErrorCode, string> = {
     "Le programme choisi n'est plus ouvert. Revenez à l'étape « Projet » pour en sélectionner un autre.",
   PIECES_MANQUANTES:
     "Certaines pièces obligatoires sont manquantes. Revenez à l'étape « Pièces justificatives ».",
+  PIECE_TROP_NOMBREUSE:
+    "Vous avez joint trop de fichiers pour une pièce. Revenez à l'étape « Pièces justificatives ».",
+  STATUT_PRO_MANQUANT:
+    "Votre situation professionnelle est obligatoire. Revenez à l'étape « Parcours actuel ».",
+  STATUT_PRO_INVALIDE:
+    "La situation professionnelle sélectionnée est invalide. Revenez à l'étape « Parcours actuel ».",
+  POSTE_MANQUANT:
+    "Votre fonction / poste actuel est obligatoire. Revenez à l'étape « Parcours actuel ».",
+  NIVEAU_INVALIDE:
+    "Le niveau visé est invalide. Revenez à l'étape « Projet » pour le resélectionner.",
+  PRIX_MANQUANT:
+    "Le tarif de cette offre n'est pas disponible. Réessayez ; si le problème persiste, contactez l'IPMD.",
+  EXPERIENCE_INVALIDE:
+    "Le nombre d'années d'expérience est invalide. Revenez à l'étape « Parcours actuel ».",
   DOC_HORS_PROFIL:
     "Un document ne correspond pas au dossier attendu. Revenez à l'étape « Pièces justificatives ».",
   CHEMIN_VIDE: "Un fichier n'a pas été correctement téléversé. Réessayez le dépôt de vos pièces.",
@@ -83,10 +112,17 @@ function codeFromError(msg: string): WizardErrorCode {
     "OFFRE_FERMEE",
     "PROGRAMME_FERME",
     "PIECES_MANQUANTES",
+    "PIECE_TROP_NOMBREUSE",
     "DOC_HORS_PROFIL",
     "CHEMIN_VIDE",
     "IDENTITE_INCOMPLETE",
     "UNIVERS_INVALIDE",
+    "STATUT_PRO_MANQUANT",
+    "STATUT_PRO_INVALIDE",
+    "POSTE_MANQUANT",
+    "NIVEAU_INVALIDE",
+    "PRIX_MANQUANT",
+    "EXPERIENCE_INVALIDE",
   ];
   return known.find((c) => msg.includes(c)) ?? "ERREUR";
 }

@@ -11,6 +11,9 @@ import {
   graduationYearOptions,
   isOtherDiploma,
   OTHER_DIPLOMA,
+  positionRequiredFor,
+  PROFESSIONAL_STATUSES,
+  SECTORS,
   situationSpec,
 } from "./background";
 
@@ -242,6 +245,78 @@ function BgInstitutionCombo({
   );
 }
 
+/** Situation professionnelle (Pro) — select des statuts canoniques. */
+function BgProfStatusSelect({
+  value,
+  onChange,
+  onBlur,
+  error,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  onBlur: () => void;
+  error?: string;
+}) {
+  const id = "bg-professionalStatus";
+  return (
+    <div>
+      <FieldLabel id={id} label="Situation professionnelle actuelle" required />
+      <select
+        id={id}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        onBlur={onBlur}
+        aria-invalid={!!error}
+        aria-describedby={error ? `${id}-err` : undefined}
+        className={controlClass(!!error)}
+      >
+        <option value="">— Sélectionnez —</option>
+        {PROFESSIONAL_STATUSES.map((s) => (
+          <option key={s.value} value={s.value}>
+            {s.label}
+          </option>
+        ))}
+      </select>
+      <FieldMsg id={id} error={error} />
+    </div>
+  );
+}
+
+/** Secteur d'activité (Pro) — recherche assistée (datalist) + saisie libre. */
+function BgSectorCombo({
+  value,
+  onChange,
+  onBlur,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  onBlur: () => void;
+}) {
+  const id = "bg-sector";
+  return (
+    <div>
+      <FieldLabel id={id} label="Secteur d'activité" />
+      <input
+        id={id}
+        type="text"
+        list="bg-sector-list"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        onBlur={onBlur}
+        placeholder="Rechercher ou saisir votre secteur…"
+        autoComplete="off"
+        className={controlClass(false)}
+      />
+      <datalist id="bg-sector-list">
+        {SECTORS.map((s) => (
+          <option key={s} value={s} />
+        ))}
+      </datalist>
+      <FieldMsg id={id} hint="Facultatif — choisissez dans la liste ou saisissez librement." />
+    </div>
+  );
+}
+
 /**
  * Étape 2 — Votre parcours actuel. Rendu piloté par la `variant`.
  * Décrit uniquement l'acquis — jamais le niveau visé à l'IPMD.
@@ -299,6 +374,35 @@ export function Step2Parcours({
             <BgLevelSelect value={value.lastLevel} onChange={set("lastLevel")} onBlur={blur("lastLevel")} error={err("lastLevel")} />
             <BgDiplomaSelect hint="Facultatif" value={value.lastDiploma} onChange={set("lastDiploma")} onBlur={blur("lastDiploma")} error={err("lastDiploma")} />
             {situationField}
+          </>
+        ) : variant === "pro" ? (
+          <>
+            <BgLevelSelect required value={value.lastLevel} onChange={set("lastLevel")} onBlur={blur("lastLevel")} error={err("lastLevel")} />
+            <BgDiplomaSelect required value={value.lastDiploma} onChange={set("lastDiploma")} onBlur={blur("lastDiploma")} error={err("lastDiploma")} />
+            <BgYearSelect value={value.graduationYear} onChange={set("graduationYear")} onBlur={blur("graduationYear")} />
+            <BgInstitutionCombo value={value.institution} onChange={set("institution")} onBlur={blur("institution")} />
+
+            <div className="sm:col-span-2 mt-1 border-t border-black/5 pt-4">
+              <p className="text-sm font-bold text-ipmd-black">Profil professionnel</p>
+              <p className="mt-0.5 text-[12px] text-black/50">
+                IPMD Pro s'adresse aux professionnels en formation continue.
+              </p>
+            </div>
+            <BgProfStatusSelect value={value.professionalStatus} onChange={set("professionalStatus")} onBlur={blur("professionalStatus")} error={err("professionalStatus")} />
+            <BgText
+              id="bg-currentPosition"
+              label="Fonction / poste actuel"
+              required={positionRequiredFor(value.professionalStatus)}
+              placeholder="Ex. Chef de projet, développeur, gérant…"
+              hint={positionRequiredFor(value.professionalStatus) ? undefined : "Facultatif"}
+              value={value.currentPosition}
+              onChange={set("currentPosition")}
+              onBlur={blur("currentPosition")}
+              error={err("currentPosition")}
+            />
+            <BgText id="bg-organization" label="Organisation / entreprise" hint="Facultatif" placeholder="Ex. Orange CI, indépendant…" value={value.organization} onChange={set("organization")} onBlur={blur("organization")} />
+            <BgSectorCombo value={value.sector} onChange={set("sector")} onBlur={blur("sector")} />
+            <BgText id="bg-experienceYears" label="Années d'expérience" inputMode="numeric" hint="Facultatif" placeholder="Ex. 5" value={value.experienceYears} onChange={set("experienceYears")} onBlur={blur("experienceYears")} error={err("experienceYears")} />
           </>
         ) : (
           <>

@@ -19,7 +19,13 @@ export type Background = {
   lastDiploma: string; // Dernier diplôme obtenu
   graduationYear: string; // Année d'obtention (facultatif)
   institution: string; // Établissement d'origine (facultatif)
-  currentSituation: string; // Situation / fonction actuelle (selon variante)
+  currentSituation: string; // Situation / fonction actuelle (executive/certificat)
+  // ── Profil professionnel structuré (variante « pro ») ──
+  professionalStatus: string; // salarie | entrepreneur | independant | demandeur_emploi | autre
+  currentPosition: string; // Fonction / poste actuel
+  organization: string; // Organisation / entreprise (facultatif)
+  sector: string; // Secteur d'activité (facultatif)
+  experienceYears: string; // Années d'expérience (facultatif, numérique)
 };
 
 export const EMPTY_BACKGROUND: Background = {
@@ -28,6 +34,11 @@ export const EMPTY_BACKGROUND: Background = {
   graduationYear: "",
   institution: "",
   currentSituation: "",
+  professionalStatus: "",
+  currentPosition: "",
+  organization: "",
+  sector: "",
+  experienceYears: "",
 };
 
 export type BackgroundVariant = "campus" | "pro" | "executive" | "certificat";
@@ -99,6 +110,45 @@ export function graduationYearOptions(span = 60): string[] {
 /** Le bloc académique (niveau + diplôme) est-il obligatoire pour cette variante ? */
 export const academicRequired = (v: BackgroundVariant): boolean => v !== "certificat";
 
+/** Situations professionnelles (Pro) — clés canoniques attendues par la RPC v4. */
+export const PROFESSIONAL_STATUSES = [
+  { value: "salarie", label: "Salarié" },
+  { value: "entrepreneur", label: "Entrepreneur" },
+  { value: "independant", label: "Indépendant" },
+  { value: "demandeur_emploi", label: "Demandeur d'emploi" },
+  { value: "autre", label: "Autre" },
+] as const;
+
+/** Le poste/fonction est-il obligatoire pour ce statut ? (pas pour demandeur d'emploi / autre) */
+export const positionRequiredFor = (status: string): boolean =>
+  status === "salarie" || status === "entrepreneur" || status === "independant";
+
+/**
+ * Secteurs d'activité — liste générale d'aide à la saisie (Pro), datalist + saisie
+ * libre (« Autre »). Volontairement générique (PAS les 8 programmes IPMD Pro).
+ */
+export const SECTORS = [
+  "Informatique & Numérique",
+  "Télécommunications",
+  "Banque & Assurance",
+  "Finance & Comptabilité",
+  "Commerce & Distribution",
+  "Industrie & Production",
+  "BTP & Immobilier",
+  "Santé & Social",
+  "Éducation & Formation",
+  "Administration publique",
+  "Transport & Logistique",
+  "Agriculture & Agroalimentaire",
+  "Énergie & Environnement",
+  "Médias & Communication",
+  "Marketing & Publicité",
+  "Tourisme & Hôtellerie",
+  "ONG & Associatif",
+  "Juridique",
+  "Conseil & Services aux entreprises",
+];
+
 /** Spécification du champ « situation / fonction actuelle » selon la variante. */
 export type SituationSpec = {
   show: boolean;
@@ -111,13 +161,8 @@ export type SituationSpec = {
 export function situationSpec(v: BackgroundVariant): SituationSpec {
   switch (v) {
     case "pro":
-      return {
-        show: true,
-        required: false,
-        label: "Situation actuelle / activité professionnelle",
-        placeholder: "Ex. Salarié, entrepreneur, en reconversion…",
-        hint: "Facultatif",
-      };
+      // Pro : remplacé par le bloc professionnel structuré (Step2Parcours) → pas de champ libre.
+      return { show: false, required: false, label: "", placeholder: "" };
     case "executive":
       return {
         show: true,
@@ -155,6 +200,14 @@ export function backgroundErrors(
   const sit = situationSpec(variant);
   if (sit.show && sit.required && !v.currentSituation.trim())
     e.currentSituation = "Champ obligatoire.";
+  // Bloc professionnel structuré (Pro) : statut obligatoire ; poste conditionnel.
+  if (variant === "pro") {
+    if (!v.professionalStatus.trim()) e.professionalStatus = "Champ obligatoire.";
+    else if (positionRequiredFor(v.professionalStatus) && !v.currentPosition.trim())
+      e.currentPosition = "Champ obligatoire.";
+    if (v.experienceYears.trim() && !/^\d{1,2}$/.test(v.experienceYears.trim()))
+      e.experienceYears = "Nombre d'années invalide.";
+  }
   return e;
 }
 

@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 import type { UniverseId } from "@/types";
 import { getUniverse } from "@/data/universes";
 import type { Background, BackgroundVariant } from "./background";
-import { backgroundErrors, isBackgroundValid, situationSpec } from "./background";
+import { backgroundErrors, isBackgroundValid, PROFESSIONAL_STATUSES, situationSpec } from "./background";
 import type { Identity } from "./identity";
 import { identityErrors, isIdentityValid, minAgeForUniverse, composeBirthDate, phoneE164, whatsappE164 } from "./identity";
 import { countryName } from "@/data/countries";
@@ -37,6 +37,19 @@ const IDENTITY_LABELS: Partial<Record<keyof Identity, string>> = {
   whatsappCountry: "Indicatif WhatsApp",
   whatsapp: "WhatsApp",
 };
+
+const BACKGROUND_LABELS: Partial<Record<keyof Background, string>> = {
+  lastLevel: "Dernier niveau d'études atteint",
+  lastDiploma: "Dernier diplôme obtenu",
+  currentSituation: "Fonction / activité professionnelle",
+  professionalStatus: "Situation professionnelle actuelle",
+  currentPosition: "Fonction / poste actuel",
+  experienceYears: "Années d'expérience",
+};
+
+/** Libellé lisible d'un statut professionnel (Pro). */
+const proStatusLabel = (v: string): string =>
+  PROFESSIONAL_STATUSES.find((s) => s.value === v)?.label ?? v;
 
 const docBadge: Record<DocRequirement, { c: string; t: string }> = {
   required: { c: "bg-ipmd-red/10 text-ipmd-red", t: "Obligatoire" },
@@ -143,9 +156,7 @@ export function Step5Recap({
     missing.push({
       section: "Parcours actuel",
       step: 2,
-      items: (Object.keys(bgErr) as (keyof Background)[]).map((k) =>
-        k === "currentSituation" ? sit.label : k === "lastLevel" ? "Dernier niveau d'études atteint" : "Dernier diplôme obtenu",
-      ),
+      items: (Object.keys(bgErr) as (keyof Background)[]).map((k) => BACKGROUND_LABELS[k] ?? k),
     });
   if (!isProjectValid(project, universe, variant, catalog)) {
     const projItems: string[] = [];
@@ -234,6 +245,15 @@ export function Step5Recap({
               <Row label="Établissement d'origine" value={background.institution} />
             </>
           )}
+          {variant === "pro" && (
+            <>
+              <Row label="Situation professionnelle" value={background.professionalStatus ? proStatusLabel(background.professionalStatus) : ""} />
+              <Row label="Fonction / poste actuel" value={background.currentPosition} />
+              <Row label="Organisation / entreprise" value={background.organization} />
+              <Row label="Secteur d'activité" value={background.sector} />
+              <Row label="Années d'expérience" value={background.experienceYears} />
+            </>
+          )}
           {showSituation && <Row label={sit.label} value={background.currentSituation} />}
         </SectionCard>
 
@@ -244,6 +264,12 @@ export function Step5Recap({
               {variant === "campus" ? (
                 <>
                   <Row label="Rentrée" value={summary.rentree} />
+                  <Row label="Niveau visé" value={summary.niveau} />
+                  <Row label="Filière" value={summary.filiere} />
+                </>
+              ) : variant === "pro" ? (
+                <>
+                  <Row label="Session" value={summary.rentree} />
                   <Row label="Niveau visé" value={summary.niveau} />
                   <Row label="Filière" value={summary.filiere} />
                 </>

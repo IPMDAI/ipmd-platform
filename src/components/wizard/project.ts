@@ -36,6 +36,8 @@ export type CatalogProgram = {
   name: string;
   credential: string | null;
   docProfile: string | null;
+  /** Niveau de l'offre (Pro : Licence 1..Master 2). NULL si l'offre n'a pas de niveau. */
+  level: string | null;
 };
 export type CertificatItem = {
   id: string;
@@ -99,7 +101,9 @@ export type Project = {
   campusIntakeId: string;
   campusLevel: string; // Niveau visé Campus (ex. « Licence 2 ») — étape intermédiaire de la cascade
   campusOfferingKey: string; // `${filiereId}::${level}` (résolu une fois la filière choisie)
-  proOfferingId: string;
+  proIntakeId: string; // Session Pro choisie — étape intermédiaire de la cascade
+  proLevel: string; // Niveau visé Pro (Licence 1..Master 2) — étape intermédiaire
+  proOfferingId: string; // catalog_offering_id résolu (session × niveau × filière)
   execOfferingId: string;
   certItemId: string;
   mode: string; // FORMATION_MODES: presentiel | distance | hybride (obligatoire)
@@ -109,6 +113,8 @@ export const EMPTY_PROJECT: Project = {
   campusIntakeId: "",
   campusLevel: "",
   campusOfferingKey: "",
+  proIntakeId: "",
+  proLevel: "",
   proOfferingId: "",
   execOfferingId: "",
   certItemId: "",
@@ -137,6 +143,41 @@ export function campusFilieresForLevel(
   return [...byId.entries()]
     .map(([filiereId, filiereName]) => ({ filiereId, filiereName }))
     .sort((a, b) => a.filiereName.localeCompare(b.filiereName));
+}
+
+// ── Pro : cascade Session → Niveau → Filière (dérivée des catalog_offerings ouverts) ──
+
+/** Sessions Pro distinctes (dérivées des offres Pro ouvertes). */
+export function proSessions(
+  catalog: WizardCatalog,
+): { intakeId: string; intakeLabel: string; academicYear: string }[] {
+  const byId = new Map<string, { intakeId: string; intakeLabel: string; academicYear: string }>();
+  for (const p of catalog.proPrograms) {
+    if (!byId.has(p.intakeId))
+      byId.set(p.intakeId, { intakeId: p.intakeId, intakeLabel: p.intakeLabel, academicYear: p.academicYear });
+  }
+  return [...byId.values()].sort((a, b) => a.intakeLabel.localeCompare(b.intakeLabel));
+}
+
+/** Niveaux Pro réellement proposés pour une session (dérivés des offres), triés. */
+export function proLevelsForSession(catalog: WizardCatalog, intakeId: string): string[] {
+  return [
+    ...new Set(
+      catalog.proPrograms.filter((p) => p.intakeId === intakeId && p.level).map((p) => p.level as string),
+    ),
+  ].sort(sortLevels);
+}
+
+/** Filières Pro (offres) réellement ouvertes pour une session + un niveau, triées. */
+export function proFilieresForSessionLevel(
+  catalog: WizardCatalog,
+  intakeId: string,
+  level: string,
+): { offeringId: string; name: string }[] {
+  return catalog.proPrograms
+    .filter((p) => p.intakeId === intakeId && p.level === level)
+    .map((p) => ({ offeringId: p.offeringId, name: p.name }))
+    .sort((a, b) => a.name.localeCompare(b.name));
 }
 
 /** Rang d'un niveau, robuste aux libellés réels (« Licence 1 » comme « L1 »). */
@@ -259,6 +300,8 @@ export function describeProject(
     if (!prog) return null;
     return {
       rentree: `${prog.intakeLabel} — ${prog.academicYear}`,
+      niveau: variant === "pro" ? (prog.level ?? undefined) : undefined,
+      filiere: variant === "pro" ? prog.name : undefined,
       formation: prog.name,
       credential: prog.credential ?? undefined,
     };

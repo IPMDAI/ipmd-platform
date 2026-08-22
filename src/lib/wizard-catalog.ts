@@ -45,7 +45,7 @@ export async function loadWizardCatalog(): Promise<WizardCatalog> {
     supabase.from("intake_offerings").select("intake_id,filiere_id,level").eq("status", "open"),
     supabase.from("filieres").select("id,name"),
     supabase.from("catalog_items").select("id,universe,name,credential,doc_profile").eq("status", "open"),
-    supabase.from("catalog_offerings").select("id,item_id,intake_id").eq("status", "open"),
+    supabase.from("catalog_offerings").select("id,item_id,intake_id,level").eq("status", "open"),
     supabase.from("document_types").select("doc_key,label,max_files"),
     supabase.from("document_profiles").select("profile_key,doc_key,requirement,sort_order"),
   ]);
@@ -116,6 +116,7 @@ export async function loadWizardCatalog(): Promise<WizardCatalog> {
         name: it.name as string,
         credential: (it.credential as string) ?? null,
         docProfile: (it.doc_profile as string) ?? null,
+        level: (o.level as string) ?? null,
       };
       if (it.universe === "professionnel") proPrograms.push(prog);
       else if (it.universe === "gouvernance") execPrograms.push(prog);
