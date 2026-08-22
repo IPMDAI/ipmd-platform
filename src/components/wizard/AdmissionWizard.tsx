@@ -49,6 +49,10 @@ export function AdmissionWizard({ catalog }: { catalog: WizardCatalog }) {
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [successId, setSuccessId] = useState<string | null>(null);
+  // Verrou SYNCHRONE anti-double-submit : le state `submitting` ne se met à jour
+  // qu'au prochain rendu, donc deux clics dans le même tick le liraient encore à
+  // false. Ce ref est posé immédiatement et bloque toute réentrance.
+  const submitLockRef = useRef(false);
 
   // Dossier Storage unique par session wizard : généré à la 1re pièce (côté
   // client uniquement → pas de souci d'hydratation), réutilisé pour toutes les
@@ -95,7 +99,8 @@ export function AdmissionWizard({ catalog }: { catalog: WizardCatalog }) {
   // Anti-double-submit via `submitting` ; les données du wizard restent
   // intactes en cas d'échec (aucun reset).
   const handleSubmit = async () => {
-    if (submitting || !universe) return;
+    if (submitLockRef.current || !universe) return;
+    submitLockRef.current = true;
     setSubmitting(true);
     setSubmitError(null);
     try {
@@ -134,6 +139,7 @@ export function AdmissionWizard({ catalog }: { catalog: WizardCatalog }) {
     } catch {
       setSubmitError("Une erreur réseau est survenue. Vos données sont conservées — réessayez.");
     } finally {
+      submitLockRef.current = false;
       setSubmitting(false);
     }
   };
