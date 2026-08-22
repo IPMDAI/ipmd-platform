@@ -43,6 +43,7 @@ export type CatalogProgram = {
   certTier?: string | null;
   durationMonths?: number | null;
   price?: number | null;
+  registrationFee?: number | null;
 };
 export type CertificatItem = {
   id: string;

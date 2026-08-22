@@ -83,7 +83,7 @@ export async function loadWizardCatalog(): Promise<WizardCatalog> {
     const [{ data: items }, { data: ints }] = await Promise.all([
       supabase
         .from("catalog_items")
-        .select("id,name,credential,universe,doc_profile,category,cert_tier,duration_months,price")
+        .select("id,name,credential,universe,doc_profile,category,cert_tier,duration_months,price,registration_fee")
         .eq("status", "open"),
       supabase.from("intakes").select("id,label,academic_year").eq("status", "open"),
     ]);
@@ -107,6 +107,7 @@ export async function loadWizardCatalog(): Promise<WizardCatalog> {
         certTier: (it.cert_tier as string) ?? null,
         durationMonths: (it.duration_months as number) ?? null,
         price: (it.price as number) ?? null,
+        registrationFee: (it.registration_fee as number) ?? null,
       };
       if (it.universe === "professionnel") proPrograms.push(prog);
       else if (it.universe === "gouvernance") execPrograms.push(prog);

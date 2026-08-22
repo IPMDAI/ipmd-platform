@@ -17,9 +17,10 @@ type Card = {
   credential: string;
   durationMonths: number | null;
   price: number | null;
+  registrationFee: number | null;
 };
 
-const REGISTRATION_FEE = 185000;
+const DEFAULT_REGISTRATION_FEE = 185000;
 const fcfa = (n: number | null) => (n != null ? `${n.toLocaleString("fr-FR")} FCFA` : "");
 
 /**
@@ -54,6 +55,7 @@ export function UltraJobsCatalog({
       credential: p.credential ?? "Certificat",
       durationMonths: p.durationMonths ?? null,
       price: p.price ?? null,
+      registrationFee: p.registrationFee ?? null,
     };
     if (!byCat.has(card.category)) byCat.set(card.category, []);
     byCat.get(card.category)!.push(card);
@@ -83,7 +85,7 @@ export function UltraJobsCatalog({
                 <p className="mt-3 text-sm font-bold text-ipmd-red">
                   {fcfa(m.price)}
                   <span className="block text-[11px] font-medium text-black/45">
-                    Frais d'inscription : {fcfa(REGISTRATION_FEE)}
+                    Frais d'inscription : {fcfa(m.registrationFee ?? DEFAULT_REGISTRATION_FEE)}
                   </span>
                 </p>
                 <div className="mt-3 flex gap-2">
@@ -138,7 +140,7 @@ export function UltraJobsCatalog({
               <span className="font-bold text-ipmd-red">{selected.credential}</span>
               {selected.durationMonths ? <span className="text-white/55"> · {selected.durationMonths} mois</span> : null}
               {selected.price ? <span className="text-white/55"> · {fcfa(selected.price)}</span> : null}
-              <span className="text-white/55"> · Inscription {fcfa(REGISTRATION_FEE)}</span>
+              <span className="text-white/55"> · Inscription {fcfa(selected.registrationFee ?? DEFAULT_REGISTRATION_FEE)}</span>
             </p>
 
             <h4 className="mt-4 text-sm font-bold text-white/85">Objectifs</h4>
