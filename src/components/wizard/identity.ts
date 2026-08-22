@@ -46,23 +46,24 @@ const PHONE_ALLOWED = /^[\d\s().\-]*$/;
 const isValidNationalNumber = (s: string) => PHONE_ALLOWED.test(s) && digits(s) >= 6;
 
 /**
- * Âge minimum requis selon l'UNIVERS (règle métier, jamais dérivée du client).
- * ultraexecutive / seniorshub : non décidés → défaut provisoire 16 (baseline),
- * à remplacer dès que la règle métier est fixée.
+ * Âge minimum requis selon l'UNIVERS (règle métier définitive, jamais dérivée
+ * du client). Le serveur (submit_candidature) applique exactement les mêmes seuils.
  */
 export function minAgeForUniverse(universe: UniverseId | null): number {
   switch (universe) {
     case "professionnel":
       return 18;
-    case "gouvernance":
     case "ultraboost":
+    case "gouvernance":
+    case "ultraexecutive":
       return 25;
+    case "seniorshub":
+      return 40;
     case "campus":
     case "ultrajobs":
       return 16;
-    // ultraexecutive, seniorshub, entreprise, null → 16 (provisoire)
     default:
-      return 16;
+      return 16; // entreprise / null (hors funnel candidature)
   }
 }
 
