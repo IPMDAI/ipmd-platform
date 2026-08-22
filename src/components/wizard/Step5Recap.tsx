@@ -6,7 +6,7 @@ import { getUniverse } from "@/data/universes";
 import type { Background, BackgroundVariant } from "./background";
 import { backgroundErrors, isBackgroundValid, situationSpec } from "./background";
 import type { Identity } from "./identity";
-import { identityErrors, isIdentityValid, minAgeForVariant, composeBirthDate, phoneE164, whatsappE164 } from "./identity";
+import { identityErrors, isIdentityValid, minAgeForUniverse, composeBirthDate, phoneE164, whatsappE164 } from "./identity";
 import { countryName } from "@/data/countries";
 import {
   activeDocProfileKey,
@@ -114,7 +114,7 @@ export function Step5Recap({
 }) {
 
   const uni = universe ? getUniverse(universe) : undefined;
-  const minAge = minAgeForVariant(variant);
+  const minAge = minAgeForUniverse(universe);
   const idErr = identityErrors(identity, minAge);
   const bgErr = backgroundErrors(background, variant);
   const sit = situationSpec(variant);

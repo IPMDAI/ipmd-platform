@@ -9,7 +9,7 @@ import { Step1Identite } from "./Step1Identite";
 import {
   EMPTY_IDENTITY,
   isIdentityValid,
-  minAgeForVariant,
+  minAgeForUniverse,
   composeBirthDate,
   phoneE164,
   whatsappE164,
@@ -74,7 +74,7 @@ export function AdmissionWizard({ catalog }: { catalog: WizardCatalog }) {
   // Variante du parcours choisi (campus / pro / executive / certificat) : pilote
   // les champs de l'Étape 2 et les options de l'Étape 3.
   const variant = variantForUniverse(universe);
-  const minAge = minAgeForVariant(variant);
+  const minAge = minAgeForUniverse(universe);
 
   const canNext =
     step === 0

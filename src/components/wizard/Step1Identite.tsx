@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { COUNTRIES } from "@/data/countries";
 import type { Identity } from "./identity";
 import { identityErrors } from "./identity";
@@ -146,7 +146,7 @@ function birthYears(minAge: number): string[] {
 
 /**
  * Étape 1 — Votre identité (internationale). État dans la coquille (persistant).
- * `minAge` provient du parcours (voir minAgeForVariant). Erreurs après blur.
+ * `minAge` provient du parcours (voir minAgeForUniverse). Erreurs après blur.
  */
 export function Step1Identite({
   value,
@@ -160,6 +160,15 @@ export function Step1Identite({
   const [touched, setTouched] = useState<Partial<Record<Field, boolean>>>({});
   const errors = identityErrors(value, minAge);
   const years = birthYears(minAge);
+
+  // Si le parcours change et rend l'année choisie incompatible (trop récente pour
+  // le nouvel âge minimum), on l'efface proprement (elle n'est plus proposable).
+  useEffect(() => {
+    if (value.birthYear && Number(value.birthYear) > NOW_YEAR - minAge) {
+      onChange({ ...value, birthYear: "" });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [minAge]);
 
   const set = (k: Field) => (v: string) => onChange({ ...value, [k]: v });
   const blur = (k: Field) => () => setTouched((t) => ({ ...t, [k]: true }));

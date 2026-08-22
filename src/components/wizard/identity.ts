@@ -1,4 +1,4 @@
-import type { BackgroundVariant } from "./background";
+import type { UniverseId } from "@/types";
 import { dialOf, isCountry } from "@/data/countries";
 
 /**
@@ -45,14 +45,22 @@ const digits = (s: string) => (s.match(/\d/g) ?? []).length;
 const PHONE_ALLOWED = /^[\d\s().\-]*$/;
 const isValidNationalNumber = (s: string) => PHONE_ALLOWED.test(s) && digits(s) >= 6;
 
-/** Âge minimum requis selon le parcours (jamais dérivé du client). */
-export function minAgeForVariant(variant: BackgroundVariant): number {
-  switch (variant) {
-    case "pro":
-    case "executive":
+/**
+ * Âge minimum requis selon l'UNIVERS (règle métier, jamais dérivée du client).
+ * ultraexecutive / seniorshub : non décidés → défaut provisoire 16 (baseline),
+ * à remplacer dès que la règle métier est fixée.
+ */
+export function minAgeForUniverse(universe: UniverseId | null): number {
+  switch (universe) {
+    case "professionnel":
       return 18;
+    case "gouvernance":
+    case "ultraboost":
+      return 25;
     case "campus":
-    case "certificat":
+    case "ultrajobs":
+      return 16;
+    // ultraexecutive, seniorshub, entreprise, null → 16 (provisoire)
     default:
       return 16;
   }
@@ -98,7 +106,7 @@ export const phoneE164 = (v: Identity) => toE164(v.phoneCountry, v.phone);
 export const whatsappE164 = (v: Identity) => toE164(v.whatsappCountry, v.whatsapp);
 
 /**
- * Erreurs par champ. `minAge` vient du parcours (via minAgeForVariant).
+ * Erreurs par champ. `minAge` vient du parcours (via minAgeForUniverse).
  * Naissance : date réelle, pas dans le futur, âge ≥ minAge.
  */
 export function identityErrors(v: Identity, minAge: number): Partial<Record<keyof Identity, string>> {
