@@ -118,7 +118,7 @@ export async function inviteFromCandidature(
 
   const { data: cand } = await ctx.supabase
     .from("inscription_requests")
-    .select("full_name, email, universe, program_interest, entry_level, status")
+    .select("full_name, last_name, first_names, email, universe, program_interest, entry_level, status, academic_year")
     .eq("id", candidatureId)
     .single();
   if (!cand) return { ok: false, message: "Candidature introuvable." };
@@ -209,6 +209,9 @@ export async function inviteFromCandidature(
     role,
     full_name: fullName,
     universe: cand.universe ?? null,
+    // Identité structurée recopiée depuis la candidature (jamais de parsing de full_name).
+    last_name: cand.last_name ?? null,
+    first_names: cand.first_names ?? null,
   };
   // Report de la naissance depuis la candidature → profil, UNIQUEMENT si le
   // profil ne l'a pas déjà (jamais d'écrasement). Best-effort : si les colonnes
@@ -228,6 +231,43 @@ export async function inviteFromCandidature(
     // colonnes naissance absentes côté candidature : report ignoré
   }
   await ctx.supabase.from("profiles").update(profileUpdate).eq("id", newId);
+
+  // 2b. MATRICULE — attribué AVANT le passage « inscrit ».
+  //  • appel exclusivement serveur, via le client service_role (assign_matricule
+  //    n'est exécutable que par service_role) ;
+  //  • atomique + idempotent (aucun nouveau numéro si le profil en a déjà un) ;
+  //  • jamais de parsing de full_name : on n'utilise que last_name/first_names ;
+  //  • sécurité transactionnelle : si l'attribution échoue, on RETOURNE une erreur
+  //    SANS marquer la candidature « inscrit » (statut inchangé → réessai possible,
+  //    idempotent). L'ordre garantit : status='inscrit' ⟹ matricule attribué.
+  let matriculeYear = (cand.academic_year || snap?.academic_year || null) as string | null;
+  if (!matriculeYear) {
+    const { data: fs } = await ctx.supabase
+      .from("finance_settings")
+      .select("academic_year")
+      .eq("id", 1)
+      .maybeSingle();
+    matriculeYear = (fs?.academic_year as string) ?? null;
+  }
+  if (!matriculeYear || !cand.last_name || !cand.first_names) {
+    return {
+      ok: false,
+      message:
+        "Matricule impossible : année académique ou identité (nom / prénoms) manquante sur la candidature. Statut inchangé.",
+    };
+  }
+  const { error: matErr } = await admin.rpc("assign_matricule", {
+    p_student: newId,
+    p_academic_year: matriculeYear,
+    p_last_name: cand.last_name,
+    p_first_names: cand.first_names,
+  });
+  if (matErr) {
+    return {
+      ok: false,
+      message: `Matricule non attribué (${matErr.message}). La candidature reste « en attente de paiement » — réessayez.`,
+    };
+  }
 
   // 3. Affectation à une classe (optionnelle).
   if (classId) {
