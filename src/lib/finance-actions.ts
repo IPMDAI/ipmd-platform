@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import { computeFinance, formatFCFA } from "@/lib/finance";
+import { computeFinance, formatFCFA, nextAccessState } from "@/lib/finance";
 import {
   canSendEmail,
   emailDocument,
@@ -12,6 +12,36 @@ import {
 import type { FormResult } from "@/types";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://ipmd.pro";
+
+/**
+ * Recalcule `access_state` (W0) à partir des paiements VALIDÉS uniquement.
+ * Appelé après toute modification de paiement (ajout / changement de statut /
+ * suppression) pour garantir l'invariant : accès `actif` ⟺ inscription
+ * intégralement soldée par des paiements `status='paye'`. Ne lève jamais un
+ * blocage manuel (`bloque`). Renvoie true si l'inscription est soldée.
+ */
+async function recomputeAccess(
+  supabase: NonNullable<Awaited<ReturnType<typeof createClient>>>,
+  studentId: string
+): Promise<boolean> {
+  const [{ data: fin }, { data: pays }] = await Promise.all([
+    supabase
+      .from("student_finance")
+      .select("registration_fee, tuition_due, discount_rate, access_state")
+      .eq("student_id", studentId)
+      .maybeSingle(),
+    supabase.from("payments").select("amount, kind, status").eq("student_id", studentId),
+  ]);
+  const state = computeFinance(fin, pays ?? []);
+  const next = nextAccessState(fin?.access_state, state.registrationSettled);
+  if (fin?.access_state && next !== fin.access_state) {
+    await supabase
+      .from("student_finance")
+      .update({ access_state: next, updated_at: new Date().toISOString() })
+      .eq("student_id", studentId);
+  }
+  return state.registrationSettled;
+}
 
 /** Emails de l'étudiant + de ses parents/garants. */
 async function recipientsFor(
@@ -189,18 +219,15 @@ export async function addPayment(
         .select("registration_fee, tuition_due, discount_rate, level, access_state")
         .eq("student_id", studentId)
         .maybeSingle(),
-      ctx.supabase.from("payments").select("amount, kind").eq("student_id", studentId),
+      ctx.supabase.from("payments").select("amount, kind, status").eq("student_id", studentId),
     ]);
     const fin = computeFinance(fin2, pays2 ?? []);
 
-    // Inscription soldée → on débloque l'accès plateforme automatiquement.
-    if (fin.registrationSettled && fin2?.access_state && fin2.access_state !== "actif") {
-      await ctx.supabase
-        .from("student_finance")
-        .update({ access_state: "actif", updated_at: new Date().toISOString() })
-        .eq("student_id", studentId);
-      activated = true;
-    }
+    // Recalcul de l'accès (W0) : actif ⟺ inscription soldée par des paiements
+    // VALIDÉS. Débloque OU repasse en pause selon le cas (jamais si 'bloque').
+    const wasActive = fin2?.access_state === "actif";
+    const settledNow = await recomputeAccess(ctx.supabase, studentId);
+    activated = settledNow && !wasActive && fin2?.access_state !== "bloque";
 
     if (canSendEmail) {
       const { name, emails } = await recipientsFor(ctx.supabase, studentId);
@@ -345,6 +372,9 @@ export async function deletePayment(
   const ctx = await getStaff();
   if (!ctx) return;
   await ctx.supabase.from("payments").delete().eq("id", paymentId);
+  // W0 : la suppression d'un paiement peut rendre l'inscription non soldée →
+  // recalcul de l'accès (peut repasser en pause).
+  await recomputeAccess(ctx.supabase, studentId);
   revalidatePath(`/espace/finance/${studentId}`);
   revalidatePath("/espace/finance");
 }
@@ -358,7 +388,16 @@ export async function setPaymentStatus(
   const ctx = await getStaff();
   if (!ctx) return;
   if (!["paye", "en_attente", "annule"].includes(status)) return;
-  await ctx.supabase.from("payments").update({ status }).eq("id", paymentId);
+  const { data: pay } = await ctx.supabase
+    .from("payments")
+    .update({ status })
+    .eq("id", paymentId)
+    .select("student_id")
+    .single();
+  // W0 : un paiement qui quitte/rejoint 'paye' change les montants encaissés →
+  // recalcul de l'accès (actif ⟺ inscription soldée par des paiements validés).
+  if (pay?.student_id) await recomputeAccess(ctx.supabase, pay.student_id as string);
+  revalidatePath(`/espace/finance/${pay?.student_id ?? ""}`);
   revalidatePath("/espace/finance/paiements");
   revalidatePath("/espace/finance");
 }
@@ -412,7 +451,7 @@ export async function sendReceiptEmail(
       .select("registration_fee, tuition_due, discount_rate")
       .eq("student_id", payment.student_id)
       .maybeSingle(),
-    ctx.supabase.from("payments").select("amount, kind").eq("student_id", payment.student_id),
+    ctx.supabase.from("payments").select("amount, kind, status").eq("student_id", payment.student_id),
     ctx.supabase.from("profiles").select("full_name, email").eq("id", payment.student_id).single(),
   ]);
   const fin = computeFinance(fin2, pays2 ?? []);

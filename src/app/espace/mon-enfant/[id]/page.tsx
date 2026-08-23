@@ -133,7 +133,8 @@ export default async function EnfantDetailPage({
   const { data: payRows } = await supabase
     .from("payments")
     .select("amount")
-    .eq("student_id", id);
+    .eq("student_id", id)
+    .eq("status", "paye");
   const totalDue = Number(finance?.total_due ?? 0);
   const totalPaid = (payRows ?? []).reduce((a, p) => a + Number(p.amount), 0);
   const balance = totalDue - totalPaid;

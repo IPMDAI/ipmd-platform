@@ -44,7 +44,7 @@ export default async function StatistiquesPage() {
     supabase.from("class_members").select("student_id, class_id"),
     supabase.from("classes").select("id, name, level, filiere_id"),
     supabase.from("filieres").select("id, name"),
-    supabase.from("payments").select("amount"),
+    supabase.from("payments").select("amount").eq("status", "paye"),
     supabase.from("student_finance").select("total_due"),
     supabase.from("session_attendance").select("present"),
     supabase.from("grades").select("score, max_score, coefficient, status"),

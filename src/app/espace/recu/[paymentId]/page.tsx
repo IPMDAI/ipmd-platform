@@ -43,7 +43,7 @@ export default async function RecuPage({
       .maybeSingle(),
     supabase
       .from("payments")
-      .select("amount, kind")
+      .select("amount, kind, status")
       .eq("student_id", payment.student_id),
   ]);
   const isStaff = ["admin", "super_admin", "scolarite"].includes(me?.role ?? "");

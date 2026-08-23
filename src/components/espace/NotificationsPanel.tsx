@@ -72,7 +72,8 @@ export async function NotificationsPanel({ userId }: { userId: string }) {
   const { data: payRows } = await supabase
     .from("payments")
     .select("amount")
-    .eq("student_id", userId);
+    .eq("student_id", userId)
+    .eq("status", "paye");
   const balance =
     Number(finance?.total_due ?? 0) -
     (payRows ?? []).reduce((a, p) => a + Number(p.amount), 0);

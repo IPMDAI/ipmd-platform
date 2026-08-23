@@ -86,7 +86,7 @@ export function computeFinance(
     tuition_due?: number | null;
     discount_rate?: number | null;
   } | null,
-  payments: { amount: number | string; kind?: string | null }[]
+  payments: { amount: number | string; kind?: string | null; status?: string | null }[]
 ): FinanceState {
   const registrationFee = Number(finance?.registration_fee ?? 0);
   const tuitionDue = Number(finance?.tuition_due ?? 0);
@@ -94,9 +94,14 @@ export function computeFinance(
   const tuitionNet = Math.round(tuitionDue * (1 - discountRate));
   const totalDue = registrationFee + tuitionNet;
 
+  // INVARIANT (W0) : seuls les paiements VALIDÉS (status='paye') sont comptés
+  // dans les montants encaissés / solde / décision d'activation d'accès. Les
+  // paiements 'en_attente' ou 'annule' sont ignorés. (Rétrocompat : les lignes
+  // sans status explicite sont traitées comme 'paye' — historique 100 % 'paye'.)
   let paidInscription = 0;
   let paidScolarite = 0;
   for (const p of payments) {
+    if (p.status != null && p.status !== "paye") continue;
     const amt = Number(p.amount);
     if (p.kind === "inscription") paidInscription += amt;
     else paidScolarite += amt;
@@ -116,6 +121,21 @@ export function computeFinance(
     registrationSettled: registrationFee > 0 ? paidInscription >= registrationFee : true,
     tuitionSettled: tuitionNet > 0 ? paidScolarite >= tuitionNet : false,
   };
+}
+
+/**
+ * Décide l'`access_state` automatique après (re)calcul financier (W0).
+ * Un blocage MANUEL (`bloque`) n'est jamais levé automatiquement ; sinon l'accès
+ * est `actif` si l'inscription est intégralement soldée (paiements VALIDÉS
+ * uniquement), `pause` sinon. Symétrique : un paiement passé annule/en_attente
+ * qui rend l'inscription non soldée repasse l'accès en `pause`.
+ */
+export function nextAccessState(
+  current: string | null | undefined,
+  registrationSettled: boolean
+): "bloque" | "actif" | "pause" {
+  if (current === "bloque") return "bloque";
+  return registrationSettled ? "actif" : "pause";
 }
 
 /** Déduit le statut financier automatique (peut être surchargé manuellement). */

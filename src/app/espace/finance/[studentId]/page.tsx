@@ -70,7 +70,7 @@ export default async function StudentFinancePage({
         .maybeSingle(),
       supabase
         .from("payments")
-        .select("id, amount, method, label, kind, reference, observation, paid_at")
+        .select("id, amount, method, label, kind, reference, observation, paid_at, status")
         .eq("student_id", studentId)
         .order("paid_at", { ascending: false }),
       supabase

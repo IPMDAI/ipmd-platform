@@ -140,7 +140,8 @@ export async function LearnerOverview({ userId }: { userId: string }) {
   const { data: payRows } = await supabase
     .from("payments")
     .select("amount")
-    .eq("student_id", userId);
+    .eq("student_id", userId)
+    .eq("status", "paye");
   const totalDue = Number(finance?.total_due ?? 0);
   const totalPaid = (payRows ?? []).reduce((a, p) => a + Number(p.amount), 0);
   let scolarite: { label: string; cls: string };

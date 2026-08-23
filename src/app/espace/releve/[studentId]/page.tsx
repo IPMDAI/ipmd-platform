@@ -43,7 +43,7 @@ export default async function RelevePage({
         .maybeSingle(),
       supabase
         .from("payments")
-        .select("id, amount, method, label, kind, reference, paid_at")
+        .select("id, amount, method, label, kind, reference, paid_at, status")
         .eq("student_id", studentId)
         .order("paid_at", { ascending: true }),
     ]);

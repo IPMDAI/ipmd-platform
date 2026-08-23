@@ -30,6 +30,7 @@ export default async function MesPaiementsPage() {
         .from("payments")
         .select("id, amount, method, label, paid_at")
         .eq("student_id", userId)
+        .eq("status", "paye")
         .order("paid_at", { ascending: false }),
       supabase
         .from("payment_schedules")
