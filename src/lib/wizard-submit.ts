@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { sendCandidatureConfirmation } from "@/lib/candidature-emails";
 
 /**
  * Envoi réel d'une candidature depuis le wizard /admission/wizard.
@@ -155,5 +156,12 @@ export async function submitWizardCandidature(
   if (!data || typeof data !== "string") {
     return { ok: false, code: "ERREUR", message: MESSAGES.ERREUR };
   }
+
+  // Lot 1 — Confirmation candidat + notification staff (best-effort STRICT :
+  // la fonction ne lève jamais ; le `.catch` est une ceinture supplémentaire).
+  // La candidature est déjà enregistrée : aucun échec d'email ne doit la
+  // transformer en erreur côté candidat.
+  await sendCandidatureConfirmation(data).catch(() => {});
+
   return { ok: true, requestId: data };
 }
