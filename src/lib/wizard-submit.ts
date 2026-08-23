@@ -37,6 +37,9 @@ export type WizardSubmitPayload = {
     organization: string;
     sector: string;
     experience_years: string;
+    /** Champs SeniorsHub (facultatifs) — persistés côté RPC uniquement si universe='seniorshub'. */
+    senior_expertise: string;
+    senior_goal: string;
   };
   project: {
     campus_intake_id: string;

@@ -26,6 +26,9 @@ export type Background = {
   organization: string; // Organisation / entreprise (facultatif)
   sector: string; // Secteur d'activité (facultatif)
   experienceYears: string; // Années d'expérience (facultatif, numérique)
+  // ── Champs SeniorsHub (facultatifs, affichés uniquement pour seniorshub) ──
+  seniorExpertise: string; // Domaine d'expérience ou d'expertise → background.senior_expertise
+  seniorGoal: string; // Objectif de formation → background.senior_goal
 };
 
 export const EMPTY_BACKGROUND: Background = {
@@ -39,6 +42,8 @@ export const EMPTY_BACKGROUND: Background = {
   organization: "",
   sector: "",
   experienceYears: "",
+  seniorExpertise: "",
+  seniorGoal: "",
 };
 
 export type BackgroundVariant = "campus" | "pro" | "executive" | "certificat";

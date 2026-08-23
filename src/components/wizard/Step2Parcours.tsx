@@ -324,10 +324,12 @@ function BgSectorCombo({
 export function Step2Parcours({
   value,
   variant,
+  universe,
   onChange,
 }: {
   value: Background;
   variant: BackgroundVariant;
+  universe?: string | null;
   onChange: (next: Background) => void;
 }) {
   const [touched, setTouched] = useState<Partial<Record<Field, boolean>>>({});
@@ -338,6 +340,7 @@ export function Step2Parcours({
   const err = (k: Field) => (touched[k] ? errors[k] : undefined);
 
   const isCert = variant === "certificat";
+  const isSenior = universe === "seniorshub";
   const acad = academicRequired(variant);
   const sit = situationSpec(variant);
 
@@ -357,6 +360,34 @@ export function Step2Parcours({
     </div>
   ) : null;
 
+  // Champs SeniorsHub (facultatifs) — affichés uniquement pour seniorshub.
+  const seniorFields = isSenior ? (
+    <>
+      <div className="sm:col-span-2">
+        <BgText
+          id="bg-seniorExpertise"
+          label="Domaine d'expérience ou d'expertise"
+          hint="Facultatif — votre métier, secteur ou savoir-faire principal."
+          placeholder="Ex. Comptabilité, enseignement, artisanat, gestion d'équipe…"
+          value={value.seniorExpertise}
+          onChange={set("seniorExpertise")}
+          onBlur={blur("seniorExpertise")}
+        />
+      </div>
+      <div className="sm:col-span-2">
+        <BgText
+          id="bg-seniorGoal"
+          label="Que souhaitez-vous apprendre ou développer avec cette formation ?"
+          hint="Facultatif — votre objectif principal."
+          placeholder="Ex. Vendre en ligne, transmettre mon savoir, utiliser l'IA…"
+          value={value.seniorGoal}
+          onChange={set("seniorGoal")}
+          onBlur={blur("seniorGoal")}
+        />
+      </div>
+    </>
+  ) : null;
+
   return (
     <div>
       <h2 className="text-xl font-extrabold tracking-tight text-ipmd-black sm:text-2xl">
@@ -374,6 +405,7 @@ export function Step2Parcours({
             <BgLevelSelect value={value.lastLevel} onChange={set("lastLevel")} onBlur={blur("lastLevel")} error={err("lastLevel")} />
             <BgDiplomaSelect hint="Facultatif" value={value.lastDiploma} onChange={set("lastDiploma")} onBlur={blur("lastDiploma")} error={err("lastDiploma")} />
             {situationField}
+            {seniorFields}
           </>
         ) : variant === "pro" ? (
           <>

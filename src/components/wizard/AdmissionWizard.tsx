@@ -194,6 +194,8 @@ export function AdmissionWizard({ catalog }: { catalog: WizardCatalog }) {
           organization: background.organization,
           sector: background.sector,
           experience_years: background.experienceYears,
+          senior_expertise: background.seniorExpertise,
+          senior_goal: background.seniorGoal,
         },
         project: {
           campus_intake_id: project.campusIntakeId,
@@ -312,7 +314,7 @@ export function AdmissionWizard({ catalog }: { catalog: WizardCatalog }) {
         ) : step === 1 ? (
           <Step1Identite value={identity} minAge={minAge} onChange={setIdentity} />
         ) : step === 2 ? (
-          <Step2Parcours value={background} variant={variant} onChange={setBackground} />
+          <Step2Parcours value={background} variant={variant} universe={universe} onChange={setBackground} />
         ) : step === 3 ? (
           <Step3Projet
             universe={universe}

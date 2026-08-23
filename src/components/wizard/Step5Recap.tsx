@@ -255,6 +255,12 @@ export function Step5Recap({
             </>
           )}
           {showSituation && <Row label={sit.label} value={background.currentSituation} />}
+          {universe === "seniorshub" && background.seniorExpertise && (
+            <Row label="Domaine d'expérience ou d'expertise" value={background.seniorExpertise} />
+          )}
+          {universe === "seniorshub" && background.seniorGoal && (
+            <Row label="Objectif de formation" value={background.seniorGoal} />
+          )}
           {variant === "executive" && (
             <>
               <Row label="Organisation / entreprise" value={background.organization} />
