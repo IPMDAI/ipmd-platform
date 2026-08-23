@@ -137,6 +137,17 @@ export function PaymentOptionStep({
         </ul>
       </div>
 
+      {/* Téléchargement de l'échéancier personnalisé (F7) — généré à la demande
+          depuis le choix courant (échelonné/comptant), toujours à jour. */}
+      <a
+        href={`/admission/pack/echeancier/pdf?t=${encodeURIComponent(token)}`}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="mt-4 flex min-h-[44px] w-full items-center justify-center gap-2 rounded-full bg-ipmd-black px-6 text-sm font-semibold text-white transition-opacity hover:opacity-90"
+      >
+        ⬇ Télécharger mon échéancier (PDF)
+      </a>
+
       {/* Frais d'inscription — séparés, hors remise, sous 72 h */}
       <p className="mt-3 rounded-xl bg-amber-50 px-3 py-2 text-[12px] leading-relaxed text-amber-800 ring-1 ring-amber-200">
         Frais d'inscription : <strong>{formatFCFA(registrationFee)}</strong> — séparés de la

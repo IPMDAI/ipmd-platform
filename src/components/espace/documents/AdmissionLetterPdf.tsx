@@ -195,6 +195,9 @@ function AdmissionDocument({ d }: { d: AdmissionLetterPdfData }) {
           <Text style={s.para}>
             <Text style={s.bold}>Prochaine étape :</Text> vous recevrez ensuite votre pack d&apos;admission complet, avec les documents à consulter/valider et les modalités de paiement.
           </Text>
+          <Text style={s.para}>
+            <Text style={s.bold}>Deux options de paiement</Text> de la scolarité vous seront proposées : <Text style={s.bold}>Échelonné</Text> (10 mensualités) ou <Text style={s.bold}>Comptant</Text> (−15 % sur la scolarité). Vous choisirez votre option dans votre espace d&apos;admission, où votre échéancier personnalisé sera téléchargeable. Les frais d&apos;inscription restent séparés et inchangés.
+          </Text>
 
           <Text style={s.docs}>
             Documents d&apos;admission : lettre d&apos;admission, proforma/frais et

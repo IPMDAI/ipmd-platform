@@ -405,6 +405,10 @@ export async function sendAdmission(
   } catch {
     // génération PDF échouée : on enverra au moins l'email HTML
   }
+  // NB (F7 révisé) : l'échéancier n'est PAS joint à l'email d'admission — le
+  // candidat choisit d'abord son option (Échelonné/Comptant) dans le pack, puis
+  // télécharge son échéancier personnalisé à jour depuis le pack. Éviter tout
+  // document obsolète.
 
   const sent = await sendScolariteEmail(rr.to, subject, html, attachments);
   if (sent < 1) {

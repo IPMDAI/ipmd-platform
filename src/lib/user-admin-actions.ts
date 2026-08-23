@@ -8,6 +8,7 @@ import { formatFCFA } from "@/lib/finance";
 import { hasAdmissionSnapshot, validateAdmissionSnapshot } from "@/lib/admission-snapshot";
 import { validateScheduleSnapshot } from "@/lib/admission-schedule";
 import { officialAssetAttachment } from "@/lib/secure-assets";
+import { revokePackLinks } from "@/lib/admission-pack-link";
 import {
   canSendEmail,
   emailDocument,
@@ -148,7 +149,7 @@ export async function inviteFromCandidature(
   // sans snapshot), on retombe sur les valeurs du formulaire.
   const { data: pack } = await ctx.supabase
     .from("admission_packs")
-    .select("class_id, accepted_level, registration_fee, tuition_due, academic_year, schedule_json")
+    .select("id, class_id, accepted_level, registration_fee, tuition_due, academic_year, schedule_json")
     .eq("candidature_id", candidatureId)
     .maybeSingle();
   const snap = hasAdmissionSnapshot(pack) ? pack! : null;
@@ -498,6 +499,18 @@ export async function inviteFromCandidature(
     .from("inscription_requests")
     .update({ status: "inscrit" })
     .eq("id", candidatureId);
+
+  // 🔒 VERROU (F7) : révoque les liens du pack → le candidat ne peut plus changer
+  // son option de paiement (schedule_json) après matérialisation. Best-effort :
+  // un échec de révocation ne doit pas invalider l'inscription déjà finalisée.
+  const packId = (pack as { id?: string } | null)?.id;
+  if (packId) {
+    try {
+      await revokePackLinks(packId);
+    } catch {
+      // révocation best-effort
+    }
+  }
 
   revalidatePath("/espace/candidatures");
   revalidatePath("/espace/utilisateurs");

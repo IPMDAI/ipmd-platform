@@ -185,10 +185,26 @@ export async function setPaymentOption(
 
   const { data: pack } = await admin
     .from("admission_packs")
-    .select("academic_year, accepted_level, registration_fee, tuition_due, schedule_json")
+    .select("candidature_id, academic_year, accepted_level, registration_fee, tuition_due, schedule_json")
     .eq("id", link.packId)
     .maybeSingle();
   if (!pack) return { ok: false, message: "Pack introuvable." };
+
+  // 🔒 VERROU (F7) : une fois l'inscription finalisée, le choix de paiement est
+  // figé (schedule_json matérialisé dans payment_schedules). On refuse toute
+  // modification pour éviter toute divergence avec l'échéancier matérialisé.
+  const { data: cand } = await admin
+    .from("inscription_requests")
+    .select("status")
+    .eq("id", pack.candidature_id as string)
+    .maybeSingle();
+  if (cand?.status === "inscrit") {
+    return {
+      ok: false,
+      message:
+        "Choix de paiement verrouillé : votre inscription est finalisée. Contactez la scolarité pour toute modification.",
+    };
+  }
 
   const sj = (pack.schedule_json ?? {}) as { tuition_official?: number };
   const tuitionOfficial =
