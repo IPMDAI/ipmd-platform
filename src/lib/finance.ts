@@ -140,11 +140,12 @@ export type Installment = {
   due_date: string;
 };
 
-export type SchedRow = Installment & { status: "payee" | "a_venir" | "retard" };
+export type SchedRow = Installment & { status: "payee" | "a_venir" | "due" | "retard" };
 
 export const SCHED_STATUS: Record<SchedRow["status"], { label: string; cls: string }> = {
   payee: { label: "Payée", cls: "bg-green-50 text-green-700" },
   a_venir: { label: "À venir", cls: "bg-black/5 text-black/55" },
+  due: { label: "À régler aujourd'hui", cls: "bg-amber-50 text-amber-700" },
   retard: { label: "En retard", cls: "bg-ipmd-red/10 text-ipmd-red" },
 };
 
@@ -164,6 +165,7 @@ export function computeSchedule(
     let status: SchedRow["status"];
     if (totalPaid >= cumulative) status = "payee";
     else if (it.due_date < today) status = "retard";
+    else if (it.due_date === today) status = "due"; // échéance du jour non couverte
     else status = "a_venir";
     return { ...it, status };
   });

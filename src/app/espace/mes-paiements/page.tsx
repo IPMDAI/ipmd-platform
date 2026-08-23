@@ -156,10 +156,16 @@ export default async function MesPaiementsPage() {
                 className={`rounded-full px-3 py-1 text-xs font-bold ${
                   next.status === "retard"
                     ? "bg-ipmd-red text-white"
-                    : "bg-white/15 text-white"
+                    : next.status === "due"
+                      ? "bg-amber-400 text-ipmd-black"
+                      : "bg-white/15 text-white"
                 }`}
               >
-                {next.status === "retard" ? "En retard depuis le" : "Avant le"}{" "}
+                {next.status === "retard"
+                  ? "En retard depuis le "
+                  : next.status === "due"
+                    ? "À régler aujourd'hui — "
+                    : "Avant le "}
                 {formatDate(next.due_date)}
               </span>
             </div>
