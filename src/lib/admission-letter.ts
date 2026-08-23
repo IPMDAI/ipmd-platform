@@ -29,6 +29,8 @@ export type AdmissionLetterData = {
   tuitionDue: number | null;
   testMode: boolean;
   packUrl?: string | null;
+  /** Deadline 72 h formatée (« au plus tard le … à …h… »), ou null. */
+  deadlineText?: string | null;
 };
 
 const TEST_BANNER = `<p style="margin:16px 0 0;padding:8px 12px;background:#fef2f2;border:1px solid #fecaca;border-radius:8px;color:#b91c1c;font-size:12px;font-weight:600">— EMAIL DE TEST — modèle en cours de validation, ne pas tenir compte. —</p>`;
@@ -79,6 +81,11 @@ export function buildAdmissionEmail(d: AdmissionLetterData): {
       sera alors téléchargeable. Les frais d'inscription restent séparés et
       inchangés.
     </p>
+    ${
+      d.deadlineText
+        ? `<p style="margin:0 0 12px;padding:8px 12px;background:#fff7ed;border:1px solid #fed7aa;border-radius:8px;color:#9a3412;font-size:13px;line-height:1.5">⏳ <strong>Délai de confirmation :</strong> les frais d'inscription de <strong>${formatFCFA(d.registrationFee)}</strong> sont à régler <strong>${escapeHtml(d.deadlineText)}</strong> (sous 72 h) pour garantir votre place.</p>`
+        : ""
+    }
     <p style="margin:0 0 12px;color:#374151;font-size:14px">Votre lettre d'admission officielle est jointe à cet email (PDF).</p>
     ${
       d.packUrl

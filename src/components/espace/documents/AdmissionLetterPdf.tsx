@@ -31,6 +31,7 @@ export type AdmissionLetterPdfData = {
   signatoryTitle: string;
   signatoryName: string;
   testMode: boolean;
+  deadlineText?: string | null;
   qrSrc?: string;
   signatureSrc?: string;
   cachetSrc?: string;
@@ -191,6 +192,11 @@ function AdmissionDocument({ d }: { d: AdmissionLetterPdfData }) {
             ))}
           </View>
           <Text style={s.disclaimer}>⚠ {SCHEDULE_DISCLAIMER}</Text>
+          {d.deadlineText ? (
+            <Text style={s.disclaimer}>
+              ⏳ Délai de confirmation : frais d&apos;inscription à régler {d.deadlineText} (sous 72 h) pour garantir la place.
+            </Text>
+          ) : null}
 
           <Text style={s.para}>
             <Text style={s.bold}>Prochaine étape :</Text> vous recevrez ensuite votre pack d&apos;admission complet, avec les documents à consulter/valider et les modalités de paiement.

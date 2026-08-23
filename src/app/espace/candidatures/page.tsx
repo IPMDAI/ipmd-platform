@@ -7,6 +7,7 @@ import { Container } from "@/components/ui/Container";
 import { CandidatureActions } from "@/components/espace/CandidatureActions";
 import { CandidatureInvite } from "@/components/espace/CandidatureInvite";
 import { ScheduleRepair } from "@/components/espace/ScheduleRepair";
+import { AdmissionDeadlineAdmin } from "@/components/espace/AdmissionDeadlineAdmin";
 import { validateScheduleSnapshot } from "@/lib/admission-schedule";
 import { DossierLinkActions } from "@/components/espace/DossierLinkActions";
 import { CandidatureSearch } from "@/components/espace/CandidatureSearch";
@@ -554,6 +555,14 @@ export default async function CandidaturesPage({
                         email={c.email}
                       />
                     )}
+
+                  {/* Deadline 72 h — badge « délai dépassé » + renouvellement (silencieux) */}
+                  {isSuper && c.status === "en_attente_paiement" && (
+                    <AdmissionDeadlineAdmin
+                      candidatureId={c.id}
+                      admissionSentAt={wf.get(c.id)?.admission_sent_at ?? null}
+                    />
+                  )}
 
                   {/* F4b — Réparation legacy de l'échéancier : pack diplômant
                       (tuition_due connu) sans échéancier valide → avertissement +

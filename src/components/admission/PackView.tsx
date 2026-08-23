@@ -23,6 +23,8 @@ export function PackView({
   conventionStatus = "non_envoyee",
   signatureMethod = null,
   schedule = null,
+  deadlineText = null,
+  deadlineExpired = false,
 }: {
   name: string;
   program: string | null;
@@ -36,6 +38,8 @@ export function PackView({
   reglementAcceptedAt?: string | null;
   conventionStatus?: string;
   signatureMethod?: string | null;
+  deadlineText?: string | null;
+  deadlineExpired?: boolean;
 }) {
   const total = registrationFee + (tuitionDue ?? 0);
   const rows: Array<[string, string]> = [
@@ -131,6 +135,8 @@ export function PackView({
                   token={token}
                   schedule={schedule}
                   registrationFee={registrationFee}
+                  deadlineText={deadlineText}
+                  deadlineExpired={deadlineExpired}
                 />
               </div>
             </div>

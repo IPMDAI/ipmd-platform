@@ -29,6 +29,7 @@ export type AdmissionPdfInput = {
   registrationFee: number;
   tuitionDue: number | null;
   testMode: boolean;
+  deadlineText?: string | null;
 };
 
 /**
@@ -57,6 +58,7 @@ export async function buildAdmissionPdf(d: AdmissionPdfInput): Promise<Buffer> {
     academicYear: d.academicYear,
     registrationFee: d.registrationFee,
     tuitionDue: d.tuitionDue,
+    deadlineText: d.deadlineText ?? null,
     longDate,
     logoSrc: logoDataUri(),
     signatoryTitle: SIGNATORY.title,

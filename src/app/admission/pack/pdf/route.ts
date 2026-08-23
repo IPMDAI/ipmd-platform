@@ -1,6 +1,7 @@
 import { verifyPackToken } from "@/lib/admission-pack-link";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { buildAdmissionPdf } from "@/lib/admission-pdf";
+import { admissionDeadlineText } from "@/lib/admission-deadline";
 import { TEST_MODE } from "@/lib/admission-config";
 
 export const runtime = "nodejs";
@@ -33,7 +34,7 @@ export async function GET(req: Request) {
 
   const { data: cand } = await admin
     .from("inscription_requests")
-    .select("full_name, program_interest")
+    .select("full_name, program_interest, admission_sent_at")
     .eq("id", pack.candidature_id)
     .single();
 
@@ -45,6 +46,7 @@ export async function GET(req: Request) {
     registrationFee: Number(pack.registration_fee ?? 0),
     tuitionDue: pack.tuition_due != null ? Number(pack.tuition_due) : null,
     testMode: TEST_MODE,
+    deadlineText: admissionDeadlineText((cand?.admission_sent_at as string) ?? null),
   });
 
   const base = slugify(`${cand?.full_name ?? "admission"}`) || "admission";

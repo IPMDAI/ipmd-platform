@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { formatFCFA } from "@/lib/finance";
 import { setPaymentOption } from "@/lib/admission-actions";
 import type { ScheduleSnapshot, PaymentOption } from "@/lib/admission-schedule";
+import { ADMISSION_EXPIRED_MESSAGE } from "@/lib/admission-deadline";
 
 /** Formate une date ISO (YYYY-MM-DD) en JJ/MM/AAAA pour le candidat. */
 function frDate(d: string): string {
@@ -22,10 +23,14 @@ export function PaymentOptionStep({
   token,
   schedule,
   registrationFee,
+  deadlineText = null,
+  deadlineExpired = false,
 }: {
   token: string;
   schedule: ScheduleSnapshot | null;
   registrationFee: number;
+  deadlineText?: string | null;
+  deadlineExpired?: boolean;
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
@@ -147,6 +152,18 @@ export function PaymentOptionStep({
       >
         ⬇ Télécharger mon échéancier (PDF)
       </a>
+
+      {/* Délai de confirmation 72 h — dépassé : message clair (place non garantie) */}
+      {deadlineExpired ? (
+        <p className="mt-3 rounded-xl bg-ipmd-red/10 px-3 py-2 text-[12px] font-medium leading-relaxed text-ipmd-red ring-1 ring-ipmd-red/20">
+          ⏳ {ADMISSION_EXPIRED_MESSAGE}
+        </p>
+      ) : deadlineText ? (
+        <p className="mt-3 rounded-xl bg-ipmd-light px-3 py-2 text-[12px] leading-relaxed text-black/70 ring-1 ring-black/10">
+          ⏳ <strong>Délai de confirmation :</strong> frais d'inscription à régler {deadlineText}{" "}
+          pour garantir votre place.
+        </p>
+      ) : null}
 
       {/* Frais d'inscription — séparés, hors remise, sous 72 h */}
       <p className="mt-3 rounded-xl bg-amber-50 px-3 py-2 text-[12px] leading-relaxed text-amber-800 ring-1 ring-amber-200">

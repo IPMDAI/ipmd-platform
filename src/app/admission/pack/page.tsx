@@ -4,6 +4,7 @@ import { verifyPackToken } from "@/lib/admission-pack-link";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { PackView } from "@/components/admission/PackView";
 import type { ScheduleSnapshot } from "@/lib/admission-schedule";
+import { admissionDeadlineText, isAdmissionExpired } from "@/lib/admission-deadline";
 
 export const metadata: Metadata = {
   title: "Mon pack d'admission — IPMD",
@@ -58,9 +59,14 @@ export default async function PackPage({
 
   const { data: cand } = await admin
     .from("inscription_requests")
-    .select("full_name, program_interest")
+    .select("full_name, program_interest, admission_sent_at")
     .eq("id", pack.candidature_id)
     .single();
+
+  // Deadline 72 h (calculée depuis l'ancre admission_sent_at ; jamais stockée).
+  const admissionSentAt = (cand?.admission_sent_at as string) ?? null;
+  const deadlineText = admissionDeadlineText(admissionSentAt);
+  const deadlineExpired = isAdmissionExpired(admissionSentAt);
 
   // Trace de consultation.
   const now = new Date().toISOString();
@@ -86,6 +92,8 @@ export default async function PackPage({
       conventionStatus={(pack.convention_status as string) ?? "non_envoyee"}
       signatureMethod={(pack.signature_method as string) ?? null}
       schedule={(pack.schedule_json as ScheduleSnapshot | null) ?? null}
+      deadlineText={deadlineText}
+      deadlineExpired={deadlineExpired}
     />
   );
 }

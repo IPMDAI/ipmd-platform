@@ -13,6 +13,7 @@ import { buildAdmissionEmail, buildRefusalEmail } from "@/lib/admission-letter";
 import { buildAdmissionPdf } from "@/lib/admission-pdf";
 import { generatePackLink, packLinkUrl } from "@/lib/admission-pack-link";
 import { buildScheduleSnapshot } from "@/lib/admission-schedule";
+import { admissionDeadlineText } from "@/lib/admission-deadline";
 import { sendScolariteEmail, canSendEmail, type EmailAttachment } from "@/lib/email";
 import type { FormResult } from "@/types";
 
@@ -337,6 +338,8 @@ export async function sendAdmission(
   }
 
   const now = new Date().toISOString();
+  // Deadline 72 h (calculée depuis l'ancre = admission_sent_at, posée à `now`).
+  const deadlineText = admissionDeadlineText(now);
 
   // 1. Pack d'admission (upsert, 1 par candidature) → id, puis lien de l'espace
   //    sécurisé. Best-effort : si la table n'existe pas, on continue sans lien.
@@ -381,6 +384,7 @@ export async function sendAdmission(
     tuitionDue: tuitionDue,
     testMode: rr.testMode,
     packUrl,
+    deadlineText,
   });
 
   let attachments: EmailAttachment[] | undefined;
@@ -393,6 +397,7 @@ export async function sendAdmission(
       registrationFee: registrationFee,
       tuitionDue: tuitionDue,
       testMode: rr.testMode,
+      deadlineText,
     });
     attachments = [
       {
@@ -422,6 +427,18 @@ export async function sendAdmission(
   };
   if (!cand.row.decided_at) update.decided_at = now;
   await ctx.supabase.from("inscription_requests").update(update).eq("id", id);
+
+  // Journal (deadline 72 h) : trace l'ENVOI RÉEL (distinct d'un renouvellement
+  // silencieux), APRÈS envoi réussi (le return sent<1 est déjà passé). Utilise
+  // le MÊME instant `now` que admission_sent_at + la deadline email/PDF.
+  // Best-effort : la table admission_events peut ne pas exister.
+  try {
+    await ctx.supabase
+      .from("admission_events")
+      .insert({ candidature_id: id, kind: "admission_sent", actor_id: ctx.userId, created_at: now, note: null });
+  } catch {
+    // journal absent : sans incidence sur l'envoi
+  }
 
   revalidate();
   return {
@@ -671,5 +688,49 @@ export async function repairPackSchedule(
       installments: snap.schedule.installments.length,
       total: snap.schedule.registration_fee + snap.schedule.tuition_net,
     },
+  };
+}
+
+/**
+ * Renouvelle le DÉLAI d'admission (72 h) — action STRICTEMENT email-free.
+ *
+ * ⚠️ Ne renvoie AUCUN email, AUCUNE lettre, AUCUN nouveau lien de pack. Remet
+ * seulement l'ancre `admission_sent_at = now()` (le délai repart) et journalise
+ * un événement `deadline_renewed` (acteur/date/motif) dans `admission_events`.
+ * Le statut reste `en_attente_paiement` (jamais modifié). Distinct de
+ * `sendAdmission` (envoi réel) et de `sendPackLink` (renvoi du lien).
+ */
+export async function renewAdmissionDeadline(
+  candidatureId: string,
+  opts?: { note?: string }
+): Promise<FormResult> {
+  const ctx = await getAdmin();
+  if (!ctx) return { ok: false, message: "Action réservée à l'administration." };
+  const admin = createAdminClient();
+  if (!admin) return { ok: false, message: "Service admin non configuré." };
+
+  // RPC ATOMIQUE : un unique renewed_at sert d'ancre ET de created_at de
+  // l'événement ; si l'audit échoue, la mise à jour du délai est rollbackée.
+  // STRICTEMENT email-free (n'écrit que admission_sent_at + admission_events).
+  // Autorisation admin/super_admin vérifiée ci-dessus (getAdmin) ; la RPC est
+  // réservée à service_role.
+  const { error } = await admin.rpc("renew_admission_deadline", {
+    p_candidature: candidatureId,
+    p_actor: ctx.userId,
+    p_note: opts?.note ?? null,
+  });
+  if (error) {
+    const msg = /en_attente_paiement/.test(error.message)
+      ? "Renouvellement possible uniquement pour une candidature « en attente de paiement »."
+      : /introuvable/.test(error.message)
+        ? "Candidature introuvable."
+        : `Renouvellement échoué : ${error.message}`;
+    return { ok: false, message: msg };
+  }
+
+  revalidate();
+  return {
+    ok: true,
+    message: "Délai d'admission renouvelé (72 h). Aucun email ni document renvoyé.",
   };
 }
