@@ -1,5 +1,8 @@
 import { emailDocument, emailLayout, buildRows, escapeHtml } from "@/lib/email";
 import { getUniverse } from "@/data/universes";
+import { candidatureReference } from "@/lib/candidature-ref";
+
+export { candidatureReference };
 
 /**
  * Composition des emails de confirmation de candidature (Lot 1).
@@ -21,11 +24,6 @@ export type CandidatureRow = {
   academic_year: string | null;
   mode: string | null;
 };
-
-/** Référence candidat lisible, dérivée de l'UUID (stable, opaque). Ex. IPMD-24A46AED. */
-export function candidatureReference(requestId: string): string {
-  return `IPMD-${requestId.slice(0, 8).toUpperCase()}`;
-}
 
 const MODE_LABEL: Record<string, string> = {
   presentiel: "Présentiel",

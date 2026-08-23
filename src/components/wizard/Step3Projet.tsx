@@ -5,6 +5,8 @@ import type { UniverseId } from "@/types";
 import { FORMATION_MODES } from "@/lib/academic";
 import type { BackgroundVariant } from "./background";
 import {
+  CAMPUS_REFERRAL_OPTIONS,
+  CAMPUS_TEXT_MAX,
   campusDiplomaForLevel,
   campusFilieresForLevel,
   campusLevels,
@@ -79,6 +81,128 @@ function ModeField({ value, onChange }: { value: string; onChange: (v: string) =
             </button>
           );
         })}
+      </div>
+    </div>
+  );
+}
+
+/** Questions Projet spécifiques à Campus (Bachelier & Étudiant) — 4 réponses obligatoires. */
+function CampusQuestions({
+  value,
+  onChange,
+}: {
+  value: Project;
+  onChange: (next: Project) => void;
+}) {
+  const set = (k: keyof Project) => (v: string) => onChange({ ...value, [k]: v });
+  const isAutre = value.campusReferralSource === "Autre";
+  const counter = (v: string) => `${v.trim().length}/${CAMPUS_TEXT_MAX}`;
+  const textClass =
+    "mt-1 w-full rounded-xl border border-black/15 bg-white px-3.5 py-2.5 text-sm text-ipmd-black outline-none transition focus:border-ipmd-red focus:ring-2 focus:ring-ipmd-red/20";
+
+  return (
+    <div className="mt-8 border-t border-black/5 pt-6">
+      <p className="text-sm font-bold text-ipmd-black">Votre motivation</p>
+      <p className="mt-0.5 text-[12px] text-black/50">
+        Ces réponses nous aident à mieux comprendre votre projet. Tous les champs sont obligatoires.
+      </p>
+
+      {/* Q1 — Pourquoi cette formation ? */}
+      <div className="mt-4">
+        <label htmlFor="campus-q1" className="text-sm font-semibold text-ipmd-black">
+          Pourquoi avez-vous choisi cette formation ? <span className="text-ipmd-red">*</span>
+        </label>
+        <textarea
+          id="campus-q1"
+          rows={3}
+          maxLength={CAMPUS_TEXT_MAX}
+          value={value.campusMotivationFormation}
+          onChange={(e) => set("campusMotivationFormation")(e.target.value)}
+          className={textClass}
+          placeholder="Expliquez en quelques phrases ce qui vous attire dans cette formation."
+        />
+        <p className="mt-1 text-right text-[11px] text-black/45">{counter(value.campusMotivationFormation)}</p>
+      </div>
+
+      {/* Q2 — Comment avez-vous connu l'IPMD ? */}
+      <div className="mt-4">
+        <label htmlFor="campus-q2" className="text-sm font-semibold text-ipmd-black">
+          Comment avez-vous connu l'IPMD ? <span className="text-ipmd-red">*</span>
+        </label>
+        <select
+          id="campus-q2"
+          value={value.campusReferralSource}
+          onChange={(e) => onChange({ ...value, campusReferralSource: e.target.value, campusReferralOther: "" })}
+          className={textClass}
+        >
+          <option value="">— Sélectionnez —</option>
+          {CAMPUS_REFERRAL_OPTIONS.map((o) => (
+            <option key={o} value={o}>
+              {o}
+            </option>
+          ))}
+        </select>
+        {isAutre && (
+          <input
+            id="campus-q2-other"
+            type="text"
+            maxLength={200}
+            value={value.campusReferralOther}
+            onChange={(e) => set("campusReferralOther")(e.target.value)}
+            className={`${textClass} mt-2`}
+            placeholder="Précisez"
+            aria-label="Précisez comment vous avez connu l'IPMD"
+          />
+        )}
+      </div>
+
+      {/* Q3 — Pourquoi intégrer l'IPMD / projet professionnel ? */}
+      <div className="mt-4">
+        <label htmlFor="campus-q3" className="text-sm font-semibold text-ipmd-black">
+          Pourquoi avez-vous choisi d'intégrer l'IPMD pour vos études professionnelles ?{" "}
+          <span className="text-ipmd-red">*</span>
+        </label>
+        <textarea
+          id="campus-q3"
+          rows={3}
+          maxLength={CAMPUS_TEXT_MAX}
+          value={value.campusMotivationIpmd}
+          onChange={(e) => set("campusMotivationIpmd")(e.target.value)}
+          className={textClass}
+          placeholder="Décrivez votre projet professionnel et pourquoi l'IPMD y répond."
+        />
+        <p className="mt-1 text-right text-[11px] text-black/45">{counter(value.campusMotivationIpmd)}</p>
+      </div>
+
+      {/* Q4 — Poursuite chez un partenaire à l'étranger ? */}
+      <div className="mt-4">
+        <p className="text-sm font-semibold text-ipmd-black">
+          Envisagez-vous de poursuivre vos études à l'étranger chez l'un de nos partenaires, après quelques
+          années à l'IPMD ? <span className="text-ipmd-red">*</span>
+        </p>
+        <div className="mt-2 grid grid-cols-2 gap-2 sm:max-w-xs">
+          {[
+            { v: "oui", label: "Oui" },
+            { v: "non", label: "Non" },
+          ].map((opt) => {
+            const active = value.campusPartnerAbroad === opt.v;
+            return (
+              <button
+                key={opt.v}
+                type="button"
+                onClick={() => set("campusPartnerAbroad")(opt.v)}
+                className={`flex items-center justify-center gap-2 rounded-xl border p-3 text-sm font-medium transition ${
+                  active
+                    ? "border-ipmd-red bg-ipmd-red/[0.04] ring-2 ring-ipmd-red/30 text-ipmd-black"
+                    : "border-black/15 bg-white text-black/70 hover:border-black/30"
+                }`}
+              >
+                <Radio active={active} />
+                {opt.label}
+              </button>
+            );
+          })}
+        </div>
       </div>
     </div>
   );
@@ -300,6 +424,9 @@ export function Step3Projet({
 
         {/* 4) Mode de formation */}
         <ModeField value={value.mode} onChange={(m) => onChange({ ...value, mode: m })} />
+
+        {/* 5) Questions Projet Campus (Bachelier & Étudiant) */}
+        <CampusQuestions value={value} onChange={onChange} />
       </div>
     );
   }

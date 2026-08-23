@@ -54,7 +54,14 @@ export type CertificatItem = {
 
 // ── Étape 4 : profils documentaires (data-driven) ──
 export type DocRequirement = "required" | "optional" | "conditional";
-export type DocProfileRow = { docKey: string; requirement: DocRequirement; sortOrder: number };
+export type DocProfileRow = {
+  docKey: string;
+  requirement: DocRequirement;
+  sortOrder: number;
+  /** Overrides par profil (document_profiles). NULL = repli sur document_types. */
+  maxFiles?: number | null;
+  label?: string | null;
+};
 export type DocLine = {
   docKey: string;
   label: string;
@@ -118,6 +125,12 @@ export type Project = {
   certIntakeId: string; // Session certificat choisie (Octobre/Février) — étape intermédiaire
   certOfferingId: string; // catalog_offering_id résolu (item × session)
   mode: string; // FORMATION_MODES: presentiel | distance | hybride (obligatoire)
+  // ── Campus (Bachelier & Étudiant) — questions Étape 3, obligatoires pour campus ──
+  campusMotivationFormation: string; // Pourquoi cette formation ? (≤500)
+  campusReferralSource: string; // Comment avez-vous connu l'IPMD ? (liste)
+  campusReferralOther: string; // Précision si « Autre »
+  campusMotivationIpmd: string; // Pourquoi intégrer l'IPMD / projet pro ? (≤500)
+  campusPartnerAbroad: string; // Poursuite chez un partenaire à l'étranger : "oui" | "non"
 };
 
 export const EMPTY_PROJECT: Project = {
@@ -134,7 +147,43 @@ export const EMPTY_PROJECT: Project = {
   certIntakeId: "",
   certOfferingId: "",
   mode: "",
+  campusMotivationFormation: "",
+  campusReferralSource: "",
+  campusReferralOther: "",
+  campusMotivationIpmd: "",
+  campusPartnerAbroad: "",
 };
+
+/** Étape 3 Campus — « Comment avez-vous connu l'IPMD ? » (liste + « Autre »). */
+export const CAMPUS_REFERRAL_OPTIONS = [
+  "Réseaux sociaux",
+  "Recherche Google / Internet",
+  "Site web IPMD",
+  "Bouche-à-oreille",
+  "Ami / ancien étudiant",
+  "Établissement scolaire / enseignant",
+  "Salon / événement / conférence",
+  "Publicité",
+  "Partenaire / entreprise",
+  "Autre",
+] as const;
+
+/** Limite de caractères des réponses libres Campus (Q1/Q3). Doit refléter la RPC v8. */
+export const CAMPUS_TEXT_MAX = 500;
+
+/** Les 4 réponses Projet Campus sont-elles valides ? (obligatoires + longueurs) */
+export function campusAnswersValid(p: Project): boolean {
+  const q1 = p.campusMotivationFormation.trim();
+  const q3 = p.campusMotivationIpmd.trim();
+  const ref = p.campusReferralSource.trim();
+  const partner = p.campusPartnerAbroad.trim();
+  if (!q1 || q1.length > CAMPUS_TEXT_MAX) return false;
+  if (!q3 || q3.length > CAMPUS_TEXT_MAX) return false;
+  if (!ref) return false;
+  if (ref === "Autre" && !p.campusReferralOther.trim()) return false;
+  if (partner !== "oui" && partner !== "non") return false;
+  return true;
+}
 
 /** Mode de formation valide (source canonique FORMATION_MODES). */
 export const isValidMode = (mode: string) => FORMATION_MODES.some((m) => m.value === mode);
@@ -296,7 +345,10 @@ export function isProjectValid(
   variant: BackgroundVariant,
   catalog: WizardCatalog,
 ): boolean {
-  return isProgramSelected(p, universe, variant, catalog) && isValidMode(p.mode);
+  if (!isProgramSelected(p, universe, variant, catalog) || !isValidMode(p.mode)) return false;
+  // Campus : les 4 réponses Projet sont obligatoires.
+  if (variant === "campus" && !campusAnswersValid(p)) return false;
+  return true;
 }
 
 /**
@@ -396,9 +448,11 @@ export function documentLinesForProfile(
     .sort((a, b) => a.sortOrder - b.sortOrder)
     .map((r) => ({
       docKey: r.docKey,
-      label: catalog.documentTypes[r.docKey] ?? r.docKey,
+      // Override par profil (document_profiles.label) sinon libellé global (document_types).
+      label: (r.label ?? catalog.documentTypes[r.docKey]) ?? r.docKey,
       requirement: r.requirement,
-      maxFiles: maxFilesForDoc(r.docKey, catalog),
+      // Override par profil (document_profiles.max_files) sinon cardinalité globale.
+      maxFiles: r.maxFiles ?? maxFilesForDoc(r.docKey, catalog),
     }));
 }
 

@@ -279,6 +279,26 @@ export function Step5Recap({
                   <Row label="Rentrée" value={summary.rentree} />
                   <Row label="Niveau visé" value={summary.niveau} />
                   <Row label="Filière" value={summary.filiere} />
+                  <Row label="Pourquoi cette formation ?" value={project.campusMotivationFormation} />
+                  <Row
+                    label="Comment avez-vous connu l'IPMD ?"
+                    value={
+                      project.campusReferralSource === "Autre"
+                        ? `Autre — ${project.campusReferralOther}`
+                        : project.campusReferralSource
+                    }
+                  />
+                  <Row label="Pourquoi intégrer l'IPMD ?" value={project.campusMotivationIpmd} />
+                  <Row
+                    label="Études à l'étranger (partenaire) ?"
+                    value={
+                      project.campusPartnerAbroad === "oui"
+                        ? "Oui"
+                        : project.campusPartnerAbroad === "non"
+                          ? "Non"
+                          : ""
+                    }
+                  />
                 </>
               ) : variant === "pro" ? (
                 <>

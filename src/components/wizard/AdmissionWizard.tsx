@@ -35,6 +35,7 @@ import {
 import { Step4Pieces } from "./Step4Pieces";
 import { Step5Recap } from "./Step5Recap";
 import { submitWizardCandidature } from "@/lib/wizard-submit";
+import { candidatureReference } from "@/lib/candidature-ref";
 
 /**
  * Coquille du wizard d'admission (étapes 0→5).
@@ -209,6 +210,12 @@ export function AdmissionWizard({ catalog }: { catalog: WizardCatalog }) {
           pro_offering_id: project.proOfferingId,
           exec_offering_id: project.execOfferingId,
           cert_item_id: project.certItemId,
+          // Campus (Étape 3) — persistés côté RPC v8 uniquement si universe='campus'.
+          motivation_formation: project.campusMotivationFormation,
+          referral_source: project.campusReferralSource,
+          referral_other: project.campusReferralOther,
+          motivation_ipmd: project.campusMotivationIpmd,
+          partner_abroad: project.campusPartnerAbroad,
         },
         mode: project.mode,
         documents,
@@ -241,7 +248,7 @@ export function AdmissionWizard({ catalog }: { catalog: WizardCatalog }) {
           </p>
           <p className="mt-4 inline-block rounded-full bg-ipmd-light px-4 py-2 text-xs font-semibold text-black/70">
             Référence de votre candidature :{" "}
-            <span className="font-mono text-ipmd-black">{successId}</span>
+            <span className="font-mono text-ipmd-black">{candidatureReference(successId)}</span>
           </p>
           <p className="mt-4 text-[12px] text-black/45">
             Conservez cette référence pour tout échange avec l'administration.
@@ -253,6 +260,14 @@ export function AdmissionWizard({ catalog }: { catalog: WizardCatalog }) {
 
   return (
     <div className="mx-auto max-w-4xl">
+      {/* Repère permanent — parcours Campus (Bachelier & Étudiant) */}
+      {universe === "campus" && (
+        <div className="mb-4 flex items-center gap-2 rounded-full bg-ipmd-red/[0.06] px-4 py-2 text-sm font-bold text-ipmd-red ring-1 ring-ipmd-red/15">
+          <span aria-hidden="true">🎓</span>
+          Candidature IPMD Campus — Bachelier &amp; Étudiant
+        </div>
+      )}
+
       {/* Fil d'Ariane — pastilles compactes (mobile) → libellés (desktop) */}
       <nav aria-label="Progression" className="mb-6">
         {/* Mobile : « Étape n/6 · Titre » + barre de progression */}

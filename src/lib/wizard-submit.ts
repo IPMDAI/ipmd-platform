@@ -50,6 +50,12 @@ export type WizardSubmitPayload = {
     pro_offering_id: string;
     exec_offering_id: string;
     cert_item_id: string;
+    /** Campus (Étape 3) — persistés côté RPC v8 uniquement si universe='campus'. */
+    motivation_formation: string;
+    referral_source: string;
+    referral_other: string;
+    motivation_ipmd: string;
+    partner_abroad: string;
   };
   /** Mode de formation (FORMATION_MODES) — persisté dans inscription_requests.mode. */
   mode: string;
@@ -78,6 +84,14 @@ export type WizardErrorCode =
   | "NIVEAU_INVALIDE"
   | "PRIX_MANQUANT"
   | "EXPERIENCE_INVALIDE"
+  | "MOTIVATION_FORMATION_MANQUANTE"
+  | "MOTIVATION_FORMATION_TROP_LONGUE"
+  | "MOTIVATION_IPMD_MANQUANTE"
+  | "MOTIVATION_IPMD_TROP_LONGUE"
+  | "REFERRAL_MANQUANT"
+  | "REFERRAL_AUTRE_MANQUANT"
+  | "REFERRAL_AUTRE_TROP_LONG"
+  | "PARTENAIRE_MANQUANT"
   | "SERVICE_INDISPONIBLE"
   | "ERREUR";
 
@@ -107,6 +121,22 @@ const MESSAGES: Record<WizardErrorCode, string> = {
     "Le tarif de cette offre n'est pas disponible. Réessayez ; si le problème persiste, contactez l'IPMD.",
   EXPERIENCE_INVALIDE:
     "Le nombre d'années d'expérience est invalide. Revenez à l'étape « Parcours actuel ».",
+  MOTIVATION_FORMATION_MANQUANTE:
+    "Indiquez pourquoi vous avez choisi cette formation. Revenez à l'étape « Projet ».",
+  MOTIVATION_FORMATION_TROP_LONGUE:
+    "Votre réponse « pourquoi cette formation » dépasse 500 caractères. Revenez à l'étape « Projet ».",
+  MOTIVATION_IPMD_MANQUANTE:
+    "Indiquez pourquoi vous souhaitez intégrer l'IPMD. Revenez à l'étape « Projet ».",
+  MOTIVATION_IPMD_TROP_LONGUE:
+    "Votre réponse « pourquoi l'IPMD » dépasse 500 caractères. Revenez à l'étape « Projet ».",
+  REFERRAL_MANQUANT:
+    "Indiquez comment vous avez connu l'IPMD. Revenez à l'étape « Projet ».",
+  REFERRAL_AUTRE_MANQUANT:
+    "Précisez comment vous avez connu l'IPMD (« Autre »). Revenez à l'étape « Projet ».",
+  REFERRAL_AUTRE_TROP_LONG:
+    "Votre précision « Autre » est trop longue. Revenez à l'étape « Projet ».",
+  PARTENAIRE_MANQUANT:
+    "Indiquez si vous envisagez une poursuite à l'étranger (Oui/Non). Revenez à l'étape « Projet ».",
   DOC_HORS_PROFIL:
     "Un document ne correspond pas au dossier attendu. Revenez à l'étape « Pièces justificatives ».",
   CHEMIN_VIDE: "Un fichier n'a pas été correctement téléversé. Réessayez le dépôt de vos pièces.",
@@ -135,6 +165,14 @@ function codeFromError(msg: string): WizardErrorCode {
     "NIVEAU_INVALIDE",
     "PRIX_MANQUANT",
     "EXPERIENCE_INVALIDE",
+    "MOTIVATION_FORMATION_MANQUANTE",
+    "MOTIVATION_FORMATION_TROP_LONGUE",
+    "MOTIVATION_IPMD_MANQUANTE",
+    "MOTIVATION_IPMD_TROP_LONGUE",
+    "REFERRAL_MANQUANT",
+    "REFERRAL_AUTRE_MANQUANT",
+    "REFERRAL_AUTRE_TROP_LONG",
+    "PARTENAIRE_MANQUANT",
   ];
   return known.find((c) => msg.includes(c)) ?? "ERREUR";
 }

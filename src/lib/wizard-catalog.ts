@@ -44,7 +44,7 @@ export async function loadWizardCatalog(): Promise<WizardCatalog> {
     supabase.from("filieres").select("id,name"),
     supabase.from("catalog_offerings").select("id,item_id,intake_id,level").eq("status", "open"),
     supabase.from("document_types").select("doc_key,label,max_files"),
-    supabase.from("document_profiles").select("profile_key,doc_key,requirement,sort_order"),
+    supabase.from("document_profiles").select("profile_key,doc_key,requirement,sort_order,max_files,label"),
   ]);
 
   // ── Campus : rentrées ouvertes + leurs offres ouvertes (filière · niveau) ──
@@ -130,6 +130,8 @@ export async function loadWizardCatalog(): Promise<WizardCatalog> {
       docKey: r.doc_key as string,
       requirement: r.requirement as DocRequirement,
       sortOrder: (r.sort_order as number) ?? 0,
+      maxFiles: (r.max_files as number) ?? null,
+      label: (r.label as string) ?? null,
     });
   }
 
