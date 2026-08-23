@@ -12,6 +12,7 @@ import { LETTERS_ENABLED, resolveRecipients } from "@/lib/admission-config";
 import { buildAdmissionEmail, buildRefusalEmail } from "@/lib/admission-letter";
 import { buildAdmissionPdf } from "@/lib/admission-pdf";
 import { generatePackLink, packLinkUrl } from "@/lib/admission-pack-link";
+import { buildScheduleSnapshot } from "@/lib/admission-schedule";
 import { sendScolariteEmail, canSendEmail, type EmailAttachment } from "@/lib/email";
 import type { FormResult } from "@/types";
 
@@ -306,6 +307,35 @@ export async function sendAdmission(
     };
   }
 
+  // F2 — Snapshot financier figé (échéancier) depuis les sources LIVE
+  // (installment_plan + tuition + finance_settings). Généré dès qu'un tarif de
+  // scolarité est connu ; en MODE TEST sans tarif, aucun snapshot (envoi inchangé).
+  // Bloque proprement l'admission si le plan est absent/invalide ou le tarif manquant.
+  let scheduleJson: unknown = null;
+  if (tuitionDue != null) {
+    const [{ data: planRows }, { data: fsDisc }] = await Promise.all([
+      ctx.supabase
+        .from("installment_plan")
+        .select("seq, pct, due_date")
+        .eq("academic_year", academicYear ?? ""),
+      ctx.supabase.from("finance_settings").select("lump_sum_discount").eq("id", 1).maybeSingle(),
+    ]);
+    const snap = buildScheduleSnapshot({
+      academicYear,
+      level: acceptedLevel,
+      registrationFee,
+      tuitionOfficial: tuitionDue,
+      lumpSumDiscount: Number(fsDisc?.lump_sum_discount ?? 0.15),
+      planRows: (planRows ?? []).map((r) => ({
+        seq: Number(r.seq),
+        pct: Number(r.pct),
+        due_date: String(r.due_date),
+      })),
+    });
+    if (!snap.ok) return { ok: false, code: snap.code, message: snap.message };
+    scheduleJson = snap.schedule;
+  }
+
   const now = new Date().toISOString();
 
   // 1. Pack d'admission (upsert, 1 par candidature) → id, puis lien de l'espace
@@ -323,6 +353,7 @@ export async function sendAdmission(
           registration_fee: registrationFee,
           tuition_due: tuitionDue,
           academic_year: academicYear,
+          schedule_json: scheduleJson,
           sent_at: now,
           sent_count: 1,
           updated_at: now,
