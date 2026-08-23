@@ -6,11 +6,12 @@ import {
   computerSpecs,
   documentsNote,
   dressCode,
-  enrollmentNotes,
-  feeColumns,
-  feeRows,
+  enrollmentNotes as enrollmentNotesFallback,
+  feeColumns as feeColumnsFallback,
+  feeRows as feeRowsFallback,
   requiredDocuments,
 } from "@/data/scolarite";
+import { loadScolariteGrid } from "@/lib/scolarite-data";
 
 export const metadata: Metadata = {
   title: "Scolarité & financement",
@@ -18,7 +19,13 @@ export const metadata: Metadata = {
     "Frais de scolarité, échéanciers et versements (FCFA), documents requis, matériel et conditions d'admission à l'IPMD.",
 };
 
-export default function ScolaritePage() {
+export default async function ScolaritePage() {
+  // F6 — grille data-driven (DB) ; fallback sur la grille statique si indisponible.
+  const grid = await loadScolariteGrid();
+  const feeColumns = grid?.feeColumns ?? feeColumnsFallback;
+  const feeRows = grid?.feeRows ?? feeRowsFallback;
+  const enrollmentNotes = grid?.enrollmentNotes ?? enrollmentNotesFallback;
+
   return (
     <>
       <PageHero

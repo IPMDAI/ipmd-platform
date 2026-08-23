@@ -150,6 +150,24 @@ export const SCHED_STATUS: Record<SchedRow["status"], { label: string; cls: stri
 };
 
 /**
+ * Répartit une scolarité en montants de tranches selon des pourcentages, avec le
+ * MÊME arrondi que `buildScheduleSnapshot` (arrondi de chaque tranche sauf la
+ * dernière, ajustée pour que la somme = total exact). Source unique partagée par
+ * l'échéancier candidat, la matérialisation et la grille /scolarite (F6).
+ */
+export function computeInstallmentAmounts(tuition: number, pcts: number[]): number[] {
+  let cumul = 0;
+  return pcts.map((p, i) => {
+    if (i < pcts.length - 1) {
+      const a = Math.round((tuition * Number(p)) / 100);
+      cumul += a;
+      return a;
+    }
+    return tuition - cumul;
+  });
+}
+
+/**
  * Calcule le statut de chaque échéance à partir du total déjà payé
  * (imputation cumulative dans l'ordre des dates) et renvoie la prochaine.
  */
