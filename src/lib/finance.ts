@@ -1,11 +1,17 @@
-/** Moyens de paiement acceptés à l'IPMD. */
+/**
+ * Moyens de paiement proposés pour les NOUVEAUX encaissements.
+ * BACI et Chèque ont été retirés des choix (communications & nouveaux paiements).
+ * ⚠️ Rétrocompatibilité : `payments.method` est un texte libre — les anciennes
+ * lignes « Versement BACI » / « Chèque » / « Espèces »… restent intactes en base
+ * et s'affichent normalement ; seule la liste de saisie change.
+ */
 export const PAYMENT_METHODS = [
   "Wave",
-  "Versement BACI",
-  "Versement AFG",
-  "Virement bancaire",
-  "Chèque",
+  "Orange Money",
   "Espèces",
+  "Versement AFG Bank",
+  "Virement AFG Bank",
+  "Autre",
 ];
 
 /** Niveaux par défaut (modifiables via Paramètres financiers). */

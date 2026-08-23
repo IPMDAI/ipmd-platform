@@ -147,7 +147,7 @@ export function AddPaymentForm({ studentId }: { studentId: string }) {
       </div>
       <div className="grid grid-cols-2 gap-3">
         <Field label="Référence" htmlFor="p-ref">
-          <input id="p-ref" name="reference" placeholder="N° transaction / chèque" className={inputBase} />
+          <input id="p-ref" name="reference" placeholder="N° transaction / référence" className={inputBase} />
         </Field>
         <Field label="Libellé" htmlFor="p-label">
           <input id="p-label" name="label" placeholder="Ex. Tranche 1" className={inputBase} />

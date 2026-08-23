@@ -152,8 +152,9 @@ export default async function ProformaPage({
                 Les frais d&apos;inscription ({formatFCFA(fin.registrationFee)}) sont à régler en
                 premier et donnent accès à la plateforme, à la carte étudiant et à
                 l&apos;attestation d&apos;inscription. Le certificat d&apos;inscription est délivré
-                après solde complet de la scolarité. Paiements acceptés : Wave, versement /
-                virement BACI ou AFG, chèque. Document non contractuel — proforma.
+                après solde complet de la scolarité. Paiements acceptés : Wave, Orange Money,
+                versement / virement AFG Bank (RIB officiel AFG Bank de l&apos;IPMD fourni lors de
+                l&apos;inscription). Document non contractuel — proforma.
               </p>
               <p className="mt-2">scolarite@ipmd.pro · ipmd.pro</p>
             </div>

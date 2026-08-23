@@ -7,6 +7,7 @@ import { VALID_ROLES } from "@/lib/dashboards";
 import { formatFCFA } from "@/lib/finance";
 import { hasAdmissionSnapshot, validateAdmissionSnapshot } from "@/lib/admission-snapshot";
 import { validateScheduleSnapshot } from "@/lib/admission-schedule";
+import { officialAssetAttachment } from "@/lib/secure-assets";
 import {
   canSendEmail,
   emailDocument,
@@ -457,7 +458,7 @@ export async function inviteFromCandidature(
     const rows = buildRows(proformaLines);
     proformaBlock = `<p style="margin:0 0 12px">Voici votre facture proforma :</p>
        <table style="width:100%;border-collapse:collapse;font-size:14px">${rows}</table>
-       <p style="margin:16px 0 0">Veuillez procéder à votre <strong>inscription définitive</strong> en réglant les frais d'inscription de <strong>${formatFCFA(registrationFee)}</strong> via Wave, versement / virement BACI ou AFG, ou chèque. Après le paiement, transmettez votre preuve de paiement au service de la scolarité pour validation.</p>`;
+       <p style="margin:16px 0 0">Veuillez procéder à votre <strong>inscription définitive</strong> en réglant les frais d'inscription de <strong>${formatFCFA(registrationFee)}</strong> via <strong>Wave</strong>, <strong>Orange Money</strong> ou par versement / virement <strong>AFG Bank</strong>. Le RIB officiel AFG Bank de l'IPMD est joint à cet email. Après le paiement, transmettez votre preuve de paiement au service de la scolarité pour validation.</p>`;
   }
 
   // Email unique (Resend) : acceptation + proforma (étudiants) + lien mot de passe.
@@ -472,7 +473,21 @@ export async function inviteFromCandidature(
          <p style="color:#9ca3af;font-size:12px;margin-top:10px">Ce lien est personnel. S'il a expiré, utilise « Mot de passe oublié » sur ${SITE_URL}/connexion.</p>
          <p style="color:#9ca3af;font-size:12px;margin-top:12px">scolarite@ipmd.pro · ipmd.pro</p>`
       );
-      emailed = await sendScolariteEmail([email], "IPMD — Dossier accepté & inscription", html);
+      // RIB officiel AFG Bank joint UNIQUEMENT pour les étudiants (contexte paiement
+      // de scolarité). Chargé depuis le bucket privé `official-assets`
+      // (documents/rib-afg.pdf) — remplaçable sans redéploiement, hors Git.
+      // Absent → email envoyé sans pièce jointe (jamais d'échec d'inscription).
+      // Aucune coordonnée bancaire recopiée dans le HTML.
+      const ribAtt = isStudent
+        ? await officialAssetAttachment("documents/rib-afg.pdf", "IPMD-RIB-AFG-Bank.pdf")
+        : null;
+      const attachments = ribAtt ? [ribAtt] : undefined;
+      emailed = await sendScolariteEmail(
+        [email],
+        "IPMD — Dossier accepté & inscription",
+        html,
+        attachments
+      );
     }
   } catch {
     // best-effort
