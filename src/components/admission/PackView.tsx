@@ -3,6 +3,7 @@ import { formatFCFA } from "@/lib/finance";
 import { ReglementConsent } from "@/components/admission/ReglementConsent";
 import { ConventionStep } from "@/components/admission/ConventionStep";
 import { PaymentOptionStep } from "@/components/admission/PaymentOptionStep";
+import { PaymentProofStep } from "@/components/admission/PaymentProofStep";
 import type { ScheduleSnapshot } from "@/lib/admission-schedule";
 
 /**
@@ -25,6 +26,8 @@ export function PackView({
   schedule = null,
   deadlineText = null,
   deadlineExpired = false,
+  proofStatus = null,
+  proofReviewNote = null,
 }: {
   name: string;
   program: string | null;
@@ -40,6 +43,8 @@ export function PackView({
   signatureMethod?: string | null;
   deadlineText?: string | null;
   deadlineExpired?: boolean;
+  proofStatus?: "a_verifier" | "valide" | "rejete" | null;
+  proofReviewNote?: string | null;
 }) {
   const total = registrationFee + (tuitionDue ?? 0);
   const rows: Array<[string, string]> = [
@@ -137,6 +142,21 @@ export function PackView({
                   registrationFee={registrationFee}
                   deadlineText={deadlineText}
                   deadlineExpired={deadlineExpired}
+                />
+              </div>
+            </div>
+
+            {/* Preuve de paiement des frais d'inscription (W2) */}
+            <div className="mt-4">
+              <p className="text-[11px] font-bold uppercase tracking-wider text-ipmd-red">
+                4. Preuve de paiement des frais d&apos;inscription
+              </p>
+              <div className="mt-2">
+                <PaymentProofStep
+                  token={token}
+                  registrationFee={registrationFee}
+                  proofStatus={proofStatus}
+                  reviewNote={proofReviewNote}
                 />
               </div>
             </div>

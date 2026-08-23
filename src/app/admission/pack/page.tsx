@@ -68,6 +68,16 @@ export default async function PackPage({
   const deadlineText = admissionDeadlineText(admissionSentAt);
   const deadlineExpired = isAdmissionExpired(admissionSentAt);
 
+  // Dernière preuve de paiement (W2) pour l'inscription (état affiché au candidat).
+  const { data: lastProof } = await admin
+    .from("payment_proofs")
+    .select("status, review_note")
+    .eq("candidature_id", pack.candidature_id)
+    .eq("kind", "inscription")
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
   // Trace de consultation.
   const now = new Date().toISOString();
   await admin
@@ -94,6 +104,8 @@ export default async function PackPage({
       schedule={(pack.schedule_json as ScheduleSnapshot | null) ?? null}
       deadlineText={deadlineText}
       deadlineExpired={deadlineExpired}
+      proofStatus={(lastProof?.status as "a_verifier" | "valide" | "rejete" | null) ?? null}
+      proofReviewNote={(lastProof?.review_note as string) ?? null}
     />
   );
 }
