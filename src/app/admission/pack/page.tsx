@@ -3,6 +3,7 @@ import Image from "next/image";
 import { verifyPackToken } from "@/lib/admission-pack-link";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { PackView } from "@/components/admission/PackView";
+import type { ScheduleSnapshot } from "@/lib/admission-schedule";
 
 export const metadata: Metadata = {
   title: "Mon pack d'admission — IPMD",
@@ -49,7 +50,7 @@ export default async function PackPage({
   const { data: pack } = await admin
     .from("admission_packs")
     .select(
-      "id, candidature_id, accepted_level, registration_fee, tuition_due, academic_year, first_viewed_at, reglement_accepted_at, convention_status, signature_method"
+      "id, candidature_id, accepted_level, registration_fee, tuition_due, academic_year, schedule_json, first_viewed_at, reglement_accepted_at, convention_status, signature_method"
     )
     .eq("id", link.packId)
     .single();
@@ -84,6 +85,7 @@ export default async function PackPage({
       reglementAcceptedAt={pack.reglement_accepted_at ?? null}
       conventionStatus={(pack.convention_status as string) ?? "non_envoyee"}
       signatureMethod={(pack.signature_method as string) ?? null}
+      schedule={(pack.schedule_json as ScheduleSnapshot | null) ?? null}
     />
   );
 }

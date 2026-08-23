@@ -2,6 +2,8 @@ import Image from "next/image";
 import { formatFCFA } from "@/lib/finance";
 import { ReglementConsent } from "@/components/admission/ReglementConsent";
 import { ConventionStep } from "@/components/admission/ConventionStep";
+import { PaymentOptionStep } from "@/components/admission/PaymentOptionStep";
+import type { ScheduleSnapshot } from "@/lib/admission-schedule";
 
 /**
  * Vue publique (sans compte) du pack d'admission. Mobile-first : lisible dès
@@ -20,6 +22,7 @@ export function PackView({
   reglementAcceptedAt = null,
   conventionStatus = "non_envoyee",
   signatureMethod = null,
+  schedule = null,
 }: {
   name: string;
   program: string | null;
@@ -28,6 +31,7 @@ export function PackView({
   registrationFee: number;
   tuitionDue: number | null;
   token: string;
+  schedule?: ScheduleSnapshot | null;
   packId: string;
   reglementAcceptedAt?: string | null;
   conventionStatus?: string;
@@ -117,12 +121,18 @@ export function PackView({
               </div>
             </div>
 
-            {/* Paiement (Lot D) — à venir */}
-            <div className="mt-4 rounded-xl bg-ipmd-light px-4 py-3 text-xs text-black/55">
-              <p className="font-semibold text-black/70">À venir :</p>
-              <ul className="mt-1 list-inside list-disc space-y-0.5">
-                <li>Modalités de paiement</li>
-              </ul>
+            {/* Paiement — choix Échelonné / Comptant + échéancier (F3) */}
+            <div className="mt-4">
+              <p className="text-[11px] font-bold uppercase tracking-wider text-ipmd-red">
+                3. Paiement de la scolarité
+              </p>
+              <div className="mt-2">
+                <PaymentOptionStep
+                  token={token}
+                  schedule={schedule}
+                  registrationFee={registrationFee}
+                />
+              </div>
             </div>
           </div>
         </div>

@@ -10,6 +10,7 @@ import {
   verifyPackToken,
 } from "@/lib/admission-pack-link";
 import { resolveRecipients } from "@/lib/admission-config";
+import { buildScheduleSnapshot, type PaymentOption } from "@/lib/admission-schedule";
 import { REGLEMENT_VERSION } from "@/data/reglement";
 import {
   sendScolariteEmail,
@@ -158,6 +159,74 @@ export async function sendPackLink(
     message: rr.testMode
       ? `MODE TEST : lien envoyé à ${rr.to[0]} (aucun vrai candidat).`
       : `Lien envoyé à ${cand.email}.`,
+  };
+}
+
+/**
+ * CHOIX du mode de paiement par le candidat (F3) : « echelonne » ou « comptant ».
+ * Action PUBLIQUE token-gated. Recalcule le snapshot financier depuis les sources
+ * LIVE (tarif officiel figé du pack + installment_plan + finance_settings) et le
+ * fige dans `admission_packs.schedule_json`.
+ * ⚠️ Ne modifie JAMAIS `student_finance` (fait seulement à la finalisation, F4).
+ * ⚠️ `tuition_due` (tarif officiel) n'est jamais écrasé — la remise comptant ne
+ * s'applique qu'à la scolarité, jamais aux frais d'inscription.
+ */
+export async function setPaymentOption(
+  token: string,
+  option: PaymentOption
+): Promise<FormResult> {
+  if (option !== "echelonne" && option !== "comptant") {
+    return { ok: false, message: "Option de paiement invalide." };
+  }
+  const link = await verifyPackToken(token);
+  if (!link) return { ok: false, message: "Lien invalide ou expiré." };
+  const admin = createAdminClient();
+  if (!admin) return { ok: false, message: "Service momentanément indisponible." };
+
+  const { data: pack } = await admin
+    .from("admission_packs")
+    .select("academic_year, accepted_level, registration_fee, tuition_due, schedule_json")
+    .eq("id", link.packId)
+    .maybeSingle();
+  if (!pack) return { ok: false, message: "Pack introuvable." };
+
+  const sj = (pack.schedule_json ?? {}) as { tuition_official?: number };
+  const tuitionOfficial =
+    pack.tuition_due != null ? Number(pack.tuition_due) : sj.tuition_official ?? null;
+
+  const [{ data: planRows }, { data: fsDisc }] = await Promise.all([
+    admin.from("installment_plan").select("seq, pct, due_date").eq("academic_year", pack.academic_year ?? ""),
+    admin.from("finance_settings").select("lump_sum_discount").eq("id", 1).maybeSingle(),
+  ]);
+
+  const snap = buildScheduleSnapshot({
+    academicYear: (pack.academic_year as string) ?? null,
+    level: (pack.accepted_level as string) ?? null,
+    registrationFee: Number(pack.registration_fee ?? 0),
+    tuitionOfficial,
+    lumpSumDiscount: Number(fsDisc?.lump_sum_discount ?? 0.15),
+    planRows: (planRows ?? []).map((r) => ({
+      seq: Number(r.seq),
+      pct: Number(r.pct),
+      due_date: String(r.due_date),
+    })),
+    paymentOption: option,
+  });
+  if (!snap.ok) return { ok: false, code: snap.code, message: snap.message };
+
+  const now = new Date().toISOString();
+  const { error } = await admin
+    .from("admission_packs")
+    .update({ schedule_json: snap.schedule, updated_at: now })
+    .eq("id", link.packId);
+  if (error) return { ok: false, message: "Une erreur est survenue. Réessayez." };
+
+  return {
+    ok: true,
+    message:
+      option === "comptant"
+        ? "Paiement comptant enregistré : remise de 15 % sur la scolarité (frais d'inscription inchangés)."
+        : "Paiement échelonné enregistré : 10 tranches.",
   };
 }
 

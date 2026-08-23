@@ -18,18 +18,20 @@ export type PlanRow = { seq: number; pct: number; due_date: string };
 
 export type ScheduleInstallment = { seq: number; pct: number; due_date: string; amount: number };
 
+export type PaymentOption = "echelonne" | "comptant";
+
 export type ScheduleSnapshot = {
   academic_year: string;
   level: string;
   registration_fee: number;
-  tuition_official: number;
-  payment_option: "echelonne"; // F2 : défaut ; le choix candidat viendra en F3
-  discount_rate: 0;
-  tuition_net: number; // = tuition_official en échelonné
-  lump_sum_discount: number; // remise comptant DISPONIBLE (non appliquée en F2)
-  comptant_amount: number; // scolarité potentielle si comptant
+  tuition_official: number; // tarif officiel — jamais écrasé
+  payment_option: PaymentOption; // choix candidat (F3) ; défaut echelonne
+  discount_rate: number; // 0 en échelonné ; lump_sum_discount en comptant
+  tuition_net: number; // officielle en échelonné ; officielle×(1−remise) en comptant
+  lump_sum_discount: number; // remise comptant DISPONIBLE (pour affichage)
+  comptant_amount: number; // scolarité si comptant (info, toujours calculée)
   comptant_deadline: string; // = due_date de T1
-  installments: ScheduleInstallment[];
+  installments: ScheduleInstallment[]; // 10 tranches (échelonné) ; 1 règlement (comptant)
 };
 
 export type ScheduleResult =
@@ -54,8 +56,10 @@ export function buildScheduleSnapshot(input: {
   tuitionOfficial: number | null;
   lumpSumDiscount: number;
   planRows: PlanRow[];
+  paymentOption?: PaymentOption; // F3 : choix candidat ; défaut echelonne
 }): ScheduleResult {
   const { academicYear, level, registrationFee, tuitionOfficial, lumpSumDiscount } = input;
+  const paymentOption: PaymentOption = input.paymentOption === "comptant" ? "comptant" : "echelonne";
 
   if (tuitionOfficial == null || !(tuitionOfficial > 0)) {
     return {
@@ -81,20 +85,34 @@ export function buildScheduleSnapshot(input: {
   }
 
   const rows = [...input.planRows].sort((a, b) => a.seq - b.seq);
-  const tuitionNet = tuitionOfficial; // échelonné par défaut : pas de remise
+  const t1 = rows[0].due_date; // 1re échéance = deadline comptant
+  const comptantAmount = Math.round(tuitionOfficial * (1 - lumpSumDiscount)); // scolarité seule
 
-  // Montants : round(tuition_net × pct) ; dernière tranche = reste exact.
-  let cumul = 0;
-  const installments: ScheduleInstallment[] = rows.map((r, i) => {
-    let amount: number;
-    if (i < rows.length - 1) {
-      amount = Math.round((tuitionNet * Number(r.pct)) / 100);
-      cumul += amount;
-    } else {
-      amount = tuitionNet - cumul; // ajustement dernière tranche → somme exacte
-    }
-    return { seq: r.seq, pct: Number(r.pct), due_date: r.due_date, amount };
-  });
+  let discountRate: number;
+  let tuitionNet: number;
+  let installments: ScheduleInstallment[];
+
+  if (paymentOption === "comptant") {
+    // Comptant : remise sur la scolarité uniquement ; 1 seul règlement à échéance T1.
+    discountRate = lumpSumDiscount;
+    tuitionNet = comptantAmount;
+    installments = [{ seq: 1, pct: 100, due_date: t1, amount: tuitionNet }];
+  } else {
+    // Échelonné : tarif officiel, 10 tranches ; dernière ajustée → somme exacte.
+    discountRate = 0;
+    tuitionNet = tuitionOfficial;
+    let cumul = 0;
+    installments = rows.map((r, i) => {
+      let amount: number;
+      if (i < rows.length - 1) {
+        amount = Math.round((tuitionNet * Number(r.pct)) / 100);
+        cumul += amount;
+      } else {
+        amount = tuitionNet - cumul;
+      }
+      return { seq: r.seq, pct: Number(r.pct), due_date: r.due_date, amount };
+    });
+  }
 
   return {
     ok: true,
@@ -103,12 +121,12 @@ export function buildScheduleSnapshot(input: {
       level: level ?? "",
       registration_fee: registrationFee,
       tuition_official: tuitionOfficial,
-      payment_option: "echelonne",
-      discount_rate: 0,
+      payment_option: paymentOption,
+      discount_rate: discountRate,
       tuition_net: tuitionNet,
       lump_sum_discount: lumpSumDiscount,
-      comptant_amount: Math.round(tuitionOfficial * (1 - lumpSumDiscount)),
-      comptant_deadline: installments[0].due_date,
+      comptant_amount: comptantAmount,
+      comptant_deadline: t1,
       installments,
     },
   };
