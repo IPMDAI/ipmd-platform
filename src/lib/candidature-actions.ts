@@ -578,10 +578,20 @@ export async function deleteCandidature(id: string): Promise<FormResult> {
  * Échéancier généré par défaut « échelonné » ; le candidat peut ensuite basculer
  * comptant dans son pack (F3, `setPaymentOption`).
  */
+export type RepairScheduleSummary = {
+  academicYear: string | null;
+  level: string | null;
+  tuitionOfficial: number;
+  paymentOption: "echelonne" | "comptant";
+  installments: number;
+  total: number;
+};
+export type RepairScheduleResult = FormResult & { schedule?: RepairScheduleSummary };
+
 export async function repairPackSchedule(
   candidatureId: string,
   opts?: { force?: boolean }
-): Promise<FormResult> {
+): Promise<RepairScheduleResult> {
   const ctx = await getAdmin();
   if (!ctx) return { ok: false, message: "Action réservée à l'administration." };
 
@@ -649,5 +659,13 @@ export async function repairPackSchedule(
   return {
     ok: true,
     message: `Échéancier ${regenerated ? "régénéré" : "généré"} (${snap.schedule.installments.length} tranches, ${academicYear ?? "année active"}). Aucun email envoyé.`,
+    schedule: {
+      academicYear: academicYear ?? snap.schedule.academic_year ?? null,
+      level: snap.schedule.level || (pack.accepted_level as string) || null,
+      tuitionOfficial: snap.schedule.tuition_official,
+      paymentOption: snap.schedule.payment_option,
+      installments: snap.schedule.installments.length,
+      total: snap.schedule.registration_fee + snap.schedule.tuition_net,
+    },
   };
 }

@@ -6,6 +6,8 @@ import { universes } from "@/data/universes";
 import { Container } from "@/components/ui/Container";
 import { CandidatureActions } from "@/components/espace/CandidatureActions";
 import { CandidatureInvite } from "@/components/espace/CandidatureInvite";
+import { ScheduleRepair } from "@/components/espace/ScheduleRepair";
+import { validateScheduleSnapshot } from "@/lib/admission-schedule";
 import { DossierLinkActions } from "@/components/espace/DossierLinkActions";
 import { CandidatureSearch } from "@/components/espace/CandidatureSearch";
 import { AdmissionPackAdmin } from "@/components/espace/AdmissionPackAdmin";
@@ -157,13 +159,15 @@ export default async function CandidaturesPage({
     registrationFee: number | null;
     tuitionDue: number | null;
     packAcademicYear: string | null;
+    // F4b : échéancier figé présent ET valide ? (sinon réparation admin possible)
+    scheduleReady: boolean;
   };
   const packMap = new Map<string, PackDetail>();
   {
     const { data: packRows, error: packErr } = await supabase
       .from("admission_packs")
       .select(
-        "candidature_id, sent_at, first_viewed_at, reglement_accepted_at, convention_status, signature_method, signature_evidence_url, class_id, accepted_level, registration_fee, tuition_due, academic_year"
+        "candidature_id, sent_at, first_viewed_at, reglement_accepted_at, convention_status, signature_method, signature_evidence_url, class_id, accepted_level, registration_fee, tuition_due, academic_year, schedule_json"
       );
     if (!packErr && packRows) {
       for (const p of packRows as Array<{
@@ -179,6 +183,7 @@ export default async function CandidaturesPage({
         registration_fee: number | null;
         tuition_due: number | null;
         academic_year: string | null;
+        schedule_json: unknown;
       }>) {
         packMap.set(p.candidature_id, {
           sentAt: p.sent_at,
@@ -192,6 +197,7 @@ export default async function CandidaturesPage({
           registrationFee: p.registration_fee != null ? Number(p.registration_fee) : null,
           tuitionDue: p.tuition_due != null ? Number(p.tuition_due) : null,
           packAcademicYear: p.academic_year,
+          scheduleReady: validateScheduleSnapshot(p.schedule_json).ok,
         });
       }
     }
@@ -546,6 +552,18 @@ export default async function CandidaturesPage({
                         url={dossierLinkUrl(c.id)}
                         candidatureId={c.id}
                         email={c.email}
+                      />
+                    )}
+
+                  {/* F4b — Réparation legacy de l'échéancier : pack diplômant
+                      (tuition_due connu) sans échéancier valide → avertissement +
+                      bouton ; sinon badge « prêt ». */}
+                  {isSuper &&
+                    c.status === "en_attente_paiement" &&
+                    packMap.get(c.id)?.tuitionDue != null && (
+                      <ScheduleRepair
+                        candidatureId={c.id}
+                        ready={packMap.get(c.id)!.scheduleReady}
                       />
                     )}
 
