@@ -6,9 +6,6 @@ import {
   computerSpecs,
   documentsNote,
   dressCode,
-  enrollmentNotes as enrollmentNotesFallback,
-  feeColumns as feeColumnsFallback,
-  feeRows as feeRowsFallback,
   requiredDocuments,
 } from "@/data/scolarite";
 import { loadScolariteGrid } from "@/lib/scolarite-data";
@@ -20,11 +17,10 @@ export const metadata: Metadata = {
 };
 
 export default async function ScolaritePage() {
-  // F6 — grille data-driven (DB) ; fallback sur la grille statique si indisponible.
+  // F6/F6b — grille financière : SOURCE UNIQUE = base de données. Aucun fallback
+  // statique. Si le chargement échoue/incomplet (loggé côté serveur), on affiche
+  // un état propre « temporairement indisponible » — jamais une grille figée.
   const grid = await loadScolariteGrid();
-  const feeColumns = grid?.feeColumns ?? feeColumnsFallback;
-  const feeRows = grid?.feeRows ?? feeRowsFallback;
-  const enrollmentNotes = grid?.enrollmentNotes ?? enrollmentNotesFallback;
 
   return (
     <>
@@ -43,6 +39,8 @@ export default async function ScolaritePage() {
           Montants en FCFA. La scolarité peut être réglée en 10 versements.
         </p>
 
+        {grid ? (
+          <>
         {/* Tableau horizontal (ordinateur) */}
         <div className="mt-8 hidden overflow-x-auto rounded-2xl ring-1 ring-black/10 lg:block">
           <table className="w-full min-w-[900px] border-collapse text-sm">
@@ -51,7 +49,7 @@ export default async function ScolaritePage() {
                 <th className="px-3 py-3 text-left font-bold">
                   Niveau d&apos;étude
                 </th>
-                {feeColumns.map((col) => (
+                {grid.feeColumns.map((col) => (
                   <th key={col.label} className="px-3 py-3 text-center font-bold">
                     <div>{col.label}</div>
                     <div className="text-xs font-medium text-white/80">
@@ -62,7 +60,7 @@ export default async function ScolaritePage() {
               </tr>
             </thead>
             <tbody>
-              {feeRows.map((row, i) => (
+              {grid.feeRows.map((row, i) => (
                 <tr
                   key={row.level}
                   className={i % 2 === 0 ? "bg-white" : "bg-ipmd-light"}
@@ -90,7 +88,7 @@ export default async function ScolaritePage() {
 
         {/* Cartes verticales (téléphone) */}
         <div className="mt-8 space-y-4 lg:hidden">
-          {feeRows.map((row) => (
+          {grid.feeRows.map((row) => (
             <div
               key={row.level}
               className="overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-black/5"
@@ -105,7 +103,7 @@ export default async function ScolaritePage() {
                 </span>
               </div>
               <dl className="grid grid-cols-2 gap-x-4 gap-y-2.5 p-4 text-sm">
-                {feeColumns.slice(1).map((col, idx) => (
+                {grid.feeColumns.slice(1).map((col, idx) => (
                   <div
                     key={col.label}
                     className="flex items-baseline justify-between gap-2 border-b border-black/5 pb-1.5"
@@ -126,7 +124,7 @@ export default async function ScolaritePage() {
 
         {/* Notes inscription / paiement */}
         <div className="mt-6 grid gap-3 sm:grid-cols-3">
-          {enrollmentNotes.map((note) => (
+          {grid.enrollmentNotes.map((note) => (
             <p
               key={note}
               className="rounded-2xl bg-white p-4 text-sm font-medium text-ipmd-black shadow-sm ring-1 ring-black/5"
@@ -135,6 +133,16 @@ export default async function ScolaritePage() {
             </p>
           ))}
         </div>
+          </>
+        ) : (
+          <div className="mt-8 rounded-2xl bg-white p-6 text-center shadow-sm ring-1 ring-black/10">
+            <p className="text-sm font-medium text-black/70">
+              Les informations financières sont temporairement indisponibles. Merci de contacter la
+              scolarité.
+            </p>
+            <p className="mt-1 text-xs text-black/45">scolarite@ipmd.pro</p>
+          </div>
+        )}
       </Section>
 
       {/* Documents requis */}
