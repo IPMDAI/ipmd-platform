@@ -112,6 +112,7 @@ export function PackView({
                   packId={packId}
                   conventionStatus={conventionStatus}
                   signatureMethod={signatureMethod}
+                  academicYear={academicYear}
                 />
               </div>
             </div>

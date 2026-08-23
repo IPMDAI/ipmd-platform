@@ -9,7 +9,6 @@ import {
 } from "@/lib/admission-actions";
 import {
   CONVENTION_TITLE,
-  CONVENTION_YEAR,
   CONVENTION_ARTICLES,
 } from "@/data/convention";
 
@@ -26,11 +25,14 @@ export function ConventionStep({
   packId,
   conventionStatus = "non_envoyee",
   signatureMethod = null,
+  academicYear = null,
 }: {
   token: string;
   packId: string;
   conventionStatus?: string;
   signatureMethod?: string | null;
+  /** Année académique issue du snapshot du pack (jamais une constante codée en dur). */
+  academicYear?: string | null;
 }) {
   const [status, setStatus] = useState(conventionStatus);
   const [method, setMethod] = useState<string | null>(signatureMethod);
@@ -92,7 +94,7 @@ export function ConventionStep({
   return (
     <div className="rounded-xl bg-white px-4 py-4 ring-1 ring-black/10">
       <p className="text-sm font-bold text-ipmd-black">{CONVENTION_TITLE}</p>
-      <p className="text-xs text-black/50">Année {CONVENTION_YEAR}</p>
+      {academicYear && <p className="text-xs text-black/50">Année {academicYear}</p>}
 
       <button
         type="button"
