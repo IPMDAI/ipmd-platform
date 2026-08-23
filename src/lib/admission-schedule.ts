@@ -38,6 +38,55 @@ export type ScheduleResult =
   | { ok: true; schedule: ScheduleSnapshot }
   | { ok: false; code: "PLAN_MANQUANT" | "PLAN_INVALIDE" | "TARIF_MANQUANT"; message: string };
 
+/**
+ * Valide un `admission_packs.schedule_json` déjà figé, AVANT matérialisation
+ * (Lot Finance F4). Module PUR : ne touche pas la DB. Vérifie la complétude ET
+ * la cohérence réelle (somme des tranches = scolarité à financer nette). Sert de
+ * garde-fou : sans snapshot valide, on ne matérialise pas et on ne passe pas
+ * « inscrit ».
+ */
+export function validateScheduleSnapshot(
+  json: unknown
+): { ok: true; snap: ScheduleSnapshot } | { ok: false; reason: string } {
+  if (json == null || typeof json !== "object") return { ok: false, reason: "manquant" };
+  const s = json as Record<string, unknown>;
+  const num = (v: unknown) => (typeof v === "number" && Number.isFinite(v) ? v : null);
+
+  const official = num(s.tuition_official);
+  const net = num(s.tuition_net);
+  const reg = num(s.registration_fee);
+  const disc = num(s.discount_rate);
+  const opt = s.payment_option;
+  const inst = s.installments;
+
+  if (official == null || !(official > 0)) return { ok: false, reason: "invalide (tarif officiel absent)" };
+  if (net == null || !(net > 0)) return { ok: false, reason: "invalide (scolarité à financer absente)" };
+  if (reg == null || reg < 0) return { ok: false, reason: "invalide (frais d'inscription absents)" };
+  if (disc == null || disc < 0 || disc >= 1) return { ok: false, reason: "invalide (remise incohérente)" };
+  if (opt !== "echelonne" && opt !== "comptant") return { ok: false, reason: "invalide (mode de paiement inconnu)" };
+  if (!Array.isArray(inst) || inst.length === 0) return { ok: false, reason: "invalide (aucune tranche)" };
+  if (opt === "comptant" && inst.length !== 1) return { ok: false, reason: "invalide (comptant ≠ 1 règlement)" };
+  if (opt === "echelonne" && inst.length !== 10) return { ok: false, reason: "invalide (échelonné ≠ 10 tranches)" };
+
+  let sum = 0;
+  for (const raw of inst) {
+    if (raw == null || typeof raw !== "object") return { ok: false, reason: "invalide (tranche illisible)" };
+    const r = raw as Record<string, unknown>;
+    const amt = num(r.amount);
+    const seq = num(r.seq);
+    if (amt == null || !(amt > 0)) return { ok: false, reason: "invalide (montant de tranche incorrect)" };
+    if (seq == null) return { ok: false, reason: "invalide (numéro de tranche manquant)" };
+    if (typeof r.due_date !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(r.due_date)) {
+      return { ok: false, reason: "invalide (date de tranche incorrecte)" };
+    }
+    sum += amt;
+  }
+  if (sum !== net) {
+    return { ok: false, reason: `invalide (somme des tranches ${sum} ≠ scolarité à financer ${net})` };
+  }
+  return { ok: true, snap: json as ScheduleSnapshot };
+}
+
 /** Le gabarit d'une année est-il exactement 10 tranches sommant à 100 % ? */
 export function validatePlan(rows: PlanRow[]): boolean {
   if (rows.length !== 10) return false;

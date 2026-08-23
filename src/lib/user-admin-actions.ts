@@ -6,6 +6,7 @@ import { createAdminClient, canAdminUsers } from "@/lib/supabase/admin";
 import { VALID_ROLES } from "@/lib/dashboards";
 import { formatFCFA } from "@/lib/finance";
 import { hasAdmissionSnapshot, validateAdmissionSnapshot } from "@/lib/admission-snapshot";
+import { validateScheduleSnapshot } from "@/lib/admission-schedule";
 import {
   canSendEmail,
   emailDocument,
@@ -146,7 +147,7 @@ export async function inviteFromCandidature(
   // sans snapshot), on retombe sur les valeurs du formulaire.
   const { data: pack } = await ctx.supabase
     .from("admission_packs")
-    .select("class_id, accepted_level, registration_fee, tuition_due, academic_year")
+    .select("class_id, accepted_level, registration_fee, tuition_due, academic_year, schedule_json")
     .eq("candidature_id", candidatureId)
     .maybeSingle();
   const snap = hasAdmissionSnapshot(pack) ? pack! : null;
@@ -162,6 +163,25 @@ export async function inviteFromCandidature(
     const check = validateAdmissionSnapshot(snap, snapCls ?? null);
     if (!check.ok) return { ok: false, message: check.message };
   }
+
+  // 🔒 F4 — ÉCHÉANCIER FIGÉ requis pour toute admission DIPLÔMANTE (scolarité
+  // connue). Le snapshot financier (admission_packs.schedule_json) est figé à
+  // « Confirmer l'admission » (F2/F3). On le valide ICI (fail-fast, avant toute
+  // création de compte) : sans échéancier valide, impossible de matérialiser
+  // payment_schedules → on N'AVANCE PAS le statut. Réessai possible après avoir
+  // reconfirmé l'admission (régénère l'échéancier). Les flux SANS scolarité
+  // (bootcamp/certif, tuition_due null) ne sont pas concernés (comportement
+  // inchangé, aucune matérialisation d'échéancier).
+  const schedCheck = validateScheduleSnapshot(
+    (pack as { schedule_json?: unknown } | null)?.schedule_json
+  );
+  if (snap && snap.tuition_due != null && role === "etudiant" && !schedCheck.ok) {
+    return {
+      ok: false,
+      message: `Échéancier d'admission ${schedCheck.reason}. Reconfirmez l'admission pour régénérer l'échéancier avant de finaliser l'inscription. Statut inchangé.`,
+    };
+  }
+  const sched = schedCheck.ok ? schedCheck.snap : null;
 
   const classId = snap?.class_id ?? str(formData, "class_id");
 
@@ -299,19 +319,40 @@ export async function inviteFromCandidature(
     let academicYear: string | null;
     let installmentsVal: number | null = null;
     let modeVal: string | null = null;
+    let discountRate = 0; // F4 : remise figée (0 échelonné ; lump_sum_discount comptant)
+    let netToFinance: number | null = null; // F4 : scolarité à financer (= tuition_net du snapshot)
 
     if (snap) {
-      // Montants figés à l'admission — aucun recalcul.
-      registrationFee = snap.registration_fee != null ? Number(snap.registration_fee) : globalReg;
-      tuitionDue = snap.tuition_due != null ? Number(snap.tuition_due) : 0;
-      academicYear = (snap.academic_year as string) ?? (settings?.academic_year ?? null);
+      // Montants figés à l'admission — aucun recalcul. Priorité au snapshot
+      // financier (schedule_json) figé à « Confirmer l'admission » (F2/F3) :
+      // tuition_due = tarif OFFICIEL (jamais le net), discount_rate + net repris tels quels.
+      registrationFee = sched
+        ? sched.registration_fee
+        : snap.registration_fee != null
+          ? Number(snap.registration_fee)
+          : globalReg;
+      tuitionDue = sched
+        ? sched.tuition_official
+        : snap.tuition_due != null
+          ? Number(snap.tuition_due)
+          : 0;
+      academicYear = sched
+        ? sched.academic_year
+        : (snap.academic_year as string) ?? (settings?.academic_year ?? null);
+      if (sched) {
+        discountRate = sched.discount_rate;
+        netToFinance = sched.tuition_net;
+        installmentsVal = sched.installments.length; // 10 (échelonné) ou 1 (comptant)
+      }
       if (classId) {
         const { data: cls } = await ctx.supabase
           .from("classes")
           .select("installments, mode")
           .eq("id", classId)
           .maybeSingle();
-        installmentsVal = cls?.installments != null ? Number(cls.installments) : null;
+        // Le nb de tranches réel vient du snapshot figé (sched) ; la classe ne
+        // sert plus qu'au mode. Sans snapshot, on retombe sur la classe.
+        if (!sched && cls?.installments != null) installmentsVal = Number(cls.installments);
         modeVal = (cls?.mode as string) ?? null;
       }
     } else {
@@ -337,13 +378,15 @@ export async function inviteFromCandidature(
       installmentsVal = cls?.installments != null ? Number(cls.installments) : null;
       modeVal = (cls?.mode as string) ?? null;
     }
-    const totalDue = registrationFee + tuitionDue;
+    // total dû = inscription + scolarité À FINANCER (nette, remise comptant incluse).
+    // tuition_due reste le tarif OFFICIEL ; discount_rate porte la remise.
+    const totalDue = registrationFee + (netToFinance ?? tuitionDue);
 
     const financeRow: Record<string, unknown> = {
       student_id: newId,
       registration_fee: registrationFee,
       tuition_due: tuitionDue,
-      discount_rate: 0,
+      discount_rate: discountRate,
       level: level || null,
       academic_year: academicYear,
       total_due: totalDue,
@@ -354,15 +397,64 @@ export async function inviteFromCandidature(
     if (installmentsVal != null) financeRow.installments = installmentsVal;
     if (modeVal) financeRow.mode = modeVal;
 
-    await ctx.supabase.from("student_finance").upsert(financeRow, { onConflict: "student_id" });
+    // 4b. F4 — MATÉRIALISATION FINANCE.
+    //  • Admission DIPLÔMANTE (snapshot figé `sched`) → RPC ATOMIQUE
+    //    `materialize_student_finance` (SECURITY DEFINER, service_role) : upsert
+    //    student_finance + delete/insert payment_schedules + vérif nb/somme, le
+    //    tout en UNE transaction DB. Idempotente (10 échelonné / 1 comptant,
+    //    jamais de doublon). tuition_due = tarif OFFICIEL ; discount_rate porte la
+    //    remise ; total_due = registration_fee + tuition_net ; frais d'inscription
+    //    EXCLUS de l'échéancier.
+    //  • Sans snapshot (bootcamp / sans scolarité) → upsert student_finance simple,
+    //    aucun payment_schedules (comportement inchangé).
+    //  Échec → RETURN sans passer « inscrit » (statut inchangé, réessai idempotent).
+    //  Garantit : inscrit ⟹ (student_finance ∧ payment_schedules) matérialisés.
+    if (sched) {
+      const { error: matFinErr } = await admin.rpc("materialize_student_finance", {
+        p_student: newId,
+        p_academic_year: sched.academic_year || null,
+        p_level: sched.level || level || null,
+        p_registration_fee: sched.registration_fee,
+        p_tuition_official: sched.tuition_official,
+        p_discount_rate: sched.discount_rate,
+        p_tuition_net: sched.tuition_net,
+        p_payment_option: sched.payment_option,
+        p_installments: sched.installments,
+        p_mode: modeVal,
+      });
+      if (matFinErr) {
+        return {
+          ok: false,
+          message: `Finance non matérialisée (${matFinErr.message}). La candidature reste « en attente de paiement » — réessayez.`,
+        };
+      }
+    } else {
+      const { error: finErr } = await ctx.supabase
+        .from("student_finance")
+        .upsert(financeRow, { onConflict: "student_id" });
+      if (finErr) {
+        return {
+          ok: false,
+          message: `Finance non enregistrée (${finErr.message}). La candidature reste « en attente de paiement » — réessayez.`,
+        };
+      }
+    }
 
-    const rows = buildRows([
+    const proformaLines: Array<[string, string]> = [
       ["Formation", cand.program_interest || "—"],
       ["Niveau accepté", level || cand.entry_level || "—"],
       ["Frais d'inscription", formatFCFA(registrationFee)],
       ["Frais de scolarité", formatFCFA(tuitionDue)],
-      ["Total à régler", formatFCFA(totalDue)],
-    ]);
+    ];
+    // Remise comptant figée (F4) : ligne dédiée pour que le total s'additionne.
+    if (discountRate > 0 && netToFinance != null) {
+      proformaLines.push([
+        `Remise paiement comptant (−${Math.round(discountRate * 100)} %)`,
+        `− ${formatFCFA(tuitionDue - netToFinance)}`,
+      ]);
+    }
+    proformaLines.push(["Total à régler", formatFCFA(totalDue)]);
+    const rows = buildRows(proformaLines);
     proformaBlock = `<p style="margin:0 0 12px">Voici votre facture proforma :</p>
        <table style="width:100%;border-collapse:collapse;font-size:14px">${rows}</table>
        <p style="margin:16px 0 0">Veuillez procéder à votre <strong>inscription définitive</strong> en réglant les frais d'inscription de <strong>${formatFCFA(registrationFee)}</strong> via Wave, versement / virement BACI ou AFG, ou chèque. Après le paiement, transmettez votre preuve de paiement au service de la scolarité pour validation.</p>`;

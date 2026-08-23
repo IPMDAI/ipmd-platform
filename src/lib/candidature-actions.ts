@@ -563,3 +563,91 @@ export async function deleteCandidature(id: string): Promise<FormResult> {
   revalidate();
   return { ok: true, message: "Candidature supprimée." };
 }
+
+/**
+ * Réparation LEGACY (Lot Finance F4) — génère / régénère UNIQUEMENT
+ * `admission_packs.schedule_json` à partir des données DÉJÀ FIGÉES du pack.
+ *
+ * AUCUN effet de bord : pas d'email, pas de lettre PDF, pas de modification de
+ * `admission_sent_at` (candidature) ni du statut de candidature. On ne touche que
+ * `schedule_json` (+ `updated_at` du pack).
+ *
+ * Cible : packs diplômants confirmés AVANT F2 (échéancier absent) qui, avec le
+ * blocage strict F4, ne pourraient pas passer « inscrit ». Idempotent : si un
+ * `schedule_json` existe déjà, NO-OP sauf régénération explicite (`force`).
+ * Échéancier généré par défaut « échelonné » ; le candidat peut ensuite basculer
+ * comptant dans son pack (F3, `setPaymentOption`).
+ */
+export async function repairPackSchedule(
+  candidatureId: string,
+  opts?: { force?: boolean }
+): Promise<FormResult> {
+  const ctx = await getAdmin();
+  if (!ctx) return { ok: false, message: "Action réservée à l'administration." };
+
+  const { data: pack } = await ctx.supabase
+    .from("admission_packs")
+    .select("id, accepted_level, registration_fee, tuition_due, academic_year, schedule_json")
+    .eq("candidature_id", candidatureId)
+    .maybeSingle();
+  if (!pack) return { ok: false, message: "Aucun pack d'admission pour cette candidature." };
+
+  // Sans scolarité figée (bootcamp / certif) : rien à réparer.
+  if (pack.tuition_due == null) {
+    return { ok: false, message: "Ce pack n'a pas de scolarité figée : aucun échéancier à générer." };
+  }
+  // Idempotence : échéancier déjà présent → NO-OP sauf régénération explicite.
+  if (pack.schedule_json != null && !opts?.force) {
+    return {
+      ok: true,
+      message: "Échéancier déjà présent — aucune régénération (option « forcer » pour recalculer).",
+    };
+  }
+
+  // Année de référence pour le gabarit de tranches (pack, sinon paramètre global).
+  let academicYear = (pack.academic_year as string) ?? null;
+  if (!academicYear) {
+    const { data: fs } = await ctx.supabase
+      .from("finance_settings")
+      .select("academic_year")
+      .eq("id", 1)
+      .maybeSingle();
+    academicYear = (fs?.academic_year as string) ?? null;
+  }
+
+  const [{ data: planRows }, { data: fsDisc }] = await Promise.all([
+    ctx.supabase
+      .from("installment_plan")
+      .select("seq, pct, due_date")
+      .eq("academic_year", academicYear ?? ""),
+    ctx.supabase.from("finance_settings").select("lump_sum_discount").eq("id", 1).maybeSingle(),
+  ]);
+
+  const snap = buildScheduleSnapshot({
+    academicYear,
+    level: (pack.accepted_level as string) ?? null,
+    registrationFee: Number(pack.registration_fee ?? 0),
+    tuitionOfficial: Number(pack.tuition_due),
+    lumpSumDiscount: Number(fsDisc?.lump_sum_discount ?? 0.15),
+    planRows: (planRows ?? []).map((r) => ({
+      seq: Number(r.seq),
+      pct: Number(r.pct),
+      due_date: String(r.due_date),
+    })),
+  });
+  if (!snap.ok) return { ok: false, code: snap.code, message: snap.message };
+
+  const regenerated = pack.schedule_json != null;
+  // Écrit UNIQUEMENT schedule_json (+ updated_at). Jamais status/sent_at/email/lettre.
+  const { error } = await ctx.supabase
+    .from("admission_packs")
+    .update({ schedule_json: snap.schedule, updated_at: new Date().toISOString() })
+    .eq("id", pack.id);
+  if (error) return { ok: false, message: `Échéancier non enregistré : ${error.message}` };
+
+  revalidatePath("/espace/candidatures");
+  return {
+    ok: true,
+    message: `Échéancier ${regenerated ? "régénéré" : "généré"} (${snap.schedule.installments.length} tranches, ${academicYear ?? "année active"}). Aucun email envoyé.`,
+  };
+}
