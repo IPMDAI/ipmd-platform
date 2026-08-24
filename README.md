@@ -146,6 +146,78 @@ dashboards (étudiant, parent, enseignant, admin…).
 
 ---
 
+## 🎓 Bourse IPMD
+
+Système d'aides financières attaché à la scolarité (univers Campus / diplômants).
+Une bourse **réduit la scolarité** ; les **frais d'inscription (300 000 FCFA)**
+restent toujours dus et ne sont jamais remisés.
+
+### Principes
+
+- **Mode** : **taux** (%) _ou_ **montant** fixe (borné au tarif officiel).
+- **Types** : mérite, sociale, partenaire, institutionnelle, autre.
+- **Pluriannuel** : 1 / 2 / 3 ans. Le taux est **fixé par année académique** et
+  **recalculé chaque année sur le tarif officiel de l'année** (jamais figé à
+  l'avance). Historique **non destructif** (l'ancien terme passe `superseded`).
+- **Cumul avec la remise du plan de paiement** (`plan_discount_cumulable`) :
+  - `false` (défaut) → **meilleur avantage** : le net le plus bas entre
+    « bourse seule » et « remise du plan seule » (la bourse ne rend jamais le
+    candidat moins avantagé).
+  - `true` → bourse d'abord, puis remise du plan sur le **reste**.
+- **Bourse totale** (net = 0) → **aucune tranche de scolarité**, mais inscription
+  toujours due.
+- **Non-rétroactivité** : un échéancier déjà figé (étudiant inscrit) n'est jamais
+  recalculé ; un changement de taux / suspension / révocation ne vaut que pour un
+  rebuild autorisé ou une **année future / réinscription**.
+
+### Cycle de vie
+
+1. **Attribution** dès le statut `accepté` — rattachée à la **candidature**
+   (`scholarships.candidature_id`).
+2. À la **finalisation de l'inscription**, la bourse est **re-rattachée à
+   l'étudiant** (`student_id` renseigné, `candidature_id = NULL`, `status =
+   active`), dans la même transaction que la matérialisation de la finance.
+3. Unicité : **1 bourse active par candidature**, puis **par étudiant**.
+
+### Sécurité & confidentialité
+
+- Écriture réservée au **super_admin** : `requireSuperAdmin()` côté action **+**
+  RPC `SECURITY DEFINER` (`search_path=''`, `EXECUTE` limité à `service_role`).
+- **Aucune lecture publique** des tables `scholarships` / `scholarship_terms`
+  (RLS super_admin only ; lecture serveur en service-role).
+- Le **motif (`reason`) est strictement privé** : jamais dans le snapshot
+  `schedule_json` ni sur aucune surface candidat/étudiant.
+
+### Modèle de données
+
+| Table                        | Rôle                                                                 |
+| ---------------------------- | -------------------------------------------------------------------- |
+| `scholarships`               | **Engagement** : candidature/étudiant, type, cumul, année de début, durée, statut (`active`/`revoked`), motif privé |
+| `scholarship_terms`          | **Valeur par année** : mode (taux/montant), taux/montant, statut (`active`/`suspended`/`superseded`) |
+| `student_finance`            | `scholarship_amount` + `scholarship_term_id` (valeurs **figées** à l'inscription) |
+
+RPC atomiques (write-side) : `grant_scholarship`, `set_scholarship_term`,
+`suspend_scholarship_term`, `resume_scholarship_term`, `revoke_scholarship`.
+
+### Fichiers clés
+
+- **Moteur (pur)** — [`src/lib/admission-schedule.ts`](src/lib/admission-schedule.ts) :
+  `resolveScholarshipForYear`, `scholarshipAmount`, `applyBourseAndPlan`,
+  `buildScheduleSnapshot` (net unifié `round((officiel − bourse) × (1 − remise))`).
+- **Lecture** — [`src/lib/scholarship-data.ts`](src/lib/scholarship-data.ts)
+  (service-role ; charge par `candidature_id` **ou** `student_id`).
+- **Actions admin** — [`src/lib/scholarship-actions.ts`](src/lib/scholarship-actions.ts).
+- **Calcul finance** — [`src/lib/finance.ts`](src/lib/finance.ts) (`computeFinance`).
+- **UI admin** — [`src/components/espace/ScholarshipPanel.tsx`](src/components/espace/ScholarshipPanel.tsx)
+  (attribution + confirmation financière + gestion par année, sur la fiche candidature).
+- **Affichage candidat / étudiant** (motif jamais exposé) —
+  [`PaymentOptionStep.tsx`](src/components/admission/PaymentOptionStep.tsx) (pack),
+  [`EcheancierPdf.tsx`](src/components/espace/documents/EcheancierPdf.tsx) (PDF),
+  [`mes-paiements`](src/app/espace/mes-paiements/page.tsx),
+  [`proforma`](src/app/espace/proforma/[studentId]/page.tsx).
+
+---
+
 ## 🗺️ Prochaines étapes (roadmap)
 
 - [ ] Authentification Supabase + espaces connectés (`app.ipmd.pro`)
