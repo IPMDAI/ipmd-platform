@@ -1,6 +1,7 @@
 ﻿import type { Metadata } from "next";
 import Link from "next/link";
-import { requireAdmin } from "@/lib/require-admin";
+import { redirect } from "next/navigation";
+import { requireCandidaturesAccess } from "@/lib/staff-access";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { universes } from "@/data/universes";
 import { Container } from "@/components/ui/Container";
@@ -77,7 +78,10 @@ export default async function CandidaturesPage({
   searchParams: Promise<{ statut?: string; type?: string; univers?: string }>;
 }) {
   const { statut, type, univers } = await searchParams;
-  const { supabase, role } = await requireAdmin();
+  // Accès : super_admin OU staff `view_candidatures` (≥1 univers). admin legacy exclu.
+  const access = await requireCandidaturesAccess();
+  if (!access) redirect("/espace");
+  const { supabase, role } = access;
   const isSuper = role === "super_admin";
 
   const [{ data: rows }, { data: classRows }, { data: levelRows }] = await Promise.all([
@@ -248,6 +252,25 @@ export default async function CandidaturesPage({
       .maybeSingle();
     if (fs?.academic_year) defaultAcademicYear = fs.academic_year as string;
   }
+
+  // Staff : univers où l'utilisateur a `edit_candidature_status` (super_admin = tous).
+  // ≤ quelques univers distincts → quelques appels RPC bornés.
+  const editableUniverses = new Set<string>();
+  if (!isSuper) {
+    const univs = Array.from(
+      new Set((rows ?? []).map((r) => r.universe as string).filter(Boolean))
+    );
+    const results = await Promise.all(
+      univs.map((u) =>
+        supabase
+          .rpc("has_staff_permission", { p_permission: "edit_candidature_status", p_universe: u })
+          .then((r) => ({ u, ok: r.data === true }))
+      )
+    );
+    for (const { u, ok } of results) if (ok) editableUniverses.add(u);
+  }
+  const canEditStatus = (u: string | null | undefined) =>
+    isSuper || (u ? editableUniverses.has(u) : false);
 
   // W3 : dernière preuve de paiement (inscription) par candidature (état admin).
   const proofMap = new Map<string, { status: string; note: string | null }>();
@@ -573,6 +596,8 @@ export default async function CandidaturesPage({
                     status={c.status}
                     name={c.full_name}
                     canDelete={isSuper}
+                    canEditStatus={canEditStatus(c.universe)}
+                    isSuper={isSuper}
                     decidedAt={wf.get(c.id)?.decided_at ?? null}
                     refusalSentAt={wf.get(c.id)?.refusal_sent_at ?? null}
                     lettersEnabled={LETTERS_ENABLED}
@@ -586,8 +611,8 @@ export default async function CandidaturesPage({
                     defaultFiliereId={suggestFiliereId(c.program_interest)}
                   />
 
-                  {/* Espace d'admission (Lot C2/C5) : états + actions lien */}
-                  {packMap.has(c.id) && (
+                  {/* Espace d'admission (Lot C2/C5) : états + actions lien — super_admin only */}
+                  {isSuper && packMap.has(c.id) && (
                     <AdmissionPackAdmin
                       candidatureId={c.id}
                       email={c.email}
@@ -606,8 +631,9 @@ export default async function CandidaturesPage({
                     />
                   )}
 
-                  {/* Dossier incomplet (diplômant) → réclamer les pièces au candidat */}
-                  {typeOf(c.universe) === "diplome" &&
+                  {/* Dossier incomplet (diplômant) → réclamer les pièces (email) — super_admin only */}
+                  {isSuper &&
+                    typeOf(c.universe) === "diplome" &&
                     ["nouveau", "en_etude", "pieces_a_completer"].includes(c.status) &&
                     (!c.doc_diploma || !c.doc_id) && (
                       <DossierLinkActions

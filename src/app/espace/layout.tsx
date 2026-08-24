@@ -3,6 +3,7 @@ import { Sidebar } from "@/components/espace/Sidebar";
 import { CommandPalette } from "@/components/espace/CommandPalette";
 import { TutorLauncher } from "@/components/espace/TutorLauncher";
 import { getNavForRole } from "@/lib/nav";
+import { canAnyStaff } from "@/lib/staff-access";
 import { roleLabels, LEARNER_ROLES } from "@/lib/dashboards";
 
 export default async function EspaceLayout({
@@ -27,7 +28,11 @@ export default async function EspaceLayout({
 
   const role = profile?.role ?? "etudiant";
   const userName = profile?.full_name || profile?.email || "Mon compte";
-  const groups = getNavForRole(role);
+  // Staff (Équipes & Accès) : lien Candidatures si `view_candidatures` sur ≥1 univers
+  // (super_admin l'a déjà via ADMIN_NAV ; on évite l'appel pour lui).
+  const canViewCandidatures =
+    role === "super_admin" || role === "admin" ? false : await canAnyStaff("view_candidatures");
+  const groups = getNavForRole(role, { canViewCandidatures });
 
   // Badges de compteur sur le menu (admins).
   let badges: Record<string, { count: number; alert: boolean }> = {};

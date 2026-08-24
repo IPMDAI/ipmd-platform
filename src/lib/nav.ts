@@ -140,7 +140,10 @@ const SUPER_ADMIN_GROUP: NavGroup = {
   items: [{ label: "Équipes & Accès", href: "/espace/equipes", icon: "🛡️" }],
 };
 
-export function getNavForRole(role: string): NavGroup[] {
+export function getNavForRole(
+  role: string,
+  opts?: { canViewCandidatures?: boolean }
+): NavGroup[] {
   let base: NavGroup[];
   if (role === "admin" || role === "super_admin") base = ADMIN_NAV;
   else if (role === "pedagogie") base = PEDAGOGIE_NAV;
@@ -150,5 +153,10 @@ export function getNavForRole(role: string): NavGroup[] {
   else base = LEARNER_NAV; // etudiant, professionnel, dirigeant
   const groups = [...base];
   if (role === "super_admin") groups.push(SUPER_ADMIN_GROUP);
+  // Staff (module Équipes & Accès) : lien Candidatures si `view_candidatures` sur
+  // ≥1 univers. admin/super_admin l'ont déjà via ADMIN_NAV → on n'ajoute rien.
+  if (opts?.canViewCandidatures && role !== "admin" && role !== "super_admin") {
+    groups.push({ title: "Staff", items: [{ label: "Candidatures", href: "/espace/candidatures", icon: "📥" }] });
+  }
   return [...groups, ACCOUNT_GROUP];
 }

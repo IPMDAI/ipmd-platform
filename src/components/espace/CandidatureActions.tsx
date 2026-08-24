@@ -54,6 +54,8 @@ export function CandidatureActions({
   status,
   name = "",
   canDelete = false,
+  canEditStatus = true,
+  isSuper = false,
   decidedAt = null,
   refusalSentAt = null,
   lettersEnabled = false,
@@ -70,6 +72,10 @@ export function CandidatureActions({
   status: string;
   name?: string;
   canDelete?: boolean;
+  /** Boutons de transition de statut visibles (super_admin ou staff edit_candidature_status). */
+  canEditStatus?: boolean;
+  /** super_admin : débloque les actions sensibles (envoi admission, lettre de refus, notifications). */
+  isSuper?: boolean;
   decidedAt?: string | null;
   refusalSentAt?: string | null;
   lettersEnabled?: boolean;
@@ -301,7 +307,7 @@ export function CandidatureActions({
         </p>
       )}
 
-      {steps.length > 0 && (
+      {canEditStatus && steps.length > 0 && (
         <div className="flex flex-wrap items-center gap-2">
           <span className="text-xs font-semibold text-black/40">Étape :</span>
           {steps.map((to) => (
@@ -334,8 +340,8 @@ export function CandidatureActions({
         </div>
       )}
 
-      {/* ACCEPTÉ — envoi officiel */}
-      {current === "accepte" && (
+      {/* ACCEPTÉ — envoi officiel (super_admin uniquement : admission/email) */}
+      {isSuper && current === "accepte" && (
         <div className="mt-3 rounded-xl bg-blue-50/70 p-3 ring-1 ring-blue-200">
           <p className="text-[11px] font-bold uppercase tracking-wider text-blue-700/80">
             Décision : accepté {testBadge}
@@ -470,7 +476,7 @@ export function CandidatureActions({
       )}
 
       {/* REFUSÉ — envoi officiel */}
-      {current === "refuse" && !refSent && (
+      {isSuper && current === "refuse" && !refSent && (
         <div className="mt-3 rounded-xl bg-black/[0.03] p-3 ring-1 ring-black/10">
           <p className="text-[11px] font-bold uppercase tracking-wider text-black/50">
             Décision : refusé {testBadge}
@@ -509,7 +515,7 @@ export function CandidatureActions({
         </div>
       )}
 
-      {current === "refuse" && refSent && (
+      {isSuper && current === "refuse" && refSent && (
         <div className="mt-3 flex flex-wrap items-center gap-2">
           <span className="text-xs font-medium text-black/50">
             🔒 Refus envoyé le {fmt(refSent)} — verrouillé.
