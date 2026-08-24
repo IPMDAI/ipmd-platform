@@ -7,8 +7,10 @@ import { Container } from "@/components/ui/Container";
 import { CandidatureActions } from "@/components/espace/CandidatureActions";
 import { CandidatureInvite } from "@/components/espace/CandidatureInvite";
 import { ScheduleRepair } from "@/components/espace/ScheduleRepair";
+import { ScholarshipPanel } from "@/components/espace/ScholarshipPanel";
 import { AdmissionDeadlineAdmin } from "@/components/espace/AdmissionDeadlineAdmin";
 import { validateScheduleSnapshot } from "@/lib/admission-schedule";
+import { loadScholarshipsAdminForCandidatures, type ScholarshipAdmin } from "@/lib/scholarship-data";
 import { DossierLinkActions } from "@/components/espace/DossierLinkActions";
 import { CandidatureSearch } from "@/components/espace/CandidatureSearch";
 import { AdmissionPackAdmin } from "@/components/espace/AdmissionPackAdmin";
@@ -45,6 +47,28 @@ function norm(s: string): string {
     .normalize("NFD")
     .replace(/[̀-ͯ]/g, "")
     .toLowerCase();
+}
+
+/** Adapte la vue admin d'une bourse (scholarship-data) aux props du panneau client. */
+function toPanelScholarship(s: ScholarshipAdmin | undefined) {
+  if (!s) return null;
+  return {
+    id: s.id,
+    kind: s.kind,
+    status: s.status,
+    startYear: s.start_academic_year,
+    durationYears: s.duration_years,
+    cumulable: s.plan_discount_cumulable,
+    reason: s.reason,
+    terms: s.terms.map((t) => ({
+      id: t.id,
+      academicYear: t.academic_year,
+      mode: t.mode,
+      rate: t.rate,
+      amount: t.amount,
+      status: t.status,
+    })),
+  };
 }
 
 export default async function CandidaturesPage({
@@ -162,6 +186,8 @@ export default async function CandidaturesPage({
     packAcademicYear: string | null;
     // F4b : échéancier figé présent ET valide ? (sinon réparation admin possible)
     scheduleReady: boolean;
+    // B4-2 : remise du PLAN choisi (pour la confirmation financière de la bourse).
+    planDiscountRate: number;
   };
   const packMap = new Map<string, PackDetail>();
   {
@@ -199,9 +225,28 @@ export default async function CandidaturesPage({
           tuitionDue: p.tuition_due != null ? Number(p.tuition_due) : null,
           packAcademicYear: p.academic_year,
           scheduleReady: validateScheduleSnapshot(p.schedule_json).ok,
+          planDiscountRate: Number(
+            (p.schedule_json as { plan_discount_rate?: number; discount_rate?: number } | null)?.plan_discount_rate ??
+              (p.schedule_json as { discount_rate?: number } | null)?.discount_rate ??
+              0
+          ),
         });
       }
     }
+  }
+
+  // B4-2 : bourses IPMD (super_admin uniquement — `reason` privé). Chargement groupé.
+  const scholarshipMap: Map<string, ScholarshipAdmin> = isSuper
+    ? await loadScholarshipsAdminForCandidatures((rows ?? []).map((r) => r.id as string))
+    : new Map();
+  let defaultAcademicYear = "2026-2027";
+  {
+    const { data: fs } = await supabase
+      .from("finance_settings")
+      .select("academic_year")
+      .eq("id", 1)
+      .maybeSingle();
+    if (fs?.academic_year) defaultAcademicYear = fs.academic_year as string;
   }
 
   // W3 : dernière preuve de paiement (inscription) par candidature (état admin).
@@ -622,6 +667,19 @@ export default async function CandidaturesPage({
                       <ScheduleRepair
                         candidatureId={c.id}
                         ready={packMap.get(c.id)!.scheduleReady}
+                      />
+                    )}
+
+                  {/* B4-2 — Bourse IPMD (super_admin, à partir de « accepté »). */}
+                  {isSuper &&
+                    ["accepte", "en_attente_paiement", "inscrit"].includes(c.status) && (
+                      <ScholarshipPanel
+                        candidatureId={c.id}
+                        status={c.status}
+                        officialTuition={packMap.get(c.id)?.tuitionDue ?? null}
+                        planDiscountRate={packMap.get(c.id)?.planDiscountRate ?? 0}
+                        currentYear={packMap.get(c.id)?.packAcademicYear ?? defaultAcademicYear}
+                        scholarship={toPanelScholarship(scholarshipMap.get(c.id))}
                       />
                     )}
 
