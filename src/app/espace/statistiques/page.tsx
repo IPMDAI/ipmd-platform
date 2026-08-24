@@ -44,7 +44,7 @@ export default async function StatistiquesPage() {
     supabase.from("class_members").select("student_id, class_id"),
     supabase.from("classes").select("id, name, level, filiere_id"),
     supabase.from("filieres").select("id, name"),
-    supabase.from("payments").select("amount").eq("status", "paye"),
+    supabase.from("payments").select("amount, candidature_id").eq("status", "paye"),
     supabase.from("student_finance").select("total_due"),
     supabase.from("session_attendance").select("present"),
     supabase.from("grades").select("score, max_score, coefficient, status"),
@@ -92,6 +92,11 @@ export default async function StatistiquesPage() {
 
   // Finance.
   const encaisse = (payments ?? []).reduce((a, p) => a + Number(p.amount), 0);
+  // W4 (Option A) : les encaissements pré-inscription (candidature_id renseigné,
+  // pas encore de profil) comptent dans le chiffre encaissé — fonds réellement reçus.
+  const encaissePre = (payments ?? [])
+    .filter((p) => p.candidature_id)
+    .reduce((a, p) => a + Number(p.amount), 0);
   const du = (finances ?? []).reduce((a, f) => a + Number(f.total_due), 0);
   const recouvrement = du > 0 ? Math.round((encaisse / du) * 100) : null;
 
@@ -229,6 +234,11 @@ export default async function StatistiquesPage() {
               <p className="mt-1 text-xs text-black/50">
                 {formatFCFA(encaisse)} / {formatFCFA(du)}
               </p>
+              {encaissePre > 0 && (
+                <p className="mt-0.5 text-[11px] text-amber-700">
+                  dont pré-inscription : {formatFCFA(encaissePre)}
+                </p>
+              )}
             </div>
             <div className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-black/5">
               <p className="text-xs font-semibold uppercase tracking-wider text-black/40">

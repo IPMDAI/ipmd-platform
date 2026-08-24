@@ -24,37 +24,62 @@ export default async function RecuPage({
   // RLS : le paiement n'est lisible que par l'étudiant, son parent ou un admin.
   const { data: payment } = await supabase
     .from("payments")
-    .select("id, student_id, amount, method, label, paid_at, kind, reference")
+    .select("id, student_id, candidature_id, amount, method, label, paid_at, kind, reference")
     .eq("id", paymentId)
     .single();
   if (!payment) notFound();
 
-  const [{ data: me }, { data: student }, { data: finance }, { data: allPayments }] = await Promise.all([
-    supabase.from("profiles").select("role").eq("id", userId).single(),
-    supabase
-      .from("profiles")
-      .select("full_name, email")
-      .eq("id", payment.student_id)
-      .single(),
-    supabase
-      .from("student_finance")
-      .select("registration_fee, tuition_due, discount_rate, level, program")
-      .eq("student_id", payment.student_id)
-      .maybeSingle(),
-    supabase
-      .from("payments")
-      .select("amount, kind, status")
-      .eq("student_id", payment.student_id),
-  ]);
+  const { data: me } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", userId)
+    .single();
   const isStaff = ["admin", "super_admin", "scolarite"].includes(me?.role ?? "");
-  const backHref = isStaff ? `/espace/finance/${payment.student_id}` : "/espace/mes-paiements";
-  const backLabel = isStaff ? "← Retour au dossier" : "← Ma scolarité";
-  const formation = finance?.program
-    ? `${finance.program}${finance.level ? ` · ${finance.level}` : ""}`
-    : finance?.level ?? null;
-  const name = student?.full_name || student?.email || "—";
-  const mat = matricule(payment.student_id);
-  const fin = computeFinance(finance, allPayments ?? []);
+
+  // W4 : paiement PRÉ-INSCRIPTION (student_id NULL, rattaché à une candidature).
+  // Reçu admin-only ; nom depuis la candidature ; pas de matricule/récap (aucun
+  // profil ni student_finance avant l'inscription). Ne jamais appeler
+  // matricule(null) ni interroger student_finance avec un student_id NULL.
+  const isPre = !payment.student_id;
+  if (isPre && !isStaff) notFound();
+
+  let name = "—";
+  let mat = "—";
+  let formation: string | null = null;
+  let recap: { totalDue: number; totalPaid: number; balance: number } | undefined;
+
+  if (payment.student_id) {
+    const [{ data: student }, { data: finance }, { data: allPayments }] = await Promise.all([
+      supabase.from("profiles").select("full_name, email").eq("id", payment.student_id).maybeSingle(),
+      supabase
+        .from("student_finance")
+        .select("registration_fee, tuition_due, discount_rate, level, program")
+        .eq("student_id", payment.student_id)
+        .maybeSingle(),
+      supabase.from("payments").select("amount, kind, status").eq("student_id", payment.student_id),
+    ]);
+    name = student?.full_name || student?.email || "—";
+    mat = matricule(payment.student_id);
+    formation = finance?.program
+      ? `${finance.program}${finance.level ? ` · ${finance.level}` : ""}`
+      : finance?.level ?? null;
+    const fin = computeFinance(finance, allPayments ?? []);
+    recap = { totalDue: fin.totalDue, totalPaid: fin.totalPaid, balance: fin.balance };
+  } else {
+    const { data: cand } = await supabase
+      .from("inscription_requests")
+      .select("full_name, email")
+      .eq("id", payment.candidature_id)
+      .maybeSingle();
+    name = cand?.full_name || cand?.email || "Candidat";
+  }
+
+  const backHref = isPre
+    ? "/espace/finance/preuves"
+    : isStaff
+      ? `/espace/finance/${payment.student_id}`
+      : "/espace/mes-paiements";
+  const backLabel = isPre ? "← Preuves à vérifier" : isStaff ? "← Retour au dossier" : "← Ma scolarité";
 
   const dateStr = new Date(payment.paid_at).toLocaleDateString("fr-FR", {
     day: "2-digit",
@@ -93,11 +118,7 @@ export default async function RecuPage({
               matricule={mat}
               verifyHref={verifyHref}
               level={formation}
-              recap={{
-                totalDue: fin.totalDue,
-                totalPaid: fin.totalPaid,
-                balance: fin.balance,
-              }}
+              recap={recap}
             />
           </div>
         </div>

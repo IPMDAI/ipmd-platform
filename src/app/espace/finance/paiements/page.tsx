@@ -61,7 +61,7 @@ export default async function PaiementsPage({
     supabase.from("student_finance").select("student_id, registration_fee, tuition_due, discount_rate"),
     supabase
       .from("payments")
-      .select("id, student_id, amount, method, kind, reference, paid_at, status, created_at")
+      .select("id, student_id, candidature_id, amount, method, kind, reference, paid_at, status, created_at")
       .order("paid_at", { ascending: true })
       .order("created_at", { ascending: true }),
     supabase.from("class_members").select("student_id, class_id"),
@@ -79,6 +79,20 @@ export default async function PaiementsPage({
 
   const all = payments ?? [];
 
+  // W4 : paiements PRÉ-INSCRIPTION (student_id NULL) → nom résolu via la candidature.
+  const preCandIds = [
+    ...new Set(all.filter((p) => !p.student_id && p.candidature_id).map((p) => p.candidature_id as string)),
+  ];
+  const candNameOf = new Map<string, string>();
+  if (preCandIds.length) {
+    const { data: cands } = await supabase
+      .from("inscription_requests")
+      .select("id, full_name, email")
+      .in("id", preCandIds);
+    for (const c of cands ?? [])
+      candNameOf.set(c.id as string, (c.full_name as string) || (c.email as string) || "Candidat");
+  }
+
   // Numéro de paiement séquentiel (ordre chronologique global).
   const numberOf = new Map(all.map((p, i) => [p.id, `P-${String(i + 1).padStart(4, "0")}`]));
 
@@ -87,6 +101,7 @@ export default async function PaiementsPage({
   const overOf = new Map<string, number>();
   const byStudent = new Map<string, typeof all>();
   for (const p of all) {
+    if (!p.student_id) continue; // pré-inscription : hors allocation dû/trop-perçu
     const arr = byStudent.get(p.student_id) ?? [];
     arr.push(p);
     byStudent.set(p.student_id, arr);
@@ -112,6 +127,7 @@ export default async function PaiementsPage({
     no: string;
     date: string;
     studentId: string;
+    isPre: boolean;
     name: string;
     className: string;
     intake: string;
@@ -127,14 +143,18 @@ export default async function PaiementsPage({
   };
 
   const rows: Row[] = all.map((p) => {
-    const cid = classOf.get(p.student_id) ?? null;
+    const isPre = !p.student_id;
+    const cid = p.student_id ? classOf.get(p.student_id) ?? null : null;
     const ci = cid ? classInfo.get(cid) : null;
     return {
       id: p.id,
       no: numberOf.get(p.id) ?? "—",
       date: p.paid_at,
-      studentId: p.student_id,
-      name: nameOf.get(p.student_id) ?? "—",
+      studentId: p.student_id ?? "",
+      isPre,
+      name: isPre
+        ? candNameOf.get(p.candidature_id as string) ?? "Candidat"
+        : nameOf.get(p.student_id) ?? "—",
       className: ci?.name ?? "—",
       intake: ci?.intake ?? "—",
       classType: ci?.type ?? null,
@@ -152,7 +172,7 @@ export default async function PaiementsPage({
   // Options de filtres.
   const intakes = [...new Set(rows.map((r) => r.intake).filter((x) => x && x !== "—"))].sort();
   const classOptions = [...new Set(rows.filter((r) => r.className !== "—").map((r) => `${classOf.get(r.studentId)}|${r.className}`))];
-  const studentOptions = [...new Map(rows.map((r) => [r.studentId, r.name])).entries()].sort((a, b) =>
+  const studentOptions = [...new Map(rows.filter((r) => !r.isPre).map((r) => [r.studentId, r.name])).entries()].sort((a, b) =>
     a[1].localeCompare(b[1])
   );
 
@@ -324,7 +344,16 @@ export default async function PaiementsPage({
                       <td className="px-3 py-2 text-black/60">{frDate(r.date)}</td>
                       <td className="px-3 py-2 font-mono text-black/55">{r.no}</td>
                       <td className="px-3 py-2 font-medium text-ipmd-black">
-                        <Link href={`/espace/finance/${r.studentId}`} className="hover:text-ipmd-red">{r.name}</Link>
+                        {r.isPre ? (
+                          <span className="inline-flex items-center gap-1.5">
+                            {r.name}
+                            <span className="rounded-full bg-amber-100 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-amber-700">
+                              pré-inscription
+                            </span>
+                          </span>
+                        ) : (
+                          <Link href={`/espace/finance/${r.studentId}`} className="hover:text-ipmd-red">{r.name}</Link>
+                        )}
                       </td>
                       <td className="px-3 py-2 text-black/60">{r.className}</td>
                       <td className="px-3 py-2 text-black/60">{r.intake}</td>
