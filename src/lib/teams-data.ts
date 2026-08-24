@@ -2,6 +2,28 @@ import "server-only";
 import { createClient } from "@/lib/supabase/server";
 
 /**
+ * Rôles ÉLIGIBLES au staff (membres d'équipe). Exclut strictement les apprenants
+ * (etudiant/professionnel/dirigeant), les parents et le super_admin (global, jamais
+ * membre). Un étudiant ne peut donc JAMAIS être ajouté à une équipe staff.
+ */
+const STAFF_ROLES = ["admin", "scolarite", "pedagogie", "enseignant"] as const;
+
+/**
+ * Libellés des permissions définis EN CODE (source de vérité d'affichage),
+ * indépendants du `label` stocké en base — évite tout mojibake d'encodage.
+ * Clés = `staff_permissions.permission_key`.
+ */
+export const PERMISSION_LABELS: Record<string, string> = {
+  view_candidatures: "Voir les candidatures",
+  edit_candidature_status: "Modifier le statut d'une candidature",
+  view_documents: "Voir les documents",
+  view_finance: "Voir la finance",
+  record_payments: "Enregistrer des paiements",
+  view_students: "Voir les étudiants",
+  manage_classes: "Gérer les classes",
+};
+
+/**
  * Données de la page d'administration des Équipes & Accès (super_admin).
  * Lecture via le client utilisateur : la RLS super_admin-only des tables staff_*
  * garantit qu'un non-super_admin ne lit rien (aucun contournement).
@@ -35,14 +57,19 @@ export async function loadEquipesAdmin(): Promise<EquipesData | null> {
     supabase.from("staff_team_permissions").select("team_id, permission_key"),
     supabase.from("universes").select("key, label").order("label"),
     supabase.from("staff_permissions").select("permission_key, label, category").order("category"),
-    supabase.from("profiles").select("id, full_name, email").order("full_name"),
+    supabase
+      .from("profiles")
+      .select("id, full_name, email")
+      .in("role", STAFF_ROLES as unknown as string[])
+      .order("full_name"),
   ]);
 
   const universes = (universesRes.data ?? []).map((u) => ({ key: u.key as string, label: u.label as string }));
   const uLabel = new Map(universes.map((u) => [u.key, u.label]));
   const permissions = (catalogueRes.data ?? []).map((p) => ({
     permission_key: p.permission_key as string,
-    label: p.label as string,
+    // Label EN CODE (source de vérité) — le `label` DB peut être mojibaké (seed).
+    label: PERMISSION_LABELS[p.permission_key as string] ?? (p.label as string),
     category: p.category as string,
   }));
   const candidates = (profilesRes.data ?? []).map((p) => ({
