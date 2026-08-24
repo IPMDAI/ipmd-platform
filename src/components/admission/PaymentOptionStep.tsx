@@ -3,8 +3,8 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { formatFCFA } from "@/lib/finance";
-import { setPaymentOption } from "@/lib/admission-actions";
-import type { ScheduleSnapshot, PaymentOption } from "@/lib/admission-schedule";
+import { setPaymentOption, setPaymentDay } from "@/lib/admission-actions";
+import type { ScheduleSnapshot, PaymentOption, PaymentDay } from "@/lib/admission-schedule";
 import { ADMISSION_EXPIRED_MESSAGE } from "@/lib/admission-deadline";
 
 /** Formate une date ISO (YYYY-MM-DD) en JJ/MM/AAAA pour le candidat. */
@@ -45,6 +45,7 @@ export function PaymentOptionStep({
   }
 
   const option = schedule.payment_option;
+  const day: PaymentDay = schedule.payment_day === "fin_mois" ? "fin_mois" : "20";
   const official = schedule.tuition_official;
   const net = schedule.tuition_net;
   const remise = official - schedule.comptant_amount; // montant de la remise comptant
@@ -57,6 +58,43 @@ export function PaymentOptionStep({
       setMsg({ ok: res.ok, text: res.message });
       if (res.ok) router.refresh(); // recharge le pack avec le snapshot recalculé
     });
+  };
+
+  const chooseDay = (next: PaymentDay) => {
+    if (pending || next === day) return;
+    setMsg(null);
+    startTransition(async () => {
+      const res = await setPaymentDay(token, next);
+      setMsg({ ok: res.ok, text: res.message });
+      if (res.ok) router.refresh(); // recharge le pack avec les nouvelles dates
+    });
+  };
+
+  const dayBtn = (val: PaymentDay, title: string, sub: string) => {
+    const active = day === val;
+    return (
+      <button
+        type="button"
+        onClick={() => chooseDay(val)}
+        disabled={pending}
+        className={`flex-1 rounded-xl border p-3 text-left transition disabled:opacity-60 ${
+          active
+            ? "border-ipmd-red bg-ipmd-red/[0.04] ring-2 ring-ipmd-red/30"
+            : "border-black/10 bg-white hover:border-black/25"
+        }`}
+      >
+        <span className="flex items-center gap-2 text-sm font-bold text-ipmd-black">
+          <span
+            className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full border ${active ? "border-ipmd-red" : "border-black/25"}`}
+            aria-hidden="true"
+          >
+            {active && <span className="h-2 w-2 rounded-full bg-ipmd-red" />}
+          </span>
+          {title}
+        </span>
+        <span className="mt-1 block text-[12px] text-black/55">{sub}</span>
+      </button>
+    );
   };
 
   const optBtn = (val: PaymentOption, title: string, sub: string) => {
@@ -116,6 +154,20 @@ export function PaymentOptionStep({
           "Paiement comptant",
           `−${Math.round(schedule.lump_sum_discount * 100)} % sur la scolarité · avant le ${frDate(schedule.comptant_deadline)}`
         )}
+      </div>
+
+      {/* Choix de la date mensuelle de règlement (D2) */}
+      <div className="mt-4">
+        <p className="text-[11px] font-bold uppercase tracking-wider text-black/45">
+          Date mensuelle de règlement
+        </p>
+        <div className="mt-2 flex flex-col gap-2 sm:flex-row">
+          {dayBtn("20", "Le 20 de chaque mois", "Échéance fixée au 20")}
+          {dayBtn("fin_mois", "Fin de mois", "Dernier jour du mois")}
+        </div>
+        <p className="mt-1.5 text-[11px] leading-relaxed text-black/45">
+          Fin de mois = dernier jour calendaire du mois (28/29, 30 ou 31 selon le mois).
+        </p>
       </div>
 
       {msg && (

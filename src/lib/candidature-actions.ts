@@ -654,6 +654,13 @@ export async function repairPackSchedule(
     ctx.supabase.from("finance_settings").select("lump_sum_discount").eq("id", 1).maybeSingle(),
   ]);
 
+  // Préserve les choix candidat existants si un snapshot est déjà présent
+  // (régénération) : option de paiement ET jour d'échéance (D2). Sinon défauts
+  // (echelonne / 20).
+  const existing = (pack.schedule_json ?? {}) as {
+    payment_option?: "echelonne" | "comptant";
+    payment_day?: "20" | "fin_mois";
+  };
   const snap = buildScheduleSnapshot({
     academicYear,
     level: (pack.accepted_level as string) ?? null,
@@ -665,6 +672,8 @@ export async function repairPackSchedule(
       pct: Number(r.pct),
       due_date: String(r.due_date),
     })),
+    paymentOption: existing.payment_option === "comptant" ? "comptant" : "echelonne",
+    paymentDay: existing.payment_day === "fin_mois" ? "fin_mois" : "20",
   });
   if (!snap.ok) return { ok: false, code: snap.code, message: snap.message };
 

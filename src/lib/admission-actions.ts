@@ -10,7 +10,12 @@ import {
   verifyPackToken,
 } from "@/lib/admission-pack-link";
 import { resolveRecipients } from "@/lib/admission-config";
-import { buildScheduleSnapshot, type PaymentOption } from "@/lib/admission-schedule";
+import {
+  buildScheduleSnapshot,
+  type PaymentOption,
+  type PaymentDay,
+  type ScheduleSnapshot,
+} from "@/lib/admission-schedule";
 import { REGLEMENT_VERSION } from "@/data/reglement";
 import {
   sendScolariteEmail,
@@ -163,21 +168,18 @@ export async function sendPackLink(
 }
 
 /**
- * CHOIX du mode de paiement par le candidat (F3) : « echelonne » ou « comptant ».
- * Action PUBLIQUE token-gated. Recalcule le snapshot financier depuis les sources
- * LIVE (tarif officiel figé du pack + installment_plan + finance_settings) et le
- * fige dans `admission_packs.schedule_json`.
- * ⚠️ Ne modifie JAMAIS `student_finance` (fait seulement à la finalisation, F4).
- * ⚠️ `tuition_due` (tarif officiel) n'est jamais écrasé — la remise comptant ne
- * s'applique qu'à la scolarité, jamais aux frais d'inscription.
+ * Recalcule + fige `admission_packs.schedule_json` depuis les sources LIVE (tarif
+ * officiel figé du pack + installment_plan + finance_settings), en PRÉSERVANT le
+ * choix non modifié (payment_option ↔ payment_day). Action interne partagée par
+ * `setPaymentOption` (F3) et `setPaymentDay` (D1/D2).
+ * Gardes : token valide, pack valide, candidature NON `inscrit` (verrou F7).
+ * ⚠️ Ne modifie JAMAIS `student_finance`/`payment_schedules`/access/statut ;
+ * `tuition_due` (tarif officiel) jamais écrasé.
  */
-export async function setPaymentOption(
+async function rebuildPackSchedule(
   token: string,
-  option: PaymentOption
-): Promise<FormResult> {
-  if (option !== "echelonne" && option !== "comptant") {
-    return { ok: false, message: "Option de paiement invalide." };
-  }
+  override: { paymentOption?: PaymentOption; paymentDay?: PaymentDay }
+): Promise<{ ok: true; schedule: ScheduleSnapshot } | { ok: false; code?: string; message: string }> {
   const link = await verifyPackToken(token);
   if (!link) return { ok: false, message: "Lien invalide ou expiré." };
   const admin = createAdminClient();
@@ -190,9 +192,7 @@ export async function setPaymentOption(
     .maybeSingle();
   if (!pack) return { ok: false, message: "Pack introuvable." };
 
-  // 🔒 VERROU (F7) : une fois l'inscription finalisée, le choix de paiement est
-  // figé (schedule_json matérialisé dans payment_schedules). On refuse toute
-  // modification pour éviter toute divergence avec l'échéancier matérialisé.
+  // 🔒 VERROU (F7) : inscription finalisée → choix figé (matérialisé).
   const { data: cand } = await admin
     .from("inscription_requests")
     .select("status")
@@ -206,9 +206,18 @@ export async function setPaymentOption(
     };
   }
 
-  const sj = (pack.schedule_json ?? {}) as { tuition_official?: number };
+  // Préservation croisée : les choix courants viennent du snapshot existant.
+  const sj = (pack.schedule_json ?? {}) as {
+    tuition_official?: number;
+    payment_option?: PaymentOption;
+    payment_day?: PaymentDay;
+  };
   const tuitionOfficial =
     pack.tuition_due != null ? Number(pack.tuition_due) : sj.tuition_official ?? null;
+  const paymentOption: PaymentOption =
+    override.paymentOption ?? (sj.payment_option === "comptant" ? "comptant" : "echelonne");
+  const paymentDay: PaymentDay =
+    override.paymentDay ?? (sj.payment_day === "fin_mois" ? "fin_mois" : "20");
 
   const [{ data: planRows }, { data: fsDisc }] = await Promise.all([
     admin.from("installment_plan").select("seq, pct, due_date").eq("academic_year", pack.academic_year ?? ""),
@@ -226,23 +235,61 @@ export async function setPaymentOption(
       pct: Number(r.pct),
       due_date: String(r.due_date),
     })),
-    paymentOption: option,
+    paymentOption,
+    paymentDay,
   });
   if (!snap.ok) return { ok: false, code: snap.code, message: snap.message };
 
-  const now = new Date().toISOString();
   const { error } = await admin
     .from("admission_packs")
-    .update({ schedule_json: snap.schedule, updated_at: now })
+    .update({ schedule_json: snap.schedule, updated_at: new Date().toISOString() })
     .eq("id", link.packId);
   if (error) return { ok: false, message: "Une erreur est survenue. Réessayez." };
+  return { ok: true, schedule: snap.schedule };
+}
 
+/**
+ * CHOIX du mode de paiement par le candidat (F3) : « echelonne » ou « comptant ».
+ * Action PUBLIQUE token-gated. PRÉSERVE le `payment_day` courant.
+ */
+export async function setPaymentOption(
+  token: string,
+  option: PaymentOption
+): Promise<FormResult> {
+  if (option !== "echelonne" && option !== "comptant") {
+    return { ok: false, message: "Option de paiement invalide." };
+  }
+  const res = await rebuildPackSchedule(token, { paymentOption: option });
+  if (!res.ok) return { ok: false, code: res.code, message: res.message };
   return {
     ok: true,
     message:
       option === "comptant"
         ? "Paiement comptant enregistré : remise de 15 % sur la scolarité (frais d'inscription inchangés)."
         : "Paiement échelonné enregistré : 10 tranches.",
+  };
+}
+
+/**
+ * CHOIX de la date mensuelle de règlement par le candidat (D2) : « 20 » ou
+ * « fin_mois ». Action PUBLIQUE token-gated. PRÉSERVE le payment_option courant ;
+ * ne recalcule que les `due_date` (montants/pourcentages/remise inchangés).
+ */
+export async function setPaymentDay(
+  token: string,
+  paymentDay: PaymentDay
+): Promise<FormResult> {
+  if (paymentDay !== "20" && paymentDay !== "fin_mois") {
+    return { ok: false, message: "Date de règlement invalide." };
+  }
+  const res = await rebuildPackSchedule(token, { paymentDay });
+  if (!res.ok) return { ok: false, code: res.code, message: res.message };
+  return {
+    ok: true,
+    message:
+      paymentDay === "fin_mois"
+        ? "Date de règlement enregistrée : fin de mois."
+        : "Date de règlement enregistrée : le 20 de chaque mois.",
   };
 }
 
