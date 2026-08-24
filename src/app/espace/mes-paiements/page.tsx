@@ -23,7 +23,7 @@ export default async function MesPaiementsPage() {
     await Promise.all([
       supabase
         .from("student_finance")
-        .select("total_due, access_state, status")
+        .select("total_due, access_state, status, scholarship_amount")
         .eq("student_id", userId)
         .maybeSingle(),
       supabase
@@ -39,6 +39,7 @@ export default async function MesPaiementsPage() {
     ]);
 
   const totalDue = Number(finance?.total_due ?? 0);
+  const bourse = Number(finance?.scholarship_amount ?? 0); // bourse IPMD appliquée (0 si aucune)
   const payments = paymentRows ?? [];
   const totalPaid = payments.reduce((a, p) => a + Number(p.amount), 0);
   const balance = totalDue - totalPaid;
@@ -138,6 +139,14 @@ export default async function MesPaiementsPage() {
               </p>
             </div>
           </div>
+
+          {/* Bourse IPMD appliquée (motif jamais exposé côté étudiant) */}
+          {bourse > 0 && (
+            <p className="mt-4 rounded-2xl bg-purple-50 px-4 py-3 text-sm font-medium text-purple-800 ring-1 ring-purple-200">
+              🎓 Bourse IPMD appliquée : <strong>− {formatFCFA(bourse)}</strong> sur ta scolarité. Le
+              montant dû ci-dessus en tient déjà compte.
+            </p>
+          )}
 
           {/* Prochain paiement */}
           {next && (

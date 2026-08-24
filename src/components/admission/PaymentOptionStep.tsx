@@ -54,8 +54,14 @@ export function PaymentOptionStep({
 
   const official = schedule.tuition_official;
   const net = schedule.tuition_net;
-  const remiseAmount = official - net; // remise réellement appliquée au plan courant
+  const bourse = schedule.scholarship_amount ?? 0; // bourse IPMD appliquée (0 si aucune)
+  const planRemise = official - bourse - net; // remise du plan, sur la base APRÈS bourse
   const nbTranches = schedule.installments.length;
+  const fullBourse = net === 0; // bourse totale : scolarité entièrement couverte
+  const bourseRateLabel =
+    schedule.scholarship_mode === "taux" && schedule.scholarship_rate
+      ? ` (${Number((schedule.scholarship_rate * 100).toFixed(2))} %)`
+      : "";
   // Plan courant : plan_months (nouveaux snapshots) ou dérivé (anciens).
   const currentPlan = schedule.plan_months ?? (schedule.payment_option === "comptant" ? 1 : 10);
   // Repli si la liste des plans n'est pas fournie : au moins le plan courant.
@@ -82,12 +88,18 @@ export function PaymentOptionStep({
           <dt className="text-black/55">Scolarité officielle</dt>
           <dd className="font-semibold text-ipmd-black">{formatFCFA(official)}</dd>
         </div>
-        {schedule.discount_rate > 0 && (
+        {bourse > 0 && (
+          <div className="flex items-center justify-between gap-4 py-1.5">
+            <dt className="text-black/55">🎓 Bourse IPMD{bourseRateLabel}</dt>
+            <dd className="font-semibold text-purple-700">− {formatFCFA(bourse)}</dd>
+          </div>
+        )}
+        {planRemise > 0 && schedule.discount_rate > 0 && (
           <div className="flex items-center justify-between gap-4 py-1.5">
             <dt className="text-black/55">
               Remise ({Math.round(schedule.discount_rate * 100)} %)
             </dt>
-            <dd className="font-semibold text-emerald-700">− {formatFCFA(remiseAmount)}</dd>
+            <dd className="font-semibold text-emerald-700">− {formatFCFA(planRemise)}</dd>
           </div>
         )}
         <div className="flex items-center justify-between gap-4 py-1.5">
@@ -96,6 +108,16 @@ export function PaymentOptionStep({
         </div>
       </dl>
 
+      {/* Bourse totale : scolarité entièrement couverte → aucune tranche. */}
+      {fullBourse && (
+        <p className="mt-3 rounded-xl bg-purple-50 px-3 py-2 text-[12px] leading-relaxed text-purple-800 ring-1 ring-purple-200">
+          🎓 Scolarité <strong>entièrement couverte</strong> par la Bourse IPMD — aucune tranche à
+          régler. Les frais d&apos;inscription restent dus.
+        </p>
+      )}
+
+      {!fullBourse && (
+      <>
       {/* Choix du plan (1/2/3/6/8/10) */}
       <p className="mt-3 text-[11px] font-bold uppercase tracking-wider text-black/45">
         Votre plan de paiement
@@ -171,6 +193,8 @@ export function PaymentOptionStep({
       >
         ⬇ Télécharger mon échéancier (PDF)
       </a>
+      </>
+      )}
 
       {/* Délai de confirmation 72 h — dépassé : message clair (place non garantie) */}
       {deadlineExpired ? (

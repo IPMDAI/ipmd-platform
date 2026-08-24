@@ -58,7 +58,7 @@ export default async function PaiementsPage({
     { data: classRows },
   ] = await Promise.all([
     supabase.from("profiles").select("id, full_name, email").eq("role", "etudiant"),
-    supabase.from("student_finance").select("student_id, registration_fee, tuition_due, discount_rate"),
+    supabase.from("student_finance").select("student_id, registration_fee, tuition_due, discount_rate, scholarship_amount"),
     supabase
       .from("payments")
       .select("id, student_id, candidature_id, amount, method, kind, reference, paid_at, status, created_at")

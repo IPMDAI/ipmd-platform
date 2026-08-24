@@ -33,7 +33,7 @@ export default async function ProformaPage({
       supabase.from("profiles").select("full_name, email").eq("id", studentId).single(),
       supabase
         .from("student_finance")
-        .select("registration_fee, tuition_due, discount_rate, level, program, academic_year")
+        .select("registration_fee, tuition_due, discount_rate, scholarship_amount, level, program, academic_year")
         .eq("student_id", studentId)
         .maybeSingle(),
       supabase

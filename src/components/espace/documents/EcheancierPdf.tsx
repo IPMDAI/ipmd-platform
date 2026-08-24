@@ -123,8 +123,14 @@ function EcheancierDocument({ d }: { d: EcheancierPdfData }) {
   const nb = sc.installments.length;
   const planMonths = sc.plan_months ?? (sc.payment_option === "comptant" ? 1 : 10);
   const single = planMonths === 1; // règlement unique (paiement en 1 fois)
-  const hasDiscount = sc.discount_rate > 0; // remise appliquée (plans 1/2/3)
-  const remise = sc.tuition_official - sc.tuition_net; // remise réellement appliquée au plan
+  const hasDiscount = sc.discount_rate > 0; // remise du plan (plans 1/2/3)
+  const bourse = sc.scholarship_amount ?? 0; // bourse IPMD appliquée (0 si aucune)
+  const planRemise = sc.tuition_official - bourse - sc.tuition_net; // remise du plan, base APRÈS bourse
+  const fullBourse = sc.tuition_net === 0; // bourse totale : scolarité couverte
+  const bourseRateLabel =
+    sc.scholarship_mode === "taux" && sc.scholarship_rate
+      ? ` (${Number((sc.scholarship_rate * 100).toFixed(2))} %)`
+      : "";
   const modeLabel = single ? "Paiement en 1 fois" : `${planMonths} mensualités`;
   // Somme EXACTE des tranches (depuis le snapshot, aucun recalcul).
   const sumInstallments = sc.installments.reduce((a, it) => a + Number(it.amount), 0);
@@ -176,12 +182,18 @@ function EcheancierDocument({ d }: { d: EcheancierPdfData }) {
               <Text style={s.recapKey}>Scolarité officielle</Text>
               <Text style={s.recapVal}>{fcfaPdf(sc.tuition_official)}</Text>
             </View>
-            {hasDiscount ? (
+            {bourse > 0 ? (
+              <View style={s.recapRow}>
+                <Text style={s.recapKey}>Bourse IPMD{bourseRateLabel}</Text>
+                <Text style={[s.recapVal, s.recapDiscount]}>− {fcfaPdf(bourse)}</Text>
+              </View>
+            ) : null}
+            {hasDiscount && planRemise > 0 ? (
               <View style={s.recapRow}>
                 <Text style={s.recapKey}>
                   Remise ({Math.round(sc.discount_rate * 100)} %)
                 </Text>
-                <Text style={[s.recapVal, s.recapDiscount]}>− {fcfaPdf(remise)}</Text>
+                <Text style={[s.recapVal, s.recapDiscount]}>− {fcfaPdf(planRemise)}</Text>
               </View>
             ) : null}
             <View style={s.recapRowLast}>
@@ -190,34 +202,43 @@ function EcheancierDocument({ d }: { d: EcheancierPdfData }) {
             </View>
           </View>
 
-          {/* Détail des versements */}
-          <Text style={s.sectionTitle}>{single ? "Règlement" : `Échéancier (${nb} versements)`}</Text>
-          <View style={s.table}>
-            <View style={s.thead}>
-              <Text style={[s.th, s.cNum]}>{single ? "Règlement" : "Tranche"}</Text>
-              <Text style={[s.th, s.cPct]}>%</Text>
-              <Text style={[s.th, s.cDate]}>Échéance</Text>
-              <Text style={[s.th, s.cAmt]}>Montant</Text>
-            </View>
-            {sc.installments.map((it, i) => (
-              <View key={it.seq} style={i % 2 === 1 ? s.trowAlt : s.trow}>
-                <Text style={[s.td, s.cNum]}>
-                  {single ? "Scolarité (1 fois)" : `Tranche ${it.seq}/${nb}`}
-                </Text>
-                <Text style={[s.tdMuted, s.cPct]}>{it.pct} %</Text>
-                <Text style={[s.td, s.cDate]}>{frDate(it.due_date)}</Text>
-                <Text style={[s.td, s.cAmt]}>{fcfaPdf(it.amount)}</Text>
+          {/* Détail des versements — ou note « bourse totale » si scolarité couverte. */}
+          {fullBourse ? (
+            <Text style={s.note}>
+              Scolarité entièrement couverte par la Bourse IPMD — aucune tranche à régler. Les frais
+              d&apos;inscription restent dus.
+            </Text>
+          ) : (
+            <>
+              <Text style={s.sectionTitle}>{single ? "Règlement" : `Échéancier (${nb} versements)`}</Text>
+              <View style={s.table}>
+                <View style={s.thead}>
+                  <Text style={[s.th, s.cNum]}>{single ? "Règlement" : "Tranche"}</Text>
+                  <Text style={[s.th, s.cPct]}>%</Text>
+                  <Text style={[s.th, s.cDate]}>Échéance</Text>
+                  <Text style={[s.th, s.cAmt]}>Montant</Text>
+                </View>
+                {sc.installments.map((it, i) => (
+                  <View key={it.seq} style={i % 2 === 1 ? s.trowAlt : s.trow}>
+                    <Text style={[s.td, s.cNum]}>
+                      {single ? "Scolarité (1 fois)" : `Tranche ${it.seq}/${nb}`}
+                    </Text>
+                    <Text style={[s.tdMuted, s.cPct]}>{it.pct} %</Text>
+                    <Text style={[s.td, s.cDate]}>{frDate(it.due_date)}</Text>
+                    <Text style={[s.td, s.cAmt]}>{fcfaPdf(it.amount)}</Text>
+                  </View>
+                ))}
+                <View style={s.ttotal}>
+                  <Text style={[s.tdTotal, s.cNum]}>Total scolarité</Text>
+                  <Text style={[s.tdTotal, s.cPct]}>—</Text>
+                  <Text style={[s.tdTotal, s.cDate]}>
+                    {single ? `avant le ${frDate(sc.comptant_deadline)}` : ""}
+                  </Text>
+                  <Text style={[s.tdTotal, s.cAmt]}>{fcfaPdf(sumInstallments)}</Text>
+                </View>
               </View>
-            ))}
-            <View style={s.ttotal}>
-              <Text style={[s.tdTotal, s.cNum]}>Total scolarité</Text>
-              <Text style={[s.tdTotal, s.cPct]}>—</Text>
-              <Text style={[s.tdTotal, s.cDate]}>
-                {single ? `avant le ${frDate(sc.comptant_deadline)}` : ""}
-              </Text>
-              <Text style={[s.tdTotal, s.cAmt]}>{fcfaPdf(sumInstallments)}</Text>
-            </View>
-          </View>
+            </>
+          )}
 
           {/* Frais d'inscription séparés */}
           <Text style={s.note}>

@@ -38,7 +38,7 @@ export default async function RelevePage({
       supabase.from("profiles").select("full_name, email").eq("id", studentId).single(),
       supabase
         .from("student_finance")
-        .select("registration_fee, tuition_due, discount_rate, level, program, academic_year, status")
+        .select("registration_fee, tuition_due, discount_rate, scholarship_amount, level, program, academic_year, status")
         .eq("student_id", studentId)
         .maybeSingle(),
       supabase

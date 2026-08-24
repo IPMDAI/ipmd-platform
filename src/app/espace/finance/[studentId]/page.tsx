@@ -64,7 +64,7 @@ export default async function StudentFinancePage({
       supabase
         .from("student_finance")
         .select(
-          "registration_fee, tuition_due, discount_rate, level, status, access_state, negotiated, payer_note"
+          "registration_fee, tuition_due, discount_rate, scholarship_amount, level, status, access_state, negotiated, payer_note"
         )
         .eq("student_id", studentId)
         .maybeSingle(),

@@ -27,7 +27,7 @@ export async function recomputeAccess(
   const [{ data: fin }, { data: pays }] = await Promise.all([
     supabase
       .from("student_finance")
-      .select("registration_fee, tuition_due, discount_rate, access_state")
+      .select("registration_fee, tuition_due, discount_rate, scholarship_amount, access_state")
       .eq("student_id", studentId)
       .maybeSingle(),
     supabase.from("payments").select("amount, kind, status").eq("student_id", studentId),
@@ -216,7 +216,7 @@ export async function addPayment(
     const [{ data: fin2 }, { data: pays2 }] = await Promise.all([
       ctx.supabase
         .from("student_finance")
-        .select("registration_fee, tuition_due, discount_rate, level, access_state")
+        .select("registration_fee, tuition_due, discount_rate, scholarship_amount, level, access_state")
         .eq("student_id", studentId)
         .maybeSingle(),
       ctx.supabase.from("payments").select("amount, kind, status").eq("student_id", studentId),
@@ -280,7 +280,7 @@ async function sendProformaEmail(
 
   const { data: fin2 } = await supabase
     .from("student_finance")
-    .select("registration_fee, tuition_due, discount_rate, level, academic_year")
+    .select("registration_fee, tuition_due, discount_rate, scholarship_amount, level, academic_year")
     .eq("student_id", studentId)
     .maybeSingle();
   const fin = computeFinance(fin2, []);
@@ -448,7 +448,7 @@ export async function sendReceiptEmail(
   const [{ data: fin2 }, { data: pays2 }, { data: stu }] = await Promise.all([
     ctx.supabase
       .from("student_finance")
-      .select("registration_fee, tuition_due, discount_rate")
+      .select("registration_fee, tuition_due, discount_rate, scholarship_amount")
       .eq("student_id", payment.student_id)
       .maybeSingle(),
     ctx.supabase.from("payments").select("amount, kind, status").eq("student_id", payment.student_id),

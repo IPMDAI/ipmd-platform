@@ -88,7 +88,7 @@ export default async function FinancePage({
     supabase.from("profiles").select("id, full_name, email, created_at").eq("role", "etudiant").order("full_name"),
     supabase
       .from("student_finance")
-      .select("student_id, registration_fee, tuition_due, discount_rate, level, status, payer_note, academic_year"),
+      .select("student_id, registration_fee, tuition_due, discount_rate, scholarship_amount, level, status, payer_note, academic_year"),
     supabase.from("payments").select("student_id, amount, method, kind, status"),
     supabase.from("payment_schedules").select("student_id, amount, due_date"),
     supabase.from("class_members").select("student_id, class_id"),

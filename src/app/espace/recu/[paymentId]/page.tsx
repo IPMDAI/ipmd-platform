@@ -53,7 +53,7 @@ export default async function RecuPage({
       supabase.from("profiles").select("full_name, email").eq("id", payment.student_id).maybeSingle(),
       supabase
         .from("student_finance")
-        .select("registration_fee, tuition_due, discount_rate, level, program")
+        .select("registration_fee, tuition_due, discount_rate, scholarship_amount, level, program")
         .eq("student_id", payment.student_id)
         .maybeSingle(),
       supabase.from("payments").select("amount, kind, status").eq("student_id", payment.student_id),
