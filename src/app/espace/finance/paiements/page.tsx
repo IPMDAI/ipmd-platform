@@ -362,7 +362,7 @@ export default async function PaiementsPage({
                       <td className="px-3 py-2 text-black/60">{r.method}</td>
                       <td className="px-3 py-2 text-black/50">{r.reference || "—"}</td>
                       <td className="px-3 py-2 text-right font-semibold text-ipmd-black">{formatFCFA(r.amount)}</td>
-                      <td className="px-3 py-2 text-right text-green-700">{r.status === "paye" ? formatFCFA(r.used) : "—"}</td>
+                      <td className="px-3 py-2 text-right text-green-700">{r.isPre ? "—" : r.status === "paye" ? formatFCFA(r.used) : "—"}</td>
                       <td className={`px-3 py-2 text-right font-semibold ${r.over > 0 ? "text-emerald-600" : "text-black/30"}`}>
                         {r.status === "paye" && r.over > 0 ? `+${formatFCFA(r.over)}` : "—"}
                       </td>
