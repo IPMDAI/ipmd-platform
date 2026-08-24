@@ -13,6 +13,7 @@ import { buildAdmissionEmail, buildRefusalEmail } from "@/lib/admission-letter";
 import { buildAdmissionPdf } from "@/lib/admission-pdf";
 import { generatePackLink, packLinkUrl } from "@/lib/admission-pack-link";
 import { buildScheduleSnapshot, resolvePlanMonths } from "@/lib/admission-schedule";
+import { loadScholarshipForCandidature } from "@/lib/scholarship-data";
 import { admissionDeadlineText } from "@/lib/admission-deadline";
 import { sendScolariteEmail, canSendEmail, type EmailAttachment } from "@/lib/email";
 import type { FormResult } from "@/types";
@@ -316,7 +317,7 @@ export async function sendAdmission(
   const DEFAULT_PLAN_MONTHS = 10;
   let scheduleJson: unknown = null;
   if (tuitionDue != null) {
-    const [{ data: planRows }, { data: fsDisc }, { data: planCfg }] = await Promise.all([
+    const [{ data: planRows }, { data: fsDisc }, { data: planCfg }, scholarship] = await Promise.all([
       ctx.supabase
         .from("installment_plan")
         .select("seq, pct, due_date")
@@ -329,6 +330,7 @@ export async function sendAdmission(
         .eq("academic_year", academicYear ?? "")
         .eq("plan_months", DEFAULT_PLAN_MONTHS)
         .maybeSingle(),
+      loadScholarshipForCandidature(id),
     ]);
     const snap = buildScheduleSnapshot({
       academicYear,
@@ -343,6 +345,8 @@ export async function sendAdmission(
         pct: Number(r.pct),
         due_date: String(r.due_date),
       })),
+      scholarshipEngagement: scholarship?.engagement ?? null,
+      scholarshipTerms: scholarship?.terms ?? [],
     });
     if (!snap.ok) return { ok: false, code: snap.code, message: snap.message };
     scheduleJson = snap.schedule;
@@ -662,7 +666,7 @@ export async function repairPackSchedule(
   // sinon défaut 10. Le jour d'échéance est fixe (30 / février).
   const planMonths = resolvePlanMonths((pack.schedule_json as Record<string, unknown>) ?? {}) ?? 10;
 
-  const [{ data: planRows }, { data: fsDisc }, { data: planCfg }] = await Promise.all([
+  const [{ data: planRows }, { data: fsDisc }, { data: planCfg }, scholarship] = await Promise.all([
     ctx.supabase
       .from("installment_plan")
       .select("seq, pct, due_date")
@@ -675,6 +679,7 @@ export async function repairPackSchedule(
       .eq("academic_year", academicYear ?? "")
       .eq("plan_months", planMonths)
       .maybeSingle(),
+    loadScholarshipForCandidature(candidatureId),
   ]);
 
   const snap = buildScheduleSnapshot({
@@ -690,6 +695,8 @@ export async function repairPackSchedule(
       pct: Number(r.pct),
       due_date: String(r.due_date),
     })),
+    scholarshipEngagement: scholarship?.engagement ?? null,
+    scholarshipTerms: scholarship?.terms ?? [],
   });
   if (!snap.ok) return { ok: false, code: snap.code, message: snap.message };
 

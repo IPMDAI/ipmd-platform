@@ -34,12 +34,20 @@ export type ScheduleSnapshot = {
   tuition_official: number; // tarif officiel — jamais écrasé
   plan_months: PlanMonths; // SOURCE PRIMAIRE : nb de mensualités du plan choisi
   payment_option: PaymentOption; // dérivé de compat (plan 1 → comptant ; sinon echelonne)
-  discount_rate: number; // remise du plan appliquée (0 si sans remise)
-  tuition_net: number; // officielle × (1 − discount_rate)
+  discount_rate: number; // remise du plan EFFECTIVE appliquée (0 si non appliquée)
+  tuition_net: number; // = round((officiel − scholarship_amount) × (1 − discount_rate)) ; 0 = bourse totale
   lump_sum_discount: number; // remise comptant DISPONIBLE (plan 1), pour affichage
   comptant_amount: number; // scolarité si comptant (plan 1), info d'affichage
   comptant_deadline: string; // = due_date de T1 (jour 30 standard)
-  installments: ScheduleInstallment[]; // longueur === plan_months
+  // Bourse IPMD figée (jamais recalculée par PDF/pack/finalisation) :
+  plan_discount_rate: number; // remise du plan CONFIG (payment_plans)
+  plan_discount_applied: boolean; // remise plan réellement appliquée ?
+  scholarship_id: string | null;
+  scholarship_term_id: string | null;
+  scholarship_amount: number; // bourse RÉELLEMENT appliquée (0 si aucune)
+  scholarship_mode: ScholarshipMode | null;
+  scholarship_rate: number | null; // si mode=taux
+  installments: ScheduleInstallment[]; // longueur === plan_months ; [] si bourse totale (net 0)
 };
 
 /** Nb de jours du mois (1-12), gère les années bissextiles (février 28/29). */
@@ -79,6 +87,74 @@ export function resolvePlanMonths(s: Record<string, unknown>): PlanMonths | null
   return null;
 }
 
+// ============ BOURSE IPMD (moteur pur, modèle B1) ============
+export type ScholarshipMode = "taux" | "montant";
+export type ScholarshipEngagement = {
+  id: string;
+  status: "active" | "revoked";
+  start_academic_year: string; // "2026-2027"
+  duration_years: 1 | 2 | 3;
+  plan_discount_cumulable: boolean;
+};
+export type ScholarshipTerm = {
+  id: string;
+  academic_year: string;
+  mode: ScholarshipMode;
+  rate?: number | null; // si taux
+  amount?: number | null; // si montant
+  status: "active" | "superseded" | "suspended";
+};
+
+function startYearOf(label: string): number {
+  return parseInt(label.split("-")[0], 10);
+}
+
+/**
+ * Résout la bourse APPLICABLE pour une année : engagement révoqué → aucune ;
+ * année hors couverture [start … start+durée−1] → aucune ; terme `suspended` →
+ * aucune (année couverte non appliquée) ; sinon le terme `active` de l'année.
+ */
+export function resolveScholarshipForYear(
+  eng: ScholarshipEngagement | null | undefined,
+  terms: ScholarshipTerm[],
+  academicYear: string
+): ScholarshipTerm | null {
+  if (!eng || eng.status === "revoked") return null;
+  const offset = startYearOf(academicYear) - startYearOf(eng.start_academic_year);
+  if (!Number.isFinite(offset) || offset < 0 || offset >= eng.duration_years) return null;
+  const current = terms.find(
+    (t) => t.academic_year === academicYear && (t.status === "active" || t.status === "suspended")
+  );
+  if (!current || current.status === "suspended") return null;
+  return current;
+}
+
+/** Montant de bourse BORNÉ à [0, tarif officiel] (taux → round(officiel×taux)). */
+export function scholarshipAmount(term: ScholarshipTerm | null, official: number): number {
+  if (!term) return 0;
+  const raw = term.mode === "taux" ? Math.round(official * (term.rate ?? 0)) : term.amount ?? 0;
+  return Math.max(0, Math.min(raw, official));
+}
+
+/**
+ * Applique bourse + remise de plan et renvoie ce qui est RÉELLEMENT appliqué.
+ *  - cumulable : bourse puis remise plan sur le reste ;
+ *  - non-cumulable : MEILLEUR AVANTAGE (net le plus bas) entre bourse seule et plan seul.
+ */
+export function applyBourseAndPlan(
+  official: number,
+  sch: number,
+  planDiscount: number,
+  cumulable: boolean
+): { schApplied: number; effDiscount: number; planApplied: boolean } {
+  if (sch <= 0) return { schApplied: 0, effDiscount: planDiscount, planApplied: planDiscount > 0 };
+  if (cumulable) return { schApplied: sch, effDiscount: planDiscount, planApplied: planDiscount > 0 };
+  const netBourse = official - sch;
+  const netPlan = Math.round(official * (1 - planDiscount));
+  if (netBourse <= netPlan) return { schApplied: sch, effDiscount: 0, planApplied: false };
+  return { schApplied: 0, effDiscount: planDiscount, planApplied: planDiscount > 0 };
+}
+
 export type ScheduleResult =
   | { ok: true; schedule: ScheduleSnapshot }
   | { ok: false; code: "PLAN_MANQUANT" | "PLAN_INVALIDE" | "TARIF_MANQUANT" | "PLAN_NON_SUPPORTE"; message: string };
@@ -104,12 +180,21 @@ export function validateScheduleSnapshot(
   const inst = s.installments;
 
   if (official == null || !(official > 0)) return { ok: false, reason: "invalide (tarif officiel absent)" };
-  if (net == null || !(net > 0)) return { ok: false, reason: "invalide (scolarité à financer absente)" };
+  if (net == null || net < 0) return { ok: false, reason: "invalide (scolarité à financer absente)" };
   if (reg == null || reg < 0) return { ok: false, reason: "invalide (frais d'inscription absents)" };
   if (disc == null || disc < 0 || disc >= 1) return { ok: false, reason: "invalide (remise incohérente)" };
 
   const pm = resolvePlanMonths(s);
   if (pm == null) return { ok: false, reason: "invalide (plan inconnu)" };
+
+  // BOURSE TOTALE : net = 0 → aucune tranche de scolarité (échéancier vide autorisé UNIQUEMENT ici).
+  if (net === 0) {
+    if (!Array.isArray(inst) || inst.length !== 0) {
+      return { ok: false, reason: "invalide (bourse totale : échéancier doit être vide)" };
+    }
+    return { ok: true, snap: json as ScheduleSnapshot };
+  }
+
   if (!Array.isArray(inst) || inst.length !== pm) {
     return { ok: false, reason: `invalide (${Array.isArray(inst) ? inst.length : 0} tranches ≠ plan ${pm})` };
   }
@@ -145,9 +230,11 @@ export function buildScheduleSnapshot(input: {
   registrationFee: number;
   tuitionOfficial: number | null;
   planMonths: number;
-  discountRate: number;
+  discountRate: number; // remise du plan CONFIG (payment_plans)
   lumpSumDiscount: number;
   planRows: PlanRow[];
+  scholarshipEngagement?: ScholarshipEngagement | null; // bourse (résolue pour l'année en interne)
+  scholarshipTerms?: ScholarshipTerm[];
 }): ScheduleResult {
   const { academicYear, level, registrationFee, tuitionOfficial, discountRate, lumpSumDiscount } = input;
 
@@ -187,25 +274,29 @@ export function buildScheduleSnapshot(input: {
   }
 
   const rows = [...input.planRows].sort((a, b) => a.seq - b.seq);
-  // Remise du plan sur la scolarité seule ; inscription intacte.
-  const tuitionNet = Math.round(tuitionOfficial * (1 - discountRate));
-  // Montant du scénario COMPTANT (plan 1), pour l'affichage (bouton/PDF).
-  const comptantAmount = Math.round(tuitionOfficial * (1 - lumpSumDiscount));
-  // Jour standard (30 / février dernier jour) ; année+mois viennent du plan.
+
+  // BOURSE IPMD : résout le terme applicable pour l'année, puis applique la règle
+  // (cumul / meilleur avantage). Sans bourse → schApplied=0, effDiscount=remise plan.
+  const term = resolveScholarshipForYear(input.scholarshipEngagement, input.scholarshipTerms ?? [], academicYear ?? "");
+  const sch = scholarshipAmount(term, tuitionOfficial);
+  const cumulable = input.scholarshipEngagement?.plan_discount_cumulable ?? false;
+  const { schApplied, effDiscount, planApplied } = applyBourseAndPlan(tuitionOfficial, sch, discountRate, cumulable);
+
+  // FORMULE UNIFIÉE : net = (officiel − bourse appliquée) × (1 − remise plan effective).
+  const tuitionNet = Math.round((tuitionOfficial - schApplied) * (1 - effDiscount));
+  const comptantAmount = Math.round(tuitionOfficial * (1 - lumpSumDiscount)); // affichage (plan 1)
   const t1 = applyStandardDay(rows[0].due_date);
 
-  // Répartition : arrondi par tranche, dernière ajustée → somme exacte = net.
+  // Bourse totale (net 0) → aucune tranche de scolarité ; sinon répartition (dernière ajustée).
   let cumul = 0;
-  const installments: ScheduleInstallment[] = rows.map((r, i) => {
-    let amount: number;
-    if (i < rows.length - 1) {
-      amount = Math.round((tuitionNet * Number(r.pct)) / 100);
-      cumul += amount;
-    } else {
-      amount = tuitionNet - cumul;
-    }
-    return { seq: r.seq, pct: Number(r.pct), due_date: applyStandardDay(r.due_date), amount };
-  });
+  const installments: ScheduleInstallment[] =
+    tuitionNet === 0
+      ? []
+      : rows.map((r, i) => {
+          const amount = i < rows.length - 1 ? Math.round((tuitionNet * Number(r.pct)) / 100) : tuitionNet - cumul;
+          if (i < rows.length - 1) cumul += amount;
+          return { seq: r.seq, pct: Number(r.pct), due_date: applyStandardDay(r.due_date), amount };
+        });
 
   const paymentOption: PaymentOption = planMonths === 1 ? "comptant" : "echelonne";
 
@@ -218,11 +309,18 @@ export function buildScheduleSnapshot(input: {
       tuition_official: tuitionOfficial,
       plan_months: planMonths,
       payment_option: paymentOption,
-      discount_rate: discountRate,
+      discount_rate: effDiscount,
       tuition_net: tuitionNet,
       lump_sum_discount: lumpSumDiscount,
       comptant_amount: comptantAmount,
       comptant_deadline: t1,
+      plan_discount_rate: discountRate,
+      plan_discount_applied: planApplied,
+      scholarship_id: term ? input.scholarshipEngagement!.id : null,
+      scholarship_term_id: term ? term.id : null,
+      scholarship_amount: schApplied,
+      scholarship_mode: term ? term.mode : null,
+      scholarship_rate: term && term.mode === "taux" ? term.rate ?? null : null,
       installments,
     },
   };

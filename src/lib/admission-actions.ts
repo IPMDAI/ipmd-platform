@@ -18,6 +18,7 @@ import {
   type PlanMonths,
   type ScheduleSnapshot,
 } from "@/lib/admission-schedule";
+import { loadScholarshipForCandidature } from "@/lib/scholarship-data";
 import { REGLEMENT_VERSION } from "@/data/reglement";
 import {
   sendScolariteEmail,
@@ -216,10 +217,11 @@ async function rebuildPackSchedule(
     pack.tuition_due != null ? Number(pack.tuition_due) : sj.tuition_official ?? null;
   const academicYear = (pack.academic_year as string) ?? "";
 
-  const [{ data: planRows }, { data: fsDisc }, { data: planCfg }] = await Promise.all([
+  const [{ data: planRows }, { data: fsDisc }, { data: planCfg }, scholarship] = await Promise.all([
     admin.from("installment_plan").select("seq, pct, due_date").eq("academic_year", academicYear).eq("plan_months", planMonths),
     admin.from("finance_settings").select("lump_sum_discount").eq("id", 1).maybeSingle(),
     admin.from("payment_plans").select("discount_rate").eq("academic_year", academicYear).eq("plan_months", planMonths).maybeSingle(),
+    loadScholarshipForCandidature(pack.candidature_id as string),
   ]);
 
   const snap = buildScheduleSnapshot({
@@ -235,6 +237,8 @@ async function rebuildPackSchedule(
       pct: Number(r.pct),
       due_date: String(r.due_date),
     })),
+    scholarshipEngagement: scholarship?.engagement ?? null,
+    scholarshipTerms: scholarship?.terms ?? [],
   });
   if (!snap.ok) return { ok: false, code: snap.code, message: snap.message };
 

@@ -427,6 +427,9 @@ export async function inviteFromCandidature(
         p_payment_option: sched.payment_option,
         p_installments: sched.installments,
         p_mode: modeVal,
+        // B3 — bourse FIGÉE du snapshot (0/NULL si aucune) ; jamais recalculée ici.
+        p_scholarship_amount: sched.scholarship_amount ?? 0,
+        p_scholarship_term_id: sched.scholarship_term_id ?? null,
       });
       if (matFinErr) {
         return {
@@ -464,6 +467,15 @@ export async function inviteFromCandidature(
     // Recalcul access_state (W0) APRÈS matérialisation + re-rattachement :
     // pause → actif si inscription soldée par des paiements 'paye', sinon reste pause.
     await recomputeAccess(ctx.supabase, newId);
+
+    // B3 — RE-RATTACHEMENT de la BOURSE active (engagement) candidature → étudiant
+    // (student_id=newId, candidature_id=NULL). Idempotent ; sans bourse → 0 ligne.
+    await admin
+      .from("scholarships")
+      .update({ student_id: newId, candidature_id: null })
+      .eq("candidature_id", candidatureId)
+      .is("student_id", null)
+      .eq("status", "active");
 
     const proformaLines: Array<[string, string]> = [
       ["Formation", cand.program_interest || "—"],

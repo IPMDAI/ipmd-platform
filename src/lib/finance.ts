@@ -85,13 +85,17 @@ export function computeFinance(
     registration_fee?: number | null;
     tuition_due?: number | null;
     discount_rate?: number | null;
+    scholarship_amount?: number | null;
   } | null,
   payments: { amount: number | string; kind?: string | null; status?: string | null }[]
 ): FinanceState {
   const registrationFee = Number(finance?.registration_fee ?? 0);
   const tuitionDue = Number(finance?.tuition_due ?? 0);
   const discountRate = Number(finance?.discount_rate ?? 0);
-  const tuitionNet = Math.round(tuitionDue * (1 - discountRate));
+  // Bourse IPMD : réduction de la scolarité, bornée au tarif officiel (0 = aucune,
+  // backward-compat strict avec l'existant). FORMULE UNIFIÉE avec buildScheduleSnapshot.
+  const scholarship = Math.max(0, Math.min(Number(finance?.scholarship_amount ?? 0), tuitionDue));
+  const tuitionNet = Math.round((tuitionDue - scholarship) * (1 - discountRate));
   const totalDue = registrationFee + tuitionNet;
 
   // INVARIANT (W0) : seuls les paiements VALIDÉS (status='paye') sont comptés
