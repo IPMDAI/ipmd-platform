@@ -133,6 +133,13 @@ const PEDAGOGIE_NAV: NavGroup[] = [
   },
 ];
 
+/** Entrée « Équipes & Accès » — RÉSERVÉE super_admin (jamais visible pour admin
+ * ni aucun autre rôle). La page /espace/equipes redouble la garde côté serveur. */
+const SUPER_ADMIN_GROUP: NavGroup = {
+  title: "Administration avancée",
+  items: [{ label: "Équipes & Accès", href: "/espace/equipes", icon: "🛡️" }],
+};
+
 export function getNavForRole(role: string): NavGroup[] {
   let base: NavGroup[];
   if (role === "admin" || role === "super_admin") base = ADMIN_NAV;
@@ -141,5 +148,7 @@ export function getNavForRole(role: string): NavGroup[] {
   else if (role === "enseignant") base = TEACHER_NAV;
   else if (role === "parent") base = PARENT_NAV;
   else base = LEARNER_NAV; // etudiant, professionnel, dirigeant
-  return [...base, ACCOUNT_GROUP];
+  const groups = [...base];
+  if (role === "super_admin") groups.push(SUPER_ADMIN_GROUP);
+  return [...groups, ACCOUNT_GROUP];
 }
