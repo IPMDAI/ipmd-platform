@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { requireUser } from "@/lib/require-user";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { Container } from "@/components/ui/Container";
 import { PrintButton } from "@/components/espace/PrintButton";
 import { FinanceExportButton } from "@/components/espace/FinanceExportButton";
@@ -61,6 +62,20 @@ export default async function FinancePage({
   const { supabase, userId } = await requireUser();
   const { data: me } = await supabase.from("profiles").select("role").eq("id", userId).single();
   if (!STAFF.includes(me?.role ?? "")) redirect("/espace");
+
+  // W3 : compteur de preuves de paiement à vérifier (via service-role).
+  let proofsToReview = 0;
+  {
+    const admin = createAdminClient();
+    if (admin) {
+      const { count } = await admin
+        .from("payment_proofs")
+        .select("id", { count: "exact", head: true })
+        .eq("kind", "inscription")
+        .eq("status", "a_verifier");
+      proofsToReview = count ?? 0;
+    }
+  }
 
   const [
     { data: students },
@@ -279,6 +294,17 @@ export default async function FinancePage({
           <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
             <h1 className="text-2xl font-extrabold tracking-tight text-ipmd-black">Finance</h1>
             <div className="flex flex-wrap gap-2 print:hidden">
+              <Link
+                href="/espace/finance/preuves"
+                className="inline-flex items-center gap-2 rounded-full bg-ipmd-black px-4 py-2 text-sm font-semibold text-white transition-opacity hover:opacity-90"
+              >
+                🧾 Preuves à vérifier
+                {proofsToReview > 0 && (
+                  <span className="rounded-full bg-ipmd-red px-2 py-0.5 text-xs font-bold">
+                    {proofsToReview}
+                  </span>
+                )}
+              </Link>
               <PrintButton />
               <FinanceExportButton rows={exportRows} columns={exportColumns} filename={`finance-${sp.intake || sp.type || sp.regime || activeStatut || "tous"}.csv`} />
               <Link href="/espace/finance/parametres" className="inline-flex items-center gap-2 rounded-full bg-ipmd-light px-4 py-2 text-sm font-semibold text-ipmd-black ring-1 ring-black/10 hover:ring-ipmd-red/40">

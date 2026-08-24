@@ -204,6 +204,22 @@ export default async function CandidaturesPage({
     }
   }
 
+  // W3 : dernière preuve de paiement (inscription) par candidature (état admin).
+  const proofMap = new Map<string, { status: string; note: string | null }>();
+  {
+    const { data: proofRows } = await supabase
+      .from("payment_proofs")
+      .select("candidature_id, status, review_note, created_at")
+      .eq("kind", "inscription")
+      .order("created_at", { ascending: false });
+    for (const p of proofRows ?? []) {
+      const cid = p.candidature_id as string;
+      if (!proofMap.has(cid)) {
+        proofMap.set(cid, { status: p.status as string, note: (p.review_note as string) ?? null });
+      }
+    }
+  }
+
   // Compteurs par statut.
   const counts: Record<string, number> = {};
   for (const c of all) counts[c.status] = (counts[c.status] ?? 0) + 1;
@@ -555,6 +571,39 @@ export default async function CandidaturesPage({
                         email={c.email}
                       />
                     )}
+
+                  {/* W3 — état de la preuve de paiement (si déposée) */}
+                  {isSuper && proofMap.has(c.id) && (
+                    (() => {
+                      const pr = proofMap.get(c.id)!;
+                      const label =
+                        pr.status === "a_verifier"
+                          ? "🧾 Preuve à vérifier"
+                          : pr.status === "valide"
+                            ? "🧾 Preuve validée"
+                            : "🧾 Preuve rejetée";
+                      const cls =
+                        pr.status === "a_verifier"
+                          ? "bg-amber-50 text-amber-800 ring-amber-200"
+                          : pr.status === "valide"
+                            ? "bg-emerald-50 text-emerald-700 ring-emerald-200"
+                            : "bg-ipmd-red/10 text-ipmd-red ring-ipmd-red/20";
+                      return (
+                        <p className={`mt-3 rounded-lg px-3 py-2 text-[12px] font-semibold ring-1 ${cls}`}>
+                          {label}
+                          {pr.status === "a_verifier" && (
+                            <>
+                              {" — "}
+                              <a href="/espace/finance/preuves" className="underline">
+                                vérifier
+                              </a>
+                            </>
+                          )}
+                          {pr.status === "rejete" && pr.note ? ` — motif : ${pr.note}` : ""}
+                        </p>
+                      );
+                    })()
+                  )}
 
                   {/* Deadline 72 h — badge « délai dépassé » + renouvellement (silencieux) */}
                   {isSuper && c.status === "en_attente_paiement" && (
