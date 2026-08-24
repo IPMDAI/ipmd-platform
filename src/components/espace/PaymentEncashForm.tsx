@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect } from "react";
+import { useActionState, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { encashPaymentProof } from "@/lib/payment-encash-actions";
 import { PAYMENT_METHODS, formatFCFA } from "@/lib/finance";
@@ -33,23 +33,16 @@ export function PaymentEncashForm({
     (FormResult & { paymentId?: string }) | null,
     FormData
   >(bound, null);
+  // Méthode contrôlée : « Autre » révèle un champ libre obligatoire.
+  const [method, setMethod] = useState<string>(defaultMethod ?? "");
+  const isOther = method === "Autre";
 
   useEffect(() => {
     if (state?.ok) router.refresh();
   }, [state, router]);
 
   return (
-    <form
-      action={action}
-      onSubmit={(e) => {
-        const fd = new FormData(e.currentTarget);
-        const amt = String(fd.get("amount") ?? "");
-        if (!window.confirm(`Enregistrer l'encaissement de ${amt} FCFA ? (montant réellement reçu)`)) {
-          e.preventDefault();
-        }
-      }}
-      className="mt-3 grid gap-2 rounded-xl bg-ipmd-light p-3 sm:grid-cols-2"
-    >
+    <form action={action} className="mt-3 grid gap-2 rounded-xl bg-ipmd-light p-3 sm:grid-cols-2">
       <label className="text-[11px] font-semibold text-black/55">
         Montant réellement reçu (FCFA)
         <input
@@ -67,7 +60,8 @@ export function PaymentEncashForm({
         <select
           name="method"
           required
-          defaultValue={defaultMethod ?? ""}
+          value={method}
+          onChange={(e) => setMethod(e.target.value)}
           className={`${inputBase} mt-1 py-1.5 text-sm`}
         >
           <option value="" disabled>
@@ -80,6 +74,19 @@ export function PaymentEncashForm({
           ))}
         </select>
       </label>
+
+      {isOther && (
+        <label className="text-[11px] font-semibold text-black/55 sm:col-span-2">
+          Précisez le moyen de paiement
+          <input
+            name="method_other"
+            type="text"
+            required
+            placeholder="Ex. Chèque, Dépôt caisse…"
+            className={`${inputBase} mt-1 py-1.5 text-sm`}
+          />
+        </label>
+      )}
 
       <label className="text-[11px] font-semibold text-black/55">
         Référence / n° transaction

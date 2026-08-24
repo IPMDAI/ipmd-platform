@@ -39,8 +39,16 @@ export async function encashPaymentProof(
   if (Number.isNaN(amount) || amount <= 0) {
     return { ok: false, message: "Montant réellement reçu invalide (doit être > 0)." };
   }
-  const method = str(formData, "method");
+  let method = str(formData, "method");
   if (!method) return { ok: false, message: "Méthode de paiement requise." };
+  // « Autre » : la méthode réelle est le texte précisé — jamais la chaîne « Autre ».
+  if (method === "Autre") {
+    const other = str(formData, "method_other");
+    if (!other) {
+      return { ok: false, message: "Précisez le moyen de paiement pour la méthode « Autre »." };
+    }
+    method = other;
+  }
   const reference = str(formData, "reference") || null;
   const paidAt = str(formData, "paid_at") || null; // défaut côté RPC = current_date
 
