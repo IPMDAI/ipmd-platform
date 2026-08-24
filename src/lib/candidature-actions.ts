@@ -102,32 +102,65 @@ export async function setCandidatureStatus(
         "Ce statut est posé par une action dédiée (Confirmer l'admission ou Créer & inviter).",
     };
   }
-  const ctx = await getAdmin();
-  if (!ctx) return { ok: false, message: "Action réservée à l'administration." };
+  // CÂBLAGE STAFF (module Équipes & Accès) : autorisé au super_admin OU à un staff
+  // ayant `edit_candidature_status` pour l'univers de la candidature. L'écriture
+  // staff passe par la RPC `set_candidature_status` (colonne `status` uniquement,
+  // column-safe) ; le super_admin garde l'UPDATE direct (trace de décision).
+  const supabase = await createClient();
+  if (!supabase) return { ok: false, message: "Service indisponible." };
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false, message: "Non connecté." };
+  const { data: me } = await supabase.from("profiles").select("role").eq("id", user.id).single();
+  const isSuper = me?.role === "super_admin";
 
-  const cand = await readCandidature(ctx.supabase, id);
-  if (!cand) return { ok: false, message: "Candidature introuvable." };
-  const current = cand.row.status ?? "nouveau";
-  if (current === status) return { ok: true, message: "Statut inchangé." };
-
-  if (!canTransition(current, status)) {
-    return {
-      ok: false,
-      message: `Transition « ${current} → ${status} » non autorisée.`,
-    };
-  }
-
-  const update: Record<string, unknown> = { status };
-  if (cand.wf && (status === "accepte" || status === "refuse")) {
-    update.decided_at = new Date().toISOString();
-    update.decided_by = ctx.userId;
-  }
-
-  const { error } = await ctx.supabase
+  // Lecture fiable (statut + univers) via service-role si dispo, sinon client user.
+  const reader = createAdminClient() ?? supabase;
+  const { data: cand } = await reader
     .from("inscription_requests")
-    .update(update)
-    .eq("id", id);
-  if (error) return { ok: false, message: error.message };
+    .select("status, universe")
+    .eq("id", id)
+    .maybeSingle();
+  if (!cand) return { ok: false, message: "Candidature introuvable." };
+  const current = (cand.status as string) ?? "nouveau";
+  if (current === status) return { ok: true, message: "Statut inchangé." };
+  if (!canTransition(current, status)) {
+    return { ok: false, message: `Transition « ${current} → ${status} » non autorisée.` };
+  }
+
+  // Autorisation par univers (staff) ou globale (super_admin).
+  let allowed = isSuper;
+  if (!allowed) {
+    const { data: ok } = await supabase.rpc("has_staff_permission", {
+      p_permission: "edit_candidature_status",
+      p_universe: cand.universe,
+    });
+    allowed = ok === true;
+  }
+  if (!allowed) return { ok: false, message: "Action non autorisée pour cet univers." };
+
+  if (isSuper) {
+    const update: Record<string, unknown> = { status };
+    if (status === "accepte" || status === "refuse") {
+      update.decided_at = new Date().toISOString();
+      update.decided_by = user.id;
+    }
+    const { error } = await supabase.from("inscription_requests").update(update).eq("id", id);
+    if (error) return { ok: false, message: error.message };
+  } else {
+    const { error } = await supabase.rpc("set_candidature_status", {
+      p_candidature: id,
+      p_status: status,
+    });
+    if (error)
+      return {
+        ok: false,
+        message: /NOT_ALLOWED/.test(error.message)
+          ? "Action non autorisée pour cet univers."
+          : error.message,
+      };
+  }
 
   revalidate();
   return { ok: true, message: "Statut mis à jour." };

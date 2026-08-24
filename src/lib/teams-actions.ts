@@ -143,32 +143,6 @@ export async function revokePermission(teamId: string, permissionKey: string): P
   return { ok: true, message: "Permission retirée." };
 }
 
-/**
- * Changement de statut d'une candidature — SEUL chemin autorisé pour le staff.
- * Passe par la RPC `set_candidature_status` (SECURITY DEFINER, colonne `status`
- * uniquement, gardée par has_staff_permission). AUCUN UPDATE direct.
- * super_admin comme staff empruntent ce même chemin.
- */
-export async function setCandidatureStatus(candidatureId: string, status: string): Promise<FormResult> {
-  const supabase = await createClient();
-  if (!supabase) return { ok: false, message: "Service indisponible." };
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return { ok: false, message: "Non connecté." };
-  const { error } = await supabase.rpc("set_candidature_status", {
-    p_candidature: candidatureId,
-    p_status: status,
-  });
-  if (error)
-    return {
-      ok: false,
-      message: /NOT_ALLOWED/.test(error.message)
-        ? "Action non autorisée pour cet univers."
-        : /INTROUVABLE/.test(error.message)
-          ? "Candidature introuvable."
-          : error.message,
-    };
-  revalidatePath("/espace/candidatures");
-  return { ok: true, message: "Statut mis à jour." };
-}
+// NB : le changement de statut candidature est câblé dans
+// `candidature-actions.setCandidatureStatus` (super_admin → UPDATE direct ;
+// staff `edit_candidature_status` → RPC `set_candidature_status`, column-safe).
