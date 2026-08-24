@@ -1,37 +1,45 @@
 /**
- * Snapshot financier d'admission (Lot Finance F2) — module PUR (aucun accès DB).
+ * Snapshot financier d'admission — module PUR (aucun accès DB).
  *
  * Fige, à « Confirmer l'admission », l'échéancier depuis les sources LIVE :
  *  - scolarité officielle = tuition_levels/classes (jamais codée en dur) ;
- *  - 10 tranches depuis `installment_plan` (pct + due_date) ;
- *  - montants calculés = tuition_net × pct, dernière tranche ajustée pour
- *    garantir somme(montants) = tuition_net exact ;
- *  - option par défaut « echelonne », discount_rate 0, tuition_net = officielle ;
- *  - remise comptant disponible = finance_settings.lump_sum_discount ;
- *  - deadline comptant = date de la 1re tranche (T1).
+ *  - plan choisi ∈ {1,2,3,6,8,10} (payment_plans) → tranches depuis installment_plan
+ *    filtré sur ce plan (pct + due_date) ;
+ *  - remise du plan (payment_plans.discount_rate : 15/10/5/0/0/0) appliquée à la
+ *    SCOLARITÉ seule ; inscription jamais remisée ;
+ *  - montants = tuition_net × pct, dernière tranche ajustée pour somme exacte ;
+ *  - jour d'échéance standard = 30 (février = dernier jour réel) ;
+ *  - deadline = date de la 1re tranche (T1).
  *
- * Le calcul est pur : la lecture DB (installment_plan, lump_sum_discount) est
- * faite par l'appelant serveur (candidature-actions.sendAdmission) et injectée ici.
+ * `payment_option` est CONSERVÉ comme champ dérivé de compatibilité (plan 1 →
+ * comptant ; 2/3/6/8/10 → echelonne). La lecture DB (payment_plans, installment_plan,
+ * finance_settings) est faite par l'appelant serveur et injectée ici.
  */
 
+export const PLAN_MONTHS = [1, 2, 3, 6, 8, 10] as const;
+export type PlanMonths = (typeof PLAN_MONTHS)[number];
+
 export type PlanRow = { seq: number; pct: number; due_date: string };
-
 export type ScheduleInstallment = { seq: number; pct: number; due_date: string; amount: number };
-
 export type PaymentOption = "echelonne" | "comptant";
+
+export function isPlanMonths(n: unknown): n is PlanMonths {
+  return typeof n === "number" && (PLAN_MONTHS as readonly number[]).includes(n);
+}
 
 export type ScheduleSnapshot = {
   academic_year: string;
   level: string;
   registration_fee: number;
   tuition_official: number; // tarif officiel — jamais écrasé
-  payment_option: PaymentOption; // choix candidat (F3) ; défaut echelonne
-  discount_rate: number; // 0 en échelonné ; lump_sum_discount en comptant
-  tuition_net: number; // officielle en échelonné ; officielle×(1−remise) en comptant
-  lump_sum_discount: number; // remise comptant DISPONIBLE (pour affichage)
-  comptant_amount: number; // scolarité si comptant (info, toujours calculée)
+  plan_months: PlanMonths; // SOURCE PRIMAIRE : nb de mensualités du plan choisi
+  payment_option: PaymentOption; // dérivé de compat (plan 1 → comptant ; sinon echelonne)
+  discount_rate: number; // remise du plan appliquée (0 si sans remise)
+  tuition_net: number; // officielle × (1 − discount_rate)
+  lump_sum_discount: number; // remise comptant DISPONIBLE (plan 1), pour affichage
+  comptant_amount: number; // scolarité si comptant (plan 1), info d'affichage
   comptant_deadline: string; // = due_date de T1 (jour 30 standard)
-  installments: ScheduleInstallment[]; // 10 tranches (échelonné) ; 1 règlement (comptant)
+  installments: ScheduleInstallment[]; // longueur === plan_months
 };
 
 /** Nb de jours du mois (1-12), gère les années bissextiles (février 28/29). */
@@ -42,8 +50,7 @@ export function daysInMonth(year: number, month1to12: number): number {
 
 /**
  * Applique le JOUR d'échéance STANDARD à une date `installment_plan` (YYYY-MM-DD),
- * en conservant ANNÉE + MOIS (source unique = installment_plan). Ne recalcule QUE
- * le jour. Aucun impact sur pct/montants. Règle unique :
+ * en conservant ANNÉE + MOIS. Ne recalcule QUE le jour. Règle unique :
  *  - jour 30 pour tous les mois ;
  *  - février → dernier jour réel (28 ou 29 selon l'année bissextile).
  * Vaut pour tous les plans (1/2/3/6/8/10) car appliquée par échéance.
@@ -55,16 +62,33 @@ export function applyStandardDay(dueDate: string): string {
   return `${y}-${String(m).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
 }
 
-export type ScheduleResult =
-  | { ok: true; schedule: ScheduleSnapshot }
-  | { ok: false; code: "PLAN_MANQUANT" | "PLAN_INVALIDE" | "TARIF_MANQUANT"; message: string };
+/** Le gabarit d'un plan = exactement `planMonths` tranches sommant à 100 %. */
+export function validatePlan(rows: PlanRow[], planMonths: PlanMonths): boolean {
+  if (rows.length !== planMonths) return false;
+  return Math.round(rows.reduce((a, r) => a + Number(r.pct), 0)) === 100;
+}
 
 /**
- * Valide un `admission_packs.schedule_json` déjà figé, AVANT matérialisation
- * (Lot Finance F4). Module PUR : ne touche pas la DB. Vérifie la complétude ET
- * la cohérence réelle (somme des tranches = scolarité à financer nette). Sert de
- * garde-fou : sans snapshot valide, on ne matérialise pas et on ne passe pas
- * « inscrit ».
+ * Backward-compat : dérive plan_months d'un snapshot (nouveau OU ancien).
+ * Nouveau → `plan_months`. Ancien → payment_option comptant→1 / echelonne→10.
+ */
+export function resolvePlanMonths(s: Record<string, unknown>): PlanMonths | null {
+  if (isPlanMonths(s.plan_months)) return s.plan_months;
+  if (s.payment_option === "comptant") return 1;
+  if (s.payment_option === "echelonne") return 10;
+  return null;
+}
+
+export type ScheduleResult =
+  | { ok: true; schedule: ScheduleSnapshot }
+  | { ok: false; code: "PLAN_MANQUANT" | "PLAN_INVALIDE" | "TARIF_MANQUANT" | "PLAN_NON_SUPPORTE"; message: string };
+
+/**
+ * Valide un `admission_packs.schedule_json` déjà figé, AVANT matérialisation.
+ * Module PUR. Accepte les snapshots NOUVEAUX (plan_months) ET ANCIENS
+ * (payment_option echelonne=10 / comptant=1). Vérifie longueur === plan_months et
+ * somme des tranches = scolarité à financer nette. Garde-fou : sans snapshot valide,
+ * on ne matérialise pas et on ne passe pas « inscrit ».
  */
 export function validateScheduleSnapshot(
   json: unknown
@@ -77,17 +101,18 @@ export function validateScheduleSnapshot(
   const net = num(s.tuition_net);
   const reg = num(s.registration_fee);
   const disc = num(s.discount_rate);
-  const opt = s.payment_option;
   const inst = s.installments;
 
   if (official == null || !(official > 0)) return { ok: false, reason: "invalide (tarif officiel absent)" };
   if (net == null || !(net > 0)) return { ok: false, reason: "invalide (scolarité à financer absente)" };
   if (reg == null || reg < 0) return { ok: false, reason: "invalide (frais d'inscription absents)" };
   if (disc == null || disc < 0 || disc >= 1) return { ok: false, reason: "invalide (remise incohérente)" };
-  if (opt !== "echelonne" && opt !== "comptant") return { ok: false, reason: "invalide (mode de paiement inconnu)" };
-  if (!Array.isArray(inst) || inst.length === 0) return { ok: false, reason: "invalide (aucune tranche)" };
-  if (opt === "comptant" && inst.length !== 1) return { ok: false, reason: "invalide (comptant ≠ 1 règlement)" };
-  if (opt === "echelonne" && inst.length !== 10) return { ok: false, reason: "invalide (échelonné ≠ 10 tranches)" };
+
+  const pm = resolvePlanMonths(s);
+  if (pm == null) return { ok: false, reason: "invalide (plan inconnu)" };
+  if (!Array.isArray(inst) || inst.length !== pm) {
+    return { ok: false, reason: `invalide (${Array.isArray(inst) ? inst.length : 0} tranches ≠ plan ${pm})` };
+  }
 
   let sum = 0;
   for (const raw of inst) {
@@ -108,28 +133,32 @@ export function validateScheduleSnapshot(
   return { ok: true, snap: json as ScheduleSnapshot };
 }
 
-/** Le gabarit d'une année est-il exactement 10 tranches sommant à 100 % ? */
-export function validatePlan(rows: PlanRow[]): boolean {
-  if (rows.length !== 10) return false;
-  const sum = rows.reduce((a, r) => a + Number(r.pct), 0);
-  return Math.round(sum) === 100;
-}
-
 /**
- * Construit le snapshot. `planRows` vient de `installment_plan` (année),
- * `lumpSumDiscount` de `finance_settings`. Bloque proprement si invalide.
+ * Construit le snapshot pour un plan donné. `planRows` = tranches du plan
+ * (installment_plan where plan_months=planMonths) ; `discountRate` = remise du plan
+ * (payment_plans) ; `lumpSumDiscount` = remise comptant disponible (finance_settings,
+ * pour l'affichage). Inscription séparée, jamais remisée. Bloque proprement si invalide.
  */
 export function buildScheduleSnapshot(input: {
   academicYear: string | null;
   level: string | null;
   registrationFee: number;
   tuitionOfficial: number | null;
+  planMonths: number;
+  discountRate: number;
   lumpSumDiscount: number;
   planRows: PlanRow[];
-  paymentOption?: PaymentOption; // F3 : choix candidat ; défaut echelonne
 }): ScheduleResult {
-  const { academicYear, level, registrationFee, tuitionOfficial, lumpSumDiscount } = input;
-  const paymentOption: PaymentOption = input.paymentOption === "comptant" ? "comptant" : "echelonne";
+  const { academicYear, level, registrationFee, tuitionOfficial, discountRate, lumpSumDiscount } = input;
+
+  if (!isPlanMonths(input.planMonths)) {
+    return {
+      ok: false,
+      code: "PLAN_NON_SUPPORTE",
+      message: `Plan de paiement ${input.planMonths} non supporté (1, 2, 3, 6, 8 ou 10 mensualités).`,
+    };
+  }
+  const planMonths = input.planMonths;
 
   if (tuitionOfficial == null || !(tuitionOfficial > 0)) {
     return {
@@ -143,47 +172,42 @@ export function buildScheduleSnapshot(input: {
     return {
       ok: false,
       code: "PLAN_MANQUANT",
-      message: `Aucun échéancier configuré pour l'année ${academicYear ?? "active"} : configure les 10 tranches (installment_plan) avant l'admission.`,
+      message: `Aucun échéancier configuré pour l'année ${academicYear ?? "active"} (plan ${planMonths} mensualités).`,
     };
   }
-  if (!validatePlan(input.planRows)) {
+  if (discountRate < 0 || discountRate >= 1) {
+    return { ok: false, code: "PLAN_INVALIDE", message: "Remise du plan incohérente." };
+  }
+  if (!validatePlan(input.planRows, planMonths)) {
     return {
       ok: false,
       code: "PLAN_INVALIDE",
-      message: `Échéancier ${academicYear ?? ""} invalide : il faut exactement 10 tranches dont la somme des pourcentages = 100 %.`,
+      message: `Plan ${planMonths} mensualités invalide : il faut exactement ${planMonths} tranches dont la somme des pourcentages = 100 %.`,
     };
   }
 
   const rows = [...input.planRows].sort((a, b) => a.seq - b.seq);
+  // Remise du plan sur la scolarité seule ; inscription intacte.
+  const tuitionNet = Math.round(tuitionOfficial * (1 - discountRate));
+  // Montant du scénario COMPTANT (plan 1), pour l'affichage (bouton/PDF).
+  const comptantAmount = Math.round(tuitionOfficial * (1 - lumpSumDiscount));
   // Jour standard (30 / février dernier jour) ; année+mois viennent du plan.
-  const t1 = applyStandardDay(rows[0].due_date); // 1re échéance = deadline comptant
-  const comptantAmount = Math.round(tuitionOfficial * (1 - lumpSumDiscount)); // scolarité seule
+  const t1 = applyStandardDay(rows[0].due_date);
 
-  let discountRate: number;
-  let tuitionNet: number;
-  let installments: ScheduleInstallment[];
+  // Répartition : arrondi par tranche, dernière ajustée → somme exacte = net.
+  let cumul = 0;
+  const installments: ScheduleInstallment[] = rows.map((r, i) => {
+    let amount: number;
+    if (i < rows.length - 1) {
+      amount = Math.round((tuitionNet * Number(r.pct)) / 100);
+      cumul += amount;
+    } else {
+      amount = tuitionNet - cumul;
+    }
+    return { seq: r.seq, pct: Number(r.pct), due_date: applyStandardDay(r.due_date), amount };
+  });
 
-  if (paymentOption === "comptant") {
-    // Comptant : remise sur la scolarité uniquement ; 1 seul règlement à échéance T1.
-    discountRate = lumpSumDiscount;
-    tuitionNet = comptantAmount;
-    installments = [{ seq: 1, pct: 100, due_date: t1, amount: tuitionNet }];
-  } else {
-    // Échelonné : tarif officiel, 10 tranches ; dernière ajustée → somme exacte.
-    discountRate = 0;
-    tuitionNet = tuitionOfficial;
-    let cumul = 0;
-    installments = rows.map((r, i) => {
-      let amount: number;
-      if (i < rows.length - 1) {
-        amount = Math.round((tuitionNet * Number(r.pct)) / 100);
-        cumul += amount;
-      } else {
-        amount = tuitionNet - cumul;
-      }
-      return { seq: r.seq, pct: Number(r.pct), due_date: applyStandardDay(r.due_date), amount };
-    });
-  }
+  const paymentOption: PaymentOption = planMonths === 1 ? "comptant" : "echelonne";
 
   return {
     ok: true,
@@ -192,6 +216,7 @@ export function buildScheduleSnapshot(input: {
       level: level ?? "",
       registration_fee: registrationFee,
       tuition_official: tuitionOfficial,
+      plan_months: planMonths,
       payment_option: paymentOption,
       discount_rate: discountRate,
       tuition_net: tuitionNet,

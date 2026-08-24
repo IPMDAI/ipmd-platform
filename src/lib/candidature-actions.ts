@@ -12,7 +12,7 @@ import { LETTERS_ENABLED, resolveRecipients } from "@/lib/admission-config";
 import { buildAdmissionEmail, buildRefusalEmail } from "@/lib/admission-letter";
 import { buildAdmissionPdf } from "@/lib/admission-pdf";
 import { generatePackLink, packLinkUrl } from "@/lib/admission-pack-link";
-import { buildScheduleSnapshot } from "@/lib/admission-schedule";
+import { buildScheduleSnapshot, resolvePlanMonths } from "@/lib/admission-schedule";
 import { admissionDeadlineText } from "@/lib/admission-deadline";
 import { sendScolariteEmail, canSendEmail, type EmailAttachment } from "@/lib/email";
 import type { FormResult } from "@/types";
@@ -308,25 +308,35 @@ export async function sendAdmission(
     };
   }
 
-  // F2 — Snapshot financier figé (échéancier) depuis les sources LIVE
-  // (installment_plan + tuition + finance_settings). Généré dès qu'un tarif de
-  // scolarité est connu ; en MODE TEST sans tarif, aucun snapshot (envoi inchangé).
+  // Snapshot financier figé (échéancier) depuis les sources LIVE (payment_plans +
+  // installment_plan + tuition + finance_settings). PLAN PAR DÉFAUT = 10 mensualités
+  // (échelonné) ; le candidat pourra ensuite choisir un autre plan dans le pack.
+  // Généré dès qu'un tarif est connu ; en MODE TEST sans tarif, aucun snapshot.
   // Bloque proprement l'admission si le plan est absent/invalide ou le tarif manquant.
+  const DEFAULT_PLAN_MONTHS = 10;
   let scheduleJson: unknown = null;
   if (tuitionDue != null) {
-    const [{ data: planRows }, { data: fsDisc }] = await Promise.all([
+    const [{ data: planRows }, { data: fsDisc }, { data: planCfg }] = await Promise.all([
       ctx.supabase
         .from("installment_plan")
         .select("seq, pct, due_date")
         .eq("academic_year", academicYear ?? "")
-        .eq("plan_months", 10),
+        .eq("plan_months", DEFAULT_PLAN_MONTHS),
       ctx.supabase.from("finance_settings").select("lump_sum_discount").eq("id", 1).maybeSingle(),
+      ctx.supabase
+        .from("payment_plans")
+        .select("discount_rate")
+        .eq("academic_year", academicYear ?? "")
+        .eq("plan_months", DEFAULT_PLAN_MONTHS)
+        .maybeSingle(),
     ]);
     const snap = buildScheduleSnapshot({
       academicYear,
       level: acceptedLevel,
       registrationFee,
       tuitionOfficial: tuitionDue,
+      planMonths: DEFAULT_PLAN_MONTHS,
+      discountRate: Number(planCfg?.discount_rate ?? 0),
       lumpSumDiscount: Number(fsDisc?.lump_sum_discount ?? 0.15),
       planRows: (planRows ?? []).map((r) => ({
         seq: Number(r.seq),
@@ -647,32 +657,39 @@ export async function repairPackSchedule(
     academicYear = (fs?.academic_year as string) ?? null;
   }
 
-  const [{ data: planRows }, { data: fsDisc }] = await Promise.all([
+  // Préserve le PLAN existant si un snapshot est déjà présent (régénération) :
+  // nouveau plan_months OU ancien payment_option (comptant→1 / echelonne→10) ;
+  // sinon défaut 10. Le jour d'échéance est fixe (30 / février).
+  const planMonths = resolvePlanMonths((pack.schedule_json as Record<string, unknown>) ?? {}) ?? 10;
+
+  const [{ data: planRows }, { data: fsDisc }, { data: planCfg }] = await Promise.all([
     ctx.supabase
       .from("installment_plan")
       .select("seq, pct, due_date")
       .eq("academic_year", academicYear ?? "")
-      .eq("plan_months", 10),
+      .eq("plan_months", planMonths),
     ctx.supabase.from("finance_settings").select("lump_sum_discount").eq("id", 1).maybeSingle(),
+    ctx.supabase
+      .from("payment_plans")
+      .select("discount_rate")
+      .eq("academic_year", academicYear ?? "")
+      .eq("plan_months", planMonths)
+      .maybeSingle(),
   ]);
 
-  // Préserve le mode de paiement existant si un snapshot est déjà présent
-  // (régénération) ; sinon défaut echelonne. Le jour d'échéance est fixe (30).
-  const existing = (pack.schedule_json ?? {}) as {
-    payment_option?: "echelonne" | "comptant";
-  };
   const snap = buildScheduleSnapshot({
     academicYear,
     level: (pack.accepted_level as string) ?? null,
     registrationFee: Number(pack.registration_fee ?? 0),
     tuitionOfficial: Number(pack.tuition_due),
+    planMonths,
+    discountRate: Number(planCfg?.discount_rate ?? 0),
     lumpSumDiscount: Number(fsDisc?.lump_sum_discount ?? 0.15),
     planRows: (planRows ?? []).map((r) => ({
       seq: Number(r.seq),
       pct: Number(r.pct),
       due_date: String(r.due_date),
     })),
-    paymentOption: existing.payment_option === "comptant" ? "comptant" : "echelonne",
   });
   if (!snap.ok) return { ok: false, code: snap.code, message: snap.message };
 

@@ -12,7 +12,10 @@ import {
 import { resolveRecipients } from "@/lib/admission-config";
 import {
   buildScheduleSnapshot,
+  resolvePlanMonths,
+  isPlanMonths,
   type PaymentOption,
+  type PlanMonths,
   type ScheduleSnapshot,
 } from "@/lib/admission-schedule";
 import { REGLEMENT_VERSION } from "@/data/reglement";
@@ -168,16 +171,16 @@ export async function sendPackLink(
 
 /**
  * Recalcule + fige `admission_packs.schedule_json` depuis les sources LIVE (tarif
- * officiel figé du pack + installment_plan + finance_settings), en PRÉSERVANT le
- * choix non modifié (payment_option). Action interne utilisée par `setPaymentOption`
- * (F3). Le jour d'échéance est fixe (30 / février dernier jour) — plus de choix candidat.
+ * officiel figé du pack + payment_plans + installment_plan filtré sur le plan +
+ * finance_settings), en PRÉSERVANT le plan non modifié. Action interne utilisée par
+ * `setPlan` (et `setPaymentOption` en compat). Jour d'échéance fixe (30 / février).
  * Gardes : token valide, pack valide, candidature NON `inscrit` (verrou F7).
  * ⚠️ Ne modifie JAMAIS `student_finance`/`payment_schedules`/access/statut ;
  * `tuition_due` (tarif officiel) jamais écrasé.
  */
 async function rebuildPackSchedule(
   token: string,
-  override: { paymentOption?: PaymentOption }
+  override: { planMonths?: PlanMonths }
 ): Promise<{ ok: true; schedule: ScheduleSnapshot } | { ok: false; code?: string; message: string }> {
   const link = await verifyPackToken(token);
   if (!link) return { ok: false, message: "Lien invalide ou expiré." };
@@ -205,33 +208,33 @@ async function rebuildPackSchedule(
     };
   }
 
-  // Le mode courant vient du snapshot existant (préservé si non surchargé).
-  const sj = (pack.schedule_json ?? {}) as {
-    tuition_official?: number;
-    payment_option?: PaymentOption;
-  };
+  // Plan courant : depuis le snapshot existant (nouveau plan_months OU ancien
+  // payment_option), défaut 10 ; surchargé si un plan est explicitement demandé.
+  const sj = (pack.schedule_json ?? {}) as { tuition_official?: number };
+  const planMonths: PlanMonths = override.planMonths ?? resolvePlanMonths(pack.schedule_json as Record<string, unknown> ?? {}) ?? 10;
   const tuitionOfficial =
     pack.tuition_due != null ? Number(pack.tuition_due) : sj.tuition_official ?? null;
-  const paymentOption: PaymentOption =
-    override.paymentOption ?? (sj.payment_option === "comptant" ? "comptant" : "echelonne");
+  const academicYear = (pack.academic_year as string) ?? "";
 
-  const [{ data: planRows }, { data: fsDisc }] = await Promise.all([
-    admin.from("installment_plan").select("seq, pct, due_date").eq("academic_year", pack.academic_year ?? "").eq("plan_months", 10),
+  const [{ data: planRows }, { data: fsDisc }, { data: planCfg }] = await Promise.all([
+    admin.from("installment_plan").select("seq, pct, due_date").eq("academic_year", academicYear).eq("plan_months", planMonths),
     admin.from("finance_settings").select("lump_sum_discount").eq("id", 1).maybeSingle(),
+    admin.from("payment_plans").select("discount_rate").eq("academic_year", academicYear).eq("plan_months", planMonths).maybeSingle(),
   ]);
 
   const snap = buildScheduleSnapshot({
-    academicYear: (pack.academic_year as string) ?? null,
+    academicYear,
     level: (pack.accepted_level as string) ?? null,
     registrationFee: Number(pack.registration_fee ?? 0),
     tuitionOfficial,
+    planMonths,
+    discountRate: Number(planCfg?.discount_rate ?? 0),
     lumpSumDiscount: Number(fsDisc?.lump_sum_discount ?? 0.15),
     planRows: (planRows ?? []).map((r) => ({
       seq: Number(r.seq),
       pct: Number(r.pct),
       due_date: String(r.due_date),
     })),
-    paymentOption,
   });
   if (!snap.ok) return { ok: false, code: snap.code, message: snap.message };
 
@@ -244,8 +247,29 @@ async function rebuildPackSchedule(
 }
 
 /**
- * CHOIX du mode de paiement par le candidat (F3) : « echelonne » ou « comptant ».
- * Action PUBLIQUE token-gated. Le jour d'échéance est fixe (30 / février dernier jour).
+ * CHOIX du plan de paiement par le candidat : nb de mensualités ∈ {1,2,3,6,8,10}.
+ * Action PUBLIQUE token-gated. Jour d'échéance fixe (30 / février dernier jour).
+ */
+export async function setPlan(token: string, months: number): Promise<FormResult> {
+  if (!isPlanMonths(months)) {
+    return { ok: false, message: "Plan de paiement invalide (1, 2, 3, 6, 8 ou 10 mensualités)." };
+  }
+  const res = await rebuildPackSchedule(token, { planMonths: months });
+  if (!res.ok) return { ok: false, code: res.code, message: res.message };
+  const disc = Math.round(res.schedule.discount_rate * 100);
+  return {
+    ok: true,
+    message:
+      months === 1
+        ? `Paiement en 1 fois enregistré : remise de ${disc} % sur la scolarité (frais d'inscription inchangés).`
+        : `Paiement en ${months} mensualités enregistré${disc > 0 ? ` : remise de ${disc} %` : ""}.`,
+  };
+}
+
+/**
+ * COMPAT : ancien choix binaire « echelonne » / « comptant ». Mappe vers le plan
+ * (echelonne → 10 mensualités, comptant → 1 fois). Conservé pour l'UI existante
+ * jusqu'à la bascule vers `setPlan` (6 plans).
  */
 export async function setPaymentOption(
   token: string,
@@ -254,7 +278,7 @@ export async function setPaymentOption(
   if (option !== "echelonne" && option !== "comptant") {
     return { ok: false, message: "Option de paiement invalide." };
   }
-  const res = await rebuildPackSchedule(token, { paymentOption: option });
+  const res = await rebuildPackSchedule(token, { planMonths: option === "comptant" ? 1 : 10 });
   if (!res.ok) return { ok: false, code: res.code, message: res.message };
   return {
     ok: true,

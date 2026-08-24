@@ -348,7 +348,7 @@ export async function inviteFromCandidature(
       if (sched) {
         discountRate = sched.discount_rate;
         netToFinance = sched.tuition_net;
-        installmentsVal = sched.installments.length; // 10 (échelonné) ou 1 (comptant)
+        installmentsVal = sched.installments.length; // nb de tranches du plan (1/2/3/6/8/10)
       }
       if (classId) {
         const { data: cls } = await ctx.supabase
