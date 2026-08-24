@@ -1,6 +1,7 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { formatFCFA } from "@/lib/finance";
 import { submitPaymentProof } from "@/lib/payment-proof-actions";
 import { PROOF_METHODS, PROOF_ACCEPT } from "@/lib/payment-proof";
@@ -25,8 +26,18 @@ export function PaymentProofStep({
   proofStatus?: "a_verifier" | "valide" | "rejete" | null;
   reviewNote?: string | null;
 }) {
+  const router = useRouter();
   const bound = submitPaymentProof.bind(null, token);
   const [state, action, pending] = useActionState<FormResult | null, FormData>(bound, null);
+  // Après un dépôt réussi : masquer immédiatement le formulaire (submitted) puis
+  // resynchroniser l'état serveur (proofStatus deviendra "a_verifier").
+  const [submitted, setSubmitted] = useState(false);
+  useEffect(() => {
+    if (state?.ok) {
+      setSubmitted(true);
+      router.refresh();
+    }
+  }, [state, router]);
 
   if (proofStatus === "valide") {
     return (
@@ -36,7 +47,7 @@ export function PaymentProofStep({
     );
   }
 
-  if (proofStatus === "a_verifier") {
+  if (proofStatus === "a_verifier" || submitted) {
     return (
       <p className="rounded-xl bg-amber-50 px-4 py-3 text-[12px] leading-relaxed text-amber-800 ring-1 ring-amber-200">
         ⏳ <strong>Preuve reçue — en cours de vérification par la scolarité.</strong> L'envoi d'un
