@@ -65,6 +65,10 @@ function coveredYears(startYear: string, duration: number): string[] {
   if (!Number.isFinite(s)) return [];
   return Array.from({ length: duration }, (_, i) => `${s + i}-${s + i + 1}`);
 }
+/** Affiche un taux FRACTIONNAIRE (0.5) en pourcentage lisible (« 50 % »), décimales préservées. */
+function ratePct(rate: number | null): string {
+  return `${Number(((rate ?? 0) * 100).toFixed(2))} %`;
+}
 
 /** Confirmation financière (moteur PUR partagé). null si tarif officiel inconnu. */
 function computePreview(
@@ -102,7 +106,7 @@ function FinancialConfirm({
   if (!p) {
     return (
       <div className="mt-2 rounded-lg bg-blue-50 p-2.5 text-[11px] text-blue-800 ring-1 ring-blue-200">
-        Tarif officiel pas encore figé : la bourse ({mode === "taux" ? `${rate ?? 0} %` : formatFCFA(amount)})
+        Tarif officiel pas encore figé : la bourse ({mode === "taux" ? ratePct(rate) : formatFCFA(amount)})
         sera appliquée automatiquement à la confirmation d'admission.
       </div>
     );
@@ -117,7 +121,7 @@ function FinancialConfirm({
       </div>
       <div className={row}>
         <span className="text-black/55">Bourse saisie</span>
-        <span className="font-semibold">{mode === "taux" ? `${rate ?? 0} %` : formatFCFA(amount)}</span>
+        <span className="font-semibold">{mode === "taux" ? ratePct(rate) : formatFCFA(amount)}</span>
       </div>
       <div className={row}>
         <span className="text-black/55">Montant de bourse calculé</span>
@@ -396,7 +400,7 @@ export function ScholarshipPanel({
   const byYear = new Map(currentTerms.map((t) => [t.academicYear, t]));
   const history = scholarship.terms.filter((t) => t.status === "superseded");
 
-  const termValue = (t: PanelTerm) => (t.mode === "taux" ? `${Math.round((t.rate ?? 0) * 100)} %` : formatFCFA(t.amount));
+  const termValue = (t: PanelTerm) => (t.mode === "taux" ? ratePct(t.rate) : formatFCFA(t.amount));
 
   const suspendResume = (t: PanelTerm) => {
     if (pending) return;
