@@ -20,21 +20,17 @@ export type ScheduleInstallment = { seq: number; pct: number; due_date: string; 
 
 export type PaymentOption = "echelonne" | "comptant";
 
-/** Jour d'échéance mensuel choisi par le candidat (D1). Défaut "20". */
-export type PaymentDay = "20" | "fin_mois";
-
 export type ScheduleSnapshot = {
   academic_year: string;
   level: string;
   registration_fee: number;
   tuition_official: number; // tarif officiel — jamais écrasé
   payment_option: PaymentOption; // choix candidat (F3) ; défaut echelonne
-  payment_day: PaymentDay; // choix candidat (D1) : 20 du mois ou fin de mois ; défaut "20"
   discount_rate: number; // 0 en échelonné ; lump_sum_discount en comptant
   tuition_net: number; // officielle en échelonné ; officielle×(1−remise) en comptant
   lump_sum_discount: number; // remise comptant DISPONIBLE (pour affichage)
   comptant_amount: number; // scolarité si comptant (info, toujours calculée)
-  comptant_deadline: string; // = due_date de T1 (selon payment_day)
+  comptant_deadline: string; // = due_date de T1 (jour 30 standard)
   installments: ScheduleInstallment[]; // 10 tranches (échelonné) ; 1 règlement (comptant)
 };
 
@@ -45,16 +41,17 @@ export function daysInMonth(year: number, month1to12: number): number {
 }
 
 /**
- * Applique le JOUR d'échéance choisi à une date `installment_plan` (YYYY-MM-DD),
- * en conservant ANNÉE + MOIS (source unique = installment_plan). Ne recalcule
- * QUE le jour. Aucun impact sur pct/montants.
- *  - "20"       → le 20 du mois ;
- *  - "fin_mois" → dernier jour calendaire réel (févr. 28/29, 30 ou 31).
+ * Applique le JOUR d'échéance STANDARD à une date `installment_plan` (YYYY-MM-DD),
+ * en conservant ANNÉE + MOIS (source unique = installment_plan). Ne recalcule QUE
+ * le jour. Aucun impact sur pct/montants. Règle unique :
+ *  - jour 30 pour tous les mois ;
+ *  - février → dernier jour réel (28 ou 29 selon l'année bissextile).
+ * Vaut pour tous les plans (1/2/3/6/8/10) car appliquée par échéance.
  */
-export function applyPaymentDay(dueDate: string, paymentDay: PaymentDay): string {
+export function applyStandardDay(dueDate: string): string {
   const [y, m] = dueDate.split("-").map(Number);
   if (!Number.isFinite(y) || !Number.isFinite(m)) return dueDate;
-  const day = paymentDay === "fin_mois" ? daysInMonth(y, m) : 20;
+  const day = m === 2 ? daysInMonth(y, m) : 30;
   return `${y}-${String(m).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
 }
 
@@ -130,11 +127,9 @@ export function buildScheduleSnapshot(input: {
   lumpSumDiscount: number;
   planRows: PlanRow[];
   paymentOption?: PaymentOption; // F3 : choix candidat ; défaut echelonne
-  paymentDay?: PaymentDay; // D1 : jour d'échéance ; défaut "20"
 }): ScheduleResult {
   const { academicYear, level, registrationFee, tuitionOfficial, lumpSumDiscount } = input;
   const paymentOption: PaymentOption = input.paymentOption === "comptant" ? "comptant" : "echelonne";
-  const paymentDay: PaymentDay = input.paymentDay === "fin_mois" ? "fin_mois" : "20";
 
   if (tuitionOfficial == null || !(tuitionOfficial > 0)) {
     return {
@@ -160,8 +155,8 @@ export function buildScheduleSnapshot(input: {
   }
 
   const rows = [...input.planRows].sort((a, b) => a.seq - b.seq);
-  // D1 : le jour d'échéance suit le choix candidat ; année+mois viennent du plan.
-  const t1 = applyPaymentDay(rows[0].due_date, paymentDay); // 1re échéance = deadline comptant
+  // Jour standard (30 / février dernier jour) ; année+mois viennent du plan.
+  const t1 = applyStandardDay(rows[0].due_date); // 1re échéance = deadline comptant
   const comptantAmount = Math.round(tuitionOfficial * (1 - lumpSumDiscount)); // scolarité seule
 
   let discountRate: number;
@@ -186,7 +181,7 @@ export function buildScheduleSnapshot(input: {
       } else {
         amount = tuitionNet - cumul;
       }
-      return { seq: r.seq, pct: Number(r.pct), due_date: applyPaymentDay(r.due_date, paymentDay), amount };
+      return { seq: r.seq, pct: Number(r.pct), due_date: applyStandardDay(r.due_date), amount };
     });
   }
 
@@ -198,7 +193,6 @@ export function buildScheduleSnapshot(input: {
       registration_fee: registrationFee,
       tuition_official: tuitionOfficial,
       payment_option: paymentOption,
-      payment_day: paymentDay,
       discount_rate: discountRate,
       tuition_net: tuitionNet,
       lump_sum_discount: lumpSumDiscount,

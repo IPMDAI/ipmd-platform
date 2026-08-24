@@ -13,7 +13,6 @@ import { resolveRecipients } from "@/lib/admission-config";
 import {
   buildScheduleSnapshot,
   type PaymentOption,
-  type PaymentDay,
   type ScheduleSnapshot,
 } from "@/lib/admission-schedule";
 import { REGLEMENT_VERSION } from "@/data/reglement";
@@ -170,15 +169,15 @@ export async function sendPackLink(
 /**
  * Recalcule + fige `admission_packs.schedule_json` depuis les sources LIVE (tarif
  * officiel figé du pack + installment_plan + finance_settings), en PRÉSERVANT le
- * choix non modifié (payment_option ↔ payment_day). Action interne partagée par
- * `setPaymentOption` (F3) et `setPaymentDay` (D1/D2).
+ * choix non modifié (payment_option). Action interne utilisée par `setPaymentOption`
+ * (F3). Le jour d'échéance est fixe (30 / février dernier jour) — plus de choix candidat.
  * Gardes : token valide, pack valide, candidature NON `inscrit` (verrou F7).
  * ⚠️ Ne modifie JAMAIS `student_finance`/`payment_schedules`/access/statut ;
  * `tuition_due` (tarif officiel) jamais écrasé.
  */
 async function rebuildPackSchedule(
   token: string,
-  override: { paymentOption?: PaymentOption; paymentDay?: PaymentDay }
+  override: { paymentOption?: PaymentOption }
 ): Promise<{ ok: true; schedule: ScheduleSnapshot } | { ok: false; code?: string; message: string }> {
   const link = await verifyPackToken(token);
   if (!link) return { ok: false, message: "Lien invalide ou expiré." };
@@ -206,18 +205,15 @@ async function rebuildPackSchedule(
     };
   }
 
-  // Préservation croisée : les choix courants viennent du snapshot existant.
+  // Le mode courant vient du snapshot existant (préservé si non surchargé).
   const sj = (pack.schedule_json ?? {}) as {
     tuition_official?: number;
     payment_option?: PaymentOption;
-    payment_day?: PaymentDay;
   };
   const tuitionOfficial =
     pack.tuition_due != null ? Number(pack.tuition_due) : sj.tuition_official ?? null;
   const paymentOption: PaymentOption =
     override.paymentOption ?? (sj.payment_option === "comptant" ? "comptant" : "echelonne");
-  const paymentDay: PaymentDay =
-    override.paymentDay ?? (sj.payment_day === "fin_mois" ? "fin_mois" : "20");
 
   const [{ data: planRows }, { data: fsDisc }] = await Promise.all([
     admin.from("installment_plan").select("seq, pct, due_date").eq("academic_year", pack.academic_year ?? "").eq("plan_months", 10),
@@ -236,7 +232,6 @@ async function rebuildPackSchedule(
       due_date: String(r.due_date),
     })),
     paymentOption,
-    paymentDay,
   });
   if (!snap.ok) return { ok: false, code: snap.code, message: snap.message };
 
@@ -250,7 +245,7 @@ async function rebuildPackSchedule(
 
 /**
  * CHOIX du mode de paiement par le candidat (F3) : « echelonne » ou « comptant ».
- * Action PUBLIQUE token-gated. PRÉSERVE le `payment_day` courant.
+ * Action PUBLIQUE token-gated. Le jour d'échéance est fixe (30 / février dernier jour).
  */
 export async function setPaymentOption(
   token: string,
@@ -267,29 +262,6 @@ export async function setPaymentOption(
       option === "comptant"
         ? "Paiement comptant enregistré : remise de 15 % sur la scolarité (frais d'inscription inchangés)."
         : "Paiement échelonné enregistré : 10 tranches.",
-  };
-}
-
-/**
- * CHOIX de la date mensuelle de règlement par le candidat (D2) : « 20 » ou
- * « fin_mois ». Action PUBLIQUE token-gated. PRÉSERVE le payment_option courant ;
- * ne recalcule que les `due_date` (montants/pourcentages/remise inchangés).
- */
-export async function setPaymentDay(
-  token: string,
-  paymentDay: PaymentDay
-): Promise<FormResult> {
-  if (paymentDay !== "20" && paymentDay !== "fin_mois") {
-    return { ok: false, message: "Date de règlement invalide." };
-  }
-  const res = await rebuildPackSchedule(token, { paymentDay });
-  if (!res.ok) return { ok: false, code: res.code, message: res.message };
-  return {
-    ok: true,
-    message:
-      paymentDay === "fin_mois"
-        ? "Date de règlement enregistrée : fin de mois."
-        : "Date de règlement enregistrée : le 20 de chaque mois.",
   };
 }
 
