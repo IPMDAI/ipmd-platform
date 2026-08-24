@@ -46,7 +46,11 @@ export default async function ProformaPage({
 
   const fin = computeFinance(finance, []);
   const name = student.full_name || student.email || "—";
-  const discount = Math.round((fin.tuitionDue - fin.tuitionNet));
+  // Décomposition : bourse IPMD (aide) vs réduction du plan de paiement — sinon les
+  // deux fusionnent sous « Réduction » (libellé faux pour un boursier). Totaux déjà
+  // corrects (computeFinance déduit scholarship_amount).
+  const bourse = Math.max(0, Math.min(Number(finance?.scholarship_amount ?? 0), fin.tuitionDue));
+  const planRemise = fin.tuitionDue - bourse - fin.tuitionNet;
 
   return (
     <section className="min-h-[70vh] bg-ipmd-light">
@@ -106,13 +110,21 @@ export default async function ProformaPage({
                       {formatFCFA(fin.tuitionDue)}
                     </td>
                   </tr>
-                  {discount > 0 && (
+                  {bourse > 0 && (
+                    <tr className="border-b border-black/5 text-purple-700">
+                      <td className="px-4 py-3">Bourse IPMD</td>
+                      <td className="px-4 py-3 text-right font-semibold">
+                        −{formatFCFA(bourse)}
+                      </td>
+                    </tr>
+                  )}
+                  {planRemise > 0 && (
                     <tr className="border-b border-black/5 text-green-700">
                       <td className="px-4 py-3">
                         Réduction paiement unique (−{Math.round(fin.discountRate * 100)}%)
                       </td>
                       <td className="px-4 py-3 text-right font-semibold">
-                        −{formatFCFA(discount)}
+                        −{formatFCFA(planRemise)}
                       </td>
                     </tr>
                   )}
