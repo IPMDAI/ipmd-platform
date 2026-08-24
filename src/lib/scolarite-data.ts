@@ -17,9 +17,11 @@ import { computeInstallmentAmounts } from "@/lib/finance";
 
 export type FeeColumn = { label: string; pct: string };
 export type FeeRow = { level: string; values: string[] };
+export type PlanInfo = { planMonths: number; discountPct: number };
 export type ScolariteGrid = {
   feeColumns: FeeColumn[];
   feeRows: FeeRow[];
+  plans: PlanInfo[];
   enrollmentNotes: string[];
 };
 
@@ -51,10 +53,17 @@ export async function loadScolariteGrid(): Promise<ScolariteGrid | null> {
       return null;
     }
 
-    const [{ data: plan, error: pErr }, { data: levels, error: lErr }] = await Promise.all([
-      admin.from("installment_plan").select("seq, pct").eq("academic_year", year).eq("plan_months", 10).order("seq"),
-      admin.from("tuition_levels").select("level, amount, sort_order").gt("amount", 0).order("sort_order"),
-    ]);
+    const [{ data: plan, error: pErr }, { data: levels, error: lErr }, { data: plansData }] =
+      await Promise.all([
+        admin.from("installment_plan").select("seq, pct").eq("academic_year", year).eq("plan_months", 10).order("seq"),
+        admin.from("tuition_levels").select("level, amount, sort_order").gt("amount", 0).order("sort_order"),
+        admin
+          .from("payment_plans")
+          .select("plan_months, discount_rate")
+          .eq("academic_year", year)
+          .eq("active", true)
+          .order("plan_months", { ascending: true }),
+      ]);
     if (pErr || lErr || !plan || plan.length === 0 || !levels || levels.length === 0) {
       console.error(
         `[scolarite] installment_plan(${year})/tuition_levels illisible ou vide — grille non chargée${pErr ? ` (plan: ${pErr.message})` : ""}${lErr ? ` (levels: ${lErr.message})` : ""}.`
@@ -83,13 +92,18 @@ export async function loadScolariteGrid(): Promise<ScolariteGrid | null> {
       );
       return null;
     }
+    const plans: PlanInfo[] = (plansData ?? []).map((p) => ({
+      planMonths: Number(p.plan_months),
+      discountPct: Math.round(Number(p.discount_rate) * 100),
+    }));
+
     const enrollmentNotes = [
       `Les frais d'inscription s'élèvent à ${grp(reg)} FCFA et ne sont pas inclus dans les frais de scolarité.`,
-      `Possibilité de payer la scolarité en ${pcts.length} mois (échéancier ci-dessus).`,
-      `Paiement unique : ${Math.round(disc * 100)} % de réduction.`,
+      `Plusieurs plans de règlement de la scolarité au choix (1 à ${pcts.length} mensualités) — voir ci-dessous.`,
+      `Échéances au 30 de chaque mois (février : dernier jour du mois).`,
     ];
 
-    return { feeColumns, feeRows, enrollmentNotes };
+    return { feeColumns, feeRows, plans, enrollmentNotes };
   } catch (e) {
     console.error(
       `[scolarite] erreur de chargement de la grille financière : ${e instanceof Error ? e.message : "erreur inconnue"}`

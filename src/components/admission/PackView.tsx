@@ -24,6 +24,7 @@ export function PackView({
   conventionStatus = "non_envoyee",
   signatureMethod = null,
   schedule = null,
+  plans = [],
   deadlineText = null,
   deadlineExpired = false,
   proofStatus = null,
@@ -37,6 +38,7 @@ export function PackView({
   tuitionDue: number | null;
   token: string;
   schedule?: ScheduleSnapshot | null;
+  plans?: { plan_months: number; discount_rate: number }[];
   packId: string;
   reglementAcceptedAt?: string | null;
   conventionStatus?: string;
@@ -139,6 +141,7 @@ export function PackView({
                 <PaymentOptionStep
                   token={token}
                   schedule={schedule}
+                  plans={plans}
                   registrationFee={registrationFee}
                   deadlineText={deadlineText}
                   deadlineExpired={deadlineExpired}

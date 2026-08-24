@@ -120,8 +120,12 @@ const s = StyleSheet.create({
 
 function EcheancierDocument({ d }: { d: EcheancierPdfData }) {
   const sc = d.schedule;
-  const comptant = sc.payment_option === "comptant";
-  const remise = sc.tuition_official - sc.comptant_amount; // montant de la remise comptant
+  const nb = sc.installments.length;
+  const planMonths = sc.plan_months ?? (sc.payment_option === "comptant" ? 1 : 10);
+  const single = planMonths === 1; // règlement unique (paiement en 1 fois)
+  const hasDiscount = sc.discount_rate > 0; // remise appliquée (plans 1/2/3)
+  const remise = sc.tuition_official - sc.tuition_net; // remise réellement appliquée au plan
+  const modeLabel = single ? "Paiement en 1 fois" : `${planMonths} mensualités`;
   // Somme EXACTE des tranches (depuis le snapshot, aucun recalcul).
   const sumInstallments = sc.installments.reduce((a, it) => a + Number(it.amount), 0);
 
@@ -161,9 +165,7 @@ function EcheancierDocument({ d }: { d: EcheancierPdfData }) {
               <Text style={s.metaTxt}>Formation : {d.program ?? "—"}</Text>
               <Text style={s.metaTxt}>· Niveau : {sc.level || "—"}</Text>
               <Text style={s.metaTxt}>· Année : {sc.academic_year || "—"}</Text>
-              <Text style={s.metaTxt}>
-                · Mode : {comptant ? "Paiement comptant" : "Paiement échelonné"}
-              </Text>
+              <Text style={s.metaTxt}>· Mode : {modeLabel}</Text>
             </View>
           </View>
 
@@ -174,10 +176,10 @@ function EcheancierDocument({ d }: { d: EcheancierPdfData }) {
               <Text style={s.recapKey}>Scolarité officielle</Text>
               <Text style={s.recapVal}>{fcfaPdf(sc.tuition_official)}</Text>
             </View>
-            {comptant ? (
+            {hasDiscount ? (
               <View style={s.recapRow}>
                 <Text style={s.recapKey}>
-                  Remise paiement comptant ({Math.round(sc.lump_sum_discount * 100)} %)
+                  Remise ({Math.round(sc.discount_rate * 100)} %)
                 </Text>
                 <Text style={[s.recapVal, s.recapDiscount]}>− {fcfaPdf(remise)}</Text>
               </View>
@@ -189,10 +191,10 @@ function EcheancierDocument({ d }: { d: EcheancierPdfData }) {
           </View>
 
           {/* Détail des versements */}
-          <Text style={s.sectionTitle}>{comptant ? "Règlement" : "Échéancier (10 versements)"}</Text>
+          <Text style={s.sectionTitle}>{single ? "Règlement" : `Échéancier (${nb} versements)`}</Text>
           <View style={s.table}>
             <View style={s.thead}>
-              <Text style={[s.th, s.cNum]}>{comptant ? "Règlement" : "Tranche"}</Text>
+              <Text style={[s.th, s.cNum]}>{single ? "Règlement" : "Tranche"}</Text>
               <Text style={[s.th, s.cPct]}>%</Text>
               <Text style={[s.th, s.cDate]}>Échéance</Text>
               <Text style={[s.th, s.cAmt]}>Montant</Text>
@@ -200,7 +202,7 @@ function EcheancierDocument({ d }: { d: EcheancierPdfData }) {
             {sc.installments.map((it, i) => (
               <View key={it.seq} style={i % 2 === 1 ? s.trowAlt : s.trow}>
                 <Text style={[s.td, s.cNum]}>
-                  {comptant ? "Scolarité (comptant)" : `Tranche ${it.seq}/${sc.installments.length}`}
+                  {single ? "Scolarité (1 fois)" : `Tranche ${it.seq}/${nb}`}
                 </Text>
                 <Text style={[s.tdMuted, s.cPct]}>{it.pct} %</Text>
                 <Text style={[s.td, s.cDate]}>{frDate(it.due_date)}</Text>
@@ -211,7 +213,7 @@ function EcheancierDocument({ d }: { d: EcheancierPdfData }) {
               <Text style={[s.tdTotal, s.cNum]}>Total scolarité</Text>
               <Text style={[s.tdTotal, s.cPct]}>—</Text>
               <Text style={[s.tdTotal, s.cDate]}>
-                {comptant ? `avant le ${frDate(sc.comptant_deadline)}` : ""}
+                {single ? `avant le ${frDate(sc.comptant_deadline)}` : ""}
               </Text>
               <Text style={[s.tdTotal, s.cAmt]}>{fcfaPdf(sumInstallments)}</Text>
             </View>
@@ -220,7 +222,7 @@ function EcheancierDocument({ d }: { d: EcheancierPdfData }) {
           {/* Frais d'inscription séparés */}
           <Text style={s.note}>
             Frais d&apos;inscription : {fcfaPdf(sc.registration_fee)} — séparés de la scolarité, non
-            inclus dans l&apos;échéancier ci-dessus{comptant ? " et non concernés par la remise" : ""},
+            inclus dans l&apos;échéancier ci-dessus{hasDiscount ? " et non concernés par la remise" : ""},
             à régler pour confirmer votre place.
           </Text>
 

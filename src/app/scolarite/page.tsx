@@ -36,7 +36,7 @@ export default async function ScolaritePage() {
           Frais de scolarité — échéanciers & versements
         </h2>
         <p className="mt-2 text-black/60">
-          Montants en FCFA. La scolarité peut être réglée en 10 versements.
+          Montants en FCFA. Plusieurs plans de paiement de la scolarité au choix (voir ci-dessous).
         </p>
 
         {grid ? (
@@ -121,6 +121,46 @@ export default async function ScolaritePage() {
             </div>
           ))}
         </div>
+
+        {/* Plans de paiement de la scolarité (data-driven depuis payment_plans) */}
+        {grid.plans.length > 0 && (
+          <div className="mt-10">
+            <h3 className="text-xl font-extrabold tracking-tight text-ipmd-black">
+              Plans de paiement de la scolarité
+            </h3>
+            <p className="mt-1 text-sm text-black/55">
+              Choisissez votre plan lors de votre admission. Remise appliquée à la scolarité (les
+              frais d&apos;inscription en sont exclus).
+            </p>
+            <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {grid.plans.map((p) => (
+                <div
+                  key={p.planMonths}
+                  className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-black/5"
+                >
+                  <p className="font-bold text-ipmd-black">
+                    {p.planMonths === 1 ? "Paiement en 1 fois" : `${p.planMonths} mensualités`}
+                  </p>
+                  <p className="mt-1 text-sm text-black/60">
+                    {p.discountPct > 0 ? (
+                      <>
+                        Remise{" "}
+                        <span className="font-semibold text-emerald-700">{p.discountPct} %</span> sur
+                        la scolarité
+                      </>
+                    ) : (
+                      "Sans remise"
+                    )}
+                  </p>
+                </div>
+              ))}
+            </div>
+            <p className="mt-3 text-xs text-black/45">
+              Échéances au 30 de chaque mois (février : dernier jour du mois). Frais d&apos;inscription
+              séparés, jamais remisés.
+            </p>
+          </div>
+        )}
 
         {/* Notes inscription / paiement */}
         <div className="mt-6 grid gap-3 sm:grid-cols-3">

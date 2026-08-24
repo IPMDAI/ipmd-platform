@@ -68,6 +68,18 @@ export default async function PackPage({
   const deadlineText = admissionDeadlineText(admissionSentAt);
   const deadlineExpired = isAdmissionExpired(admissionSentAt);
 
+  // Plans de paiement disponibles (data-driven) : 6 options + remise par plan.
+  const { data: plansData } = await admin
+    .from("payment_plans")
+    .select("plan_months, discount_rate")
+    .eq("academic_year", pack.academic_year ?? "")
+    .eq("active", true)
+    .order("plan_months", { ascending: true });
+  const plans = (plansData ?? []).map((p) => ({
+    plan_months: Number(p.plan_months),
+    discount_rate: Number(p.discount_rate),
+  }));
+
   // Dernière preuve de paiement (W2) pour l'inscription (état affiché au candidat).
   const { data: lastProof } = await admin
     .from("payment_proofs")
@@ -102,6 +114,7 @@ export default async function PackPage({
       conventionStatus={(pack.convention_status as string) ?? "non_envoyee"}
       signatureMethod={(pack.signature_method as string) ?? null}
       schedule={(pack.schedule_json as ScheduleSnapshot | null) ?? null}
+      plans={plans}
       deadlineText={deadlineText}
       deadlineExpired={deadlineExpired}
       proofStatus={(lastProof?.status as "a_verifier" | "valide" | "rejete" | null) ?? null}
