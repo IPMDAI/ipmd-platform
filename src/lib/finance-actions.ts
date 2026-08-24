@@ -20,7 +20,7 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://ipmd.pro";
  * intégralement soldée par des paiements `status='paye'`. Ne lève jamais un
  * blocage manuel (`bloque`). Renvoie true si l'inscription est soldée.
  */
-async function recomputeAccess(
+export async function recomputeAccess(
   supabase: NonNullable<Awaited<ReturnType<typeof createClient>>>,
   studentId: string
 ): Promise<boolean> {

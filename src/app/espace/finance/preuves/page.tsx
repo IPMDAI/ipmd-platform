@@ -5,6 +5,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { Container } from "@/components/ui/Container";
 import { formatFCFA } from "@/lib/finance";
 import { PaymentProofReview } from "@/components/espace/PaymentProofReview";
+import { PaymentEncashForm } from "@/components/espace/PaymentEncashForm";
 
 export const metadata: Metadata = { title: "Preuves à vérifier — Finance" };
 
@@ -36,15 +37,31 @@ export default async function PreuvesPage() {
     name: string;
   };
   let rows: Row[] = [];
+  // W4 : preuves VALIDÉES en attente d'encaissement (payment_id IS NULL).
+  let encashRows: Row[] = [];
+  const today = new Date().toISOString().slice(0, 10);
   if (admin) {
-    const { data: proofs } = await admin
-      .from("payment_proofs")
-      .select("id, candidature_id, method, amount_declared, reference, submitted_at")
-      .eq("kind", "inscription")
-      .eq("status", "a_verifier")
-      .order("submitted_at", { ascending: true });
+    const [{ data: proofs }, { data: encash }] = await Promise.all([
+      admin
+        .from("payment_proofs")
+        .select("id, candidature_id, method, amount_declared, reference, submitted_at")
+        .eq("kind", "inscription")
+        .eq("status", "a_verifier")
+        .order("submitted_at", { ascending: true }),
+      admin
+        .from("payment_proofs")
+        .select("id, candidature_id, method, amount_declared, reference, submitted_at")
+        .eq("kind", "inscription")
+        .eq("status", "valide")
+        .is("payment_id", null)
+        .order("submitted_at", { ascending: true }),
+    ]);
 
-    const ids = [...new Set((proofs ?? []).map((p) => p.candidature_id as string))];
+    const ids = [
+      ...new Set(
+        [...(proofs ?? []), ...(encash ?? [])].map((p) => p.candidature_id as string)
+      ),
+    ];
     const nameById = new Map<string, string>();
     if (ids.length) {
       const { data: cands } = await admin
@@ -55,7 +72,14 @@ export default async function PreuvesPage() {
         nameById.set(c.id as string, (c.full_name as string) || (c.email as string) || "—");
       }
     }
-    rows = (proofs ?? []).map((p) => ({
+    const toRow = (p: {
+      id: unknown;
+      candidature_id: unknown;
+      method: unknown;
+      amount_declared: unknown;
+      reference: unknown;
+      submitted_at: unknown;
+    }): Row => ({
       id: p.id as string,
       candidature_id: p.candidature_id as string,
       method: (p.method as string) ?? null,
@@ -63,7 +87,9 @@ export default async function PreuvesPage() {
       reference: (p.reference as string) ?? null,
       submitted_at: (p.submitted_at as string) ?? null,
       name: nameById.get(p.candidature_id as string) ?? "—",
-    }));
+    });
+    rows = (proofs ?? []).map(toRow);
+    encashRows = (encash ?? []).map(toRow);
   }
 
   return (
@@ -107,6 +133,49 @@ export default async function PreuvesPage() {
               <div className="mt-3">
                 <PaymentProofReview proofId={r.id} />
               </div>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      {/* W4 — Preuves validées, en attente d'encaissement (payment_id IS NULL). */}
+      <div className="mt-12 flex items-center gap-3">
+        <h2 className="text-xl font-extrabold tracking-tight text-ipmd-black">
+          Preuves validées — à encaisser{" "}
+          <span className="ml-1 rounded-full bg-emerald-600 px-2 py-0.5 text-sm font-bold text-white">
+            {encashRows.length}
+          </span>
+        </h2>
+      </div>
+      <p className="mt-1 text-sm text-black/55">
+        Enregistrez l'encaissement <strong>réellement reçu</strong> (montant modifiable). Cela crée
+        le paiement d'inscription et son reçu ; le passage « inscrit » reste géré séparément.
+      </p>
+
+      {encashRows.length === 0 ? (
+        <p className="mt-6 rounded-2xl bg-black/5 px-4 py-3 text-sm font-medium text-black/50">
+          Aucune preuve validée en attente d'encaissement.
+        </p>
+      ) : (
+        <ul className="mt-6 space-y-3">
+          {encashRows.map((r) => (
+            <li key={r.id} className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-emerald-200">
+              <div className="text-sm">
+                <p className="font-bold text-ipmd-black">{r.name}</p>
+                <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-[13px] text-black/70">
+                  <span>Moyen déclaré : <strong>{r.method ?? "—"}</strong></span>
+                  <span>Montant déclaré : <strong>{formatFCFA(Number(r.amount_declared))}</strong></span>
+                  <span>Réf : {r.reference ?? "—"}</span>
+                  <span>Déposée le {frDateTime(r.submitted_at)}</span>
+                </div>
+              </div>
+              <PaymentEncashForm
+                proofId={r.id}
+                defaultAmount={Number(r.amount_declared)}
+                defaultMethod={r.method}
+                defaultReference={r.reference}
+                today={today}
+              />
             </li>
           ))}
         </ul>

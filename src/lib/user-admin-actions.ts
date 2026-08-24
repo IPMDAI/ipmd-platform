@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient, canAdminUsers } from "@/lib/supabase/admin";
 import { VALID_ROLES } from "@/lib/dashboards";
 import { formatFCFA } from "@/lib/finance";
+import { recomputeAccess } from "@/lib/finance-actions";
 import { hasAdmissionSnapshot, validateAdmissionSnapshot } from "@/lib/admission-snapshot";
 import { validateScheduleSnapshot } from "@/lib/admission-schedule";
 import { officialAssetAttachment } from "@/lib/secure-assets";
@@ -231,6 +232,9 @@ export async function inviteFromCandidature(
     role,
     full_name: fullName,
     universe: cand.universe ?? null,
+    // W4 : lien durable candidature ↔ profil (1:1), posé atomiquement avec le profil.
+    // Sert de clé au re-rattachement des paiements pré-inscription (remplace l'email).
+    candidature_id: candidatureId,
     // Identité structurée recopiée depuis la candidature (jamais de parsing de full_name).
     last_name: cand.last_name ?? null,
     first_names: cand.first_names ?? null,
@@ -441,6 +445,25 @@ export async function inviteFromCandidature(
         };
       }
     }
+
+    // W4 — RE-RATTACHEMENT ATOMIQUE des paiements pré-inscription au profil, via RPC
+    // idempotente (student_id=newId, candidature_id=NULL), UNIQUEMENT après la
+    // matérialisation finance (qui force access_state='pause'). Sans paiement
+    // pré-inscription → 0 ligne (no-op, flux existant inchangé). Échec → RETURN
+    // sans passer « inscrit » (statut inchangé, réessai idempotent).
+    const { error: reattachErr } = await ctx.supabase.rpc("reattach_candidature_payments", {
+      p_candidature: candidatureId,
+      p_student: newId,
+    });
+    if (reattachErr) {
+      return {
+        ok: false,
+        message: `Rattachement des paiements pré-inscription échoué (${reattachErr.message}). La candidature reste « en attente de paiement » — réessayez.`,
+      };
+    }
+    // Recalcul access_state (W0) APRÈS matérialisation + re-rattachement :
+    // pause → actif si inscription soldée par des paiements 'paye', sinon reste pause.
+    await recomputeAccess(ctx.supabase, newId);
 
     const proformaLines: Array<[string, string]> = [
       ["Formation", cand.program_interest || "—"],
