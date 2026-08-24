@@ -2,6 +2,7 @@ import { Section } from "@/components/ui/Section";
 import { Reveal } from "@/components/ui/Reveal";
 import { UniverseCard } from "@/components/cards/UniverseCard";
 import { universes } from "@/data/universes";
+import { DIPLOMA_FORMATIONS } from "@/data/diploma-highlights";
 
 /** Groupes affichés (sous-titres) dans la section des univers. */
 const GROUPS = [
@@ -47,7 +48,10 @@ export function UniversesSection() {
               <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
                 {list.map((universe, i) => (
                   <Reveal key={universe.id} delay={i * 60}>
-                    <UniverseCard universe={universe} />
+                    <UniverseCard
+                      universe={universe}
+                      formations={group.kind === "diplome" ? DIPLOMA_FORMATIONS[universe.id] : undefined}
+                    />
                   </Reveal>
                 ))}
                 {/* Comble l'espace vide quand le groupe laisse un trou (Certificats : 4 cartes ; Entreprises : 1 carte). */}

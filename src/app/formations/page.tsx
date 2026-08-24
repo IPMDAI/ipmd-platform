@@ -6,45 +6,12 @@ import { Reveal } from "@/components/ui/Reveal";
 import { UniverseCard } from "@/components/cards/UniverseCard";
 import { CtaBanner } from "@/components/sections/CtaBanner";
 import { universes } from "@/data/universes";
+import { DIPLOMA_FORMATIONS } from "@/data/diploma-highlights";
 
 export const metadata: Metadata = {
   title: "Formations",
   description:
     "Toutes les formations IPMD : diplômes (Campus, Pro, Executive) et bootcamps certifiants (UltraJobs, UltraBoost, UltraExecutive).",
-};
-
-/**
- * Formations affichées DANS les cartes de la page Diplômes (aperçu avant clic).
- * Affichage pur, propre à cette page — ne modifie ni le catalogue interne
- * (`src/data/programs.ts`), ni les pages univers, ni la DB / l'admission.
- */
-const DIPLOMA_FORMATIONS: Record<string, { icon: string; label: string }[]> = {
-  campus: [
-    { icon: "📱", label: "Marketing digital" },
-    { icon: "🎨", label: "Graphisme & design" },
-    { icon: "📣", label: "Communication digitale" },
-    { icon: "📊", label: "Management de projet digital" },
-    { icon: "💳", label: "Comptabilité & finance digitale" },
-    { icon: "💻", label: "Développement d'applications" },
-    { icon: "🛒", label: "E-commerce & commerce international" },
-    { icon: "🤖", label: "Informatique & intelligence artificielle" },
-  ],
-  professionnel: [
-    { icon: "📱", label: "Marketing digital" },
-    { icon: "🎨", label: "Graphisme & design" },
-    { icon: "📣", label: "Communication digitale" },
-    { icon: "📊", label: "Management de projet digital" },
-    { icon: "💳", label: "Finance digitale" },
-    { icon: "💻", label: "Développement d'applications" },
-    { icon: "🛒", label: "E-commerce" },
-    { icon: "🤖", label: "Intelligence artificielle" },
-  ],
-  gouvernance: [
-    { icon: "📱", label: "Marketing digital" },
-    { icon: "📊", label: "Management de projet digital" },
-    { icon: "💳", label: "Finance digitale" },
-    { icon: "🤖", label: "Intelligence artificielle" },
-  ],
 };
 
 export default function FormationsPage() {
