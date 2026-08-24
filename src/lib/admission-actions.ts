@@ -220,7 +220,7 @@ async function rebuildPackSchedule(
     override.paymentDay ?? (sj.payment_day === "fin_mois" ? "fin_mois" : "20");
 
   const [{ data: planRows }, { data: fsDisc }] = await Promise.all([
-    admin.from("installment_plan").select("seq, pct, due_date").eq("academic_year", pack.academic_year ?? ""),
+    admin.from("installment_plan").select("seq, pct, due_date").eq("academic_year", pack.academic_year ?? "").eq("plan_months", 10),
     admin.from("finance_settings").select("lump_sum_discount").eq("id", 1).maybeSingle(),
   ]);
 

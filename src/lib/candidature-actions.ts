@@ -318,7 +318,8 @@ export async function sendAdmission(
       ctx.supabase
         .from("installment_plan")
         .select("seq, pct, due_date")
-        .eq("academic_year", academicYear ?? ""),
+        .eq("academic_year", academicYear ?? "")
+        .eq("plan_months", 10),
       ctx.supabase.from("finance_settings").select("lump_sum_discount").eq("id", 1).maybeSingle(),
     ]);
     const snap = buildScheduleSnapshot({
@@ -650,7 +651,8 @@ export async function repairPackSchedule(
     ctx.supabase
       .from("installment_plan")
       .select("seq, pct, due_date")
-      .eq("academic_year", academicYear ?? ""),
+      .eq("academic_year", academicYear ?? "")
+      .eq("plan_months", 10),
     ctx.supabase.from("finance_settings").select("lump_sum_discount").eq("id", 1).maybeSingle(),
   ]);
 

@@ -52,7 +52,7 @@ export async function loadScolariteGrid(): Promise<ScolariteGrid | null> {
     }
 
     const [{ data: plan, error: pErr }, { data: levels, error: lErr }] = await Promise.all([
-      admin.from("installment_plan").select("seq, pct").eq("academic_year", year).order("seq"),
+      admin.from("installment_plan").select("seq, pct").eq("academic_year", year).eq("plan_months", 10).order("seq"),
       admin.from("tuition_levels").select("level, amount, sort_order").gt("amount", 0).order("sort_order"),
     ]);
     if (pErr || lErr || !plan || plan.length === 0 || !levels || levels.length === 0) {
