@@ -3,8 +3,17 @@ import Link from "next/link";
 import type { Universe } from "@/types";
 import { Badge } from "@/components/ui/Badge";
 
-/** Carte d'un des 6 univers IPMD (image, infos, boutons d'accès rapides). */
-export function UniverseCard({ universe }: { universe: Universe }) {
+/** Carte d'un des 6 univers IPMD (image, infos, boutons d'accès rapides).
+ * `formations` (optionnel) affiche, avant les boutons, la liste des formations
+ * de l'univers (utilisé sur la page Diplômes). Affichage pur — aucun impact
+ * catalogue/DB/admission. */
+export function UniverseCard({
+  universe,
+  formations,
+}: {
+  universe: Universe;
+  formations?: { icon: string; label: string }[];
+}) {
   const isDiploma = universe.kind === "diplome";
   const admissionHref = isDiploma ? "/admission" : `/inscription-bootcamp?u=${universe.id}`;
   const badgeLabel =
@@ -67,6 +76,31 @@ export function UniverseCard({ universe }: { universe: Universe }) {
           </Link>
         ) : (
           <>
+            {/* Formations de l'univers (page Diplômes) — liste avant les boutons */}
+            {formations && formations.length > 0 && (
+              <div className="mt-5 rounded-2xl bg-ipmd-light/60 p-4 ring-1 ring-black/5">
+                <p className="text-[11px] font-bold uppercase tracking-wide text-black/40">
+                  Formations
+                </p>
+                <ul className="mt-2.5 space-y-1.5">
+                  {formations.map((f) => (
+                    <li
+                      key={f.label}
+                      className="flex items-center gap-2.5 text-sm font-medium text-ipmd-black"
+                    >
+                      <span
+                        aria-hidden
+                        className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-white text-sm shadow-sm ring-1 ring-black/5"
+                      >
+                        {f.icon}
+                      </span>
+                      <span className="leading-snug">{f.label}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
             {/* Boutons d'accès rapides */}
             <div className="mt-5 flex flex-wrap gap-2">
               {quickLinks.map((l) => (

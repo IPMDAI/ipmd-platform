@@ -13,6 +13,40 @@ export const metadata: Metadata = {
     "Toutes les formations IPMD : diplômes (Campus, Pro, Executive) et bootcamps certifiants (UltraJobs, UltraBoost, UltraExecutive).",
 };
 
+/**
+ * Formations affichées DANS les cartes de la page Diplômes (aperçu avant clic).
+ * Affichage pur, propre à cette page — ne modifie ni le catalogue interne
+ * (`src/data/programs.ts`), ni les pages univers, ni la DB / l'admission.
+ */
+const DIPLOMA_FORMATIONS: Record<string, { icon: string; label: string }[]> = {
+  campus: [
+    { icon: "📱", label: "Marketing digital" },
+    { icon: "🎨", label: "Graphisme & design" },
+    { icon: "📣", label: "Communication digitale" },
+    { icon: "📊", label: "Management de projet digital" },
+    { icon: "💳", label: "Comptabilité & finance digitale" },
+    { icon: "💻", label: "Développement d'applications" },
+    { icon: "🛒", label: "E-commerce & commerce international" },
+    { icon: "🤖", label: "Informatique & intelligence artificielle" },
+  ],
+  professionnel: [
+    { icon: "📱", label: "Marketing digital" },
+    { icon: "🎨", label: "Graphisme & design" },
+    { icon: "📣", label: "Communication digitale" },
+    { icon: "📊", label: "Management de projet digital" },
+    { icon: "💳", label: "Finance digitale" },
+    { icon: "💻", label: "Développement d'applications" },
+    { icon: "🛒", label: "E-commerce" },
+    { icon: "🤖", label: "Intelligence artificielle" },
+  ],
+  gouvernance: [
+    { icon: "📱", label: "Marketing digital" },
+    { icon: "📊", label: "Management de projet digital" },
+    { icon: "💳", label: "Finance digitale" },
+    { icon: "🤖", label: "Intelligence artificielle" },
+  ],
+};
+
 export default function FormationsPage() {
   const diplomas = universes.filter((u) => u.kind === "diplome");
   const certificates = universes.filter((u) => u.kind === "certificat");
@@ -35,7 +69,7 @@ export default function FormationsPage() {
         <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {diplomas.map((u, i) => (
             <Reveal key={u.id} delay={i * 50}>
-              <UniverseCard universe={u} />
+              <UniverseCard universe={u} formations={DIPLOMA_FORMATIONS[u.id]} />
             </Reveal>
           ))}
         </div>
