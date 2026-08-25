@@ -272,6 +272,25 @@ export default async function CandidaturesPage({
   const canEditStatus = (u: string | null | undefined) =>
     isSuper || (u ? editableUniverses.has(u) : false);
 
+  // Staff : univers où l'utilisateur a `view_documents` (E8). Gate l'affichage des
+  // pièces jointes ET la génération des URLs signées (le row est déjà cloisonné E3).
+  const viewableDocUniverses = new Set<string>();
+  if (!isSuper) {
+    const univs = Array.from(
+      new Set((rows ?? []).map((r) => r.universe as string).filter(Boolean))
+    );
+    const results = await Promise.all(
+      univs.map((u) =>
+        supabase
+          .rpc("has_staff_permission", { p_permission: "view_documents", p_universe: u })
+          .then((r) => ({ u, ok: r.data === true }))
+      )
+    );
+    for (const { u, ok } of results) if (ok) viewableDocUniverses.add(u);
+  }
+  const canViewDocuments = (u: string | null | undefined) =>
+    isSuper || (u ? viewableDocUniverses.has(u) : false);
+
   // W3 : dernière preuve de paiement (inscription) par candidature (état admin).
   const proofMap = new Map<string, { status: string; note: string | null }>();
   {
@@ -349,12 +368,18 @@ export default async function CandidaturesPage({
   if (admin) {
     const paths = candidatures
       .flatMap((c) => [
-        c.doc_diploma,
-        ...(c.doc_bulletins ? c.doc_bulletins.split(",") : []),
-        c.doc_id,
-        c.doc_attestation,
-        c.doc_cv,
-        packMap.get(c.id)?.evidencePath ?? null,
+        // Pièces candidat : seulement si l'utilisateur a `view_documents` sur l'univers (E8).
+        ...(canViewDocuments(c.universe)
+          ? [
+              c.doc_diploma,
+              ...(c.doc_bulletins ? c.doc_bulletins.split(",") : []),
+              c.doc_id,
+              c.doc_attestation,
+              c.doc_cv,
+            ]
+          : []),
+        // Preuve de convention : super_admin uniquement (bloc AdmissionPackAdmin).
+        isSuper ? packMap.get(c.id)?.evidencePath ?? null : null,
       ])
       .filter(Boolean) as string[];
     if (paths.length > 0) {
@@ -562,7 +587,8 @@ export default async function CandidaturesPage({
                     </p>
                   )}
 
-                  {(() => {
+                  {/* Pièces jointes candidat — visibles si super_admin ou staff `view_documents` (E8) */}
+                  {canViewDocuments(c.universe) && (() => {
                     const links: { label: string; path: string }[] = [];
                     if (c.doc_cv) links.push({ label: "CV", path: c.doc_cv });
                     if (c.doc_diploma) links.push({ label: "Diplôme", path: c.doc_diploma });
