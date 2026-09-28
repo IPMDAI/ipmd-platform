@@ -4,6 +4,7 @@ import { UniverseVideo } from "@/components/sections/UniverseVideo";
 import { Section } from "@/components/ui/Section";
 import { Button } from "@/components/ui/Button";
 import { CtaBanner } from "@/components/sections/CtaBanner";
+import { BootcampFormulas } from "@/components/sections/BootcampFormulas";
 import { UltraJobsCatalog } from "@/components/ultrajobs/UltraJobsCatalog";
 import { ExperienceWorkspace } from "@/components/sections/ExperienceWorkspace";
 import { getUniverse } from "@/data/universes";
@@ -51,6 +52,8 @@ export default async function UltraJobsPage() {
           <UltraJobsCatalog items={items} />
         </div>
       </Section>
+
+      <BootcampFormulas universeId="ultrajobs" />
 
       <CtaBanner
         title="Prêt à décrocher votre métier digital ?"

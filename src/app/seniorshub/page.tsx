@@ -4,6 +4,7 @@ import { UniverseVideo } from "@/components/sections/UniverseVideo";
 import { Section } from "@/components/ui/Section";
 import { Button } from "@/components/ui/Button";
 import { CtaBanner } from "@/components/sections/CtaBanner";
+import { BootcampFormulas } from "@/components/sections/BootcampFormulas";
 import { UltraJobsCatalog } from "@/components/ultrajobs/UltraJobsCatalog";
 import { ExperienceWorkspace } from "@/components/sections/ExperienceWorkspace";
 import { getUniverse } from "@/data/universes";
@@ -59,6 +60,8 @@ export default async function SeniorsHubPage() {
       </Section>
 
       <ExperienceWorkspace universeId="seniorshub" />
+
+      <BootcampFormulas universeId="seniorshub" />
 
       <CtaBanner
         title="Prêt à valoriser votre expérience ?"

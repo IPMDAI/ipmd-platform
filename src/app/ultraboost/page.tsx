@@ -4,6 +4,7 @@ import { UniverseVideo } from "@/components/sections/UniverseVideo";
 import { Section } from "@/components/ui/Section";
 import { Button } from "@/components/ui/Button";
 import { CtaBanner } from "@/components/sections/CtaBanner";
+import { BootcampFormulas } from "@/components/sections/BootcampFormulas";
 import { UltraJobsCatalog } from "@/components/ultrajobs/UltraJobsCatalog";
 import { ExperienceWorkspace } from "@/components/sections/ExperienceWorkspace";
 import { getUniverse } from "@/data/universes";
@@ -57,6 +58,8 @@ export default async function UltraBoostPage() {
           <UltraJobsCatalog items={items} universe="ultraboost" />
         </div>
       </Section>
+
+      <BootcampFormulas universeId="ultraboost" />
 
       <CtaBanner
         title="Prêt à booster votre carrière ?"
