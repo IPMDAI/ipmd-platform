@@ -122,10 +122,20 @@ export function AdmissionWizard({ catalog }: { catalog: WizardCatalog }) {
     const item = sp.get("item");
     if (!u || !item || !getUniverse(u)) return;
     if (variantForUniverse(u as UniverseId) === "certificat") {
-      // Univers présélectionné ; formation présélectionnée si l'item existe pour cet univers.
-      const found = !!item && (catalog.certByUniverse[u] ?? []).some((x) => x.itemId === item);
+      // Univers présélectionné. L'item peut être une FORMULE (choix principal) ou
+      // un MÉTIER (thème facultatif si les formules sont actives, sinon programme
+      // historique).
+      const hasFormules = (catalog.certFormulasByUniverse[u] ?? []).length > 0;
+      const isFormula = !!item && (catalog.certFormulasByUniverse[u] ?? []).some((x) => x.itemId === item);
+      const isMetier = !!item && (catalog.certByUniverse[u] ?? []).some((x) => x.itemId === item);
+      const proj = { ...EMPTY_PROJECT };
+      if (isFormula) proj.certItemId = item as string;
+      else if (isMetier) {
+        if (hasFormules) proj.certThemeItemId = item as string;
+        else proj.certItemId = item as string;
+      }
       setUniverse(u as UniverseId);
-      setProject(found ? { ...EMPTY_PROJECT, certItemId: item as string } : { ...EMPTY_PROJECT });
+      setProject(proj);
       setStep(1);
       window.history.pushState({ wizardStep: 1 }, "");
     }
@@ -210,6 +220,7 @@ export function AdmissionWizard({ catalog }: { catalog: WizardCatalog }) {
           pro_offering_id: project.proOfferingId,
           exec_offering_id: project.execOfferingId,
           cert_item_id: project.certItemId,
+          cert_theme_item_id: project.certThemeItemId,
           // Campus (Étape 3) — persistés côté RPC v8 uniquement si universe='campus'.
           motivation_formation: project.campusMotivationFormation,
           referral_source: project.campusReferralSource,

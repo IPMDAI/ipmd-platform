@@ -11,7 +11,9 @@ import {
   campusFilieresForLevel,
   campusLevels,
   certProgrammesForSession,
+  certFormulaProgrammesForSession,
   certSessions,
+  hasCertFormulas,
   offeringKey,
   proFilieresForSessionLevel,
   proLevelsForSession,
@@ -702,22 +704,189 @@ export function Step3Projet({
   const certSess = certSessions(catalog, certUni);
   if (certSess.length === 0) return <div>{title}<EmptyState label="ce parcours" /></div>;
 
+  // Option A : dès que des formules sont ouvertes, la FORMULE devient le choix
+  // principal et le métier un thème facultatif. Sinon (formules non activées) →
+  // parcours métier historique, strictement inchangé.
+  const useFormules = hasCertFormulas(catalog, certUni);
   const selectedCertSession = value.certIntakeId || (certSess.length === 1 ? certSess[0].intakeId : "");
+
+  const selectCertSession = (id: string) => {
+    const off = value.certItemId ? resolveCertOffering(catalog, certUni, id, value.certItemId) : undefined;
+    onChange({ ...value, certIntakeId: id, certOfferingId: off ? off.offeringId : "" });
+  };
+
+  // Libellé prix formule (« dès » pour le court variable des univers standard).
+  const priceLabel = (p: CatalogProgram) => {
+    if (p.price == null) return "";
+    const variable = (p.durationMonths ?? 0) === 0 && certUni !== "ultraexecutive";
+    return `${variable ? "dès " : ""}${p.price.toLocaleString("fr-FR")} FCFA`;
+  };
+
+  const sessionBlock = (
+    <div className="mt-5">
+      {certSess.length > 1 ? (
+        <>
+          <label htmlFor="pj-cert-session" className="text-sm font-semibold text-ipmd-black">
+            Session <span className="text-ipmd-red">*</span>
+          </label>
+          <select
+            id="pj-cert-session"
+            value={selectedCertSession}
+            onChange={(e) => selectCertSession(e.target.value)}
+            className="mt-1 w-full rounded-xl border border-black/15 bg-white px-3.5 py-2.5 text-sm outline-none focus:border-ipmd-red focus:ring-2 focus:ring-ipmd-red/20"
+          >
+            <option value="">— Sélectionnez —</option>
+            {certSess.map((s) => (
+              <option key={s.intakeId} value={s.intakeId}>
+                {s.intakeLabel} — {s.academicYear}
+              </option>
+            ))}
+          </select>
+        </>
+      ) : (
+        <>
+          <p className="text-sm font-semibold text-ipmd-black">
+            Session <span className="text-ipmd-red">*</span>
+          </p>
+          <div className="mt-1.5 inline-flex items-center gap-2 rounded-xl border border-ipmd-red/30 bg-ipmd-red/[0.04] px-3.5 py-2.5 text-sm font-semibold text-ipmd-black">
+            <span className="flex h-4 w-4 items-center justify-center rounded-full border border-ipmd-red" aria-hidden="true">
+              <span className="h-2 w-2 rounded-full bg-ipmd-red" />
+            </span>
+            {certSess[0].intakeLabel} — {certSess[0].academicYear}
+          </div>
+        </>
+      )}
+    </div>
+  );
+
+  // ─────────── Parcours FORMULE (Option A) ───────────
+  if (useFormules) {
+    const formules = selectedCertSession
+      ? certFormulaProgrammesForSession(catalog, certUni, selectedCertSession)
+      : [];
+    const selectFormule = (p: CatalogProgram) =>
+      onChange({ ...value, certItemId: p.itemId, certOfferingId: p.offeringId });
+
+    // Thèmes métiers (facultatifs), dédupliqués par item et groupés par catégorie.
+    const themes = selectedCertSession ? certProgrammesForSession(catalog, certUni, selectedCertSession) : [];
+    const seenTheme = new Set<string>();
+    const themeByCat = new Map<string, CatalogProgram[]>();
+    for (const p of themes) {
+      if (seenTheme.has(p.itemId)) continue;
+      seenTheme.add(p.itemId);
+      const c = p.category ?? "Autres";
+      if (!themeByCat.has(c)) themeByCat.set(c, []);
+      themeByCat.get(c)!.push(p);
+    }
+    const selectTheme = (itemId: string) => onChange({ ...value, certThemeItemId: itemId });
+
+    return (
+      <div>
+        {title}
+
+        {sessionBlock}
+
+        {/* 2) Formule — choix principal */}
+        <div className="mt-6">
+          <p className="text-sm font-semibold text-ipmd-black">
+            Choisissez votre formule <span className="text-ipmd-red">*</span>
+          </p>
+          <p className="mt-0.5 text-[12px] text-black/50">
+            La formule fixe la durée, le certificat, le coût et les frais d'inscription.
+          </p>
+          {!selectedCertSession ? (
+            <p className="mt-2 rounded-xl border border-dashed border-black/15 bg-black/[0.015] p-3 text-[13px] text-black/50">
+              Choisissez d'abord une session pour afficher les formules.
+            </p>
+          ) : formules.length === 0 ? (
+            <p className="mt-2 rounded-xl border border-amber-200 bg-amber-50 p-3 text-[13px] font-semibold text-amber-900">
+              Aucune formule ouverte pour cette session.
+            </p>
+          ) : (
+            <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
+              {formules.map((p) => {
+                const active = value.certOfferingId === p.offeringId;
+                return (
+                  <button key={p.offeringId} type="button" onClick={() => selectFormule(p)} className={optionClass(active)}>
+                    <Radio active={active} />
+                    <span>
+                      <span className="text-sm font-semibold text-ipmd-black">{p.name}</span>
+                      <span className="mt-0.5 block text-[11px] text-black/50">
+                        {p.credential ?? "Certificat"}
+                        {p.durationMonths ? ` · ${p.durationMonths} mois` : ""}
+                        {p.price != null ? ` · ${priceLabel(p)}` : ""}
+                        {p.registrationFee != null
+                          ? ` · inscription ${p.registrationFee.toLocaleString("fr-FR")} FCFA`
+                          : ""}
+                      </span>
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        {/* 3) Thème métier — facultatif */}
+        {selectedCertSession && themeByCat.size > 0 && (
+          <div className="mt-6">
+            <p className="text-sm font-semibold text-ipmd-black">
+              Thème métier <span className="text-[11px] font-normal text-black/45">(facultatif)</span>
+            </p>
+            <p className="mt-0.5 text-[12px] text-black/50">
+              Orientez votre formule vers un métier précis. Vous pourrez aussi le préciser plus tard.
+            </p>
+            <div className="mt-2 space-y-4">
+              {[...themeByCat.entries()].map(([cat, progs]) => (
+                <div key={cat}>
+                  <p className="text-[13px] font-bold text-black/70">{cat}</p>
+                  <div className="mt-1.5 grid grid-cols-1 gap-2 sm:grid-cols-2">
+                    {progs.map((p) => {
+                      const active = value.certThemeItemId === p.itemId;
+                      return (
+                        <button
+                          key={p.itemId}
+                          type="button"
+                          onClick={() => selectTheme(active ? "" : p.itemId)}
+                          className={optionClass(active)}
+                        >
+                          <Radio active={active} />
+                          <span className="text-sm font-medium text-ipmd-black">{p.name}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
+            </div>
+            {value.certThemeItemId && (
+              <button
+                type="button"
+                onClick={() => selectTheme("")}
+                className="mt-3 text-[12px] font-semibold text-ipmd-red hover:underline"
+              >
+                Effacer le thème
+              </button>
+            )}
+          </div>
+        )}
+
+        {/* 4) Mode de formation */}
+        <ModeField value={value.mode} onChange={(m) => onChange({ ...value, mode: m })} />
+      </div>
+    );
+  }
+
+  // ─────────── Parcours MÉTIER historique (formules non activées) ───────────
   const certProgrammes = selectedCertSession
     ? certProgrammesForSession(catalog, certUni, selectedCertSession)
     : [];
   const preProgramme = value.certItemId
     ? (catalog.certByUniverse[certUni] ?? []).find((x) => x.itemId === value.certItemId)
     : undefined;
-
-  const selectCertSession = (id: string) => {
-    const off = value.certItemId ? resolveCertOffering(catalog, certUni, id, value.certItemId) : undefined;
-    onChange({ ...value, certIntakeId: id, certOfferingId: off ? off.offeringId : "" });
-  };
   const selectCertProgramme = (p: CatalogProgram) =>
     onChange({ ...value, certItemId: p.itemId, certOfferingId: p.offeringId });
 
-  // Groupement par catégorie pour un affichage clair.
   const certByCat = new Map<string, CatalogProgram[]>();
   for (const p of certProgrammes) {
     const c = p.category ?? "Autres";
@@ -741,41 +910,7 @@ export function Step3Projet({
         </div>
       )}
 
-      {/* 1) Session certificat */}
-      <div className="mt-5">
-        {certSess.length > 1 ? (
-          <>
-            <label htmlFor="pj-cert-session" className="text-sm font-semibold text-ipmd-black">
-              Session <span className="text-ipmd-red">*</span>
-            </label>
-            <select
-              id="pj-cert-session"
-              value={selectedCertSession}
-              onChange={(e) => selectCertSession(e.target.value)}
-              className="mt-1 w-full rounded-xl border border-black/15 bg-white px-3.5 py-2.5 text-sm outline-none focus:border-ipmd-red focus:ring-2 focus:ring-ipmd-red/20"
-            >
-              <option value="">— Sélectionnez —</option>
-              {certSess.map((s) => (
-                <option key={s.intakeId} value={s.intakeId}>
-                  {s.intakeLabel} — {s.academicYear}
-                </option>
-              ))}
-            </select>
-          </>
-        ) : (
-          <>
-            <p className="text-sm font-semibold text-ipmd-black">
-              Session <span className="text-ipmd-red">*</span>
-            </p>
-            <div className="mt-1.5 inline-flex items-center gap-2 rounded-xl border border-ipmd-red/30 bg-ipmd-red/[0.04] px-3.5 py-2.5 text-sm font-semibold text-ipmd-black">
-              <span className="flex h-4 w-4 items-center justify-center rounded-full border border-ipmd-red" aria-hidden="true">
-                <span className="h-2 w-2 rounded-full bg-ipmd-red" />
-              </span>
-              {certSess[0].intakeLabel} — {certSess[0].academicYear}
-            </div>
-          </>
-        )}
-      </div>
+      {sessionBlock}
 
       {/* 2) Programme / formation (groupé par catégorie) */}
       <div className="mt-6">

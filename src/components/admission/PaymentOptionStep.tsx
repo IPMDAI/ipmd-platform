@@ -64,6 +64,8 @@ export function PaymentOptionStep({
       : "";
   // Plan courant : plan_months (nouveaux snapshots) ou dérivé (anciens).
   const currentPlan = schedule.plan_months ?? (schedule.payment_option === "comptant" ? 1 : 10);
+  // Certifiant (Option A) : échéancier mensuel dès le démarrage (≠ « au 30 » Campus).
+  const isCert = schedule.max_installments != null;
   // Repli si la liste des plans n'est pas fournie : au moins le plan courant.
   const options =
     plans.length > 0
@@ -118,7 +120,20 @@ export function PaymentOptionStep({
 
       {!fullBourse && (
       <>
-      {/* Choix du plan (1/2/3/6/8/10) */}
+      {/* Certifiant (Option A) : encart incitatif « payez en 1 fois pour −15 % » ;
+          l'échéancier reste au tarif plein, pas de sélecteur de plan. */}
+      {isCert && schedule.comptant_amount > 0 && (
+        <p className="mt-3 rounded-xl bg-emerald-50 px-3 py-2 text-[12px] leading-relaxed text-emerald-800 ring-1 ring-emerald-200">
+          💡 <strong>Payez en une seule fois</strong> : réglez toute la scolarité en un seul versement
+          de <strong>{formatFCFA(schedule.comptant_amount)}</strong> et bénéficiez de{" "}
+          <strong>−15 %</strong> (soit {formatFCFA(official - schedule.comptant_amount)} d&apos;économie).
+          Sinon, l&apos;échéancier ci-dessous s&apos;applique au tarif plein.
+        </p>
+      )}
+
+      {/* Choix du plan (Campus / Pro / Executive uniquement) */}
+      {!isCert && (
+      <>
       <p className="mt-3 text-[11px] font-bold uppercase tracking-wider text-black/45">
         Votre plan de paiement
       </p>
@@ -131,7 +146,9 @@ export function PaymentOptionStep({
               ? `Remise ${disc} % · règlement unique`
               : disc > 0
                 ? `Remise ${disc} % · ${p.plan_months} versements`
-                : `${p.plan_months} versements au 30 de chaque mois`;
+                : isCert
+                  ? `${p.plan_months} mensualités égales dès le démarrage`
+                  : `${p.plan_months} versements au 30 de chaque mois`;
           return (
             <button
               key={p.plan_months}
@@ -158,6 +175,8 @@ export function PaymentOptionStep({
           );
         })}
       </div>
+      </>
+      )}
 
       {msg && (
         <p className={`mt-2 text-[12px] font-medium ${msg.ok ? "text-emerald-700" : "text-ipmd-red"}`}>

@@ -12,6 +12,7 @@ import {
 import { resolveRecipients } from "@/lib/admission-config";
 import {
   buildScheduleSnapshot,
+  buildCertificatSchedule,
   resolvePlanMonths,
   isPlanMonths,
   type PaymentOption,
@@ -211,11 +212,50 @@ async function rebuildPackSchedule(
 
   // Plan courant : depuis le snapshot existant (nouveau plan_months OU ancien
   // payment_option), défaut 10 ; surchargé si un plan est explicitement demandé.
-  const sj = (pack.schedule_json ?? {}) as { tuition_official?: number };
-  const planMonths: PlanMonths = override.planMonths ?? resolvePlanMonths(pack.schedule_json as Record<string, unknown> ?? {}) ?? 10;
+  const sj = (pack.schedule_json ?? {}) as {
+    tuition_official?: number;
+    max_installments?: number;
+    start_date?: string;
+  };
   const tuitionOfficial =
     pack.tuition_due != null ? Number(pack.tuition_due) : sj.tuition_official ?? null;
   const academicYear = (pack.academic_year as string) ?? "";
+
+  // CERTIFIANT (Option A) : snapshot marqué `max_installments` → moteur dédié.
+  // Plans valides = comptant (1) ou N× (max_installments). Dates mensuelles dès le
+  // démarrage ; jamais les tables/dates Campus.
+  if (typeof sj.max_installments === "number") {
+    const maxInstallments = sj.max_installments;
+    const startDate = sj.start_date ?? new Date().toISOString().slice(0, 10);
+    const planMonths =
+      override.planMonths ??
+      resolvePlanMonths(pack.schedule_json as Record<string, unknown>) ??
+      (maxInstallments > 1 ? maxInstallments : 1);
+    const { data: fsLump } = await admin
+      .from("finance_settings")
+      .select("lump_sum_discount")
+      .eq("id", 1)
+      .maybeSingle();
+    const sched = buildCertificatSchedule({
+      academicYear,
+      label: (pack.accepted_level as string) ?? null,
+      registrationFee: Number(pack.registration_fee ?? 0),
+      tuitionOfficial,
+      maxInstallments,
+      planMonths,
+      startDate,
+      lumpSumDiscount: Number(fsLump?.lump_sum_discount ?? 0.15),
+    });
+    if (!sched.ok) return { ok: false, code: sched.code, message: sched.message };
+    const { error: certErr } = await admin
+      .from("admission_packs")
+      .update({ schedule_json: sched.schedule, updated_at: new Date().toISOString() })
+      .eq("id", link.packId);
+    if (certErr) return { ok: false, message: "Une erreur est survenue. Réessayez." };
+    return { ok: true, schedule: sched.schedule };
+  }
+
+  const planMonths: PlanMonths = override.planMonths ?? resolvePlanMonths(pack.schedule_json as Record<string, unknown> ?? {}) ?? 10;
 
   const [{ data: planRows }, { data: fsDisc }, { data: planCfg }, scholarship] = await Promise.all([
     admin.from("installment_plan").select("seq, pct, due_date").eq("academic_year", academicYear).eq("plan_months", planMonths),

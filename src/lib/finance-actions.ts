@@ -209,6 +209,45 @@ export async function addPayment(
     .single();
   if (error) return { ok: false, message: error.message };
 
+  // CERTIFIANT (Option A) — remise −15 % « comptant » réalisée UNIQUEMENT si ce
+  // versement de scolarité, UNIQUE et premier, solde toute la scolarité au tarif
+  // comptant (montant == round(0,85 × tuition_due)). Tout paiement partiel/étalé
+  // reste au tarif plein. Gardé par `lump_sum_eligible` (certifiant only) → Campus
+  // JAMAIS impacté. L'inscription (kind='inscription') n'est jamais remisée.
+  if (kind === "scolarite") {
+    const { data: finL } = await ctx.supabase
+      .from("student_finance")
+      .select("tuition_due, discount_rate, lump_sum_eligible")
+      .eq("student_id", studentId)
+      .maybeSingle();
+    const eligible =
+      (finL as { lump_sum_eligible?: boolean } | null)?.lump_sum_eligible === true &&
+      Number(finL?.discount_rate ?? 0) === 0;
+    if (eligible) {
+      const { data: prior } = await ctx.supabase
+        .from("payments")
+        .select("id")
+        .eq("student_id", studentId)
+        .eq("kind", "scolarite")
+        .neq("id", inserted?.id ?? "")
+        .limit(1);
+      const isFirst = !prior || prior.length === 0;
+      const { data: fsL } = await ctx.supabase
+        .from("finance_settings")
+        .select("lump_sum_discount")
+        .eq("id", 1)
+        .maybeSingle();
+      const lump = Number(fsL?.lump_sum_discount ?? 0.15);
+      const target = Math.round(Number(finL?.tuition_due ?? 0) * (1 - lump));
+      if (isFirst && target > 0 && amount === target) {
+        await ctx.supabase
+          .from("student_finance")
+          .update({ discount_rate: lump, updated_at: new Date().toISOString() })
+          .eq("student_id", studentId);
+      }
+    }
+  }
+
   // Situation financière + auto-activation de l'accès + reçu (best-effort).
   let emailed = 0;
   let activated = false;

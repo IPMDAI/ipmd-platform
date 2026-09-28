@@ -125,9 +125,10 @@ export type Project = {
   execIntakeId: string; // Session Executive choisie — étape intermédiaire
   execLevel: string; // Niveau visé Executive (Licence 3/Master 1/Master 2) — étape intermédiaire
   execOfferingId: string; // catalog_offering_id résolu Executive
-  certItemId: string; // Programme/formation certificat choisi (ou présélectionné via URL)
+  certItemId: string; // Certificat : FORMULE choisie (choix principal, Option A) — item is_formula
   certIntakeId: string; // Session certificat choisie (Octobre/Février) — étape intermédiaire
-  certOfferingId: string; // catalog_offering_id résolu (item × session)
+  certOfferingId: string; // catalog_offering_id résolu (formule × session) — porte prix/frais
+  certThemeItemId: string; // Certificat : métier/thème secondaire FACULTATIF (→ program_interest)
   mode: string; // FORMATION_MODES: presentiel | distance | hybride (obligatoire)
   // ── Campus (Bachelier & Étudiant) — questions Étape 3, obligatoires pour campus ──
   campusMotivationFormation: string; // Pourquoi cette formation ? (≤500)
@@ -150,6 +151,7 @@ export const EMPTY_PROJECT: Project = {
   certItemId: "",
   certIntakeId: "",
   certOfferingId: "",
+  certThemeItemId: "",
   mode: "",
   campusMotivationFormation: "",
   campusReferralSource: "",
@@ -255,9 +257,12 @@ export const proFilieresForSessionLevel = (catalog: WizardCatalog, intakeId: str
   programFilieresForSessionLevel(catalog.proPrograms, intakeId, level);
 
 // ── Certificats : Session → Programme (offering-based, sans niveau) ──
-/** Sessions certificat d'un univers (dérivées des offres). */
+/** Sessions certificat d'un univers (dérivées des offres — métiers ET formules). */
 export const certSessions = (catalog: WizardCatalog, universe: string) =>
-  programSessions(catalog.certByUniverse[universe] ?? []);
+  programSessions([
+    ...(catalog.certByUniverse[universe] ?? []),
+    ...(catalog.certFormulasByUniverse[universe] ?? []),
+  ]);
 
 /** Programmes (offres) certificat pour une session donnée, triés par catégorie puis nom. */
 export function certProgrammesForSession(
@@ -270,16 +275,56 @@ export function certProgrammesForSession(
     .sort((a, b) => (a.category ?? "").localeCompare(b.category ?? "") || a.name.localeCompare(b.name));
 }
 
-/** Résout l'offering certificat pour (item, session). */
+/** Résout l'offering certificat pour (item, session) — cherche formules ET métiers. */
 export function resolveCertOffering(
   catalog: WizardCatalog,
   universe: string,
   intakeId: string,
   itemId: string,
 ): CatalogProgram | undefined {
-  return (catalog.certByUniverse[universe] ?? []).find(
-    (p) => p.intakeId === intakeId && p.itemId === itemId,
-  );
+  return [
+    ...(catalog.certFormulasByUniverse[universe] ?? []),
+    ...(catalog.certByUniverse[universe] ?? []),
+  ].find((p) => p.intakeId === intakeId && p.itemId === itemId);
+}
+
+/** Un univers a-t-il des formules ouvertes ? (pilote le nouveau parcours Option A). */
+export const hasCertFormulas = (catalog: WizardCatalog, universe: string) =>
+  (catalog.certFormulasByUniverse[universe] ?? []).length > 0;
+
+/** Formules (offres) d'un univers pour une session, triées par durée croissante. */
+export function certFormulaProgrammesForSession(
+  catalog: WizardCatalog,
+  universe: string,
+  intakeId: string,
+): CatalogProgram[] {
+  return (catalog.certFormulasByUniverse[universe] ?? [])
+    .filter((p) => p.intakeId === intakeId)
+    .sort((a, b) => (a.durationMonths ?? 0) - (b.durationMonths ?? 0) || a.name.localeCompare(b.name));
+}
+
+/** Programme certificat (formule OU métier) résolu par offeringId — cherche les deux. */
+export function certProgramByOffering(
+  catalog: WizardCatalog,
+  universe: string,
+  offeringId: string,
+): CatalogProgram | undefined {
+  return [
+    ...(catalog.certFormulasByUniverse[universe] ?? []),
+    ...(catalog.certByUniverse[universe] ?? []),
+  ].find((x) => x.offeringId === offeringId);
+}
+
+/** Un item certificat (formule ou métier) résolu par itemId — pour l'affichage du thème. */
+export function certItemById(
+  catalog: WizardCatalog,
+  universe: string,
+  itemId: string,
+): CatalogProgram | undefined {
+  return [
+    ...(catalog.certFormulasByUniverse[universe] ?? []),
+    ...(catalog.certByUniverse[universe] ?? []),
+  ].find((x) => x.itemId === itemId);
 }
 
 /** Items certificat uniques (dédupliqués par itemId) — pour l'affichage catalogue public. */
@@ -353,7 +398,7 @@ export function isProgramSelected(
   if (variant === "pro") return catalog.proPrograms.some((x) => x.offeringId === p.proOfferingId);
   if (variant === "executive")
     return catalog.execPrograms.some((x) => x.offeringId === p.execOfferingId);
-  return (catalog.certByUniverse[universe ?? ""] ?? []).some((x) => x.offeringId === p.certOfferingId);
+  return certProgramByOffering(catalog, universe ?? "", p.certOfferingId) !== undefined;
 }
 
 /** Sélection valide = programme choisi ET mode de formation obligatoire choisi. */
@@ -390,8 +435,7 @@ export function activeDocProfileKey(
       "executive"
     );
   return (
-    (catalog.certByUniverse[universe ?? ""] ?? []).find((x) => x.offeringId === p.certOfferingId)?.docProfile ??
-    "cert-light"
+    certProgramByOffering(catalog, universe ?? "", p.certOfferingId)?.docProfile ?? "cert-light"
   );
 }
 
@@ -444,11 +488,15 @@ export function describeProject(
       credential: prog.credential ?? undefined,
     };
   }
-  const off = (catalog.certByUniverse[universe ?? ""] ?? []).find((x) => x.offeringId === p.certOfferingId);
+  const off = certProgramByOffering(catalog, universe ?? "", p.certOfferingId);
   if (!off) return null;
+  // Option A : le thème métier (facultatif) est accolé au libellé de la formule.
+  const theme = p.certThemeItemId
+    ? certItemById(catalog, universe ?? "", p.certThemeItemId)?.name
+    : undefined;
   return {
     rentree: `${off.intakeLabel} — ${off.academicYear}`,
-    formation: off.name,
+    formation: theme ? `${off.name} — Thème : ${theme}` : off.name,
     credential: off.credential ?? undefined,
     category: off.category ?? undefined,
     durationMonths: off.durationMonths ?? undefined,

@@ -16,7 +16,9 @@
  * finance_settings) est faite par l'appelant serveur et injectée ici.
  */
 
-export const PLAN_MONTHS = [1, 2, 3, 6, 8, 10] as const;
+// 4 ajouté pour les formules certifiantes (Bootcamp 6 mois = 4×). Sans effet sur
+// Campus : son menu de plans vient des lignes DB (payment_plans), pas de ce constant.
+export const PLAN_MONTHS = [1, 2, 3, 4, 6, 8, 10] as const;
 export type PlanMonths = (typeof PLAN_MONTHS)[number];
 
 export type PlanRow = { seq: number; pct: number; due_date: string };
@@ -48,12 +50,30 @@ export type ScheduleSnapshot = {
   scholarship_mode: ScholarshipMode | null;
   scholarship_rate: number | null; // si mode=taux
   installments: ScheduleInstallment[]; // longueur === plan_months ; [] si bourse totale (net 0)
+  // ── Certifiant (Option A) uniquement — permet de re-matérialiser sans re-requêter ──
+  max_installments?: number; // nb max de versements de la formule (échelonné = ce N)
+  start_date?: string; // ancre de l'échéancier mensuel (YYYY-MM-DD)
 };
 
 /** Nb de jours du mois (1-12), gère les années bissextiles (février 28/29). */
 export function daysInMonth(year: number, month1to12: number): number {
   const leap = (year % 4 === 0 && year % 100 !== 0) || year % 400 === 0;
   return [31, leap ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31][month1to12 - 1];
+}
+
+/**
+ * Ajoute `months` mois à une date YYYY-MM-DD en conservant le jour (borné au dernier
+ * jour du mois cible). Sert aux échéances mensuelles CERTIFIANTES, calées sur la date
+ * de démarrage (≠ jour 30 Campus).
+ */
+export function addMonthsYMD(ymd: string, months: number): string {
+  const [y, m, d] = ymd.split("-").map(Number);
+  if (![y, m, d].every(Number.isFinite)) return ymd;
+  const idx = m - 1 + months;
+  const ty = y + Math.floor(idx / 12);
+  const tm = ((idx % 12) + 12) % 12; // 0-11
+  const day = Math.min(d, daysInMonth(ty, tm + 1));
+  return `${ty}-${String(tm + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
 }
 
 /**
@@ -322,6 +342,93 @@ export function buildScheduleSnapshot(input: {
       scholarship_mode: term ? term.mode : null,
       scholarship_rate: term && term.mode === "taux" ? term.rate ?? null : null,
       installments,
+    },
+  };
+}
+
+/**
+ * Échéancier CERTIFIANT (Option A) — module PUR, SÉPARÉ du calcul Campus.
+ *  - `planMonths = 1` → COMPTANT : 1 versement à `round(tuition × (1 − lumpSumDiscount))`
+ *    (remise −15 % ACQUISE uniquement si soldé en 1 fois — vérifié au paiement, B3-3d).
+ *  - `planMonths = maxInstallments` (>1) → ÉCHELONNÉ : N mensualités ÉGALES au tarif
+ *    PLEIN, calées sur `startDate` (dernière tranche ajustée pour la somme exacte).
+ * Inscription séparée, jamais remisée. Aucune bourse (bootcamps).
+ */
+export function buildCertificatSchedule(input: {
+  academicYear: string | null;
+  label: string | null; // libellé logique (nom de la formule) → champ `level`
+  registrationFee: number;
+  tuitionOfficial: number | null;
+  maxInstallments: number;
+  planMonths: number; // 1 (comptant) ou maxInstallments (échelonné)
+  startDate: string; // ancre YYYY-MM-DD (session/inscription)
+  lumpSumDiscount: number; // 0.15
+}): ScheduleResult {
+  const { academicYear, label, registrationFee, tuitionOfficial, maxInstallments, planMonths, startDate, lumpSumDiscount } = input;
+
+  if (tuitionOfficial == null || !(tuitionOfficial > 0)) {
+    return { ok: false, code: "TARIF_MANQUANT", message: "Tarif de la formule manquant : impossible de générer l'échéancier." };
+  }
+  if (!Number.isInteger(maxInstallments) || maxInstallments < 1) {
+    return { ok: false, code: "PLAN_INVALIDE", message: "Nombre de versements de la formule invalide." };
+  }
+  const isComptant = planMonths === 1;
+  if (!isComptant && planMonths !== maxInstallments) {
+    return { ok: false, code: "PLAN_NON_SUPPORTE", message: `Plan ${planMonths} non supporté pour cette formule (comptant ou ${maxInstallments}×).` };
+  }
+  const n = isComptant ? 1 : maxInstallments;
+  if (!isPlanMonths(n)) {
+    return { ok: false, code: "PLAN_NON_SUPPORTE", message: `Plan ${n} non supporté (1, 2, 3, 4, 6, 8 ou 10 versements).` };
+  }
+  if (lumpSumDiscount < 0 || lumpSumDiscount >= 1) {
+    return { ok: false, code: "PLAN_INVALIDE", message: "Remise comptant incohérente." };
+  }
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(startDate)) {
+    return { ok: false, code: "PLAN_INVALIDE", message: "Date de démarrage invalide." };
+  }
+
+  // Option A : l'échéancier est TOUJOURS au tarif plein (N versements ou 1). La
+  // remise −15 % ne se réalise qu'au PAIEMENT (versement unique soldant toute la
+  // scolarité) — jamais figée ici. `comptant_amount` reste la cible incitative.
+  const net = tuitionOfficial;
+  const discountRate = 0;
+
+  let cumul = 0;
+  const installments: ScheduleInstallment[] = Array.from({ length: n }, (_, i) => {
+    const amount = i < n - 1 ? Math.round(net / n) : net - cumul;
+    if (i < n - 1) cumul += amount;
+    return {
+      seq: i + 1,
+      pct: Math.round((100 / n) * 100) / 100,
+      due_date: addMonthsYMD(startDate, i),
+      amount,
+    };
+  });
+
+  return {
+    ok: true,
+    schedule: {
+      academic_year: academicYear ?? "",
+      level: label ?? "",
+      registration_fee: registrationFee,
+      tuition_official: tuitionOfficial,
+      plan_months: n,
+      payment_option: isComptant ? "comptant" : "echelonne",
+      discount_rate: discountRate,
+      tuition_net: net,
+      lump_sum_discount: lumpSumDiscount,
+      comptant_amount: Math.round(tuitionOfficial * (1 - lumpSumDiscount)),
+      comptant_deadline: installments[0]?.due_date ?? startDate,
+      plan_discount_rate: discountRate,
+      plan_discount_applied: false,
+      scholarship_id: null,
+      scholarship_term_id: null,
+      scholarship_amount: 0,
+      scholarship_mode: null,
+      scholarship_rate: null,
+      installments,
+      max_installments: maxInstallments,
+      start_date: startDate,
     },
   };
 }

@@ -92,17 +92,26 @@ export default async function PackPage({
   const deadlineText = admissionDeadlineText(admissionSentAt);
   const deadlineExpired = isAdmissionExpired(admissionSentAt);
 
-  // Plans de paiement disponibles (data-driven) : 6 options + remise par plan.
-  const { data: plansData } = await admin
-    .from("payment_plans")
-    .select("plan_months, discount_rate")
-    .eq("academic_year", pack.academic_year ?? "")
-    .eq("active", true)
-    .order("plan_months", { ascending: true });
-  const plans = (plansData ?? []).map((p) => ({
-    plan_months: Number(p.plan_months),
-    discount_rate: Number(p.discount_rate),
-  }));
+  // Plans de paiement disponibles. Certifiant (snapshot marqué `max_installments`) :
+  // comptant −15 % + échelonné N× (plein) ; sinon Campus (payment_plans data-driven).
+  const schedForPlans = (pack.schedule_json as ScheduleSnapshot | null) ?? null;
+  let plans: { plan_months: number; discount_rate: number }[];
+  if (schedForPlans && typeof schedForPlans.max_installments === "number") {
+    // Certifiant (Option A) : échéancier fixe N× au tarif plein, PAS de sélecteur de
+    // plan (la remise −15 % se réalise au paiement en 1 fois). Aucun plan alternatif.
+    plans = [];
+  } else {
+    const { data: plansData } = await admin
+      .from("payment_plans")
+      .select("plan_months, discount_rate")
+      .eq("academic_year", pack.academic_year ?? "")
+      .eq("active", true)
+      .order("plan_months", { ascending: true });
+    plans = (plansData ?? []).map((p) => ({
+      plan_months: Number(p.plan_months),
+      discount_rate: Number(p.discount_rate),
+    }));
+  }
 
   // Dernière preuve de paiement (W2) pour l'inscription (état affiché au candidat).
   const { data: lastProof } = await admin

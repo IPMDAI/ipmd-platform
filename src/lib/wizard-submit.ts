@@ -50,6 +50,8 @@ export type WizardSubmitPayload = {
     pro_offering_id: string;
     exec_offering_id: string;
     cert_item_id: string;
+    /** Certificat : métier/thème secondaire facultatif (Option A) → program_interest (RPC B3-2). */
+    cert_theme_item_id?: string;
     /** Campus (Étape 3) — persistés côté RPC v8 uniquement si universe='campus'. */
     motivation_formation: string;
     referral_source: string;

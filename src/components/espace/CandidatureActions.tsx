@@ -18,6 +18,15 @@ import { formatFCFA } from "@/lib/finance";
 
 export type LevelOption = { level: string; amount: number | null };
 export type FiliereOption = { id: string; name: string };
+/** Certifiant (Option A) : une formule choisissable à l'admission (offre résolue). */
+export type CertFormuleOption = {
+  offeringId: string;
+  name: string;
+  price: number; // prix de référence (court = plancher « dès »)
+  registrationFee: number;
+  durationMonths: number;
+  maxInstallments: number;
+};
 export type ClassOption = {
   id: string;
   name: string;
@@ -67,6 +76,8 @@ export function CandidatureActions({
   registrationFee = 300000,
   academicYear = null,
   defaultFiliereId = null,
+  certFormules = [],
+  defaultCertOfferingId = null,
 }: {
   id: string;
   status: string;
@@ -87,6 +98,10 @@ export function CandidatureActions({
   registrationFee?: number;
   academicYear?: string | null;
   defaultFiliereId?: string | null;
+  /** Certifiant : formules ouvertes de l'univers du candidat (vide → hors activation). */
+  certFormules?: CertFormuleOption[];
+  /** Certifiant : offre stockée sur la candidature (présélection). */
+  defaultCertOfferingId?: string | null;
 }) {
   const [current, setCurrent] = useState(status);
   const [decided, setDecided] = useState<string | null>(decidedAt);
@@ -95,6 +110,12 @@ export function CandidatureActions({
     defaultFiliereId && filieres.some((f) => f.id === defaultFiliereId) ? defaultFiliereId : ""
   );
   const [acceptLevel, setAcceptLevel] = useState<string>("");
+  const [certOfferingId, setCertOfferingId] = useState<string>(
+    defaultCertOfferingId && certFormules.some((f) => f.offeringId === defaultCertOfferingId)
+      ? defaultCertOfferingId
+      : ""
+  );
+  const [certAmount, setCertAmount] = useState<string>("");
   const [pending, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [note, setNote] = useState<string | null>(null);
@@ -105,6 +126,14 @@ export function CandidatureActions({
   const historical = isHistoricalDecision(current, decided);
 
   const diplomaLevels = levels.filter((l) => !NON_DIPLOMA_LEVELS.includes(l.level));
+
+  // Certifiant (Option A) : formule choisie → tarif/inscription/versements ; court =
+  // montant exact à saisir. Aperçu du comptant (−15 %) et du nombre de versements.
+  const selectedFormule = certFormules.find((f) => f.offeringId === certOfferingId) ?? null;
+  const certIsCourt = (selectedFormule?.durationMonths ?? -1) === 0;
+  const certTuition = certIsCourt ? Number(certAmount || 0) : selectedFormule?.price ?? 0;
+  const certComptant = Math.round(certTuition * 0.85);
+  const canConfirmCert = !!selectedFormule && (!certIsCourt || Number(certAmount) > 0);
 
   // Résolution ACADÉMIQUE côté client (aperçu) — miroir exact de resolveAcademic serveur :
   // classes de l'année active, filiere_id + level. 0 → manquante · 1 → OK · >1 → doublon.
@@ -195,7 +224,11 @@ export function CandidatureActions({
         id,
         isDiplome
           ? { filiereId: acceptFiliere, level: acceptLevel, force: historical }
-          : { force: historical }
+          : {
+              force: historical,
+              certOfferingId: certOfferingId || undefined,
+              amount: certIsCourt && certAmount ? Number(certAmount) : undefined,
+            }
       );
       if (res.ok) {
         setCurrent("en_attente_paiement");
@@ -435,12 +468,85 @@ export function CandidatureActions({
             </div>
           )}
 
+          {lettersEnabled && !isDiplome && (
+            <div className="mt-2 rounded-lg bg-white/70 p-2.5 ring-1 ring-blue-100">
+              <p className="text-[11px] font-semibold text-black/55">
+                Formule du candidat — fixe le coût, les frais d&apos;inscription et le nombre de versements.
+              </p>
+              {certFormules.length === 0 ? (
+                <p className="mt-1.5 text-[11px] font-medium text-amber-700">
+                  ⚠ Aucune formule ouverte pour cet univers (activation en attente).
+                </p>
+              ) : (
+                <>
+                  <div className="mt-1.5 flex flex-wrap items-center gap-2">
+                    <select
+                      value={certOfferingId}
+                      onChange={(e) => {
+                        setCertOfferingId(e.target.value);
+                        setCertAmount("");
+                      }}
+                      disabled={pending}
+                      className="rounded-lg border border-black/10 bg-white px-2 py-1 text-xs text-black/70"
+                    >
+                      <option value="">Formule…</option>
+                      {certFormules.map((f) => (
+                        <option key={f.offeringId} value={f.offeringId}>
+                          {f.name}
+                        </option>
+                      ))}
+                    </select>
+                    {certIsCourt && (
+                      <input
+                        type="number"
+                        min={1}
+                        inputMode="numeric"
+                        value={certAmount}
+                        onChange={(e) => setCertAmount(e.target.value)}
+                        disabled={pending}
+                        placeholder="Montant exact (FCFA)"
+                        aria-label="Montant exact du bootcamp court"
+                        className="w-40 rounded-lg border border-black/10 bg-white px-2 py-1 text-xs text-black/70"
+                      />
+                    )}
+                  </div>
+                  {selectedFormule && (!certIsCourt || Number(certAmount) > 0) && (
+                    <div className="mt-2 flex flex-wrap gap-1.5 text-[11px]">
+                      <span className="rounded-full bg-black/[0.04] px-2 py-0.5 text-black/60">
+                        Inscription : <strong>{formatFCFA(selectedFormule.registrationFee)}</strong>
+                      </span>
+                      <span className="rounded-full bg-black/[0.04] px-2 py-0.5 text-black/60">
+                        Coût : <strong>{formatFCFA(certTuition)}</strong>
+                      </span>
+                      <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-emerald-800">
+                        Comptant −15 % : <strong>{formatFCFA(certComptant)}</strong>
+                      </span>
+                      <span className="rounded-full bg-blue-100 px-2 py-0.5 text-blue-800">
+                        Versements :{" "}
+                        <strong>
+                          {selectedFormule.maxInstallments === 1
+                            ? "comptant"
+                            : `${selectedFormule.maxInstallments}×`}
+                        </strong>
+                      </span>
+                    </div>
+                  )}
+                  {certIsCourt && !(Number(certAmount) > 0) && (
+                    <p className="mt-1.5 text-[11px] font-medium text-amber-700">
+                      ⚠ Bootcamp court : saisis le montant exact avant d&apos;envoyer.
+                    </p>
+                  )}
+                </>
+              )}
+            </div>
+          )}
+
           <div className="mt-2 flex flex-wrap items-center gap-2">
             {lettersEnabled ? (
               <button
                 type="button"
                 onClick={confirmAdmission}
-                disabled={pending || (isDiplome && !canConfirm)}
+                disabled={pending || (isDiplome && !canConfirm) || (!isDiplome && !canConfirmCert)}
                 className={`${pill} bg-blue-600 text-white hover:bg-blue-700`}
               >
                 📩 Confirmer l&apos;admission

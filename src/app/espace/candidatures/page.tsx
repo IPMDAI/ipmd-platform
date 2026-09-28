@@ -5,7 +5,7 @@ import { requireCandidaturesAccess } from "@/lib/staff-access";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { universes } from "@/data/universes";
 import { Container } from "@/components/ui/Container";
-import { CandidatureActions } from "@/components/espace/CandidatureActions";
+import { CandidatureActions, type CertFormuleOption } from "@/components/espace/CandidatureActions";
 import { CandidatureInvite } from "@/components/espace/CandidatureInvite";
 import { ScheduleRepair } from "@/components/espace/ScheduleRepair";
 import { ScholarshipPanel } from "@/components/espace/ScholarshipPanel";
@@ -88,7 +88,7 @@ export default async function CandidaturesPage({
     supabase
       .from("inscription_requests")
       .select(
-        "id, full_name, email, phone, whatsapp, universe, program_interest, entry_level, last_education, last_diploma, message, created_at, status, desired_role, doc_diploma, doc_bulletins, doc_id, doc_attestation, doc_cv, mode"
+        "id, full_name, email, phone, whatsapp, universe, program_interest, entry_level, last_education, last_diploma, message, created_at, status, desired_role, doc_diploma, doc_bulletins, doc_id, doc_attestation, doc_cv, mode, catalog_offering_id"
       )
       .order("created_at", { ascending: false }),
     supabase
@@ -130,6 +130,53 @@ export default async function CandidaturesPage({
   const filieres = (filiereRows ?? [])
     .filter((f) => f.status !== "archive" && f.status !== "en_attente")
     .map((f) => ({ id: f.id as string, name: f.name as string }));
+
+  // Formules certifiantes OUVERTES (Option A) → sélecteur d'admission par univers.
+  // Une offre par formule (session la plus proche). Vide tant que non activées (draft).
+  const { data: formuleRows } = await supabase
+    .from("catalog_offerings")
+    .select(
+      "id, item_id, status, intakes(start_date), catalog_items!inner(id, universe, name, price, registration_fee, duration_months, max_installments, is_formula, status)"
+    )
+    .eq("status", "open")
+    .eq("catalog_items.is_formula", true)
+    .eq("catalog_items.status", "open");
+  type FRow = {
+    id: string;
+    item_id: string;
+    intakes: { start_date: string | null } | null;
+    catalog_items: {
+      id: string;
+      universe: string;
+      name: string;
+      price: number | null;
+      registration_fee: number | null;
+      duration_months: number | null;
+      max_installments: number | null;
+    } | null;
+  };
+  const bestByItem = new Map<string, { row: FRow; start: string }>();
+  for (const r of (formuleRows ?? []) as unknown as FRow[]) {
+    if (!r.catalog_items) continue;
+    const start = r.intakes?.start_date ?? "9999-12-31";
+    const prev = bestByItem.get(r.catalog_items.id);
+    if (!prev || start < prev.start) bestByItem.set(r.catalog_items.id, { row: r, start });
+  }
+  const certFormulesByUniverse: Record<string, CertFormuleOption[]> = {};
+  for (const { row: r } of bestByItem.values()) {
+    const ci = r.catalog_items!;
+    (certFormulesByUniverse[ci.universe] ??= []).push({
+      offeringId: r.id,
+      name: ci.name,
+      price: Number(ci.price ?? 0),
+      registrationFee: Number(ci.registration_fee ?? 0),
+      durationMonths: Number(ci.duration_months ?? 0),
+      maxInstallments: Number(ci.max_installments ?? 1),
+    });
+  }
+  for (const u of Object.keys(certFormulesByUniverse)) {
+    certFormulesByUniverse[u].sort((a, b) => a.durationMonths - b.durationMonths);
+  }
   // Rapproche le texte libre `program_interest` d'une filière (normalisé) → pré-sélection.
   const normFil = (s: string) =>
     (s ?? "")
@@ -635,6 +682,8 @@ export default async function CandidaturesPage({
                     registrationFee={registrationFee}
                     academicYear={academicYear}
                     defaultFiliereId={suggestFiliereId(c.program_interest)}
+                    certFormules={certFormulesByUniverse[c.universe] ?? []}
+                    defaultCertOfferingId={(c as { catalog_offering_id?: string | null }).catalog_offering_id ?? null}
                   />
 
                   {/* Espace d'admission (Lot C2/C5) : états + actions lien — super_admin only */}

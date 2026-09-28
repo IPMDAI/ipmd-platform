@@ -12,7 +12,12 @@ import { LETTERS_ENABLED, resolveRecipients } from "@/lib/admission-config";
 import { buildAdmissionEmail, buildRefusalEmail } from "@/lib/admission-letter";
 import { buildAdmissionPdf } from "@/lib/admission-pdf";
 import { generatePackLink, packLinkUrl } from "@/lib/admission-pack-link";
-import { buildScheduleSnapshot, resolvePlanMonths } from "@/lib/admission-schedule";
+import {
+  buildScheduleSnapshot,
+  buildCertificatSchedule,
+  resolvePlanMonths,
+  type ScheduleSnapshot,
+} from "@/lib/admission-schedule";
 import { loadScholarshipForCandidature } from "@/lib/scholarship-data";
 import { admissionDeadlineText } from "@/lib/admission-deadline";
 import { sendScolariteEmail, canSendEmail, type EmailAttachment } from "@/lib/email";
@@ -258,7 +263,15 @@ async function resolveAcademic(
  */
 export async function sendAdmission(
   id: string,
-  opts: { filiereId?: string; level?: string; force?: boolean } = {}
+  opts: {
+    filiereId?: string;
+    level?: string;
+    force?: boolean;
+    /** Certifiant : offre de la formule choisie par l'admin (sinon celle stockée). */
+    certOfferingId?: string;
+    /** Certifiant : montant exact du bootcamp court (prix variable). */
+    amount?: number;
+  } = {}
 ): Promise<FormResult> {
   const force = opts.force ?? false;
   const ctx = await getAdmin();
@@ -285,7 +298,7 @@ export async function sendAdmission(
 
   const { data: c } = await ctx.supabase
     .from("inscription_requests")
-    .select("full_name, email, program_interest, entry_level")
+    .select("full_name, email, program_interest, entry_level, universe, catalog_offering_id")
     .eq("id", id)
     .single();
   if (!c) return { ok: false, message: "Candidature introuvable." };
@@ -301,13 +314,92 @@ export async function sendAdmission(
   // automatique). Jamais depuis entry_level (diplôme antérieur). Pour un parcours
   // sans filière (bootcamp / cas manuel), pas de résolution : frais globaux + tarif
   // du niveau si fourni.
+  const CERT_UNIVERSES = ["ultrajobs", "ultraboost", "ultraexecutive", "seniorshub"];
+  const isCert = CERT_UNIVERSES.includes((c.universe as string) ?? "");
+
   let classId: string | null = null;
   let acceptedLevel: string | null = opts.level ?? null;
   let academicYear: string | null = null;
   let registrationFee: number;
   let tuitionDue: number | null = null;
+  let certSchedule: ScheduleSnapshot | null = null;
 
-  if (opts.filiereId && opts.level) {
+  if (isCert) {
+    // CERTIFIANT (Option A) : tarif/inscription/versements viennent de la FORMULE
+    // (offering stocké sur la candidature, ou fourni par l'admin). Court = montant
+    // exact obligatoire. Échéancier via le moteur certifiant dédié (≠ Campus).
+    const offeringId = opts.certOfferingId ?? ((c.catalog_offering_id as string | null) ?? null);
+    if (!offeringId) {
+      return {
+        ok: false,
+        code: "formule_requise",
+        message: "Choisis la formule du candidat avant d'envoyer l'admission.",
+      };
+    }
+    const { data: off } = await ctx.supabase
+      .from("catalog_offerings")
+      .select(
+        "id, price, intakes(academic_year, start_date), catalog_items(price, registration_fee, max_installments, duration_months, universe, name, credential)"
+      )
+      .eq("id", offeringId)
+      .maybeSingle();
+    const offr = off as {
+      price: number | null;
+      intakes: { academic_year: string | null; start_date: string | null } | null;
+      catalog_items: {
+        price: number | null;
+        registration_fee: number | null;
+        max_installments: number | null;
+        duration_months: number | null;
+        universe: string | null;
+        name: string | null;
+        credential: string | null;
+      } | null;
+    } | null;
+    const ci = offr?.catalog_items ?? null;
+    if (!offr || !ci || ci.universe !== c.universe) {
+      return {
+        ok: false,
+        code: "formule_invalide",
+        message: "Formule introuvable ou incohérente avec l'univers du candidat.",
+      };
+    }
+    registrationFee = Number(ci.registration_fee ?? 0);
+    const isCourt = Number(ci.duration_months ?? 0) === 0;
+    const basePrice = offr.price ?? ci.price;
+    tuitionDue = opts.amount != null ? Number(opts.amount) : isCourt ? null : Number(basePrice ?? NaN);
+    if (tuitionDue == null || !(tuitionDue > 0)) {
+      return {
+        ok: false,
+        code: "montant_requis",
+        message: "Saisis le montant exact du bootcamp court avant d'envoyer l'admission.",
+      };
+    }
+    const maxInstallments = Number(ci.max_installments ?? 1);
+    academicYear = offr.intakes?.academic_year ?? null;
+    acceptedLevel = (ci.credential as string) ?? null;
+    const startDate = offr.intakes?.start_date ?? new Date().toISOString().slice(0, 10);
+    const { data: fsLump } = await ctx.supabase
+      .from("finance_settings")
+      .select("lump_sum_discount")
+      .eq("id", 1)
+      .maybeSingle();
+    const lump = Number(fsLump?.lump_sum_discount ?? 0.15);
+    // Plan par défaut : échelonné (N×) si la formule le permet, sinon comptant.
+    const planMonths = maxInstallments > 1 ? maxInstallments : 1;
+    const sched = buildCertificatSchedule({
+      academicYear,
+      label: (c.program_interest as string) ?? ci.name ?? null,
+      registrationFee,
+      tuitionOfficial: tuitionDue,
+      maxInstallments,
+      planMonths,
+      startDate,
+      lumpSumDiscount: lump,
+    });
+    if (!sched.ok) return { ok: false, code: sched.code, message: sched.message };
+    certSchedule = sched.schedule;
+  } else if (opts.filiereId && opts.level) {
     const r = await resolveAcademic(ctx.supabase, { filiereId: opts.filiereId, level: opts.level });
     if (!r.ok) return { ok: false, code: r.code, message: r.message };
     classId = r.classId;
@@ -348,8 +440,8 @@ export async function sendAdmission(
   // Généré dès qu'un tarif est connu ; en MODE TEST sans tarif, aucun snapshot.
   // Bloque proprement l'admission si le plan est absent/invalide ou le tarif manquant.
   const DEFAULT_PLAN_MONTHS = 10;
-  let scheduleJson: unknown = null;
-  if (tuitionDue != null) {
+  let scheduleJson: unknown = certSchedule ?? null;
+  if (!isCert && tuitionDue != null) {
     const [{ data: planRows }, { data: fsDisc }, { data: planCfg }, scholarship] = await Promise.all([
       ctx.supabase
         .from("installment_plan")

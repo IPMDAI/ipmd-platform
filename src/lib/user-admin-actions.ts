@@ -430,6 +430,9 @@ export async function inviteFromCandidature(
         // B3 — bourse FIGÉE du snapshot (0/NULL si aucune) ; jamais recalculée ici.
         p_scholarship_amount: sched.scholarship_amount ?? 0,
         p_scholarship_term_id: sched.scholarship_term_id ?? null,
+        // B3-3d (Option A) : marqueur certifiant → remise −15 % réalisée au paiement
+        // (solde en 1 fois) ; le snapshot certifiant porte `max_installments`.
+        p_lump_sum_eligible: sched.max_installments != null,
       });
       if (matFinErr) {
         return {
