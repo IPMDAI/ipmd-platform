@@ -339,7 +339,7 @@ export async function sendAdmission(
     const { data: off } = await ctx.supabase
       .from("catalog_offerings")
       .select(
-        "id, price, intakes(academic_year, start_date), catalog_items(price, registration_fee, max_installments, duration_months, universe, name, credential)"
+        "id, price, intakes(academic_year, start_date), catalog_items(price, registration_fee, max_installments, duration_months, universe, name, credential, is_formula)"
       )
       .eq("id", offeringId)
       .maybeSingle();
@@ -354,14 +354,19 @@ export async function sendAdmission(
         universe: string | null;
         name: string | null;
         credential: string | null;
+        is_formula: boolean | null;
       } | null;
     } | null;
     const ci = offr?.catalog_items ?? null;
-    if (!offr || !ci || ci.universe !== c.universe) {
+    // Gardé aux FORMULES uniquement (is_formula) : tant que les formules ne sont pas
+    // activées (draft), aucune offre formule n'existe → la branche reste DORMANTE et
+    // l'admission certifiant conserve son comportement antérieur (formule requise).
+    // Une offre « métier » (is_formula=false) n'ouvre jamais ce circuit.
+    if (!offr || !ci || ci.universe !== c.universe || ci.is_formula !== true) {
       return {
         ok: false,
-        code: "formule_invalide",
-        message: "Formule introuvable ou incohérente avec l'univers du candidat.",
+        code: "formule_requise",
+        message: "Choisis une formule ouverte pour ce candidat avant d'envoyer l'admission.",
       };
     }
     registrationFee = Number(ci.registration_fee ?? 0);
