@@ -75,7 +75,7 @@ export function buildAdmissionEmail(d: AdmissionLetterData): {
     </p>
     <p style="margin:0 0 12px;color:#374151;font-size:14px;line-height:1.6">
       <strong>Deux options de paiement de la scolarité</strong> vous seront proposées :
-      <strong>Échelonné</strong> (10 mensualités) ou <strong>Comptant</strong>
+      <strong>Échelonné</strong> (en plusieurs mensualités) ou <strong>Comptant</strong>
       (−15&nbsp;% sur la scolarité). Vous choisirez votre option directement dans
       votre espace d'admission, où votre <strong>échéancier personnalisé</strong>
       sera alors téléchargeable. Les frais d'inscription restent séparés et
