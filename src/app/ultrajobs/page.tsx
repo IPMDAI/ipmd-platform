@@ -41,6 +41,8 @@ export default async function UltraJobsPage() {
 
       <ExperienceWorkspace universeId="ultrajobs" />
 
+      <BootcampFormulas universeId="ultrajobs" />
+
       <Section variant="white">
         <h2 className="text-2xl font-extrabold tracking-tight text-ipmd-black sm:text-3xl">
           Nos bootcamps métiers, par domaine
@@ -52,8 +54,6 @@ export default async function UltraJobsPage() {
           <UltraJobsCatalog items={items} />
         </div>
       </Section>
-
-      <BootcampFormulas universeId="ultrajobs" />
 
       <CtaBanner
         title="Prêt à décrocher votre métier digital ?"

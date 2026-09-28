@@ -41,6 +41,8 @@ export default async function UltraBoostPage() {
 
       <ExperienceWorkspace universeId="ultraboost" />
 
+      <BootcampFormulas universeId="ultraboost" />
+
       <Section variant="dark">
         <div className="flex flex-wrap items-center gap-3">
           <span className="rounded-full bg-amber-400 px-3 py-1 text-xs font-bold uppercase tracking-wide text-ipmd-black">
@@ -58,8 +60,6 @@ export default async function UltraBoostPage() {
           <UltraJobsCatalog items={items} universe="ultraboost" />
         </div>
       </Section>
-
-      <BootcampFormulas universeId="ultraboost" />
 
       <CtaBanner
         title="Prêt à booster votre carrière ?"

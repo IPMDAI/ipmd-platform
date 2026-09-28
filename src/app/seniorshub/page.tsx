@@ -39,6 +39,8 @@ export default async function SeniorsHubPage() {
 
       <UniverseVideo universeId="seniorshub" />
 
+      <BootcampFormulas universeId="seniorshub" />
+
       <Section variant="white">
         <h2 className="text-2xl font-extrabold tracking-tight text-ipmd-black sm:text-3xl">
           Nos bootcamps certifiants pour seniors & experts
@@ -60,8 +62,6 @@ export default async function SeniorsHubPage() {
       </Section>
 
       <ExperienceWorkspace universeId="seniorshub" />
-
-      <BootcampFormulas universeId="seniorshub" />
 
       <CtaBanner
         title="Prêt à valoriser votre expérience ?"
