@@ -4,6 +4,7 @@ import { UniverseVideo } from "@/components/sections/UniverseVideo";
 import { Section } from "@/components/ui/Section";
 import { Button } from "@/components/ui/Button";
 import { CtaBanner } from "@/components/sections/CtaBanner";
+import { BootcampFormulas } from "@/components/sections/BootcampFormulas";
 import { UltraJobsCatalog } from "@/components/ultrajobs/UltraJobsCatalog";
 import { ExperienceWorkspace } from "@/components/sections/ExperienceWorkspace";
 import { getUniverse } from "@/data/universes";
@@ -39,6 +40,8 @@ export default async function UltraExecutivePage() {
       <UniverseVideo universeId="ultraexecutive" />
 
       <ExperienceWorkspace universeId="ultraexecutive" />
+
+      <BootcampFormulas universeId="ultraexecutive" />
 
       <Section variant="white">
         <h2 className="text-2xl font-extrabold tracking-tight text-ipmd-black sm:text-3xl">
