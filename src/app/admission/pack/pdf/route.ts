@@ -27,7 +27,7 @@ export async function GET(req: Request) {
 
   const { data: pack } = await admin
     .from("admission_packs")
-    .select("candidature_id, accepted_level, registration_fee, tuition_due, academic_year")
+    .select("candidature_id, class_id, accepted_level, registration_fee, tuition_due, academic_year")
     .eq("id", link.packId)
     .single();
   if (!pack) return new Response("Pack introuvable.", { status: 404 });
@@ -38,10 +38,30 @@ export async function GET(req: Request) {
     .eq("id", pack.candidature_id)
     .single();
 
+  // Formation + niveau RÉELLEMENT acceptés (classe du pack), pas le programme demandé.
+  let acceptedProgram = (cand?.program_interest as string) ?? null;
+  let acceptedLevel = (pack.accepted_level as string) ?? null;
+  if (pack.class_id) {
+    const { data: klass } = await admin
+      .from("classes")
+      .select("level, filiere_id")
+      .eq("id", pack.class_id)
+      .single();
+    if (klass?.level) acceptedLevel = klass.level as string;
+    if (klass?.filiere_id) {
+      const { data: fil } = await admin
+        .from("filieres")
+        .select("name")
+        .eq("id", klass.filiere_id)
+        .single();
+      if (fil?.name) acceptedProgram = fil.name as string;
+    }
+  }
+
   const pdf = await buildAdmissionPdf({
     name: (cand?.full_name as string) ?? "",
-    program: (cand?.program_interest as string) ?? null,
-    level: (pack.accepted_level as string) ?? null,
+    program: acceptedProgram,
+    level: acceptedLevel,
     academicYear: (pack.academic_year as string) ?? null,
     registrationFee: Number(pack.registration_fee ?? 0),
     tuitionDue: pack.tuition_due != null ? Number(pack.tuition_due) : null,

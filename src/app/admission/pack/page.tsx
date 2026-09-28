@@ -51,7 +51,7 @@ export default async function PackPage({
   const { data: pack } = await admin
     .from("admission_packs")
     .select(
-      "id, candidature_id, accepted_level, registration_fee, tuition_due, academic_year, schedule_json, first_viewed_at, reglement_accepted_at, convention_status, signature_method"
+      "id, candidature_id, class_id, accepted_level, registration_fee, tuition_due, academic_year, schedule_json, first_viewed_at, reglement_accepted_at, convention_status, signature_method"
     )
     .eq("id", link.packId)
     .single();
@@ -62,6 +62,30 @@ export default async function PackPage({
     .select("full_name, program_interest, admission_sent_at")
     .eq("id", pack.candidature_id)
     .single();
+
+  // Formation + niveau RÉELLEMENT ACCEPTÉS : résolus depuis la classe du pack
+  // (class_id → classes.level + filieres.name), et non depuis le programme
+  // DEMANDÉ par le candidat (`program_interest`, qui peut mentionner un autre
+  // niveau). Évite toute discordance (ex. postulé L3 / admis L2). Repli sur
+  // program_interest / accepted_level si le pack n'a pas de classe (packs anciens).
+  let acceptedProgram = (cand?.program_interest as string) ?? null;
+  let acceptedLevel = (pack.accepted_level as string) ?? null;
+  if (pack.class_id) {
+    const { data: klass } = await admin
+      .from("classes")
+      .select("level, filiere_id")
+      .eq("id", pack.class_id)
+      .single();
+    if (klass?.level) acceptedLevel = klass.level as string;
+    if (klass?.filiere_id) {
+      const { data: fil } = await admin
+        .from("filieres")
+        .select("name")
+        .eq("id", klass.filiere_id)
+        .single();
+      if (fil?.name) acceptedProgram = fil.name as string;
+    }
+  }
 
   // Deadline 72 h (calculée depuis l'ancre admission_sent_at ; jamais stockée).
   const admissionSentAt = (cand?.admission_sent_at as string) ?? null;
@@ -103,8 +127,8 @@ export default async function PackPage({
   return (
     <PackView
       name={cand?.full_name ?? ""}
-      program={cand?.program_interest ?? null}
-      level={pack.accepted_level ?? null}
+      program={acceptedProgram}
+      level={acceptedLevel}
       academicYear={pack.academic_year ?? null}
       registrationFee={Number(pack.registration_fee ?? 0)}
       tuitionDue={pack.tuition_due != null ? Number(pack.tuition_due) : null}
