@@ -77,6 +77,9 @@ export type WizardCatalog = {
   /** Offres certifiantes ouvertes (offering-based, avec session), groupées par univers.
    *  Un item offert sur 2 sessions apparaît en 2 entrées (offeringId distinct). */
   certByUniverse: Record<string, CatalogProgram[]>;
+  /** Formules certifiantes (Lot B, is_formula=true) par univers — grille tarifaire,
+   *  séparées des métiers. Vide tant que les formules ne sont pas `open`. */
+  certFormulasByUniverse: Record<string, CatalogProgram[]>;
   /** doc_key → libellé (document_types). */
   documentTypes: Record<string, string>;
   /** doc_key → nombre max de fichiers (document_types.max_files). Vide tant que la
@@ -91,6 +94,7 @@ export const EMPTY_CATALOG: WizardCatalog = {
   proPrograms: [],
   execPrograms: [],
   certByUniverse: {},
+  certFormulasByUniverse: {},
   documentTypes: {},
   documentMaxFiles: {},
   documentProfiles: {},
@@ -289,6 +293,20 @@ export function certUniqueItems(catalog: WizardCatalog, universe: string): Catal
     }
   }
   return out.sort((a, b) => (a.category ?? "").localeCompare(b.category ?? "") || a.name.localeCompare(b.name));
+}
+
+/** Formules certifiantes uniques d'un univers, triées par durée croissante
+ *  (court=0 → parcours). Vide tant que les formules ne sont pas `open`. */
+export function certFormulaItems(catalog: WizardCatalog, universe: string): CatalogProgram[] {
+  const seen = new Set<string>();
+  const out: CatalogProgram[] = [];
+  for (const p of catalog.certFormulasByUniverse[universe] ?? []) {
+    if (!seen.has(p.itemId)) {
+      seen.add(p.itemId);
+      out.push(p);
+    }
+  }
+  return out.sort((a, b) => (a.durationMonths ?? 0) - (b.durationMonths ?? 0) || a.name.localeCompare(b.name));
 }
 
 /** Rang d'un niveau, robuste aux libellés réels (« Licence 1 » comme « L1 »). */

@@ -75,6 +75,7 @@ export async function loadWizardCatalog(): Promise<WizardCatalog> {
   const proPrograms: CatalogProgram[] = [];
   const execPrograms: CatalogProgram[] = [];
   const certByUniverse: Record<string, CatalogProgram[]> = {};
+  const certFormulasByUniverse: Record<string, CatalogProgram[]> = {};
   const offers = catOfferData ?? [];
   if (offers.length) {
     // NB : on lit TOUS les items ouverts (pas de `.in(id, [...])`) — une longue liste
@@ -83,7 +84,7 @@ export async function loadWizardCatalog(): Promise<WizardCatalog> {
     const [{ data: items }, { data: ints }] = await Promise.all([
       supabase
         .from("catalog_items")
-        .select("id,name,credential,universe,doc_profile,category,cert_tier,duration_months,price,registration_fee")
+        .select("id,name,credential,universe,doc_profile,category,cert_tier,duration_months,price,registration_fee,is_formula")
         .eq("status", "open"),
       supabase.from("intakes").select("id,label,academic_year").eq("status", "open"),
     ]);
@@ -111,6 +112,10 @@ export async function loadWizardCatalog(): Promise<WizardCatalog> {
       };
       if (it.universe === "professionnel") proPrograms.push(prog);
       else if (it.universe === "gouvernance") execPrograms.push(prog);
+      else if (it.is_formula)
+        // Formules (Lot B) : source de la grille tarifaire, JAMAIS mêlées aux
+        // métiers du catalogue ni à la liste « Programme » du wizard.
+        (certFormulasByUniverse[it.universe as string] ??= []).push(prog);
       else (certByUniverse[it.universe as string] ??= []).push(prog);
     }
   }
@@ -142,6 +147,7 @@ export async function loadWizardCatalog(): Promise<WizardCatalog> {
     proPrograms,
     execPrograms,
     certByUniverse,
+    certFormulasByUniverse,
     documentTypes,
     documentMaxFiles,
     documentProfiles,

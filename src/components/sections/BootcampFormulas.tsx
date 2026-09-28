@@ -1,13 +1,39 @@
 import { Section } from "@/components/ui/Section";
 import { Button } from "@/components/ui/Button";
-import { BOOTCAMP_FORMULAS, BOOTCAMP_INTAKE } from "@/data/bootcamp-formulas";
+import { getBootcampFormulas, BOOTCAMP_INTAKE } from "@/data/bootcamp-formulas";
+import type { CatalogProgram } from "@/components/wizard/project";
+
+const fcfa = (n: number) => `${n.toLocaleString("fr-FR")} FCFA`;
 
 /**
- * Grille des 5 formules & tarifs des bootcamps certifiants — réutilisée par
- * UltraJobs, UltraBoost et SeniorsHub (chacun dans son espace). Le lien
- * d'admission cible l'univers courant.
+ * Grille des 5 formules & tarifs des bootcamps certifiants — PAR UNIVERS.
+ * Le lien d'admission cible l'univers courant.
+ *
+ * Source des montants : la grille statique par univers (`getBootcampFormulas`)
+ * sert de repli et reste affichée tant que les formules ne sont pas `open`.
+ * Dès qu'elles le sont, `dbFormulas` (catalog_items is_formula=true) prime sur
+ * le prix et les frais d'inscription — matchés par `durationMonths` — de sorte
+ * que l'affiché ne peut jamais diverger du facturé.
  */
-export function BootcampFormulas({ universeId }: { universeId: string }) {
+export function BootcampFormulas({
+  universeId,
+  dbFormulas = [],
+}: {
+  universeId: string;
+  dbFormulas?: CatalogProgram[];
+}) {
+  const base = getBootcampFormulas(universeId);
+  const dbByMonths = new Map(dbFormulas.map((p) => [p.durationMonths ?? 0, p]));
+
+  const formulas = base.map((f) => {
+    const db = dbByMonths.get(f.durationMonths);
+    return {
+      ...f,
+      price: db?.price != null ? fcfa(db.price) : f.price,
+      registration: db?.registrationFee != null ? fcfa(db.registrationFee) : f.registration,
+    };
+  });
+
   return (
     <Section variant="light">
       <div className="text-center">
@@ -23,7 +49,7 @@ export function BootcampFormulas({ universeId }: { universeId: string }) {
       </div>
 
       <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-        {BOOTCAMP_FORMULAS.map((f) => (
+        {formulas.map((f) => (
           <div
             key={f.id}
             className="flex flex-col rounded-3xl bg-white p-6 shadow-sm ring-1 ring-black/5 transition-shadow hover:shadow-md"
@@ -40,7 +66,7 @@ export function BootcampFormulas({ universeId }: { universeId: string }) {
                 </span>
               )}
               <span className="text-2xl font-extrabold text-ipmd-red">{f.price}</span>
-              <span className="ml-1 text-xs text-black/45">coût de la formation</span>
+              <span className="ml-1 text-xs text-black/45">coût du bootcamp</span>
             </div>
 
             <ul className="mt-4 space-y-2 text-[13px] text-black/70">
@@ -70,7 +96,7 @@ export function BootcampFormulas({ universeId }: { universeId: string }) {
       </div>
 
       <p className="mt-6 text-center text-xs text-black/50">
-        ⚠️ Les frais d&apos;inscription ne sont pas inclus dans le coût de la formation ou du bootcamp choisi.
+        ⚠️ Les frais d&apos;inscription ne sont pas inclus dans le coût du bootcamp ou du parcours choisi.
       </p>
     </Section>
   );

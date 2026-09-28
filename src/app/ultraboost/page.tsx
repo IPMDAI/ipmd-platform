@@ -9,7 +9,7 @@ import { UltraJobsCatalog } from "@/components/ultrajobs/UltraJobsCatalog";
 import { ExperienceWorkspace } from "@/components/sections/ExperienceWorkspace";
 import { getUniverse } from "@/data/universes";
 import { loadWizardCatalog } from "@/lib/wizard-catalog";
-import { certUniqueItems } from "@/components/wizard/project";
+import { certUniqueItems, certFormulaItems } from "@/components/wizard/project";
 
 export const metadata: Metadata = {
   title: "UltraBoost — Executive Bootcamps",
@@ -41,7 +41,7 @@ export default async function UltraBoostPage() {
 
       <ExperienceWorkspace universeId="ultraboost" />
 
-      <BootcampFormulas universeId="ultraboost" />
+      <BootcampFormulas universeId="ultraboost" dbFormulas={certFormulaItems(catalog, "ultraboost")} />
 
       <Section variant="dark">
         <div className="flex flex-wrap items-center gap-3">

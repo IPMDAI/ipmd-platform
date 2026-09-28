@@ -9,7 +9,7 @@ import { UltraJobsCatalog } from "@/components/ultrajobs/UltraJobsCatalog";
 import { ExperienceWorkspace } from "@/components/sections/ExperienceWorkspace";
 import { getUniverse } from "@/data/universes";
 import { loadWizardCatalog } from "@/lib/wizard-catalog";
-import { certUniqueItems } from "@/components/wizard/project";
+import { certUniqueItems, certFormulaItems } from "@/components/wizard/project";
 
 export const metadata: Metadata = {
   title: "SeniorsHub — Bootcamps certifiants pour seniors & experts",
@@ -39,7 +39,7 @@ export default async function SeniorsHubPage() {
 
       <UniverseVideo universeId="seniorshub" />
 
-      <BootcampFormulas universeId="seniorshub" />
+      <BootcampFormulas universeId="seniorshub" dbFormulas={certFormulaItems(catalog, "seniorshub")} />
 
       <Section variant="white">
         <h2 className="text-2xl font-extrabold tracking-tight text-ipmd-black sm:text-3xl">
