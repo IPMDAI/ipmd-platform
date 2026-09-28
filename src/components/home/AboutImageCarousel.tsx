@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { useState, useEffect } from "react";
 
-const IMAGES = ["/ipmd-propo0.png", "/ipmd-propo1.png", "/ipmd_propo7.png"];
+const IMAGES = ["/ipmd-propo0.webp", "/ipmd-propo1.webp", "/ipmd_propo7.webp"];
 
 /** Carrousel d'images de la section « À propos » (rotation auto, crossfade). */
 export function AboutImageCarousel() {
