@@ -15,8 +15,9 @@ import "server-only";
 // contrôle qui reçoit réellement.
 export const LETTERS_ENABLED = true;
 
-// ⛔ Rester à false tant que le modèle admission/refus n'a pas été validé.
-export const TEMPLATE_VALIDATED = false;
+// ✅ Modèle validé (25/09/2026) : MODE RÉEL activé — les vrais candidats acceptés
+// reçoivent leur lettre d'admission avec les montants à payer.
+export const TEMPLATE_VALIDATED = true;
 
 export const TEST_MODE = !TEMPLATE_VALIDATED;
 
