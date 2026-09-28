@@ -2,8 +2,11 @@ import { Container } from "@/components/ui/Container";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 
-/** Vidéo de présentation IPMD jouée en fond du hero (muette, en boucle). */
-const HERO_VIDEO_SRC = "/IPMD_Video.mp4";
+/** Vidéo de présentation IPMD jouée en fond du hero (muette, en boucle).
+ *  Version web optimisée (720p, sans audio, ~3,4 Mo) + poster affiché
+ *  instantanément → page rapide même sur mobile. */
+const HERO_VIDEO_SRC = "/IPMD_hero.mp4";
+const HERO_POSTER_SRC = "/IPMD_hero-poster.jpg";
 
 /** Bande d'identité IPMD (titre, slogan, CTA, statistiques) sur fond vidéo. */
 export function Hero() {
@@ -17,11 +20,12 @@ export function Hero() {
         <video
           className="absolute inset-0 h-full w-full object-cover"
           src={HERO_VIDEO_SRC}
+          poster={HERO_POSTER_SRC}
           autoPlay
           muted
           loop
           playsInline
-          preload="auto"
+          preload="none"
         />
       </div>
 
