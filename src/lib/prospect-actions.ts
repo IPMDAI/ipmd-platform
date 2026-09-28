@@ -216,7 +216,7 @@ export async function sendProspectInfo(prospectId: string): Promise<FormResult> 
      <table style="width:100%;border-collapse:collapse;font-size:14px">${rows}</table>
      <p style="margin-top:12px">Les frais d'inscription (uniques) donnent accès à la plateforme, à la carte étudiant et à l'attestation d'inscription. Un <strong>échéancier</strong> de paiement et une <strong>réduction de 15%</strong> (paiement unique) sont possibles.</p>
      <p style="margin-top:12px">Pour candidater : <a href="${SITE}/admission" style="color:#e01228;font-weight:600">${SITE}/admission</a></p>
-     <p style="color:#9ca3af;font-size:12px;margin-top:8px">Service des Admissions — admission@ipmd.pro · WhatsApp +225 07 75 75 88 88</p>`
+     <p style="color:#9ca3af;font-size:12px;margin-top:8px">Service des Admissions — admission@ipmd.pro · WhatsApp +225 05 75 75 88 88</p>`
   );
   const sent = await sendScolariteEmail([p.email], "IPMD — Votre demande d'information", html);
   if (sent > 0) {
@@ -282,7 +282,7 @@ export async function draftProspectReply(
     frais_inscription_fcfa: reg,
     frais_scolarite_fcfa: tuition,
     site_admission: `${SITE}/admission`,
-    whatsapp_admissions: "+225 07 75 75 88 88",
+    whatsapp_admissions: "+225 05 75 75 88 88",
   };
 
   try {

@@ -245,7 +245,7 @@ export function AdmissionsChat() {
         {
           role: "assistant",
           content:
-            "Merci pour toutes ces questions ! 😊 Pour un suivi personnalisé, laissez vos coordonnées sur ipmd.pro/demande-info ou écrivez-nous sur WhatsApp +225 07 75 75 88 88 — un conseiller vous répondra.",
+            "Merci pour toutes ces questions ! 😊 Pour un suivi personnalisé, laissez vos coordonnées sur ipmd.pro/demande-info ou écrivez-nous sur WhatsApp +225 05 75 75 88 88 — un conseiller vous répondra.",
         },
       ]);
       setInput("");
@@ -287,7 +287,7 @@ export function AdmissionsChat() {
     } catch {
       setMessages((m) => {
         const c = [...m];
-        c[c.length - 1] = { role: "assistant", content: "Désolé, une erreur est survenue. Écrivez-nous sur WhatsApp : +225 07 75 75 88 88." };
+        c[c.length - 1] = { role: "assistant", content: "Désolé, une erreur est survenue. Écrivez-nous sur WhatsApp : +225 05 75 75 88 88." };
         return c;
       });
     } finally {
@@ -385,7 +385,7 @@ export function AdmissionsChat() {
                   📝 M'identifier (infos précises)
                 </button>
               )}
-              <a href="https://wa.me/2250775758888" target="_blank" rel="noopener noreferrer" className="rounded-full bg-[#25D366]/10 px-2.5 py-1 font-semibold text-[#128C7E]">WhatsApp</a>
+              <a href="https://wa.me/2250575758888" target="_blank" rel="noopener noreferrer" className="rounded-full bg-[#25D366]/10 px-2.5 py-1 font-semibold text-[#128C7E]">WhatsApp</a>
               <Link href="/demande-info" className="rounded-full bg-ipmd-light px-2.5 py-1 font-semibold text-ipmd-black hover:bg-black/5">✉️ Demande d&apos;info</Link>
             </div>
             {handsFree && (

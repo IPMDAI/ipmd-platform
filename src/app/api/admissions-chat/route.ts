@@ -43,7 +43,7 @@ export async function POST(req: NextRequest) {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
     return Response.json(
-      { error: "L'assistant n'est pas disponible pour le moment. Écrivez-nous sur WhatsApp : +225 07 75 75 88 88." },
+      { error: "L'assistant n'est pas disponible pour le moment. Écrivez-nous sur WhatsApp : +225 05 75 75 88 88." },
       { status: 503 }
     );
   }
@@ -87,7 +87,7 @@ export async function POST(req: NextRequest) {
       } catch (err) {
         console.error("Admissions chat error:", err);
         controller.enqueue(
-          encoder.encode("\n\nDésolé, une erreur est survenue. Écrivez-nous sur WhatsApp : +225 07 75 75 88 88.")
+          encoder.encode("\n\nDésolé, une erreur est survenue. Écrivez-nous sur WhatsApp : +225 05 75 75 88 88.")
         );
       } finally {
         controller.close();

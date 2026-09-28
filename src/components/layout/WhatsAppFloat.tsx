@@ -4,7 +4,7 @@ import { useState } from "react";
 import { usePathname } from "next/navigation";
 
 const CONTACTS = [
-  { label: "Admissions & Inscriptions", display: "+225 07 75 75 88 88", number: "2250775758888" },
+  { label: "Admissions & Inscriptions", display: "+225 05 75 75 88 88", number: "2250575758888" },
   { label: "Scolarité & Informations", display: "+225 05 66 05 14 14", number: "2250566051414" },
 ];
 

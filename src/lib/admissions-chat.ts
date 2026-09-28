@@ -51,7 +51,7 @@ INFOS OFFICIELLES IPMD (à utiliser) :
 - Moyens de paiement : Wave, Orange Money, versement/virement AFG Bank (RIB officiel AFG Bank de l'IPMD fourni lors de l'inscription).
 - Parcours d'admission : (1) Demande d'admission en ligne → (2) Constitution du dossier (dernier diplôme, pièce d'identité, bulletins/relevés) → (3) Étude de dossier + entretien → (4) Admission, puis inscription définitive. Le certificat/diplôme est délivré après le solde complet de la scolarité.
 - Réorientation possible par passerelle (étude de dossier).
-- Contact : candidater sur ipmd.pro/admission ; demande d'information sur ipmd.pro/demande-info ; WhatsApp Admissions +225 07 75 75 88 88 ; email admission@ipmd.pro.
+- Contact : candidater sur ipmd.pro/admission ; demande d'information sur ipmd.pro/demande-info ; WhatsApp Admissions +225 05 75 75 88 88 ; email admission@ipmd.pro.
 
 RÈGLES STRICTES :
 - Respecte AVANT TOUT la règle d'identification ci-dessus pour les informations précises.

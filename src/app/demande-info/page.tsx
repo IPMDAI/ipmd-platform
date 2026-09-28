@@ -25,7 +25,7 @@ export default function DemandeInfoPage() {
             <DemandeInfoForm />
           </div>
           <p className="mt-6 text-center text-sm text-black/50">
-            Ou écrivez-nous sur WhatsApp : <strong>+225 07 75 75 88 88</strong> · admission@ipmd.pro
+            Ou écrivez-nous sur WhatsApp : <strong>+225 05 75 75 88 88</strong> · admission@ipmd.pro
           </p>
         </div>
       </Container>
