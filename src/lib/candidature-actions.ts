@@ -325,10 +325,12 @@ export async function sendAdmission(
   let certSchedule: ScheduleSnapshot | null = null;
 
   if (isCert) {
-    // CERTIFIANT (Option A) : tarif/inscription/versements viennent de la FORMULE
-    // (offering stocké sur la candidature, ou fourni par l'admin). Court = montant
-    // exact obligatoire. Échéancier via le moteur certifiant dédié (≠ Campus).
-    const offeringId = opts.certOfferingId ?? ((c.catalog_offering_id as string | null) ?? null);
+    // CERTIFIANT (Option A) : tarif/inscription/versements viennent de la FORMULE.
+    // On PRIORISE l'offre RÉELLEMENT choisie par le candidat (catalog_offering_id) —
+    // elle porte SA session (dates de l'échéancier) — et on ne retombe sur le choix
+    // admin (opts.certOfferingId) que pour les anciennes candidatures sans offre.
+    // Court = montant exact obligatoire. Échéancier via le moteur certifiant dédié.
+    const offeringId = ((c.catalog_offering_id as string | null) ?? null) ?? opts.certOfferingId ?? null;
     if (!offeringId) {
       return {
         ok: false,
