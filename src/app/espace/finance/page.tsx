@@ -6,6 +6,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { Container } from "@/components/ui/Container";
 import { PrintButton } from "@/components/espace/PrintButton";
 import { FinanceExportButton } from "@/components/espace/FinanceExportButton";
+import { FinanceSearch } from "@/components/espace/FinanceSearch";
 import {
   formatFCFA,
   computeFinance,
@@ -393,6 +394,9 @@ export default async function FinancePage({
             {stat("Étudiants (vue)", String(shown.length))}
           </div>
 
+          {/* Recherche instantanée par nom / prénom / classe */}
+          <FinanceSearch />
+
           {/* Tableau détaillé */}
           <div className="mt-4 overflow-x-auto rounded-2xl bg-white shadow-sm ring-1 ring-black/5">
             <table className="w-full min-w-[1320px] text-[12px]">
@@ -421,7 +425,14 @@ export default async function FinancePage({
                   <tr><td colSpan={16} className="px-3 py-6 text-center text-black/45">Aucun étudiant dans cette sélection.</td></tr>
                 ) : (
                   shown.map((r) => (
-                    <tr key={r.id} className="border-t border-black/5 hover:bg-ipmd-light/40">
+                    <tr
+                      key={r.id}
+                      data-search={`${r.name} ${r.className ?? ""}`
+                        .normalize("NFD")
+                        .replace(/[̀-ͯ]/g, "")
+                        .toLowerCase()}
+                      className="border-t border-black/5 hover:bg-ipmd-light/40"
+                    >
                       <td className="px-3 py-2 font-medium text-ipmd-black">
                         <Link href={`/espace/finance/${r.id}`} className="hover:text-ipmd-red">{r.name}</Link>
                       </td>
