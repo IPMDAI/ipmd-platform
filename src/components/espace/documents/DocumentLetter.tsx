@@ -98,7 +98,7 @@ export function DocumentLetter({
           bordure rouge (border-top) qui sort toujours sur papier. */}
       <div className="h-2 w-full bg-gradient-to-r from-ipmd-black via-ipmd-red to-ipmd-black print:hidden" />
 
-      <div className="px-8 py-10 sm:px-12 print:px-10 print:py-6">
+      <div className="px-8 py-10 sm:px-12 print:px-8 print:py-4">
         {official ? (
           /* En-tête OFFICIEL — Attestation de réussite uniquement (centré, encadré). */
           <>
@@ -109,16 +109,16 @@ export function DocumentLetter({
                 <p className="font-normal normal-case italic text-black/55">{MINISTRY_HEADER.motto}</p>
               </div>
             </div>
-            <div className="flex flex-col items-center text-center">
-              <span className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-full bg-white ring-1 ring-black/10">
+            <div className="flex flex-col items-center text-center print:mb-1">
+              <span className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-full bg-white ring-1 ring-black/10 print:h-12 print:w-12">
                 <Image src="/logo-ipmd.png" alt="Logo IPMD" width={64} height={64} className="h-full w-full object-contain" />
               </span>
-              <p className="mt-2 font-serif text-xl font-bold text-black/45">
+              <p className="mt-2 font-serif text-xl font-bold text-black/45 print:mt-1">
                 Institut Polytechnique des Métiers du Digital
               </p>
               <p className="text-[12px] text-black/55">{MINISTRY_HEADER.estab}</p>
             </div>
-            <div className="mt-5 rounded-xl border border-black/70 py-3 print:mt-3">
+            <div className="mt-5 rounded-xl border border-black/70 py-3 print:mt-2 print:py-2">
               <h1 className="text-center text-xl font-extrabold uppercase tracking-wide text-ipmd-black sm:text-2xl">
                 {title}
               </h1>
@@ -159,7 +159,7 @@ export function DocumentLetter({
         )}
 
         {/* Corps */}
-        <div className="mt-8 space-y-4 text-[15px] leading-relaxed text-black/80 print:mt-4 print:space-y-2">
+        <div className="mt-8 space-y-4 text-[15px] leading-relaxed text-black/80 print:mt-3 print:space-y-1.5">
           <p>
             {official
               ? soussigneIntro(signatory.title)
@@ -283,7 +283,7 @@ export function DocumentLetter({
         </div>
 
         {/* Signature */}
-        <div className="mt-12 flex items-end justify-between gap-6 print:mt-6">
+        <div className="mt-12 flex items-end justify-between gap-6 print:mt-4">
           <div className="flex items-center gap-3">
             <span className="shrink-0 rounded-lg bg-white p-1 ring-1 ring-black/10">
               <QrCode value={verifyHref} size={84} />
@@ -306,7 +306,7 @@ export function DocumentLetter({
                 {signatory.mention}
               </p>
             )}
-            <div className="relative mt-3 flex h-24 w-60 items-center justify-center">
+            <div className="relative mt-3 flex h-24 w-60 items-center justify-center print:mt-1 print:h-16">
               {/* Cachet derrière */}
               <Cachet size={84} />
               {/* Signature au-dessus, entièrement contenue (jamais rognée) */}
