@@ -8,7 +8,7 @@ import type { FormResult } from "@/types";
 // 'test' : n'envoie QU'À l'adresse de test (ADMISSION_TEST_EMAIL) ; tout autre
 // destinataire est journalisé en 'skipped' (aucun email à de vrais étudiants).
 // 'live' : envoie à tous. Passer à 'live' après validation de la recette.
-const REGLEMENT_EMAIL_MODE: "test" | "live" = "test";
+const REGLEMENT_EMAIL_MODE: "test" | "live" = "live";
 const REGLEMENT_TEST_ADDRESS = (process.env.ADMISSION_TEST_EMAIL ?? "").trim().toLowerCase();
 
 const RESEND_API_KEY = process.env.RESEND_API_KEY ?? "";
