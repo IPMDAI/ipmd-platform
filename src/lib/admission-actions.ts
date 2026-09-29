@@ -21,6 +21,7 @@ import {
 } from "@/lib/admission-schedule";
 import { loadScholarshipForCandidature } from "@/lib/scholarship-data";
 import { REGLEMENT_VERSION, getReglement, isBootcampUniverse } from "@/data/reglement";
+import { recordAndSendReglementAcceptance } from "@/lib/reglement-emails";
 import {
   sendScolariteEmail,
   canSendEmail,
@@ -348,18 +349,26 @@ export async function acceptPackReglement(token: string): Promise<FormResult> {
 
   // Version du règlement selon le parcours (bootcamp/certifiant vs diplôme).
   let version = REGLEMENT_VERSION;
+  let isBootcamp = false;
+  let candId: string | null = null;
+  let candEmail: string | null = null;
+  let candName: string | null = null;
   const { data: pack } = await admin
     .from("admission_packs")
     .select("candidature_id")
     .eq("id", link.packId)
     .maybeSingle();
-  if (pack?.candidature_id) {
+  candId = (pack?.candidature_id as string | null) ?? null;
+  if (candId) {
     const { data: cand } = await admin
       .from("inscription_requests")
-      .select("universe")
-      .eq("id", pack.candidature_id as string)
+      .select("universe, email, full_name")
+      .eq("id", candId)
       .maybeSingle();
-    version = getReglement(isBootcampUniverse(cand?.universe as string | null)).version;
+    isBootcamp = isBootcampUniverse(cand?.universe as string | null);
+    version = getReglement(isBootcamp).version;
+    candEmail = (cand?.email as string | null) ?? null;
+    candName = (cand?.full_name as string | null) ?? null;
   }
 
   // Enregistrement ATOMIQUE (fonction Postgres) : conservation de l'acceptation
@@ -370,6 +379,19 @@ export async function acceptPackReglement(token: string): Promise<FormResult> {
     p_version: version,
   });
   if (error) return { ok: false, message: "Une erreur est survenue. Réessayez." };
+
+  // Email de confirmation d'acceptation (journalisé + best-effort, ne bloque rien).
+  await recordAndSendReglementAcceptance({
+    scope: "pack",
+    dedupKey: `pack:${link.packId}:${version}`,
+    candidatureId: candId,
+    userId: null,
+    recipient: candEmail,
+    name: candName,
+    parcours: isBootcamp ? "bootcamp" : "diplome",
+    version,
+    acceptedAt: new Date(),
+  });
 
   return { ok: true, message: "Règlement intérieur accepté. Merci !" };
 }

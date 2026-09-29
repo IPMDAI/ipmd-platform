@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { resolveUserIsBootcamp } from "@/lib/reglement-user";
+import { recordAndSendReglementAcceptance } from "@/lib/reglement-emails";
 import { getReglement } from "@/data/reglement";
 import type { FormResult } from "@/types";
 
@@ -19,7 +20,8 @@ export async function acceptReglement(
   if (!user) return { ok: false, message: "Veuillez vous connecter." };
 
   // Version selon le PARCOURS du candidat (univers), pas selon la finance.
-  const version = getReglement(await resolveUserIsBootcamp(user.id)).version;
+  const isBootcamp = await resolveUserIsBootcamp(user.id);
+  const version = getReglement(isBootcamp).version;
 
   const { error } = await supabase
     .from("reglement_acceptances")
@@ -28,6 +30,24 @@ export async function acceptReglement(
       { onConflict: "user_id,version" }
     );
   if (error) return { ok: false, message: error.message };
+
+  // Email de confirmation d'acceptation (journalisé + best-effort, ne bloque rien).
+  const { data: me } = await supabase
+    .from("profiles")
+    .select("full_name")
+    .eq("id", user.id)
+    .maybeSingle();
+  await recordAndSendReglementAcceptance({
+    scope: "espace",
+    dedupKey: `user:${user.id}:${version}`,
+    candidatureId: null,
+    userId: user.id,
+    recipient: user.email ?? null,
+    name: (me?.full_name as string | null) ?? null,
+    parcours: isBootcamp ? "bootcamp" : "diplome",
+    version,
+    acceptedAt: new Date(),
+  });
 
   revalidatePath("/espace/reglement");
   return { ok: true, message: "Lecture confirmée. Merci !" };
