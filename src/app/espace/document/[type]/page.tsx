@@ -289,8 +289,7 @@ export default async function DocumentPage({
                 signatory={{
                   title: sig.title,
                   name: sig.name,
-                  // Réussite : pas de mention suppléance/délégation (signature directe).
-                  mention: kind === "reussite" || variant === "sous-reserve" ? null : sig.mention,
+                  mention: variant === "sous-reserve" ? null : sig.mention,
                   signature: signatureSrc,
                 }}
               />

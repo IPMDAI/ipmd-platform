@@ -87,10 +87,9 @@ export function delegationMention(
   if (key === "responsable-pedago")
     return "Pour le Directeur des Études et par délégation";
 
-  // Administrateur Général signant un document ACADÉMIQUE = suppléance
-  // (il ne signe pas « par délégation » du Directeur des Études).
-  if (key === "admin-general" && category === "academique")
-    return "En l'absence du Directeur des Études";
+  // Administrateur Général : signe EN SON PROPRE NOM → aucune mention de
+  // suppléance/délégation (ni « En l'absence du Directeur des Études »).
+  if (key === "admin-general") return null;
 
   // Directrice Exécutive sur un document administratif courant.
   if (key === "directrice-executive")
