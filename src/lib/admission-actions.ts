@@ -20,7 +20,7 @@ import {
   type ScheduleSnapshot,
 } from "@/lib/admission-schedule";
 import { loadScholarshipForCandidature } from "@/lib/scholarship-data";
-import { REGLEMENT_VERSION } from "@/data/reglement";
+import { REGLEMENT_VERSION, getReglement, isBootcampUniverse } from "@/data/reglement";
 import {
   sendScolariteEmail,
   canSendEmail,
@@ -346,15 +346,29 @@ export async function acceptPackReglement(token: string): Promise<FormResult> {
   const admin = createAdminClient();
   if (!admin) return { ok: false, message: "Service momentanément indisponible." };
 
-  const now = new Date().toISOString();
-  const { error } = await admin
+  // Version du règlement selon le parcours (bootcamp/certifiant vs diplôme).
+  let version = REGLEMENT_VERSION;
+  const { data: pack } = await admin
     .from("admission_packs")
-    .update({
-      reglement_accepted_at: now,
-      reglement_version: REGLEMENT_VERSION,
-      updated_at: now,
-    })
-    .eq("id", link.packId);
+    .select("candidature_id")
+    .eq("id", link.packId)
+    .maybeSingle();
+  if (pack?.candidature_id) {
+    const { data: cand } = await admin
+      .from("inscription_requests")
+      .select("universe")
+      .eq("id", pack.candidature_id as string)
+      .maybeSingle();
+    version = getReglement(isBootcampUniverse(cand?.universe as string | null)).version;
+  }
+
+  // Enregistrement ATOMIQUE (fonction Postgres) : conservation de l'acceptation
+  // antérieure (append-only) + mise à jour du pack + journal de la nouvelle version
+  // réussissent ENSEMBLE ou sont TOUS annulés. Aucune perte d'historique possible.
+  const { error } = await admin.rpc("accept_pack_reglement", {
+    p_pack_id: link.packId,
+    p_version: version,
+  });
   if (error) return { ok: false, message: "Une erreur est survenue. Réessayez." };
 
   return { ok: true, message: "Règlement intérieur accepté. Merci !" };

@@ -5,6 +5,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { PackView } from "@/components/admission/PackView";
 import type { ScheduleSnapshot } from "@/lib/admission-schedule";
 import { admissionDeadlineText, isAdmissionExpired } from "@/lib/admission-deadline";
+import { getReglement, isBootcampUniverse } from "@/data/reglement";
 
 export const metadata: Metadata = {
   title: "Mon pack d'admission — IPMD",
@@ -51,7 +52,7 @@ export default async function PackPage({
   const { data: pack } = await admin
     .from("admission_packs")
     .select(
-      "id, candidature_id, class_id, accepted_level, registration_fee, tuition_due, academic_year, schedule_json, first_viewed_at, reglement_accepted_at, convention_status, signature_method"
+      "id, candidature_id, class_id, accepted_level, registration_fee, tuition_due, academic_year, schedule_json, first_viewed_at, reglement_accepted_at, reglement_version, convention_status, signature_method"
     )
     .eq("id", link.packId)
     .single();
@@ -59,7 +60,7 @@ export default async function PackPage({
 
   const { data: cand } = await admin
     .from("inscription_requests")
-    .select("full_name, program_interest, admission_sent_at")
+    .select("full_name, program_interest, admission_sent_at, universe")
     .eq("id", pack.candidature_id)
     .single();
 
@@ -133,6 +134,28 @@ export default async function PackPage({
     })
     .eq("id", pack.id);
 
+  // Règlement applicable au PARCOURS (bootcamp vs diplôme) + traçabilité :
+  // l'acceptation ne vaut QUE pour la version acceptée. Si la version applicable a
+  // changé (ex. ancienne acceptation Diplôme, formation Bootcamp), on n'affiche PAS
+  // « accepté » ; on montre l'acceptation antérieure et on redemande l'accusé de
+  // lecture de la version en vigueur.
+  const isBootcamp = isBootcampUniverse(cand?.universe as string | null);
+  const currentVersion = getReglement(isBootcamp).version;
+  const acceptedVersion = (pack.reglement_version as string | null) ?? null;
+  const acceptedForCurrent =
+    pack.reglement_accepted_at && acceptedVersion === currentVersion
+      ? (pack.reglement_accepted_at as string)
+      : null;
+  const priorAcceptedAt =
+    pack.reglement_accepted_at && acceptedVersion && acceptedVersion !== currentVersion
+      ? (pack.reglement_accepted_at as string)
+      : null;
+  const priorLabel = acceptedVersion?.startsWith("bootcamp")
+    ? "Bootcamps & Certificats"
+    : acceptedVersion?.startsWith("diplome")
+    ? "Diplôme (Licence & Master)"
+    : (acceptedVersion ?? null);
+
   return (
     <PackView
       name={cand?.full_name ?? ""}
@@ -143,7 +166,9 @@ export default async function PackPage({
       tuitionDue={pack.tuition_due != null ? Number(pack.tuition_due) : null}
       token={t as string}
       packId={pack.id as string}
-      reglementAcceptedAt={pack.reglement_accepted_at ?? null}
+      reglementAcceptedAt={acceptedForCurrent}
+      reglementPriorAcceptedAt={priorAcceptedAt}
+      reglementPriorLabel={priorLabel}
       conventionStatus={(pack.convention_status as string) ?? "non_envoyee"}
       signatureMethod={(pack.signature_method as string) ?? null}
       schedule={(pack.schedule_json as ScheduleSnapshot | null) ?? null}
@@ -152,6 +177,7 @@ export default async function PackPage({
       deadlineExpired={deadlineExpired}
       proofStatus={(lastProof?.status as "a_verifier" | "valide" | "rejete" | null) ?? null}
       proofReviewNote={(lastProof?.review_note as string) ?? null}
+      isBootcamp={isBootcamp}
     />
   );
 }

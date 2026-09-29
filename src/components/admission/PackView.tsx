@@ -21,6 +21,8 @@ export function PackView({
   token,
   packId,
   reglementAcceptedAt = null,
+  reglementPriorAcceptedAt = null,
+  reglementPriorLabel = null,
   conventionStatus = "non_envoyee",
   signatureMethod = null,
   schedule = null,
@@ -29,6 +31,7 @@ export function PackView({
   deadlineExpired = false,
   proofStatus = null,
   proofReviewNote = null,
+  isBootcamp = false,
 }: {
   name: string;
   program: string | null;
@@ -41,12 +44,18 @@ export function PackView({
   plans?: { plan_months: number; discount_rate: number }[];
   packId: string;
   reglementAcceptedAt?: string | null;
+  /** Acceptation d'une AUTRE version (ex. Diplôme) — affichée pour traçabilité, ne
+   * vaut pas acceptation de la version en vigueur. */
+  reglementPriorAcceptedAt?: string | null;
+  reglementPriorLabel?: string | null;
   conventionStatus?: string;
   signatureMethod?: string | null;
   deadlineText?: string | null;
   deadlineExpired?: boolean;
   proofStatus?: "a_verifier" | "valide" | "rejete" | null;
   proofReviewNote?: string | null;
+  /** Certifiant/bootcamp → règlement « Bootcamps & Certificats ». */
+  isBootcamp?: boolean;
 }) {
   const total = registrationFee + (tuitionDue ?? 0);
   const rows: Array<[string, string]> = [
@@ -112,7 +121,13 @@ export function PackView({
                 1. Règlement intérieur
               </p>
               <div className="mt-2">
-                <ReglementConsent token={token} acceptedAt={reglementAcceptedAt} />
+                <ReglementConsent
+                  token={token}
+                  acceptedAt={reglementAcceptedAt}
+                  priorAcceptedAt={reglementPriorAcceptedAt}
+                  priorLabel={reglementPriorLabel}
+                  isBootcamp={isBootcamp}
+                />
               </div>
             </div>
 

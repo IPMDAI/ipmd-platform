@@ -5,12 +5,8 @@ import { requireUser } from "@/lib/require-user";
 import { Container } from "@/components/ui/Container";
 import { PrintButton } from "@/components/espace/PrintButton";
 import { AcceptReglementButton } from "@/components/espace/AcceptReglementButton";
-import {
-  REGLEMENT_ARTICLES,
-  REGLEMENT_TITLE,
-  REGLEMENT_YEAR,
-  REGLEMENT_VERSION,
-} from "@/data/reglement";
+import { getReglement } from "@/data/reglement";
+import { resolveUserIsBootcamp } from "@/lib/reglement-user";
 
 export const metadata: Metadata = { title: "Règlement intérieur" };
 
@@ -21,11 +17,17 @@ export default async function ReglementPage() {
   const { data: me } = await supabase.from("profiles").select("role").eq("id", userId).single();
   const isLearner = LEARNER.includes(me?.role ?? "");
 
+  // Cursus bootcamp/certifiant vs diplôme : identifié par le PARCOURS du candidat
+  // (profiles.universe, puis candidature → univers ; marqueur financier en dernier
+  // recours seulement). Cf. resolveUserIsBootcamp.
+  const isBootcamp = await resolveUserIsBootcamp(userId);
+  const reglement = getReglement(isBootcamp);
+
   const { data: accept } = await supabase
     .from("reglement_acceptances")
     .select("accepted_at")
     .eq("user_id", userId)
-    .eq("version", REGLEMENT_VERSION)
+    .eq("version", reglement.version)
     .maybeSingle();
 
   const acceptedAt = accept?.accepted_at
@@ -44,7 +46,16 @@ export default async function ReglementPage() {
             <Link href="/espace" className="text-sm font-semibold text-black/50 hover:text-ipmd-red">
               ← Retour à l&apos;espace
             </Link>
-            <PrintButton />
+            <div className="flex items-center gap-2">
+              {/* Vrai téléchargement : fichier PDF servi en pièce jointe (≠ impression). */}
+              <a
+                href="/espace/reglement/pdf"
+                className="rounded-full bg-white px-4 py-2 text-sm font-semibold text-ipmd-black ring-1 ring-black/15 transition-opacity hover:opacity-90"
+              >
+                ⬇️ Télécharger (PDF)
+              </a>
+              <PrintButton />
+            </div>
           </div>
 
           <article className="mt-6 rounded-2xl bg-white p-8 shadow-sm ring-1 ring-black/5 print:rounded-none print:shadow-none print:ring-0 sm:p-12">
@@ -63,7 +74,7 @@ export default async function ReglementPage() {
                 </div>
               </div>
               <p className="text-right text-[11px] font-semibold text-black/50">
-                Année {REGLEMENT_YEAR}
+                Année {reglement.year}
               </p>
             </header>
 
@@ -71,13 +82,13 @@ export default async function ReglementPage() {
               Règlement intérieur
             </h1>
             <p className="mt-1 text-center text-sm text-black/55">
-              Cursus Diplôme (Licence &amp; Master) — {REGLEMENT_YEAR}
+              {isBootcamp ? "Bootcamps & Certificats" : "Cursus Diplôme (Licence & Master)"} — {reglement.year}
             </p>
             <div className="mx-auto mt-2 h-1 w-16 rounded-full bg-ipmd-red" />
 
             {/* Articles */}
             <div className="mt-8 space-y-6">
-              {REGLEMENT_ARTICLES.map((a) => (
+              {reglement.articles.map((a) => (
                 <section key={a.n} className="break-inside-avoid">
                   <h2 className="text-sm font-bold uppercase tracking-wide text-ipmd-red">
                     Article {a.n} — {a.title}
@@ -123,7 +134,7 @@ export default async function ReglementPage() {
               </div>
             </div>
             <p className="mt-6 text-center text-[11px] text-black/40">
-              INSTITUT POLYTECHNIQUE DES MÉTIERS DU DIGITAL — {REGLEMENT_TITLE} · {REGLEMENT_YEAR}
+              INSTITUT POLYTECHNIQUE DES MÉTIERS DU DIGITAL — {reglement.title} · {reglement.year}
             </p>
           </article>
         </div>

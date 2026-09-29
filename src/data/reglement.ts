@@ -204,3 +204,175 @@ export const REGLEMENT_ARTICLES: Article[] = [
     ],
   },
 ];
+
+// ──────────────────────────────────────────────────────────────
+// Variante BOOTCAMPS & CERTIFICATS — relecture de fond des 23 articles (cf.
+// BOOTCAMP_OVERRIDES ci-dessous). ⚠️ À VALIDER par l'administration.
+// ──────────────────────────────────────────────────────────────
+export const REGLEMENT_BOOTCAMP_VERSION = "bootcamp-2026-2027";
+export const REGLEMENT_BOOTCAMP_TITLE = "Règlement intérieur — Bootcamps & Certificats";
+
+// RELECTURE DE FOND (23 articles) — À VALIDER par l'administration. Chaque article
+// a été confronté à la réalité des bootcamps ; on n'importe pas d'obligation qui ne
+// s'y applique pas. Adaptations de SUBSTANCE : art. 6 (conseil pédagogique par
+// session, sans semestre/promotion/coordinateurs Licence-Master), art. 7 (délégués
+// réservés aux Parcours longs, exclus des bootcamps courts), art. 9-10 (retrait du
+// volet « parents d'étudiants », public adulte ; commissions d'études conservées),
+// art. 11 (assiduité conservée, cadre « arrêt de travail »/semestre retiré), art. 12
+// (stage ≥ 6 mois, facultatif, sans réf. juridique FR ni affirmation RC), art. 13
+// al. 6 (intitulés réels des certificats), art. 17 al. 2 (dress code campus assoupli),
+// art. 20 al. 5 (PC imposé → recommandé selon la formule). Le reste = terminologie
+// « apprenant ». AUCUNE règle nouvelle d'évaluation/rattrapage/délivrance.
+// Articles repris à l'identique du texte commun : 3, 4, 19, 21.
+type ReglementOverride = { title?: string; body: string[] };
+const BOOTCAMP_OVERRIDES: Record<number, ReglementOverride> = {
+  1: {
+    body: [
+      "Le présent règlement intérieur définit les règles applicables à l'ensemble des apprenants et auditeurs inscrits aux bootcamps et formations certifiantes de l'IPMD. Il s'inscrit dans le cadre de la réglementation en vigueur en République de Côte d'Ivoire.",
+    ],
+  },
+  2: {
+    title: "Calendrier de la session, emplois du temps et e-mail",
+    body: [
+      "Chaque session de bootcamp se déroule sur une période définie, de quelques heures à trois (3) ans selon la formule (Bootcamp court, 1 mois, 3 mois, 6 mois, ou Parcours professionnel de 10 mois à 3 ans selon l'univers). Le calendrier et les emplois du temps sont établis par l'administration qui les publie au début de la session. Ils peuvent donner lieu à modification en fonction des contraintes pédagogiques. La publication est faite sur mail, sur WhatsApp ou sur notre plateforme. La durée hebdomadaire des cours varie selon les formules, les sections et les périodes de formation. Elle peut être augmentée ou réduite en fonction des impératifs internes de l'école.",
+      "Un e-mail est attribué à chaque nouvel(le) apprenant(e). Il est obligatoire d'utiliser cet e-mail pour assurer le bon déroulement et le suivi de votre formation et la réception des informations capitales.",
+    ],
+  },
+  5: {
+    body: [
+      "Il participe au recrutement des apprenants et des intervenants. Il assure le contrôle du suivi individuel de chaque apprenant. Il organise, coordonne et contrôle les programmes d'études. Il fait appliquer les directives et veille à leur bonne exécution auprès des apprenants et des enseignants.",
+    ],
+  },
+  6: {
+    body: [
+      "Un conseil pédagogique se réunit, sous la présidence de l'administrateur général ou de son représentant, à l'issue de chaque session de formation. Il examine les résultats et émet un avis sur les questions d'ordre pédagogique qui sont soulevées.",
+      "Y participent notamment : la direction des études ; la direction des projets, des métiers digitaux et de l'insertion socio-professionnelle ; les formateurs et les intervenants concernés ; le cas échéant, un ou plusieurs représentants des apprenants, à titre consultatif.",
+    ],
+  },
+  7: {
+    title: "Représentants des apprenants",
+    body: [
+      "Pour les formules longues (Parcours professionnel), les apprenants peuvent désigner, pour la durée de la formation, un ou plusieurs représentants chargés du lien avec l'administration. Ces représentants ont un devoir de réserve pendant et après leur mandat. Cette disposition ne s'applique pas aux bootcamps de courte durée.",
+    ],
+  },
+  8: {
+    title: "Les associations d'apprenants",
+    body: [
+      "Elles peuvent être autorisées par l'administration. Les statuts doivent être déposés et légalisés auprès de la mairie de la commune. Leur raison sociale est indépendante de celle de l'école. Elles représentent les apprenants de l'établissement conformément au contenu de leurs statuts. Leur siège est autorisé au sein de l'établissement. Cette autorisation peut être retirée si l'activité de l'association risque de mettre en cause la notoriété et le bon fonctionnement de l'établissement. Elles organisent des activités tant didactiques (conférences, réunions) que ludiques (sortie détente, journée culturelle).",
+      "L'association des apprenants de IPMD est constituée d'un bureau représentatif dont les membres sont des apprenants des différentes formations, ayant différentes responsabilités et répondant à une hiérarchie (président(e), vice-président(e), secrétaire et secrétaire(s) adjoint(s), responsable organisation et adjoint(s), responsable communication et adjoint(s), trésorier(e) et adjoint(s)).",
+      "L'administrateur général ou son représentant est président d'honneur de toute association hébergée par l'école.",
+    ],
+  },
+  9: {
+    body: [
+      "Tout apprenant — ou, s'il est mineur, son représentant légal — qui désire être reçu par l'administrateur général ou son représentant doit en effectuer la demande auprès du secrétariat.",
+    ],
+  },
+  10: {
+    title: "Commissions d'études",
+    body: [
+      "L'administrateur général ou son représentant peut réunir des commissions d'études composées de toutes les personnes (formateurs, apprenants et/ou entreprises) susceptibles d'aider à la résolution d'un problème de formation.",
+      "Pour un apprenant mineur, l'administration peut, en tant que de besoin, échanger individuellement avec son représentant légal sur le suivi et le déroulement de sa formation. Cette disposition ne constitue pas une réunion générale de parents.",
+    ],
+  },
+  11: {
+    title: "Assiduité des apprenants",
+    body: [
+      "Alinéa 1 — Assiduité en cours : elle est impérative pendant toute la durée de la session. Aucun apprenant ne sera admis en séance une fois le cours commencé. Toute absence devra être justifiée par l'apprenant sous 48 heures. Le contrôle des présences est effectué par les formateurs à chaque séance.",
+      "Alinéa 2 — Justification des absences : tout manquement à l'obligation d'assiduité doit être justifié par un document écrit. Toute absence pour maladie ou motif grave doit être signalée dans les 48 heures et justifiée (certificat médical ou justificatif équivalent) auprès de la direction des études, qui apprécie le motif. Si le motif est jugé acceptable, l'absence est excusée ; dans le cas contraire, elle est non excusée et sanctionnable.",
+      "Alinéa 3 — Retards : les retards sont comptabilisés et peuvent être sanctionnés comme les absences. En cas de retard, l'apprenant signale sa présence et son heure d'arrivée à l'accueil. Si, exceptionnellement, il est admis en cours de séance, il lui revient de s'assurer que le formateur a bien noté son arrivée.",
+      "Alinéa 4 — Absences aux évaluations : toute absence non justifiée à une évaluation est sanctionnée par un zéro (0). Les justificatifs doivent être produits dans les 48 heures suivant l'épreuve ; aucun document remis ultérieurement ne sera pris en considération. L'accès à une éventuelle épreuve de rattrapage relève de la décision pédagogique. Aucun retard n'est autorisé lors d'une épreuve.",
+    ],
+  },
+  12: {
+    body: [
+      "Un stage, un projet ou une mission peut être proposé aux apprenants et auditeurs inscrits à une formule d'une durée d'au moins six (6) mois. Aucune de ces activités n'est garantie ni imposée à l'ensemble des apprenants. Les Bootcamps court, 1 mois et 3 mois ne sont pas concernés. Lorsqu'un tel stage, projet ou mission a lieu, il s'effectue sous l'autorité de la direction des projets et de l'insertion socio-professionnelle et après accord formel. Un accord préalable devra être validé avant le début du projet, de la mission ou du stage, et remis à la direction des projets au moins quinze jours avant le démarrage.",
+      "Les dispositions relatives à la convention de stage ne s'appliquent que si un stage est effectivement organisé. Lorsqu'un stage en entreprise a lieu, il fait l'objet, après avis favorable, d'une convention entre l'école et l'entreprise d'accueil, établie conformément à la réglementation en vigueur. Cette convention pourra être adaptée lorsque le stage ou la mission se déroule dans une entreprise située à l'étranger.",
+      "Le cas échéant, aucun stage ne débute sans le retour de la convention signée. Les conditions d'assurance et de couverture applicables durant le stage sont précisées dans la convention.",
+    ],
+  },
+  13: {
+    body: [
+      REGLEMENT_ARTICLES[12].body[0], // Alinéa 1 (organisation) — inchangé
+      REGLEMENT_ARTICLES[12].body[1], // Alinéa 2 (déroulement) — inchangé
+      "Alinéa 6 — Délivrance des Certificats : à l'issue de la formation, l'apprenant se voit délivrer, au vu de ses résultats, le certificat IPMD correspondant à la formule suivie : Microcertificat professionnel IPMD (Bootcamp court), Certificat professionnel IPMD — Fondamentaux (Bootcamp 1 mois), Certificat professionnel métier IPMD (Bootcamp 3 mois), Certificat de compétences professionnelles IPMD (Bootcamp 6 mois) ou Certificat supérieur d'expertise professionnelle IPMD (Parcours professionnel de 10 mois à 3 ans selon l'univers). Tout apprenant ayant obtenu une note inférieure ou égale à 09/20 à l'évaluation finale concernée a droit à une session de rattrapage.",
+    ],
+  },
+  14: {
+    body: [
+      "Toute fraude, tentative de fraude ou plagiat commis par un apprenant peut entraîner l'annulation de son épreuve ou la nullité du document remis (rapport, dossier, projet…). En cas de flagrant délit lors d'une épreuve écrite, le candidat doit quitter la salle et se voit attribuer un zéro (0).",
+      REGLEMENT_ARTICLES[13].body[1], // citation anti-plagiat — inchangée
+    ],
+  },
+  15: {
+    body: [
+      REGLEMENT_ARTICLES[14].body[0], // dialogue/suivi — inchangé (pas de « étudiant »)
+      "Dans le cadre d'échanges avec d'autres établissements (conventions de coopération, jumelage, voyages…), l'apprenant devra respecter le règlement intérieur de l'établissement d'accueil. Toute sanction prononcée par l'établissement d'accueil pourra également être suivie d'effet par l'administration de l'école.",
+      "L'apprenant dont le travail sera jugé notoirement insuffisant par le Conseil Pédagogique (article 6) pourra également faire l'objet d'une convocation par l'administration et/ou du conseil de discipline.",
+    ],
+  },
+  16: {
+    body: [
+      "Le conseil de discipline est le seul habilité à prononcer, à l'encontre des apprenants, des sanctions graves de nature à affecter la poursuite de la formation dans l'établissement. L'apprenant y est jugé dans la transparence, par une commission représentative, devant laquelle il peut prendre la parole et se faire assister.",
+      "La commission comprend : 1) l'administrateur général ou son représentant ; 2) éventuellement, selon la faute reprochée, un représentant du corps professoral et/ou un responsable du suivi et de l'accompagnement des apprenants ; 3) sur demande expresse de l'apprenant convoqué, un apprenant de son choix (qui ne prend pas part au vote).",
+      "L'administration peut suspendre la présence de l'apprenant si elle estime que celle-ci est de nature à causer un trouble important dans la séance, l'établissement ou l'entreprise de stage. Un compte-rendu sera adressé à l'apprenant.",
+    ],
+  },
+  17: {
+    body: [
+      "Ce règlement fixe les mesures d'application en matière d'hygiène et de sécurité, de comportements et de respect des lieux. Il s'applique à tous les apprenants inscrits et suivant leur formation dans l'établissement.",
+      "Alinéa 1 — Interdiction de fumer : il est strictement interdit de fumer et de vapoter dans tous les locaux de l'établissement et aux abords de l'établissement.",
+      "Alinéa 2 — Tenue vestimentaire : une tenue et un comportement corrects sont exigés dans les locaux de l'établissement comme lors des activités de représentation de l'école. Pour des raisons de sécurité, il est interdit de porter tout vêtement ou accessoire (casquette, capuche, lunettes de soleil…) rendant difficile l'identification des personnes.",
+      "Alinéa 3 — Interdiction de bizutage : le bizutage, sous quelque forme que ce soit, est strictement interdit et l'école décline toute responsabilité.",
+      "Alinéa 4 — Substances toxiques ou alcoolisées : il est interdit d'introduire et de consommer des substances toxiques ou alcoolisées dans l'école et aux abords de l'école.",
+      "Alinéa 5 — Mesure d'hygiène : il est formellement interdit de consommer nourriture et boisson en dehors des lieux autorisés par l'administration.",
+      "Alinéa 6 — Respect de l'environnement : veiller à ne laisser traîner aucun détritus et utiliser les corbeilles. Il est strictement interdit de sortir le mobilier des salles de cours. Les apprenants respectent scrupuleusement les règles de stationnement.",
+    ],
+  },
+  18: {
+    body: [
+      "Alinéa 1 — Dégradations matérielles : chaque apprenant a l'obligation de conserver en bon état le matériel confié et les locaux mis à sa disposition. L'utilisation du matériel à d'autres fins, notamment personnelles, est interdite. Toute dégradation fait l'objet de sanctions et de poursuites, et le montant des dégâts peut être facturé au responsable.",
+      "Alinéa 2 — Vol ou dommages des biens personnels : l'école décline toute responsabilité en cas de perte, vol ou détérioration des objets personnels apportés ou déposés par les apprenants dans les locaux du campus.",
+    ],
+  },
+  20: {
+    body: [
+      "Alinéa 1 — Courrier personnel : aucun courrier personnel d'apprenant ne saurait être réceptionné par l'école.",
+      "Alinéa 2 — Téléphone de l'école : les messages téléphoniques destinés aux apprenants ne seront enregistrés et transmis que pour des cas graves et urgents. L'usage du téléphone de l'école par les apprenants n'est pas autorisé.",
+      "Alinéa 3 — Téléphone mobile ou smartphone : son utilisation n'est pas autorisée pendant les cours et examens. Toute utilisation entraînera l'exclusion immédiate, une convocation par l'administration, et éventuellement le conseil de discipline en cas de récidive.",
+      "Alinéa 4 — Salles et matériels informatiques ou audiovisuels : les règles d'accès et d'utilisation sont définies par l'administration.",
+      "Alinéa 5 — Ordinateur personnel : un ordinateur personnel est nécessaire pour les formules impliquant des travaux pratiques numériques. Les caractéristiques recommandées sont communiquées à l'inscription selon la formule.",
+      "Alinéa 6 — Charte informatique et internet : la réglementation précisant l'utilisation des technologies de l'information (ordinateur personnel, ordinateur de l'école, wifi, internet…) figure dans le document « Charte Informatique et Internet ». Les photocopieurs sont à l'usage exclusif de l'administration.",
+    ],
+  },
+  22: {
+    body: [
+      "Le non-règlement des frais de scolarité à terme peut, après un premier avertissement, entraîner l'exclusion temporaire ou définitive de l'établissement sur décision de l'administration. Les évaluations auxquelles l'apprenant n'aura pas pris part lui vaudront une note de 0/20. Dès lors, le solde du montant de la scolarité devient immédiatement exigible.",
+      REGLEMENT_ARTICLES[21].body[1], // droits d'inscription non remboursables — inchangé
+    ],
+  },
+  23: {
+    body: [
+      "Tout apprenant inscrit à IPMD est réputé avoir pris connaissance et approuvé le présent règlement intérieur et s'engage à le respecter. Un exemplaire est disponible sur la plateforme.",
+    ],
+  },
+};
+
+export const REGLEMENT_BOOTCAMP_ARTICLES: Article[] = REGLEMENT_ARTICLES.map((a) => {
+  const o = BOOTCAMP_OVERRIDES[a.n];
+  return o ? { ...a, ...(o.title ? { title: o.title } : {}), body: o.body } : a;
+});
+
+export type ReglementSet = { title: string; year: string; version: string; articles: Article[] };
+
+/** Jeu de règlement selon le parcours : bootcamp/certifiant vs diplômant. */
+export function getReglement(isBootcamp: boolean): ReglementSet {
+  return isBootcamp
+    ? { title: REGLEMENT_BOOTCAMP_TITLE, year: REGLEMENT_YEAR, version: REGLEMENT_BOOTCAMP_VERSION, articles: REGLEMENT_BOOTCAMP_ARTICLES }
+    : { title: REGLEMENT_TITLE, year: REGLEMENT_YEAR, version: REGLEMENT_VERSION, articles: REGLEMENT_ARTICLES };
+}
+
+/** Univers certifiants (bootcamps) → règlement Bootcamp. */
+export function isBootcampUniverse(universe: string | null | undefined): boolean {
+  return ["ultrajobs", "ultraboost", "ultraexecutive", "seniorshub"].includes(universe ?? "");
+}
