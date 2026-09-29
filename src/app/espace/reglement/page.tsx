@@ -38,6 +38,26 @@ export default async function ReglementPage() {
       })
     : null;
 
+  // Acceptation d'une version ANTÉRIEURE (ex. diplome-2026-2027 avant r2) : affichée
+  // pour traçabilité, ne vaut pas acceptation de la version en vigueur.
+  const { data: prior } = acceptedAt
+    ? { data: null }
+    : await supabase
+        .from("reglement_acceptances")
+        .select("accepted_at")
+        .eq("user_id", userId)
+        .neq("version", reglement.version)
+        .order("accepted_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+  const priorAcceptedAt = prior?.accepted_at
+    ? new Date(prior.accepted_at).toLocaleDateString("fr-FR", {
+        day: "2-digit",
+        month: "long",
+        year: "numeric",
+      })
+    : null;
+
   return (
     <section className="min-h-[70vh] bg-ipmd-light">
       <Container className="py-12 sm:py-16">
@@ -110,6 +130,13 @@ export default async function ReglementPage() {
                 </p>
               ) : isLearner ? (
                 <>
+                  {priorAcceptedAt && (
+                    <p className="mb-3 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800 ring-1 ring-amber-200">
+                      Vous aviez accepté une version précédente de ce règlement le {priorAcceptedAt}.
+                      Cette version a été mise à jour&nbsp;: merci d&apos;en accuser lecture
+                      ci-dessous. Votre acceptation précédente reste enregistrée.
+                    </p>
+                  )}
                   <p className="mb-3 text-sm font-bold text-ipmd-black">
                     Accusé de lecture (Article 23)
                   </p>

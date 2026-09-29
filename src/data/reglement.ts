@@ -363,13 +363,41 @@ export const REGLEMENT_BOOTCAMP_ARTICLES: Article[] = REGLEMENT_ARTICLES.map((a)
   return o ? { ...a, ...(o.title ? { title: o.title } : {}), body: o.body } : a;
 });
 
+// ──────────────────────────────────────────────────────────────
+// Version Diplôme CORRIGÉE (r2). Retire les références juridiques FRANÇAISES
+// (art. 1 : Code du travail L.6352-3/R.6352-1 ; art. 12 : Décret 2006-1093 et
+// art. L.412-8 Code de la Sécurité Sociale) et l'affirmation de couverture RC non
+// vérifiée. L'IPMD étant en Côte d'Ivoire, on renvoie à « la réglementation en
+// vigueur ». La version historique `diplome-2026-2027` (REGLEMENT_VERSION /
+// REGLEMENT_ARTICLES) reste INCHANGÉE : les acceptations déjà enregistrées demeurent
+// traçables. getReglement(false) sert désormais r2 → les étudiants ayant accepté la
+// v1 devront ré-accuser lecture (mécanisme version-aware du pack et de l'espace).
+// ──────────────────────────────────────────────────────────────
+export const REGLEMENT_VERSION_V2 = "diplome-2026-2027-r2";
+
+const DIPLOME_V2_OVERRIDES: Record<number, string[]> = {
+  1: [
+    "Le présent règlement intérieur définit les règles applicables à l'ensemble des étudiants inscrits à l'IPMD. Il s'inscrit dans le cadre de la réglementation en vigueur en République de Côte d'Ivoire.",
+  ],
+  12: [
+    REGLEMENT_ARTICLES[11].body[0], // Alinéa 1 — inchangé
+    "Aucun stage ou mission ne peut être entamé sans validation préalable de la direction des projets. Après avis favorable, chaque période de stage ou de mission en entreprise fait l'objet d'une convention entre l'école et l'entreprise d'accueil, établie conformément à la réglementation en vigueur. Cette convention pourra être adaptée lorsque le stage ou la mission se déroule dans une entreprise située à l'étranger.",
+    "Le cas échéant, aucun stage ne pourra débuter sans le retour de la convention signée. Les conditions d'assurance et de couverture applicables durant le stage sont précisées dans la convention.",
+  ],
+};
+
+export const REGLEMENT_DIPLOME_V2_ARTICLES: Article[] = REGLEMENT_ARTICLES.map((a) =>
+  DIPLOME_V2_OVERRIDES[a.n] ? { ...a, body: DIPLOME_V2_OVERRIDES[a.n] } : a,
+);
+
 export type ReglementSet = { title: string; year: string; version: string; articles: Article[] };
 
-/** Jeu de règlement selon le parcours : bootcamp/certifiant vs diplômant. */
+/** Jeu de règlement selon le parcours : bootcamp/certifiant vs diplômant.
+ * Le diplôme sert la version corrigée r2 (les acceptations v1 restent traçables). */
 export function getReglement(isBootcamp: boolean): ReglementSet {
   return isBootcamp
     ? { title: REGLEMENT_BOOTCAMP_TITLE, year: REGLEMENT_YEAR, version: REGLEMENT_BOOTCAMP_VERSION, articles: REGLEMENT_BOOTCAMP_ARTICLES }
-    : { title: REGLEMENT_TITLE, year: REGLEMENT_YEAR, version: REGLEMENT_VERSION, articles: REGLEMENT_ARTICLES };
+    : { title: REGLEMENT_TITLE, year: REGLEMENT_YEAR, version: REGLEMENT_VERSION_V2, articles: REGLEMENT_DIPLOME_V2_ARTICLES };
 }
 
 /** Univers certifiants (bootcamps) → règlement Bootcamp. */
