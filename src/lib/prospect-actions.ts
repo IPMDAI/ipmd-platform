@@ -61,6 +61,28 @@ export async function submitProspect(
   if (universe) row.universe = universe;
   const { error } = await supabase.from("prospects").insert(row);
   if (error) return { ok: false, message: error.message };
+
+  // Alerte email à l'équipe des admissions (best-effort — ne bloque jamais).
+  if (canSendEmail) {
+    const rows = buildRows([
+      ["Nom", fullName],
+      ["Email", email],
+      ["Téléphone / WhatsApp", phone],
+      ["Univers", universe || null],
+      ["Programme", program],
+      ["Niveau", level],
+      ["Format", FORMAT_LABEL[format] ?? format],
+      ["Message", message],
+    ]);
+    const html = emailDocument(
+      "Nouvelle demande d'information",
+      `<p style="margin:0 0 12px;color:#374151;font-size:14px">Une nouvelle demande d'information a été reçue via le site. Retrouvez-la dans « Marketing / Prospects ».</p>
+       <table style="width:100%;border-collapse:collapse;font-size:14px">${rows}</table>`
+    );
+    const inbox = process.env.RESEND_ADMISSION ?? "admission@ipmd.pro";
+    await sendScolariteEmail([inbox], `Nouvelle demande d'information — ${fullName}`, html);
+  }
+
   return { ok: true, message: "Merci ! Votre demande a bien été reçue. L'équipe des admissions vous recontactera très vite." };
 }
 
