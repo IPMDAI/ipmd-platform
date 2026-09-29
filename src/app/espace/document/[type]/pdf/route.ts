@@ -134,7 +134,9 @@ export async function GET(
     signatory: {
       title: sig.title,
       name: sig.name,
-      mention: variant === "sous-reserve" ? null : sig.mention,
+      // Attestation de réussite : pas de mention de suppléance/délégation
+      // (le signataire choisi signe directement, conforme au modèle officiel).
+      mention: kind === "reussite" || variant === "sous-reserve" ? null : sig.mention,
     },
     logoSrc: logoDataUri(),
     qrSrc,
