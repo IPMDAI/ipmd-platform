@@ -80,12 +80,14 @@ export function DocumentLetter({
   // Attestation de réussite OFFICIELLE (diplôme, définitive) : en-tête d'État +
   // « Je soussigné… » + corps validé/admis (sans moyenne).
   const official = kind === "reussite" && !isBC && variant !== "sous-reserve";
+  // Année académique affichée : override admin (ex. 2025-2026) sinon année du dossier.
+  const displayYear = (yearOverride && yearOverride.trim()) || dossier.year;
   const officialParas = official
     ? reussiteOfficialParagraphs({
         name: dossier.name,
         program: prog,
         level: levelStr,
-        year: (yearOverride && yearOverride.trim()) || dossier.year,
+        year: displayYear,
         civilite: civilite ?? null,
         admission: admission ?? null,
         soutenance,
@@ -148,7 +150,7 @@ export function DocumentLetter({
               </div>
               <div className="text-right text-[11px] text-black/50">
                 <p className="font-semibold text-ipmd-black">N° {dossier.matricule}</p>
-                <p>Année {dossier.year}</p>
+                <p>Année {displayYear}</p>
               </div>
             </div>
             <h1 className="mt-8 text-center text-xl font-extrabold uppercase tracking-wide text-ipmd-black sm:text-2xl print:mt-4">
@@ -234,7 +236,7 @@ export function DocumentLetter({
                     a satisfait aux exigences pédagogiques de l&apos;IPMD et{" "}
                     <strong>validé son parcours</strong> en{" "}
                     <strong>{programLine(dossier)}</strong>, au titre de
-                    l&apos;année académique <strong>{dossier.year}</strong>
+                    l&apos;année académique <strong>{displayYear}</strong>
                   </>
                 )}
                 {dossier.average !== null ? (
@@ -266,7 +268,7 @@ export function DocumentLetter({
                 ) : (
                   <>
                     est régulièrement {inscrit}{" "}à l&apos;IPMD au titre de
-                    l&apos;année académique <strong>{dossier.year}</strong>, en{" "}
+                    l&apos;année académique <strong>{displayYear}</strong>, en{" "}
                     <strong>{programLine(dossier)}</strong>, et y suit assidûment
                     les enseignements.
                   </>

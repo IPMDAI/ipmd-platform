@@ -263,11 +263,12 @@ export default async function DocumentPage({
               civilite={civilite}
               matricule={matricule}
               date={date}
+              annee={annee}
             />
           )}
 
           {type === "attestation-reussite" && isAdmin && variant !== "sous-reserve" && (
-            <ReussiteOptionsBar admission={admission} soutenance={soutenance} annee={annee} />
+            <ReussiteOptionsBar admission={admission} soutenance={soutenance} />
           )}
 
           <div className="print-area mt-6">

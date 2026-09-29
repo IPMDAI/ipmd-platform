@@ -12,11 +12,9 @@ import { useRouter, usePathname, useSearchParams } from "next/navigation";
 export function ReussiteOptionsBar({
   admission,
   soutenance,
-  annee,
 }: {
   admission?: string;
   soutenance?: string;
-  annee?: string;
 }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -42,17 +40,6 @@ export function ReussiteOptionsBar({
           onBlur={(e) => update("admission", e.target.value.trim())}
           placeholder="ex. admis en Licence 3"
           className={`${field} w-52`}
-        />
-      </label>
-
-      <label className="flex items-center gap-1.5">
-        <span className="font-semibold text-black/55">Année :</span>
-        <input
-          type="text"
-          defaultValue={annee ?? ""}
-          onBlur={(e) => update("annee", e.target.value.trim())}
-          placeholder="ex. 2025-2026"
-          className={`${field} w-28`}
         />
       </label>
 

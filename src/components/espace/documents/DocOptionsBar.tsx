@@ -11,10 +11,12 @@ export function DocOptionsBar({
   civilite,
   matricule,
   date,
+  annee,
 }: {
   civilite?: string;
   matricule?: string;
   date?: string;
+  annee?: string;
 }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -63,6 +65,17 @@ export function DocOptionsBar({
           defaultValue={date ?? ""}
           onChange={(e) => update("date", e.target.value)}
           className={field}
+        />
+      </label>
+
+      <label className="flex items-center gap-1.5">
+        <span className="font-semibold text-black/55">Année académique :</span>
+        <input
+          type="text"
+          defaultValue={annee ?? ""}
+          onBlur={(e) => update("annee", e.target.value.trim())}
+          placeholder="année en cours"
+          className={`${field} w-28`}
         />
       </label>
     </div>
