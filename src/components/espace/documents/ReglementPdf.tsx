@@ -54,10 +54,8 @@ const s = StyleSheet.create({
   article: { marginTop: 11 },
   artTitle: { fontSize: 9, fontWeight: 700, color: RED, textTransform: "uppercase", letterSpacing: 0.4 },
   para: { marginTop: 3, textAlign: "justify" },
-  signBlock: { marginTop: 22, flexDirection: "row", gap: 32 },
-  signCol: { flex: 1 },
-  signLabel: { fontSize: 8, color: MUTED },
-  signLine: { marginTop: 26, borderBottomWidth: 1, borderBottomColor: "#9ca3af" },
+  acceptBox: { marginTop: 20, backgroundColor: "#f6f7f9", borderRadius: 6, padding: 10 },
+  acceptTxt: { fontSize: 8.5, color: MUTED, lineHeight: 1.5 },
   footer: {
     position: "absolute",
     bottom: 18,
@@ -109,15 +107,12 @@ function ReglementDocument({ d }: { d: ReglementPdfData }) {
             </View>
           ))}
 
-          <View style={s.signBlock} wrap={false}>
-            <View style={s.signCol}>
-              <Text style={s.signLabel}>L&apos;apprenant(e) — Date et signature</Text>
-              <View style={s.signLine} />
-            </View>
-            <View style={s.signCol}>
-              <Text style={s.signLabel}>Pour l&apos;IPMD — Date, cachet et signature</Text>
-              <View style={s.signLine} />
-            </View>
+          <View style={s.acceptBox} wrap={false}>
+            <Text style={s.acceptTxt}>
+              Acceptation : l&apos;accusé de lecture du présent règlement est recueilli et
+              horodaté en ligne sur la plateforme IPMD, lors de l&apos;admission ou depuis
+              l&apos;espace personnel (article 23). Le présent document est une copie de référence.
+            </Text>
           </View>
         </View>
 

@@ -149,16 +149,14 @@ export default async function ReglementPage() {
               )}
             </div>
 
-            {/* Pied (impression) */}
-            <div className="mt-8 hidden grid-cols-2 gap-8 border-t border-black/10 pt-6 text-xs text-black/55 print:grid">
-              <div>
-                <p>L&apos;étudiant(e) — Date et signature</p>
-                <div className="mt-10 border-b border-black/30" />
-              </div>
-              <div>
-                <p>Le parent / tuteur légal — Date et signature</p>
-                <div className="mt-10 border-b border-black/30" />
-              </div>
+            {/* Pied (impression) — l'acceptation se fait en ligne (accusé de lecture
+                horodaté, article 23), pas par signature papier. */}
+            <div className="mt-8 hidden border-t border-black/10 pt-6 text-xs text-black/55 print:block">
+              <p>
+                Acceptation&nbsp;: l&apos;accusé de lecture du présent règlement est recueilli et
+                horodaté en ligne sur la plateforme IPMD (article 23). Ce document imprimé est une
+                copie de référence.
+              </p>
             </div>
             <p className="mt-6 text-center text-[11px] text-black/40">
               INSTITUT POLYTECHNIQUE DES MÉTIERS DU DIGITAL — {reglement.title} · {reglement.year}

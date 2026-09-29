@@ -353,7 +353,7 @@ const BOOTCAMP_OVERRIDES: Record<number, ReglementOverride> = {
   },
   23: {
     body: [
-      "Tout apprenant inscrit à IPMD est réputé avoir pris connaissance et approuvé le présent règlement intérieur et s'engage à le respecter. Un exemplaire est disponible sur la plateforme.",
+      "Tout apprenant inscrit à IPMD est tenu de prendre connaissance du présent règlement intérieur et d'en accuser lecture sur la plateforme. Cet accusé de lecture, horodaté et rattaché à la version en vigueur, vaut engagement à respecter le règlement. Un exemplaire est disponible en consultation et en téléchargement sur la plateforme.",
     ],
   },
 };
@@ -383,6 +383,9 @@ const DIPLOME_V2_OVERRIDES: Record<number, string[]> = {
     REGLEMENT_ARTICLES[11].body[0], // Alinéa 1 — inchangé
     "Aucun stage ou mission ne peut être entamé sans validation préalable de la direction des projets. Après avis favorable, chaque période de stage ou de mission en entreprise fait l'objet d'une convention entre l'école et l'entreprise d'accueil, établie conformément à la réglementation en vigueur. Cette convention pourra être adaptée lorsque le stage ou la mission se déroule dans une entreprise située à l'étranger.",
     "Le cas échéant, aucun stage ne pourra débuter sans le retour de la convention signée. Les conditions d'assurance et de couverture applicables durant le stage sont précisées dans la convention.",
+  ],
+  23: [
+    "Tout étudiant inscrit à IPMD est tenu de prendre connaissance du présent règlement intérieur et d'en accuser lecture sur la plateforme. Cet accusé de lecture, horodaté et rattaché à la version en vigueur, vaut engagement à respecter le règlement. Un exemplaire est disponible en consultation et en téléchargement sur la plateforme.",
   ],
 };
 
