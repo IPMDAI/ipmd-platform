@@ -7,6 +7,7 @@ import { PrintButton } from "@/components/espace/PrintButton";
 import { DocumentLetter } from "@/components/espace/documents/DocumentLetter";
 import { StudentCard } from "@/components/espace/documents/StudentCard";
 import { DocOptionsBar } from "@/components/espace/documents/DocOptionsBar";
+import { ReussiteOptionsBar } from "@/components/espace/documents/ReussiteOptionsBar";
 import { getDossier, isDocumentSlug, longDate } from "@/lib/documents";
 import { parseCivilite } from "@/lib/doc-format";
 import { signDoc, verifyUrl } from "@/lib/doc-verify";
@@ -30,10 +31,13 @@ export default async function DocumentPage({
     matricule?: string;
     civilite?: string;
     date?: string;
+    admission?: string;
+    soutenance?: string;
+    annee?: string;
   }>;
 }) {
   const { type } = await params;
-  const { student, signataire, variante, matricule, civilite, date } =
+  const { student, signataire, variante, matricule, civilite, date, admission, soutenance, annee } =
     await searchParams;
   if (!isDocumentSlug(type)) notFound();
 
@@ -78,13 +82,21 @@ export default async function DocumentPage({
     date && /^\d{4}-\d{2}-\d{2}$/.test(date)
       ? longDate(new Date(date + "T12:00:00Z"))
       : undefined;
+  // Réussite : confirmés par l'admin (par étudiant).
+  const soutenanceBool =
+    soutenance === "1" || soutenance === "true"
+      ? true
+      : soutenance === "0" || soutenance === "false"
+      ? false
+      : undefined;
+  const yearOverride = annee?.trim() ? annee.trim().replace(/\s*-\s*/, " – ") : undefined;
 
   const verifyHref = verifyUrl(
     signDoc({
       t: type,
       m: effectiveMatricule,
       n: dossier.name,
-      y: dossier.year,
+      y: yearOverride ?? dossier.year,
       ...(type === "attestation-reussite" && variant !== "sous-reserve"
         ? { a: dossier.average, me: dossier.mention }
         : {}),
@@ -119,6 +131,9 @@ export default async function DocumentPage({
     if (matricule) qs.set("matricule", matricule);
     if (civilite) qs.set("civilite", civilite);
     if (date) qs.set("date", date);
+    if (admission) qs.set("admission", admission);
+    if (soutenance) qs.set("soutenance", soutenance);
+    if (annee) qs.set("annee", annee);
     return `?${qs.toString()}`;
   };
 
@@ -131,6 +146,9 @@ export default async function DocumentPage({
     if (matricule) qs.set("matricule", matricule);
     if (civilite) qs.set("civilite", civilite);
     if (date) qs.set("date", date);
+    if (admission) qs.set("admission", admission);
+    if (soutenance) qs.set("soutenance", soutenance);
+    if (annee) qs.set("annee", annee);
     const q = qs.toString();
     return `/espace/document/${type}/pdf${q ? `?${q}` : ""}`;
   })();
@@ -143,6 +161,9 @@ export default async function DocumentPage({
     if (matricule) qs.set("matricule", matricule);
     if (civilite) qs.set("civilite", civilite);
     if (date) qs.set("date", date);
+    if (admission) qs.set("admission", admission);
+    if (soutenance) qs.set("soutenance", soutenance);
+    if (annee) qs.set("annee", annee);
     if (v === "sous-reserve") qs.set("variante", "sous-reserve");
     const q = qs.toString();
     return q ? `?${q}` : "?";
@@ -245,6 +266,10 @@ export default async function DocumentPage({
             />
           )}
 
+          {type === "attestation-reussite" && isAdmin && variant !== "sous-reserve" && (
+            <ReussiteOptionsBar admission={admission} soutenance={soutenance} annee={annee} />
+          )}
+
           <div className="print-area mt-6">
             {type === "carte" ? (
               <StudentCard dossier={dossier} verifyHref={verifyHref} />
@@ -257,6 +282,9 @@ export default async function DocumentPage({
                 matricule={effectiveMatricule}
                 civilite={civ}
                 dateLabel={dateLabel}
+                admission={admission ?? null}
+                soutenance={soutenanceBool}
+                yearOverride={yearOverride ?? null}
                 signatory={{
                   title: sig.title,
                   name: sig.name,

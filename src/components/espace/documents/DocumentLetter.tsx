@@ -1,6 +1,13 @@
 import Image from "next/image";
 import { longDate, type Dossier } from "@/lib/documents";
-import { programLine, birthLine, levelPhrases } from "@/lib/doc-format";
+import {
+  programLine,
+  birthLine,
+  levelPhrases,
+  reussiteOfficialParagraphs,
+  soussigneIntro,
+  MINISTRY_HEADER,
+} from "@/lib/doc-format";
 import { QrCode } from "@/components/espace/documents/QrCode";
 import { Cachet } from "@/components/espace/documents/Cachet";
 import { OfficialFooter } from "@/components/espace/documents/OfficialFooter";
@@ -36,6 +43,9 @@ export function DocumentLetter({
   matricule,
   civilite,
   dateLabel,
+  admission,
+  soutenance,
+  yearOverride,
 }: {
   dossier: Dossier;
   kind: Kind;
@@ -45,6 +55,10 @@ export function DocumentLetter({
   matricule?: string;
   civilite?: { label: string; fem: boolean } | null;
   dateLabel?: string;
+  admission?: string | null;
+  soutenance?: boolean;
+  /** Réussite : année académique confirmée par l'admin (ex. « 2025 – 2026 »). */
+  yearOverride?: string | null;
 }) {
   const isBC = dossier.isBootcamp;
   const title = (isBC ? TITLES_BOOTCAMP : TITLES)[kind];
@@ -63,6 +77,20 @@ export function DocumentLetter({
   const sujet = civilite ? `${civilite.label} ${dossier.name}` : "l'intéressé(e)";
   const inscrit = fem === true ? "inscrite" : fem === false ? "inscrit" : "inscrit(e)";
   const interesse = fem === true ? "l'intéressée" : fem === false ? "l'intéressé" : "l'intéressé(e)";
+  // Attestation de réussite OFFICIELLE (diplôme, définitive) : en-tête d'État +
+  // « Je soussigné… » + corps validé/admis (sans moyenne).
+  const official = kind === "reussite" && !isBC && variant !== "sous-reserve";
+  const officialParas = official
+    ? reussiteOfficialParagraphs({
+        name: dossier.name,
+        program: prog,
+        level: levelStr,
+        year: (yearOverride && yearOverride.trim()) || dossier.year,
+        civilite: civilite ?? null,
+        admission: admission ?? null,
+        soutenance,
+      })
+    : [];
 
   return (
     <div className="document-page relative overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-black/5 print:rounded-none print:shadow-none print:ring-0 print:mb-2 print:border-t-[6px] print:border-ipmd-red">
@@ -71,47 +99,73 @@ export function DocumentLetter({
       <div className="h-2 w-full bg-gradient-to-r from-ipmd-black via-ipmd-red to-ipmd-black print:hidden" />
 
       <div className="px-8 py-10 sm:px-12 print:px-10 print:py-6">
-        {/* En-tête institutionnel */}
-        <div className="flex items-start justify-between gap-4 border-b border-black/10 pb-6">
-          <div className="flex items-center gap-3">
-            <span className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-full bg-white ring-1 ring-black/10">
-              <Image
-                src="/logo-ipmd.png"
-                alt="Logo IPMD"
-                width={56}
-                height={56}
-                className="h-full w-full object-contain"
-              />
-            </span>
-            <div className="leading-tight">
-              <p className="text-base font-extrabold tracking-tight text-ipmd-black">
-                IPMD
-              </p>
-              <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-black/55">
+        {official ? (
+          /* En-tête OFFICIEL — Attestation de réussite uniquement (centré, encadré). */
+          <>
+            <div className="mb-4 flex items-start justify-between gap-4 text-[10px] font-semibold uppercase leading-tight text-black/70">
+              <p className="max-w-[46%] whitespace-pre-line">{MINISTRY_HEADER.left}</p>
+              <div className="max-w-[46%] text-right">
+                <p>{MINISTRY_HEADER.right}</p>
+                <p className="font-normal normal-case italic text-black/55">{MINISTRY_HEADER.motto}</p>
+              </div>
+            </div>
+            <div className="flex flex-col items-center text-center">
+              <span className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-full bg-white ring-1 ring-black/10">
+                <Image src="/logo-ipmd.png" alt="Logo IPMD" width={64} height={64} className="h-full w-full object-contain" />
+              </span>
+              <p className="mt-2 font-serif text-xl font-bold text-black/45">
                 Institut Polytechnique des Métiers du Digital
               </p>
-              <p className="text-[11px] text-black/45">
-                Abidjan — Côte d&apos;Ivoire · ipmd.pro
-              </p>
+              <p className="text-[12px] text-black/55">{MINISTRY_HEADER.estab}</p>
             </div>
-          </div>
-          <div className="text-right text-[11px] text-black/50">
-            <p className="font-semibold text-ipmd-black">N° {dossier.matricule}</p>
-            <p>Année {dossier.year}</p>
-          </div>
-        </div>
-
-        {/* Titre */}
-        <h1 className="mt-8 text-center text-xl font-extrabold uppercase tracking-wide text-ipmd-black sm:text-2xl print:mt-4">
-          {title}
-        </h1>
-        <div className="mx-auto mt-2 h-1 w-16 rounded-full bg-ipmd-red" />
+            <div className="mt-5 rounded-xl border border-black/70 py-3 print:mt-3">
+              <h1 className="text-center text-xl font-extrabold uppercase tracking-wide text-ipmd-black sm:text-2xl">
+                {title}
+              </h1>
+            </div>
+          </>
+        ) : (
+          /* En-tête standard — Attestation / Certificat de scolarité (inchangé). */
+          <>
+            <div className="flex items-start justify-between gap-4 border-b border-black/10 pb-6">
+              <div className="flex items-center gap-3">
+                <span className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-full bg-white ring-1 ring-black/10">
+                  <Image
+                    src="/logo-ipmd.png"
+                    alt="Logo IPMD"
+                    width={56}
+                    height={56}
+                    className="h-full w-full object-contain"
+                  />
+                </span>
+                <div className="leading-tight">
+                  <p className="text-base font-extrabold tracking-tight text-ipmd-black">IPMD</p>
+                  <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-black/55">
+                    Institut Polytechnique des Métiers du Digital
+                  </p>
+                  <p className="text-[11px] text-black/45">Abidjan — Côte d&apos;Ivoire · ipmd.pro</p>
+                </div>
+              </div>
+              <div className="text-right text-[11px] text-black/50">
+                <p className="font-semibold text-ipmd-black">N° {dossier.matricule}</p>
+                <p>Année {dossier.year}</p>
+              </div>
+            </div>
+            <h1 className="mt-8 text-center text-xl font-extrabold uppercase tracking-wide text-ipmd-black sm:text-2xl print:mt-4">
+              {title}
+            </h1>
+            <div className="mx-auto mt-2 h-1 w-16 rounded-full bg-ipmd-red" />
+          </>
+        )}
 
         {/* Corps */}
         <div className="mt-8 space-y-4 text-[15px] leading-relaxed text-black/80 print:mt-4 print:space-y-2">
           <p>
-            L&apos;Institut Polytechnique des Métiers du Digital (IPMD){" "}
-            {kind === "certificat" ? "certifie" : "atteste"} que :
+            {official
+              ? soussigneIntro(signatory.title)
+              : `L'Institut Polytechnique des Métiers du Digital (IPMD) ${
+                  kind === "certificat" ? "certifie" : "atteste"
+                } que :`}
           </p>
 
           <div className="rounded-xl bg-ipmd-light px-5 py-4">
@@ -160,6 +214,12 @@ export function DocumentLetter({
                   La présente attestation lui est délivrée pour servir et valoir
                   ce que de droit.
                 </p>
+              </>
+            ) : official ? (
+              <>
+                {officialParas.map((t, i) => (
+                  <p key={i}>{t}</p>
+                ))}
               </>
             ) : (
             <>

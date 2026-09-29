@@ -103,6 +103,98 @@ export function levelPhrases(
   };
 }
 
+// ── Attestation de RÉUSSITE — format officiel (en-tête ministériel) ──────────
+
+/** En-tête d'État (haut du document officiel). */
+export const MINISTRY_HEADER = {
+  left: "MINISTÈRE DE L'ENSEIGNEMENT SUPÉRIEUR\nET DE LA RECHERCHE SCIENTIFIQUE",
+  right: "RÉPUBLIQUE DE CÔTE D'IVOIRE",
+  motto: "Union – Discipline – Travail",
+  estab: "Établissement privé d'enseignement supérieur",
+};
+
+/** « Le Directeur des Études » → « Directeur des Études » (retire l'article). */
+export function stripArticle(title: string): string {
+  return title.replace(/^\s*(l['’]|le\s+|la\s+)/i, "").trim();
+}
+
+/** Accord « soussigné(e) » d'après le genre grammatical de la fonction. */
+export function soussigneWord(title: string): string {
+  return /directrice/i.test(title) || /^\s*la\s/i.test(title) ? "soussignée" : "soussigné";
+}
+
+/** Introduction « Je soussigné(e), <fonction> de l'IPMD, atteste par la présente que : ». */
+export function soussigneIntro(signatoryTitle: string): string {
+  return `Je ${soussigneWord(signatoryTitle)}, ${stripArticle(
+    signatoryTitle
+  )} de l'Institut Polytechnique des Métiers du Digital (IPMD), atteste par la présente que :`;
+}
+
+/** Fin de cycle (L3 / M2 / Master Pro) → clause soutenance de projet de fin de formation. */
+export function isEndOfCycle(level: string | null): boolean {
+  const l = (level ?? "").toLowerCase();
+  return (
+    /licence\s*3|\bl3\b/.test(l) ||
+    /master\s*2|\bm2\b/.test(l) ||
+    (/master/.test(l) && /(pro|unique|intensif)/.test(l))
+  );
+}
+
+/** Formule d'admission/obtention selon le niveau validé. */
+export function admissionPhrase(level: string | null, fem?: boolean | null): string {
+  const admis = fem === true ? "admise" : fem === false ? "admis" : "admis(e)";
+  const l = (level ?? "").toLowerCase();
+  if (/master/.test(l)) {
+    if (/master\s*1|\bm1\b/.test(l)) return `${admis} en Master 2 (M2)`;
+    return "titulaire du Master professionnel";
+  }
+  if (/licence/.test(l)) {
+    const m = l.match(/licence\s*(\d)|\bl(\d)\b/);
+    const n = m ? parseInt(m[1] ?? m[2], 10) : NaN;
+    if (n === 1) return `${admis} en deuxième année de Licence (L2)`;
+    if (n === 2) return `${admis} en troisième année de Licence (L3)`;
+    return `titulaire de la Licence professionnelle et ${admis} en Master 1 (M1)`;
+  }
+  return `${admis} à l'année supérieure`;
+}
+
+/**
+ * Corps officiel de l'attestation de RÉUSSITE (sans moyenne ni mention).
+ * « <sujet> a validé avec succès l'ensemble de ses semestres[ + soutenance],
+ *  … En conséquence, il/elle est déclaré(e) <admission>, filière …, … ».
+ */
+export function reussiteOfficialParagraphs(opts: {
+  name: string;
+  program: string;
+  level: string | null;
+  year: string;
+  civilite: { label: string; fem: boolean } | null;
+  /** Libellé d'admission/titre CONFIRMÉ par l'admin (ex. « admis en Licence 3 »).
+   * À défaut, repli sur admissionPhrase (à faire valider avant émission). */
+  admission?: string | null;
+  /** Clause soutenance CONFIRMÉE par l'admin. undefined → repli sur isEndOfCycle. */
+  soutenance?: boolean;
+}): string[] {
+  const fem = opts.civilite?.fem ?? null;
+  const sujet = opts.civilite ? `${opts.civilite.label} ${opts.name}` : opts.name;
+  const ilelle = fem === true ? "elle" : fem === false ? "il" : "il/elle";
+  const declare = fem === true ? "déclarée" : fem === false ? "déclaré" : "déclaré(e)";
+  const dashIdx = opts.program.indexOf(" — ");
+  const filiere = dashIdx >= 0 ? opts.program.slice(dashIdx + 3) : null;
+  const withSoutenance = opts.soutenance ?? isEndOfCycle(opts.level);
+  const soutenance = withSoutenance
+    ? ", présenté ses projets digitaux et soutenu avec succès son projet de fin de formation"
+    : "";
+  const admission = (opts.admission && opts.admission.trim()) || admissionPhrase(opts.level, fem);
+  return [
+    `${sujet} a validé avec succès l'ensemble de ses semestres${soutenance}, conformément aux exigences académiques de l'Institut, au titre de l'année académique ${opts.year}.`,
+    `En conséquence, ${ilelle} est ${declare} ${admission}${
+      filiere ? `, filière ${filiere}` : ""
+    }, ayant satisfait à l'ensemble des exigences académiques requises pour la validation de son parcours de formation.`,
+    "La présente attestation lui est délivrée pour servir et valoir ce que de droit.",
+  ];
+}
+
 export type DocKind = "scolarite" | "certificat" | "reussite";
 
 /** Intitulé officiel du document selon le type (diplôme vs bootcamp). */

@@ -7,7 +7,14 @@ import {
   StyleSheet,
   renderToBuffer,
 } from "@react-pdf/renderer";
-import { OFFICIAL_LEGAL_LINES, NB_SHORT, levelPhrases } from "@/lib/doc-format";
+import {
+  OFFICIAL_LEGAL_LINES,
+  NB_SHORT,
+  levelPhrases,
+  reussiteOfficialParagraphs,
+  soussigneIntro,
+  MINISTRY_HEADER,
+} from "@/lib/doc-format";
 
 export type AttestationPdfData = {
   kind: "scolarite" | "certificat" | "reussite";
@@ -24,6 +31,10 @@ export type AttestationPdfData = {
   average: number | null;
   mention: string;
   longDate: string;
+  /** Réussite : libellé d'admission confirmé par l'admin (ex. « admis en Licence 3 »). */
+  admission?: string | null;
+  /** Réussite : clause soutenance confirmée par l'admin. */
+  soutenance?: boolean;
   signatory: { title: string; name: string; mention: string | null };
   logoSrc: string;
   qrSrc: string;
@@ -41,6 +52,18 @@ const s = StyleSheet.create({
   bar: { height: 6, backgroundColor: RED },
   // Zone principale extensible : pousse le pied légal + la bande tout en bas.
   body: { paddingHorizontal: 40, paddingTop: 16, flexGrow: 1 },
+  ministryRow: { flexDirection: "row", justifyContent: "space-between", marginBottom: 10 },
+  ministryRight: { alignItems: "flex-end" },
+  ministryTxt: { fontSize: 7.5, fontWeight: 700, color: BLACK, maxWidth: 250 },
+  ministryMotto: { fontSize: 7.5, fontStyle: "italic", color: MUTED, marginTop: 1 },
+  // En-tête officiel centré (attestation de réussite) — nom de l'Institut en
+  // serif gris (police Times intégrée à @react-pdf), fidèle au modèle fourni.
+  centerHead: { alignItems: "center", marginTop: 2 },
+  centerLogo: { width: 72, height: 72, objectFit: "contain", marginBottom: 4 },
+  instName: { fontSize: 18, fontFamily: "Times-Bold", color: "#8a8a8a", textAlign: "center" },
+  instSub: { fontSize: 9, color: MUTED, textAlign: "center", marginTop: 2 },
+  titleBox: { marginTop: 12, marginBottom: 8, borderWidth: 1.2, borderColor: "#111114", borderRadius: 8, paddingVertical: 10, paddingHorizontal: 14 },
+  titleBoxTxt: { fontSize: 16, fontWeight: 700, textAlign: "center", color: BLACK, letterSpacing: 0.5 },
   headerRow: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -109,6 +132,21 @@ function buildBody(d: AttestationPdfData): string[] {
   const inscrit = fem === true ? "inscrite" : fem === false ? "inscrit" : "inscrit(e)";
   const interesse = fem === true ? "l'intéressée" : fem === false ? "l'intéressé" : "l'intéressé(e)";
   if (d.kind === "reussite") {
+    // Format OFFICIEL (diplôme, définitif) : « Je soussigné… a validé ses
+    // semestres… déclaré admis en… » — sans moyenne ni mention.
+    if (!isBC && d.variant !== "sous-reserve") {
+      const dashIdx = d.programLine.indexOf(" — ");
+      const level = dashIdx >= 0 ? d.programLine.slice(0, dashIdx) : d.programLine;
+      return reussiteOfficialParagraphs({
+        name: d.name,
+        program: d.programLine,
+        level,
+        year: d.year,
+        civilite: d.civilite ?? null,
+        admission: d.admission ?? null,
+        soutenance: d.soutenance,
+      });
+    }
     // Variante « sous réserve de soutenance » (documents diplômants).
     if (!isBC && d.variant === "sous-reserve") {
       const dashIdx = d.programLine.indexOf(" — ");
@@ -142,35 +180,60 @@ function buildBody(d: AttestationPdfData): string[] {
 function AttestationDocument({ d }: { d: AttestationPdfData }) {
   const paras = buildBody(d);
   const verb = d.kind === "certificat" ? "certifie" : "atteste";
+  // Réussite officielle (diplôme, définitive) : formule « Je soussigné… » + corps validé/admis.
+  const official = d.kind === "reussite" && !d.isBootcamp && d.variant !== "sous-reserve";
 
   return (
     <Document title={`${d.title} — ${d.name}`} author="IPMD">
       <Page size="A4" style={s.page}>
         <View style={s.bar} />
         <View style={s.body}>
-          {/* En-tête */}
-          <View style={s.headerRow}>
-            <View style={s.headerLeft}>
-              <Image src={d.logoSrc} style={s.logo} />
-              <View>
-                <Text style={s.brand}>IPMD</Text>
-                <Text style={s.brandSub}>Institut Polytechnique des Métiers du Digital</Text>
-                <Text style={s.brandLoc}>Abidjan — Côte d&apos;Ivoire · ipmd.pro</Text>
+          {official ? (
+            /* En-tête OFFICIEL — Attestation de réussite uniquement (centré, encadré). */
+            <>
+              <View style={s.ministryRow}>
+                <Text style={s.ministryTxt}>{MINISTRY_HEADER.left}</Text>
+                <View style={s.ministryRight}>
+                  <Text style={s.ministryTxt}>{MINISTRY_HEADER.right}</Text>
+                  <Text style={s.ministryMotto}>{MINISTRY_HEADER.motto}</Text>
+                </View>
               </View>
-            </View>
-            <View style={s.headerRight}>
-              <Text style={s.num}>N° {d.reference ?? d.matricule}</Text>
-              <Text style={s.yearTxt}>Année {d.year}</Text>
-            </View>
-          </View>
-
-          {/* Titre */}
-          <Text style={s.title}>{d.title}</Text>
-          <View style={s.titleRule} />
+              <View style={s.centerHead}>
+                <Image src={d.logoSrc} style={s.centerLogo} />
+                <Text style={s.instName}>Institut Polytechnique des Métiers du Digital</Text>
+                <Text style={s.instSub}>{MINISTRY_HEADER.estab}</Text>
+              </View>
+              <View style={s.titleBox}>
+                <Text style={s.titleBoxTxt}>{d.title}</Text>
+              </View>
+            </>
+          ) : (
+            /* En-tête standard — Attestation / Certificat de scolarité (inchangé). */
+            <>
+              <View style={s.headerRow}>
+                <View style={s.headerLeft}>
+                  <Image src={d.logoSrc} style={s.logo} />
+                  <View>
+                    <Text style={s.brand}>IPMD</Text>
+                    <Text style={s.brandSub}>Institut Polytechnique des Métiers du Digital</Text>
+                    <Text style={s.brandLoc}>Abidjan — Côte d&apos;Ivoire · ipmd.pro</Text>
+                  </View>
+                </View>
+                <View style={s.headerRight}>
+                  <Text style={s.num}>N° {d.reference ?? d.matricule}</Text>
+                  <Text style={s.yearTxt}>Année {d.year}</Text>
+                </View>
+              </View>
+              <Text style={s.title}>{d.title}</Text>
+              <View style={s.titleRule} />
+            </>
+          )}
 
           {/* Corps */}
           <Text style={s.intro}>
-            L&apos;Institut Polytechnique des Métiers du Digital (IPMD) {verb} que :
+            {official
+              ? soussigneIntro(d.signatory.title)
+              : `L'Institut Polytechnique des Métiers du Digital (IPMD) ${verb} que :`}
           </Text>
 
           <View style={s.nameBox}>

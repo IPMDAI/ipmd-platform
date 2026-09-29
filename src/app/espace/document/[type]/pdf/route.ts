@@ -57,10 +57,23 @@ export async function GET(
   const matriculeOverride = url.searchParams.get("matricule")?.trim() || undefined;
   const civilite = parseCivilite(url.searchParams.get("civilite"));
   const dateParam = url.searchParams.get("date")?.trim() || undefined;
+  // Réussite : libellé d'admission + clause soutenance CONFIRMÉS par l'admin.
+  const admissionParam = url.searchParams.get("admission")?.trim() || undefined;
+  const soutenanceParam = url.searchParams.get("soutenance");
+  const soutenance =
+    soutenanceParam === "1" || soutenanceParam === "true"
+      ? true
+      : soutenanceParam === "0" || soutenanceParam === "false"
+      ? false
+      : undefined;
+  // Année académique confirmée par l'admin (ex. réussite « 2025-2026 »). À défaut,
+  // année courante du dossier (comportement inchangé pour les autres documents).
+  const anneeParam = url.searchParams.get("annee")?.trim() || undefined;
   const targetId = student || userId;
 
   const dossier = await getDossier(targetId);
   if (!dossier) return new Response("Dossier introuvable.", { status: 404 });
+  const effectiveYear = anneeParam ? anneeParam.replace(/\s*-\s*/, " – ") : dossier.year;
 
   // Variante « sous réserve » (attestation de réussite) + matricule affiché.
   const variant =
@@ -85,7 +98,7 @@ export async function GET(
       t: type,
       m: effectiveMatricule,
       n: dossier.name,
-      y: dossier.year,
+      y: effectiveYear,
       ...(type === "attestation-reussite" && variant !== "sous-reserve"
         ? { a: dossier.average, me: dossier.mention }
         : {}),
@@ -110,12 +123,14 @@ export async function GET(
     name: dossier.name,
     matricule: effectiveMatricule,
     reference: dossier.matricule,
-    year: dossier.year,
+    year: effectiveYear,
     programLine: programLine(dossier),
     birthLine: birthLine(dossier, civilite?.fem ?? null),
     average: dossier.average,
     mention: dossier.mention,
     longDate: docDate,
+    admission: admissionParam ?? null,
+    soutenance,
     signatory: {
       title: sig.title,
       name: sig.name,
