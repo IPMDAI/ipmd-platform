@@ -269,8 +269,7 @@ export function DocumentLetter({
                   <>
                     est régulièrement {inscrit}{" "}à l&apos;IPMD au titre de
                     l&apos;année académique <strong>{displayYear}</strong>, en{" "}
-                    <strong>{programLine(dossier)}</strong>, et y suit assidûment
-                    les enseignements.
+                    <strong>{programLine(dossier)}</strong>.
                   </>
                 )}
               </p>

@@ -172,7 +172,7 @@ function buildBody(d: AttestationPdfData): string[] {
   return [
     isBC
       ? `est régulièrement ${inscrit} au bootcamp ${d.programLine} à l'IPMD, et y suit assidûment la formation.`
-      : `est régulièrement ${inscrit} à l'IPMD au titre de l'année académique ${d.year}, en ${d.programLine}, et y suit assidûment les enseignements.`,
+      : `est régulièrement ${inscrit} à l'IPMD au titre de l'année académique ${d.year}, en ${d.programLine}.`,
     `${d.kind === "certificat" ? "Le présent certificat est délivré" : "La présente attestation est délivrée"} à ${interesse} pour servir et valoir ce que de droit.`,
   ];
 }
