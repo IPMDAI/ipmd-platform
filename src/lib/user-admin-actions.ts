@@ -261,8 +261,10 @@ export async function inviteFromCandidature(
   // 2b. MATRICULE — attribué AVANT le passage « inscrit ».
   //  • appel exclusivement serveur, via le client service_role (assign_matricule
   //    n'est exécutable que par service_role) ;
-  //  • atomique + idempotent (aucun nouveau numéro si le profil en a déjà un) ;
-  //  • jamais de parsing de full_name : on n'utilise que last_name/first_names ;
+  //  • atomique + idempotent (aucun nouveau numéro si le profil en a déjà un ;
+  //    le matricule ne change JAMAIS ensuite, même en cas de changement de classe) ;
+  //  • format IPMD-{N}EA{AADEB}{AAFIN}R{MM} : N = numéro global incrémental (seq),
+  //    EA = année académique d'entrée, R = mois réel de 1re inscription (maintenant) ;
   //  • sécurité transactionnelle : si l'attribution échoue, on RETOURNE une erreur
   //    SANS marquer la candidature « inscrit » (statut inchangé → réessai possible,
   //    idempotent). L'ordre garantit : status='inscrit' ⟹ matricule attribué.
@@ -275,18 +277,19 @@ export async function inviteFromCandidature(
       .maybeSingle();
     matriculeYear = (fs?.academic_year as string) ?? null;
   }
-  if (!matriculeYear || !cand.last_name || !cand.first_names) {
+  if (!matriculeYear) {
     return {
       ok: false,
       message:
-        "Matricule impossible : année académique ou identité (nom / prénoms) manquante sur la candidature. Statut inchangé.",
+        "Matricule impossible : année académique manquante sur la candidature. Statut inchangé.",
     };
   }
+  // R = mois d'inscription officielle = mois de la finalisation (maintenant).
+  const inscriptionMonth = String(new Date().getMonth() + 1).padStart(2, "0");
   const { error: matErr } = await admin.rpc("assign_matricule", {
     p_student: newId,
     p_academic_year: matriculeYear,
-    p_last_name: cand.last_name,
-    p_first_names: cand.first_names,
+    p_month: inscriptionMonth,
   });
   if (matErr) {
     return {

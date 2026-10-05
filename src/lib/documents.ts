@@ -106,7 +106,10 @@ export type Dossier = {
   level: string | null;
   universe: string | null;
   isBootcamp: boolean;
+  /** Matricule complet affiché (base + rentrée, ex. IPMD-597E0279-R10-2026). */
   matricule: string;
+  /** Identifiant court (base), utilisé comme N° du document. */
+  baseMatricule: string;
   year: string;
   average: number | null;
   mention: string;
@@ -122,7 +125,7 @@ export async function getDossier(studentId: string): Promise<Dossier | null> {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("full_name, email, universe, birth_date, birth_place, avatar_url")
+    .select("full_name, email, universe, birth_date, birth_place, avatar_url, matricule")
     .eq("id", studentId)
     .single();
   if (!profile) return null;
@@ -171,7 +174,10 @@ export async function getDossier(studentId: string): Promise<Dossier | null> {
     level,
     universe: profile.universe ? universeNameById[profile.universe] ?? null : null,
     isBootcamp: profile.universe ? universeKindById[profile.universe] === "certificat" : false,
-    matricule: matricule(studentId),
+    // Matricule officiel STOCKÉ (profiles.matricule, attribué à l'inscription) ;
+    // repli sur l'identifiant court pour les fiches sans matricule (ex. <2026-2027).
+    matricule: (profile.matricule as string | null) ?? matricule(studentId),
+    baseMatricule: matricule(studentId),
     year: academicYear(),
     average,
     mention: mention(average),

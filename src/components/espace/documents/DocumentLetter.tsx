@@ -149,7 +149,7 @@ export function DocumentLetter({
                 </div>
               </div>
               <div className="text-right text-[11px] text-black/50">
-                <p className="font-semibold text-ipmd-black">N° {dossier.matricule}</p>
+                <p className="font-semibold text-ipmd-black">N° {dossier.baseMatricule}</p>
                 <p>Année {displayYear}</p>
               </div>
             </div>
