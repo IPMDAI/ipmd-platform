@@ -155,7 +155,7 @@ export default async function FinancePage({
     const fin = computeFinance(f, payByStudent.get(s.id) ?? []);
     const sched = computeSchedule(
       (schedByStudent.get(s.id) ?? []).map((x, i) => ({ id: String(i), label: null, ...x })),
-      fin.totalPaid,
+      fin.paidScolarite, // échéancier = scolarité : exclure les frais d'inscription
       today
     );
     const overdue = sched.rows.filter((r) => r.status === "retard");

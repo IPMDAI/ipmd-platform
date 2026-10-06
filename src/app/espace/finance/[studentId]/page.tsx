@@ -146,7 +146,10 @@ export default async function StudentFinancePage({
   const scolaritySettled = fin.tuitionSettled || (fin.balance <= 0 && fin.totalDue > 0);
 
   const today = new Date().toISOString().slice(0, 10);
-  const { rows: schedule } = computeSchedule(scheduleRows ?? [], fin.totalPaid, today);
+  // L'échéancier porte sur la SCOLARITÉ uniquement : on n'y impute que les
+  // paiements de scolarité (pas les frais d'inscription), sinon les 1res tranches
+  // apparaîtraient « payées » à hauteur de l'inscription.
+  const { rows: schedule } = computeSchedule(scheduleRows ?? [], fin.paidScolarite, today);
 
   const droits = [
     { label: "Polo", ok: fin.registrationSettled },

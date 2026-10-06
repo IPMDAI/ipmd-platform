@@ -28,7 +28,7 @@ export default async function MesPaiementsPage() {
         .maybeSingle(),
       supabase
         .from("payments")
-        .select("id, amount, method, label, paid_at")
+        .select("id, amount, method, label, paid_at, kind")
         .eq("student_id", userId)
         .eq("status", "paye")
         .order("paid_at", { ascending: false }),
@@ -42,6 +42,11 @@ export default async function MesPaiementsPage() {
   const bourse = Number(finance?.scholarship_amount ?? 0); // bourse IPMD appliquée (0 si aucune)
   const payments = paymentRows ?? [];
   const totalPaid = payments.reduce((a, p) => a + Number(p.amount), 0);
+  // Échéancier = scolarité : on n'y impute pas les frais d'inscription.
+  const paidScolarite = payments.reduce(
+    (a, p) => a + (p.kind === "inscription" ? 0 : Number(p.amount)),
+    0
+  );
   const balance = totalDue - totalPaid;
 
   const access = finance?.access_state ?? "actif";
@@ -58,7 +63,7 @@ export default async function MesPaiementsPage() {
   const today = new Date().toISOString().slice(0, 10);
   const { rows: schedule, next } = computeSchedule(
     scheduleRows ?? [],
-    totalPaid,
+    paidScolarite,
     today
   );
 
