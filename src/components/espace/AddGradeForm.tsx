@@ -83,28 +83,19 @@ export function AddGradeForm({
             </select>
           </Field>
 
-          <div className="grid grid-cols-2 gap-3">
-            <Field label="Type" htmlFor="g-type">
-              <select id="g-type" name="type" defaultValue="classe" className={inputBase}>
-                {GRADE_TYPES.map((t) => (
-                  <option key={t.value} value={t.value}>
-                    {t.label}
-                  </option>
-                ))}
-              </select>
-            </Field>
-            <Field label="Coefficient" htmlFor="g-coef">
-              <input
-                id="g-coef"
-                name="coefficient"
-                type="number"
-                step="0.5"
-                min="0.5"
-                defaultValue="1"
-                className={inputBase}
-              />
-            </Field>
-          </div>
+          <Field label="Type" htmlFor="g-type">
+            <select id="g-type" name="type" defaultValue="classe" className={inputBase}>
+              {GRADE_TYPES.map((t) => (
+                <option key={t.value} value={t.value}>
+                  {t.label}
+                </option>
+              ))}
+            </select>
+          </Field>
+          <p className="rounded-lg bg-ipmd-light px-3 py-2 text-xs font-medium text-black/60">
+            Coefficient automatique : <strong>Classe ×1</strong> · <strong>Examen ×2</strong>{" "}
+            — moyenne = (classe × 1 + examen × 2) ÷ 3.
+          </p>
 
           <div className="grid grid-cols-2 gap-3">
             <Field label="Note" htmlFor="g-score" required>

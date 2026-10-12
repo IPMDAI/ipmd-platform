@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { resolveGradeTypeAndCoef } from "@/lib/grades";
 import type { FormResult } from "@/types";
 
 /** Récupère le contexte enseignant (ou super_admin), sinon null. */
@@ -253,9 +254,9 @@ export async function addGrade(
     return { ok: false, message: "La note dépasse le barème." };
   }
 
-  const type = str(formData, "type") === "examen" ? "examen" : "classe";
-  const coefRaw = str(formData, "coefficient").replace(",", ".");
-  const coef = coefRaw ? Number.parseFloat(coefRaw) : 1;
+  // Règle IPMD centralisée : le coefficient découle du type (classe=1, examen=2).
+  // Le coefficient éventuellement envoyé par le client est ignoré (non contournable).
+  const { type, coefficient: coef } = resolveGradeTypeAndCoef(str(formData, "type"));
 
   const { error } = await ctx.supabase.from("grades").insert({
     course_id: courseId,
@@ -264,7 +265,7 @@ export async function addGrade(
     score,
     max_score: maxScore,
     type,
-    coefficient: !Number.isNaN(coef) && coef > 0 ? coef : 1,
+    coefficient: coef,
     semester: str(formData, "semester") || null,
     comment: str(formData, "comment") || null,
   });
@@ -336,9 +337,9 @@ export async function addGradesBatch(
   if (Number.isNaN(maxScore) || maxScore <= 0) {
     return { ok: false, message: "Barème invalide." };
   }
-  const type = str(formData, "type") === "examen" ? "examen" : "classe";
-  const coefRaw = str(formData, "coefficient").replace(",", ".");
-  const coef = coefRaw ? Number.parseFloat(coefRaw) : 1;
+  // Règle IPMD centralisée : le coefficient découle du type (classe=1, examen=2).
+  // Le coefficient éventuellement envoyé par le client est ignoré (non contournable).
+  const { type, coefficient: coef } = resolveGradeTypeAndCoef(str(formData, "type"));
   const semester = str(formData, "semester") || null;
 
   const rows: Record<string, unknown>[] = [];
@@ -359,7 +360,7 @@ export async function addGradesBatch(
       score,
       max_score: maxScore,
       type,
-      coefficient: !Number.isNaN(coef) && coef > 0 ? coef : 1,
+      coefficient: coef,
       semester,
       comment: null,
     });

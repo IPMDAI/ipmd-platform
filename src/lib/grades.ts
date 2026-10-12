@@ -16,6 +16,30 @@ export const GRADE_TYPE_LABELS: Record<string, string> = Object.fromEntries(
   GRADE_TYPES.map((t) => [t.value, t.label])
 );
 
+export type GradeType = "classe" | "examen";
+
+/** Normalise le type de note saisi (toute valeur inconnue → « classe »). */
+export function normalizeGradeType(raw: string): GradeType {
+  return raw === "examen" ? "examen" : "classe";
+}
+
+/**
+ * Règle IPMD : le coefficient d'une note est DÉRIVÉ de son type —
+ * note de classe = 1, examen = 2 — de sorte que la moyenne du module vaut
+ * (note de classe × 1 + examen × 2) ÷ 3.
+ *
+ * Cette fonction n'accepte QUE le type : aucun coefficient envoyé par le
+ * client ne peut influencer le résultat (règle serveur non contournable).
+ * C'est l'unique source de vérité, utilisée par toutes les saisies de notes.
+ */
+export function resolveGradeTypeAndCoef(rawType: string): {
+  type: GradeType;
+  coefficient: 1 | 2;
+} {
+  const type = normalizeGradeType(rawType);
+  return { type, coefficient: type === "examen" ? 2 : 1 };
+}
+
 /** Moyenne pondérée (par coefficient), sur 20. null si aucune note. */
 export function averageValue(grades: GradeLike[]): number | null {
   if (grades.length === 0) return null;

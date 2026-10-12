@@ -65,14 +65,12 @@ export function BatchGradeForm({
             ))}
           </select>
         </Field>
-        <div className="grid grid-cols-2 gap-3">
-          <Field label="Coef." htmlFor="b-coef">
-            <input id="b-coef" name="coefficient" type="number" step="0.5" min="0.5" defaultValue="1" className={inputBase} />
-          </Field>
-          <Field label="Barème" htmlFor="b-max">
-            <input id="b-max" name="max_score" type="number" step="0.25" min="1" defaultValue="20" className={inputBase} />
-          </Field>
-        </div>
+        <Field label="Barème" htmlFor="b-max">
+          <input id="b-max" name="max_score" type="number" step="0.25" min="1" defaultValue="20" className={inputBase} />
+        </Field>
+        <p className="rounded-lg bg-ipmd-light px-3 py-2 text-xs font-medium text-black/60">
+          Coefficient automatique : <strong>Classe ×1</strong> · <strong>Examen ×2</strong>.
+        </p>
       </div>
 
       {/* Tableau étudiant → note */}
