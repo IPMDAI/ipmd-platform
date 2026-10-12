@@ -7,6 +7,9 @@ export const ACADEMIC_STATUSES: { value: string; label: string }[] = [
   { value: "actif", label: "Activé" },
   { value: "refuse", label: "Refusé" },
   { value: "archive", label: "Archivé" },
+  // Module conservé en base mais NON affecté à une maquette (ni S5, ni S6,
+  // ni à valider). Semestre/UE/crédits nuls tant qu'il n'est pas ré-affecté.
+  { value: "reserve", label: "En réserve (non affecté)" },
 ];
 
 export const ACADEMIC_STATUS_VALUES = ACADEMIC_STATUSES.map((s) => s.value);
@@ -15,8 +18,8 @@ export const STATUS_LABEL: Record<string, string> = Object.fromEntries(
   ACADEMIC_STATUSES.map((s) => [s.value, s.label])
 );
 
-/** Statuts réservés au Super Admin (validation finale). */
-export const SUPER_ONLY_STATUSES = ["valide", "actif", "refuse", "archive"];
+/** Statuts réservés au Super Admin (validation finale + mise en réserve). */
+export const SUPER_ONLY_STATUSES = ["valide", "actif", "refuse", "archive", "reserve"];
 
 /** Classes de couleur du badge selon le statut. */
 export function statusBadgeClass(status: string | null): string {
@@ -30,6 +33,7 @@ export function statusBadgeClass(status: string | null): string {
     case "refuse":
       return "bg-ipmd-red/10 text-ipmd-red";
     case "archive":
+    case "reserve":
       return "bg-black/5 text-black/40";
     default:
       return "bg-ipmd-light text-black/50";

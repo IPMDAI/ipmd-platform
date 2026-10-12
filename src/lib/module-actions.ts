@@ -91,6 +91,24 @@ export async function setModuleStatus(
   if (!ACADEMIC_STATUS_VALUES.includes(status)) {
     return { ok: false, message: "Statut invalide." };
   }
+  // Garde-fou : un module `reserve` (semestre détaché, UE/crédits nuls) ne peut
+  // pas être activé tel quel. Il faut d'abord lui ré-affecter sa maquette avant
+  // de l'activer. On exige donc les 3 éléments structurants : semestre, UE et
+  // crédits. (Couvre aussi tout module non structuré, pas seulement `reserve`.)
+  if (status === "actif") {
+    const { data: mod } = await ctx.supabase
+      .from("modules")
+      .select("semester, ue_id, credits")
+      .eq("id", moduleId)
+      .single();
+    if (!mod?.semester || !mod.ue_id || (mod.credits ?? 0) <= 0) {
+      return {
+        ok: false,
+        message:
+          "Activation impossible : ce module n'est pas structuré (semestre, UE et crédits > 0 requis). Affectez-lui d'abord sa maquette avant de l'activer.",
+      };
+    }
+  }
   const { error } = await ctx.supabase
     .from("modules")
     .update({ status })

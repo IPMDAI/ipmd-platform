@@ -47,10 +47,14 @@ export default async function FiliereModulesPage({
   if (!filiere) notFound();
 
   // Années de maquette disponibles (la maquette est versionnée par année).
+  // On inclut `actif` + `en_attente` (pour qu'une année ne contenant encore
+  // que des modules à valider reste accessible au workflow), mais on exclut
+  // `reserve` (modules mis de côté, hors maquette).
   const { data: yearRows } = await supabase
     .from("modules")
     .select("academic_year")
-    .eq("filiere_id", filiereId);
+    .eq("filiere_id", filiereId)
+    .in("status", ["actif", "en_attente"]);
   const years = [
     ...new Set((yearRows ?? []).map((y) => y.academic_year as string).filter(Boolean)),
   ].sort().reverse();
@@ -61,25 +65,37 @@ export default async function FiliereModulesPage({
       ? CURRENT_ACADEMIC_YEAR
       : years[0] ?? CURRENT_ACADEMIC_YEAR;
 
-  const [{ data: modRows }, { data: ueRows }, { data: cfg }] = await Promise.all([
-    supabase
-      .from("modules")
-      .select("id, name, level, semester, heures_cours, heures_td, heures_tp, heures_projet, credits, ue_id")
-      .eq("filiere_id", filiereId)
-      .eq("academic_year", year)
-      .order("name"),
-    supabase
-      .from("unites_enseignement")
-      .select("id, code, name, level, semester")
-      .eq("filiere_id", filiereId)
-      .eq("academic_year", year)
-      .order("code"),
-    supabase
-      .from("academic_year_config")
-      .select("hours_per_credit")
-      .eq("academic_year", year)
-      .maybeSingle(),
-  ]);
+  const [{ data: modRows }, { data: ueRows }, { data: cfg }, { data: pendRows }] =
+    await Promise.all([
+      // Maquette officielle = modules `actif` uniquement.
+      supabase
+        .from("modules")
+        .select("id, name, level, semester, heures_cours, heures_td, heures_tp, heures_projet, credits, ue_id")
+        .eq("filiere_id", filiereId)
+        .eq("academic_year", year)
+        .eq("status", "actif")
+        .order("name"),
+      supabase
+        .from("unites_enseignement")
+        .select("id, code, name, level, semester")
+        .eq("filiere_id", filiereId)
+        .eq("academic_year", year)
+        .order("code"),
+      supabase
+        .from("academic_year_config")
+        .select("hours_per_credit")
+        .eq("academic_year", year)
+        .maybeSingle(),
+      // Workflow de validation : modules `en_attente` (visibles séparément).
+      // Les `reserve` sont exclus (ni maquette, ni « À valider »).
+      supabase
+        .from("modules")
+        .select("id, name, level, semester")
+        .eq("filiere_id", filiereId)
+        .eq("academic_year", year)
+        .eq("status", "en_attente")
+        .order("name"),
+    ]);
   const modules = (modRows ?? []) as Mod[];
   const ues = (ueRows ?? []) as Ue[];
   const factor = Number(cfg?.hours_per_credit ?? 0);
@@ -303,6 +319,38 @@ export default async function FiliereModulesPage({
                     </div>
                   );
                 })
+              )}
+
+              {/* Workflow de validation : modules `en_attente` (hors maquette
+                  officielle tant qu'ils ne sont pas activés). Les `reserve`
+                  n'apparaissent jamais ici. */}
+              {(pendRows ?? []).length > 0 && (
+                <div className="overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-amber-200">
+                  <div className="border-b border-amber-100 bg-amber-50 px-4 py-2.5 text-sm font-bold text-amber-800">
+                    À valider — {pendRows!.length} module(s) en attente
+                  </div>
+                  <ul className="divide-y divide-black/5">
+                    {pendRows!.map((m) => (
+                      <li
+                        key={m.id}
+                        className="flex items-center justify-between gap-3 px-4 py-2.5"
+                      >
+                        <Link
+                          href={`/espace/module/${m.id}`}
+                          className="min-w-0 flex-1 text-xs font-medium text-ipmd-black transition-colors hover:text-ipmd-red"
+                        >
+                          {m.name}
+                          <span className="ml-2 text-black/40">
+                            {[m.level, m.semester].filter(Boolean).join(" · ")}
+                          </span>
+                        </Link>
+                        <span className="shrink-0 rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-bold text-amber-700">
+                          en attente
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
               )}
             </div>
 

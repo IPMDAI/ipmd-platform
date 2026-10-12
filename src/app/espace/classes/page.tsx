@@ -59,8 +59,12 @@ export default async function ClassesPage() {
       .eq("role", "etudiant")
       .order("full_name"),
     supabase.from("class_members").select("student_id, class_id"),
-    // Compteur de modules = maquette de l'année courante uniquement.
-    supabase.from("modules").select("filiere_id").eq("academic_year", CURRENT_ACADEMIC_YEAR),
+    // Compteur de modules = maquette OFFICIELLE de l'année courante (status `actif`).
+    supabase
+      .from("modules")
+      .select("filiere_id")
+      .eq("academic_year", CURRENT_ACADEMIC_YEAR)
+      .eq("status", "actif"),
   ]);
 
   const moduleCount = new Map<string, number>();
