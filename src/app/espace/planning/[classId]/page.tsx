@@ -7,7 +7,14 @@ import { NewSlotForm } from "@/components/espace/NewSlotForm";
 import { NotifyClassButton } from "@/components/espace/NotifyClassButton";
 import { SlotStatusSelect } from "@/components/espace/SlotStatusSelect";
 import { removeTimetableSlot } from "@/lib/planning-actions";
-import { DAY_OPTIONS, formatTime } from "@/lib/schedule";
+import {
+  DAY_OPTIONS,
+  formatTime,
+  SESSION_TYPE_LABEL,
+  typeBadgeClass,
+  MODALITY_LABEL,
+  MODALITY_ICON,
+} from "@/lib/schedule";
 
 export const metadata: Metadata = {
   title: "Planning de la classe",
@@ -32,7 +39,7 @@ export default async function ClassPlanningPage({
     await Promise.all([
       supabase
         .from("timetable_slots")
-        .select("id, subject, teacher_id, room_id, day_of_week, start_time, end_time, status")
+        .select("id, subject, teacher_id, room_id, day_of_week, start_time, end_time, status, type, modality")
         .eq("class_id", classId)
         .order("start_time"),
       supabase
@@ -154,6 +161,20 @@ export default async function ClassPlanningPage({
                             <p className="mt-0.5 text-sm font-semibold text-ipmd-black">
                               {s.subject}
                             </p>
+                            {(s.type || s.modality) && (
+                              <div className="mt-1 flex flex-wrap gap-1">
+                                {s.type && (
+                                  <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ring-1 ${typeBadgeClass(s.type)}`}>
+                                    {SESSION_TYPE_LABEL[s.type] ?? s.type}
+                                  </span>
+                                )}
+                                {s.modality && (
+                                  <span className="rounded-full bg-white px-2 py-0.5 text-[10px] font-semibold text-black/60 ring-1 ring-black/10">
+                                    {MODALITY_ICON[s.modality] ?? ""} {MODALITY_LABEL[s.modality] ?? s.modality}
+                                  </span>
+                                )}
+                              </div>
+                            )}
                             {s.teacher_id && teacherName.get(s.teacher_id) && (
                               <p className="text-xs text-black/55">
                                 👤 {teacherName.get(s.teacher_id)}

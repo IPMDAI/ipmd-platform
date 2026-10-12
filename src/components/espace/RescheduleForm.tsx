@@ -31,6 +31,14 @@ export function RescheduleForm({ sessionId }: { sessionId: string }) {
         Fin
         <input name="new_end" type="time" className={`${inputBase} mt-1 py-1.5 text-sm`} />
       </label>
+      <label className="w-full text-[11px] font-semibold text-black/55 sm:w-64">
+        Motif de dérogation <span className="font-normal text-black/40">(requis si date bloquée)</span>
+        <input
+          name="exception_reason"
+          placeholder="Ex. concours / examen institutionnel"
+          className={`${inputBase} mt-1 py-1.5 text-sm`}
+        />
+      </label>
       <button
         type="submit"
         disabled={pending}

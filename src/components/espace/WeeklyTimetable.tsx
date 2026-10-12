@@ -3,6 +3,10 @@ import {
   formatTime,
   SLOT_STATUS_LABEL,
   slotStatusClass,
+  SESSION_TYPE_LABEL,
+  typeBadgeClass,
+  MODALITY_LABEL,
+  MODALITY_ICON,
 } from "@/lib/schedule";
 import { shortDate } from "@/lib/holidays";
 
@@ -15,6 +19,8 @@ export type TimetableSlot = {
   teacherName?: string | null;
   roomName?: string | null;
   status?: string | null;
+  type?: string | null;
+  modality?: string | null;
 };
 
 /** Grille hebdomadaire en lecture seule (étudiant, parent, prof). */
@@ -96,6 +102,24 @@ export function WeeklyTimetable({
                       >
                         {s.subject}
                       </p>
+                      {(s.type || s.modality) && (
+                        <div className="mt-1 flex flex-wrap gap-1">
+                          {s.type && (
+                            <span
+                              className={`rounded-full px-2 py-0.5 text-[10px] font-bold ring-1 ${typeBadgeClass(
+                                s.type
+                              )}`}
+                            >
+                              {SESSION_TYPE_LABEL[s.type] ?? s.type}
+                            </span>
+                          )}
+                          {s.modality && (
+                            <span className="rounded-full bg-white px-2 py-0.5 text-[10px] font-semibold text-black/60 ring-1 ring-black/10">
+                              {MODALITY_ICON[s.modality] ?? ""} {MODALITY_LABEL[s.modality] ?? s.modality}
+                            </span>
+                          )}
+                        </div>
+                      )}
                       {s.teacherName && (
                         <p className="text-xs text-black/55">👤 {s.teacherName}</p>
                       )}

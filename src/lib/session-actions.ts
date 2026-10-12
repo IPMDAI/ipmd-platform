@@ -218,7 +218,12 @@ export async function rescheduleSession(
     .eq("id", originalId);
 
   revalidatePath("/espace/seances");
-  return { ok: true, message: "Rattrapage programmé." };
+  return {
+    ok: true,
+    message: decision.withException
+      ? "Rattrapage programmé — ⚠️ exception administrative (date normalement bloquée), motif tracé."
+      : "Rattrapage programmé.",
+  };
 }
 
 /** Change le statut d'une séance (staff ou enseignant de la séance). */

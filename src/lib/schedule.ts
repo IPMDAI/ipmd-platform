@@ -75,3 +75,47 @@ export const MODALITY_VALUES: string[] = MODALITIES.map((m) => m.value);
 export const MODALITY_LABEL: Record<string, string> = Object.fromEntries(
   MODALITIES.map((m) => [m.value, m.label])
 );
+
+/** Catégorie d'un type de séance (pour la couleur du badge). */
+export const SESSION_TYPE_CATEGORY: Record<string, string> = {
+  cours: "enseignement", td: "enseignement", tp: "enseignement",
+  devoir_surveille: "evaluation", controle_continu: "evaluation", examen: "evaluation",
+  rattrapage: "evaluation", presentation: "evaluation", soutenance: "evaluation",
+  atelier: "pratique", hackathon: "pratique", recherche_terrain: "pratique", projet: "pratique",
+  journee_ipmd: "evenement",
+};
+
+/** Classe de badge par catégorie (couleur + anneau ; le libellé reste affiché). */
+export function typeBadgeClass(type: string): string {
+  switch (SESSION_TYPE_CATEGORY[type]) {
+    case "enseignement": return "bg-blue-50 text-blue-700 ring-blue-200";
+    case "evaluation": return "bg-amber-50 text-amber-800 ring-amber-200";
+    case "pratique": return "bg-green-50 text-green-700 ring-green-200";
+    case "evenement": return "bg-purple-50 text-purple-700 ring-purple-200";
+    default: return "bg-black/5 text-black/60 ring-black/10";
+  }
+}
+
+/** Icône de modalité (en complément du libellé, jamais seule). */
+export const MODALITY_ICON: Record<string, string> = {
+  presentiel: "🏫",
+  distanciel: "💻",
+};
+
+/** Types de jalons du calendrier académique (academic_calendar.kind). */
+export const CALENDAR_KINDS = [
+  { value: "rentree", label: "Rentrée" },
+  { value: "examens_s1", label: "Examens S1" },
+  { value: "examens_s2", label: "Examens S2" },
+  { value: "presentations", label: "Présentations de projets" },
+  { value: "soutenances", label: "Soutenances" },
+  { value: "vacances", label: "Vacances" },
+  { value: "stage_l2", label: "Stage L2" },
+  { value: "stage_l3", label: "Stage L3" },
+  { value: "hackathon", label: "Hackathon" },
+  { value: "journee_ipmd", label: "Journée IPMD" },
+] as const;
+export const CALENDAR_KIND_VALUES: string[] = CALENDAR_KINDS.map((k) => k.value);
+export const CALENDAR_KIND_LABEL: Record<string, string> = Object.fromEntries(
+  CALENDAR_KINDS.map((k) => [k.value, k.label])
+);
