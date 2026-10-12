@@ -20,13 +20,19 @@ type Mod = {
   heures_td: number | null;
   heures_tp: number | null;
   heures_projet: number | null;
+  heures_stage: number | null;
   credits: number | null;
   ue_id: string | null;
 };
 type Ue = { id: string; code: string; name: string; level: string | null; semester: string | null };
 
+// Heures « campus » (cours/TD/TP/projet) — ce que l'étudiant suit à IPMD.
 const prog = (m: Mod) =>
   (m.heures_cours ?? 0) + (m.heures_td ?? 0) + (m.heures_tp ?? 0) + (m.heures_projet ?? 0);
+// Heures de stage (en entreprise) — comptées à part, jamais mélangées au campus.
+const stageH = (m: Mod) => m.heures_stage ?? 0;
+// Charge programmée totale du module = campus + stage.
+const chargeTot = (m: Mod) => prog(m) + stageH(m);
 
 export default async function FiliereModulesPage({
   params,
@@ -70,7 +76,7 @@ export default async function FiliereModulesPage({
       // Maquette officielle = modules `actif` uniquement.
       supabase
         .from("modules")
-        .select("id, name, level, semester, heures_cours, heures_td, heures_tp, heures_projet, credits, ue_id")
+        .select("id, name, level, semester, heures_cours, heures_td, heures_tp, heures_projet, heures_stage, credits, ue_id")
         .eq("filiere_id", filiereId)
         .eq("academic_year", year)
         .eq("status", "actif")
@@ -118,7 +124,8 @@ export default async function FiliereModulesPage({
   const levelOrder = [...NIVEAUX, "Autres"].filter((l) => tree.has(l));
   const semOrder = [...SEMESTERS, "—"];
   const sumCredits = (ms: Mod[]) => ms.reduce((a, m) => a + (m.credits ?? 0), 0);
-  const sumProg = (ms: Mod[]) => ms.reduce((a, m) => a + prog(m), 0);
+  const sumProg = (ms: Mod[]) => ms.reduce((a, m) => a + prog(m), 0); // campus
+  const sumStage = (ms: Mod[]) => ms.reduce((a, m) => a + stageH(m), 0); // stage entreprise
 
   const cell = "px-2 py-1.5 text-center tabular-nums";
 
@@ -195,7 +202,8 @@ export default async function FiliereModulesPage({
                           const ueMap = semMap.get(sem)!;
                           const allMods = [...ueMap.values()].flat();
                           const semCredits = sumCredits(allMods);
-                          const semProg = sumProg(allMods);
+                          const semProg = sumProg(allMods); // heures campus
+                          const semStage = sumStage(allMods); // heures stage
                           const charge = factor > 0 ? semCredits * factor : 0;
                           // UE ordonnées par code, puis le bucket "Hors UE".
                           const ueKeys = [...ueMap.keys()]
@@ -210,8 +218,13 @@ export default async function FiliereModulesPage({
                                 <p className="text-sm font-bold text-ipmd-black">{sem}</p>
                                 <div className="flex flex-wrap items-center gap-1.5 text-[11px] font-bold">
                                   <span className="rounded-full bg-white px-2 py-0.5 text-black/60 ring-1 ring-black/10">
-                                    {semProg} h prog.
+                                    {semProg} h campus
                                   </span>
+                                  {semStage > 0 && (
+                                    <span className="rounded-full bg-indigo-50 px-2 py-0.5 text-indigo-700 ring-1 ring-indigo-200">
+                                      {semStage} h stage
+                                    </span>
+                                  )}
                                   {charge > 0 && (
                                     <span className="rounded-full bg-white px-2 py-0.5 text-black/60 ring-1 ring-black/10">
                                       {charge} h charge
@@ -233,7 +246,12 @@ export default async function FiliereModulesPage({
                                         <span className="text-ipmd-red">{ue.code}</span> — {ue.name}
                                       </p>
                                       <p className="shrink-0 text-[11px] font-semibold text-black/50">
-                                        {sumProg(ms)} h · {sumCredits(ms)} cr
+                                        {sumProg(ms)} h campus
+                                        {sumStage(ms) > 0 && (
+                                          <span className="text-indigo-700"> · {sumStage(ms)} h stage</span>
+                                        )}
+                                        {" · "}
+                                        {sumCredits(ms)} cr
                                       </p>
                                     </div>
                                     <table className="w-full text-xs">
@@ -244,7 +262,8 @@ export default async function FiliereModulesPage({
                                           <th className={cell}>TD</th>
                                           <th className={cell}>TP</th>
                                           <th className={cell}>Proj</th>
-                                          <th className={cell}>H</th>
+                                          <th className={`${cell} text-indigo-600`}>Stage</th>
+                                          <th className={cell}>Charge</th>
                                           <th className={cell}>Cr</th>
                                           <th className="px-2 py-1"></th>
                                         </tr>
@@ -264,7 +283,10 @@ export default async function FiliereModulesPage({
                                             <td className={cell}>{m.heures_td ?? "—"}</td>
                                             <td className={cell}>{m.heures_tp ?? "—"}</td>
                                             <td className={cell}>{m.heures_projet ?? "—"}</td>
-                                            <td className={`${cell} font-semibold`}>{prog(m)}</td>
+                                            <td className={`${cell} font-semibold ${stageH(m) > 0 ? "bg-indigo-50 text-indigo-700" : "text-black/30"}`}>
+                                              {stageH(m) > 0 ? stageH(m) : "—"}
+                                            </td>
+                                            <td className={`${cell} font-semibold`}>{chargeTot(m)}</td>
                                             <td className={`${cell} font-bold text-ipmd-black`}>{m.credits ?? "—"}</td>
                                             <td className="px-2 py-1.5 text-right">
                                               <form action={deleteModule.bind(null, filiereId, m.id)}>
