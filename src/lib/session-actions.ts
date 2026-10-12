@@ -52,7 +52,7 @@ export async function generateSessions(
   const [{ data: slots }, { data: holidays }] = await Promise.all([
     ctx.supabase
       .from("timetable_slots")
-      .select("day_of_week, start_time, end_time, subject, teacher_id, room_id")
+      .select("day_of_week, start_time, end_time, subject, teacher_id, room_id, type, modality")
       .eq("class_id", classId),
     ctx.supabase
       .from("holidays")
@@ -104,6 +104,8 @@ export async function generateSessions(
         start_time: s.start_time,
         end_time: s.end_time,
         semester,
+        type: s.type, // la séance hérite du type + modalité de son créneau
+        modality: s.modality,
         status: holiSet.has(iso) ? "ferie" : "prevue",
       });
     }
@@ -138,7 +140,7 @@ export async function rescheduleSession(
   const { data: orig } = await ctx.supabase
     .from("course_sessions")
     .select(
-      "class_id, teacher_id, subject, room_id, teacher_name, teacher_function, room_name, start_time, end_time, semester"
+      "class_id, teacher_id, subject, room_id, teacher_name, teacher_function, room_name, start_time, end_time, semester, type, modality"
     )
     .eq("id", originalId)
     .single();
@@ -160,6 +162,8 @@ export async function rescheduleSession(
       start_time: start,
       end_time: end,
       semester: orig.semester,
+      type: orig.type, // le rattrapage conserve le type + la modalité d'origine
+      modality: orig.modality,
       status: "prevue",
     },
     { onConflict: "class_id,session_date,start_time", ignoreDuplicates: true }

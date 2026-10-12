@@ -4,7 +4,7 @@ import { useActionState, useEffect, useRef } from "react";
 import { addTimetableSlot } from "@/lib/planning-actions";
 import { Field, inputBase } from "@/components/forms/FormField";
 import { ActionButton } from "@/components/ui/Button";
-import { DAY_OPTIONS } from "@/lib/schedule";
+import { DAY_OPTIONS, SESSION_TYPES, MODALITIES } from "@/lib/schedule";
 import type { FormResult } from "@/types";
 
 type Named = { id: string; name: string };
@@ -45,6 +45,33 @@ export function NewSlotForm({
           className={inputBase}
         />
       </Field>
+
+      <div className="grid grid-cols-2 gap-3">
+        <Field label="Type" htmlFor="p-type" required>
+          <select id="p-type" name="type" required defaultValue="" className={inputBase}>
+            <option value="" disabled>
+              — Choisir —
+            </option>
+            {SESSION_TYPES.map((t) => (
+              <option key={t.value} value={t.value}>
+                {t.label}
+              </option>
+            ))}
+          </select>
+        </Field>
+        <Field label="Modalité" htmlFor="p-modality" required>
+          <select id="p-modality" name="modality" required defaultValue="" className={inputBase}>
+            <option value="" disabled>
+              — Choisir —
+            </option>
+            {MODALITIES.map((m) => (
+              <option key={m.value} value={m.value}>
+                {m.label}
+              </option>
+            ))}
+          </select>
+        </Field>
+      </div>
 
       <Field label="Professeur" htmlFor="p-teacher">
         <select id="p-teacher" name="teacher_id" defaultValue="" className={inputBase}>

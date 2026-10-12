@@ -43,3 +43,35 @@ export function slotStatusClass(status: string): string {
       return "bg-black/5 text-black/50"; // prévu
   }
 }
+
+/** Types de séance (nomenclature — miroir de la table session_types). */
+export const SESSION_TYPES = [
+  { value: "cours", label: "Cours" },
+  { value: "td", label: "TD" },
+  { value: "tp", label: "TP" },
+  { value: "devoir_surveille", label: "Devoir surveillé" },
+  { value: "controle_continu", label: "Contrôle continu" },
+  { value: "examen", label: "Examen" },
+  { value: "rattrapage", label: "Rattrapage" },
+  { value: "atelier", label: "Atelier" },
+  { value: "hackathon", label: "Hackathon" },
+  { value: "journee_ipmd", label: "Journée IPMD" },
+  { value: "recherche_terrain", label: "Recherche terrain" },
+  { value: "projet", label: "Projet" },
+  { value: "presentation", label: "Présentation" },
+  { value: "soutenance", label: "Soutenance" },
+] as const;
+export const SESSION_TYPE_VALUES: string[] = SESSION_TYPES.map((t) => t.value);
+export const SESSION_TYPE_LABEL: Record<string, string> = Object.fromEntries(
+  SESSION_TYPES.map((t) => [t.value, t.label])
+);
+
+/** Modalités (présentiel / distanciel). Obligatoire, pas de défaut. */
+export const MODALITIES = [
+  { value: "presentiel", label: "Présentiel" },
+  { value: "distanciel", label: "Distanciel" },
+] as const;
+export const MODALITY_VALUES: string[] = MODALITIES.map((m) => m.value);
+export const MODALITY_LABEL: Record<string, string> = Object.fromEntries(
+  MODALITIES.map((m) => [m.value, m.label])
+);

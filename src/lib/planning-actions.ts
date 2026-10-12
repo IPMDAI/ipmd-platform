@@ -8,7 +8,13 @@ import {
   escapeHtml,
   sendEmailTo,
 } from "@/lib/email";
-import { DAY_LABELS, formatTime, SLOT_STATUS_VALUES } from "@/lib/schedule";
+import {
+  DAY_LABELS,
+  formatTime,
+  SLOT_STATUS_VALUES,
+  SESSION_TYPE_VALUES,
+  MODALITY_VALUES,
+} from "@/lib/schedule";
 import type { FormResult } from "@/types";
 
 async function getAdmin() {
@@ -69,10 +75,19 @@ export async function addTimetableSlot(
   const day = Number.parseInt(str(formData, "day_of_week"), 10);
   const start = str(formData, "start_time");
   const end = str(formData, "end_time");
+  // Type + modalité OBLIGATOIRES et explicites (jamais déduits silencieusement).
+  const type = str(formData, "type");
+  const modality = str(formData, "modality");
 
   if (!subject) return { ok: false, message: "La matière est requise." };
   if (!day || !start || !end) {
     return { ok: false, message: "Jour et horaires sont requis." };
+  }
+  if (!SESSION_TYPE_VALUES.includes(type)) {
+    return { ok: false, message: "Type de séance requis." };
+  }
+  if (!MODALITY_VALUES.includes(modality)) {
+    return { ok: false, message: "Modalité requise (présentiel ou distanciel)." };
   }
   if (end <= start) {
     return { ok: false, message: "L'heure de fin doit suivre le début." };
@@ -107,6 +122,8 @@ export async function addTimetableSlot(
     day_of_week: day,
     start_time: start,
     end_time: end,
+    type,
+    modality,
   });
   if (error) return { ok: false, message: error.message };
 
