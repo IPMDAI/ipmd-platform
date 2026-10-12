@@ -5,6 +5,7 @@ import { TutorLauncher } from "@/components/espace/TutorLauncher";
 import { getNavForRole } from "@/lib/nav";
 import { canAnyStaff } from "@/lib/staff-access";
 import { roleLabels, LEARNER_ROLES } from "@/lib/dashboards";
+import { CURRENT_ACADEMIC_YEAR } from "@/lib/referentiel";
 
 export default async function EspaceLayout({
   children,
@@ -41,7 +42,7 @@ export default async function EspaceLayout({
       supabase.from("inscription_requests").select("*", { count: "exact", head: true }).eq("status", "nouveau"),
       supabase.from("contact_messages").select("*", { count: "exact", head: true }),
       supabase.from("filieres").select("*", { count: "exact", head: true }).eq("status", "en_attente"),
-      supabase.from("modules").select("*", { count: "exact", head: true }).eq("status", "en_attente"),
+      supabase.from("modules").select("*", { count: "exact", head: true }).eq("status", "en_attente").eq("academic_year", CURRENT_ACADEMIC_YEAR),
       supabase.from("internal_messages").select("*", { count: "exact", head: true }).eq("status", "nouveau").eq("archived", false),
       supabase.from("content_reports").select("*", { count: "exact", head: true }).eq("status", "open"),
     ]);

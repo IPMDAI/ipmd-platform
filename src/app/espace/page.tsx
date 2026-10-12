@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { CURRENT_ACADEMIC_YEAR } from "@/lib/referentiel";
 import { Container } from "@/components/ui/Container";
 import { ActionButton } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
@@ -94,7 +95,7 @@ export default async function EspacePage() {
       supabase.from("inscription_requests").select("*", { count: "exact", head: true }).eq("status", "nouveau"),
       supabase.from("contact_messages").select("*", { count: "exact", head: true }),
       supabase.from("filieres").select("*", { count: "exact", head: true }).eq("status", "en_attente"),
-      supabase.from("modules").select("*", { count: "exact", head: true }).eq("status", "en_attente"),
+      supabase.from("modules").select("*", { count: "exact", head: true }).eq("status", "en_attente").eq("academic_year", CURRENT_ACADEMIC_YEAR),
     ]);
     pending = {
       candidatures: cand.count ?? 0,

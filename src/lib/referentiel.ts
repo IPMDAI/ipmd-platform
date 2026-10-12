@@ -1,3 +1,6 @@
+/** Année académique de la maquette active (défaut des écrans « programme / modules »). */
+export const CURRENT_ACADEMIC_YEAR = "2026-2027";
+
 /** Filières standard de l'IPMD (= les formations proposées). */
 export const IPMD_FILIERES = [
   "Marketing digital",

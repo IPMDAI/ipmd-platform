@@ -22,6 +22,7 @@ import {
   seedFilieres,
   seedModules,
 } from "@/lib/referentiel-actions";
+import { CURRENT_ACADEMIC_YEAR } from "@/lib/referentiel";
 
 export const metadata: Metadata = {
   title: "Classes & filières",
@@ -58,7 +59,8 @@ export default async function ClassesPage() {
       .eq("role", "etudiant")
       .order("full_name"),
     supabase.from("class_members").select("student_id, class_id"),
-    supabase.from("modules").select("filiere_id"),
+    // Compteur de modules = maquette de l'année courante uniquement.
+    supabase.from("modules").select("filiere_id").eq("academic_year", CURRENT_ACADEMIC_YEAR),
   ]);
 
   const moduleCount = new Map<string, number>();

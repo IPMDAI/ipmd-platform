@@ -1,5 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { createClient } from "@/lib/supabase/server";
+import { CURRENT_ACADEMIC_YEAR } from "@/lib/referentiel";
 import {
   findConflicts,
   CONFLICT_LABEL,
@@ -44,7 +45,7 @@ export async function POST() {
         supabase.from("inscription_requests").select("*", { count: "exact", head: true }).eq("status", "nouveau"),
         supabase.from("contact_messages").select("*", { count: "exact", head: true }),
         supabase.from("filieres").select("*", { count: "exact", head: true }).eq("status", "en_attente"),
-        supabase.from("modules").select("*", { count: "exact", head: true }).eq("status", "en_attente"),
+        supabase.from("modules").select("*", { count: "exact", head: true }).eq("status", "en_attente").eq("academic_year", CURRENT_ACADEMIC_YEAR),
         supabase.from("profiles").select("*", { count: "exact", head: true }).eq("role", "etudiant"),
         supabase
           .from("timetable_slots")

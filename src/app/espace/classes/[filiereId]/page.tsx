@@ -5,7 +5,7 @@ import { requireAdmin } from "@/lib/require-admin";
 import { Container } from "@/components/ui/Container";
 import { NewModuleForm } from "@/components/espace/NewModuleForm";
 import { deleteModule } from "@/lib/referentiel-actions";
-import { NIVEAUX, SEMESTERS, LEVEL_PHASE } from "@/lib/referentiel";
+import { NIVEAUX, SEMESTERS, LEVEL_PHASE, CURRENT_ACADEMIC_YEAR } from "@/lib/referentiel";
 
 export const metadata: Metadata = {
   title: "Modules de la filière",
@@ -13,10 +13,13 @@ export const metadata: Metadata = {
 
 export default async function FiliereModulesPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ filiereId: string }>;
+  searchParams: Promise<{ annee?: string }>;
 }) {
   const { filiereId } = await params;
+  const { annee } = await searchParams;
   const { supabase } = await requireAdmin();
 
   const { data: filiere } = await supabase
@@ -26,10 +29,27 @@ export default async function FiliereModulesPage({
     .single();
   if (!filiere) notFound();
 
+  // Années de maquette disponibles pour cette filière (sélecteur). La maquette
+  // est versionnée par année : on ne lit QUE l'année active.
+  const { data: yearRows } = await supabase
+    .from("modules")
+    .select("academic_year")
+    .eq("filiere_id", filiereId);
+  const years = [
+    ...new Set((yearRows ?? []).map((y) => y.academic_year as string).filter(Boolean)),
+  ].sort().reverse();
+  const year =
+    annee && years.includes(annee)
+      ? annee
+      : years.includes(CURRENT_ACADEMIC_YEAR)
+      ? CURRENT_ACADEMIC_YEAR
+      : years[0] ?? CURRENT_ACADEMIC_YEAR;
+
   const { data: rows } = await supabase
     .from("modules")
     .select("id, name, level, semester")
     .eq("filiere_id", filiereId)
+    .eq("academic_year", year)
     .order("created_at");
   const modules = rows ?? [];
 
@@ -61,8 +81,28 @@ export default async function FiliereModulesPage({
             Modules — {filiere.name}
           </h1>
           <p className="mt-1 text-sm text-black/55">
-            Les modules (matières) enseignés dans cette filière.
+            Les modules (matières) enseignés dans cette filière — maquette{" "}
+            <strong>{year}</strong>.
           </p>
+
+          {years.length > 0 && (
+            <div className="mt-3 flex flex-wrap items-center gap-2">
+              <span className="text-xs font-semibold text-black/45">Année :</span>
+              {years.map((y) => (
+                <Link
+                  key={y}
+                  href={`/espace/classes/${filiereId}?annee=${y}`}
+                  className={`rounded-full px-3 py-1 text-xs font-bold ring-1 transition-colors ${
+                    y === year
+                      ? "bg-ipmd-black text-white ring-ipmd-black"
+                      : "bg-white text-black/60 ring-black/10 hover:ring-ipmd-red/40"
+                  }`}
+                >
+                  {y}
+                </Link>
+              ))}
+            </div>
+          )}
 
           <div className="mt-8 grid gap-8 lg:grid-cols-[1fr_22rem]">
             <div className="order-2 lg:order-1">
@@ -143,7 +183,7 @@ export default async function FiliereModulesPage({
             </div>
 
             <div className="order-1 lg:order-2">
-              <NewModuleForm filiereId={filiereId} />
+              <NewModuleForm filiereId={filiereId} academicYear={year} />
             </div>
           </div>
         </div>

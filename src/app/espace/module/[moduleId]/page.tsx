@@ -25,7 +25,7 @@ export default async function ModulePage({
   const { data: module } = await supabase
     .from("modules")
     .select(
-      "id, name, level, semester, teacher_id, hours, coefficient, objectives, skills, evaluation_methods, syllabus, status, filiere_id"
+      "id, name, level, semester, academic_year, teacher_id, hours, coefficient, objectives, skills, evaluation_methods, syllabus, status, filiere_id"
     )
     .eq("id", moduleId)
     .single();
@@ -94,6 +94,11 @@ export default async function ModulePage({
             {module.semester && (
               <span className="rounded-full bg-ipmd-light px-2.5 py-1 font-semibold text-black/60 ring-1 ring-black/5">
                 {module.semester}
+              </span>
+            )}
+            {module.academic_year && (
+              <span className="rounded-full bg-ipmd-black px-2.5 py-1 font-semibold text-white">
+                📅 {module.academic_year}
               </span>
             )}
             {teacherName && (

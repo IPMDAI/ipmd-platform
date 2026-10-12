@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import { IPMD_FILIERES, LEVEL_FROM_DEGREE } from "@/lib/referentiel";
+import { IPMD_FILIERES, LEVEL_FROM_DEGREE, CURRENT_ACADEMIC_YEAR } from "@/lib/referentiel";
 import { ACADEMIC_STATUS_VALUES } from "@/lib/academic";
 import { programs } from "@/data/programs";
 import { programDetails } from "@/data/programDetails";
@@ -111,9 +111,11 @@ export async function seedModules(_formData?: FormData): Promise<void> {
   // Retire l'ancien pré-remplissage (modules sans niveau).
   await ctx.supabase.from("modules").delete().is("level", null);
 
+  // Pré-remplissage pour la maquette de l'année courante uniquement.
   const { data: existing } = await ctx.supabase
     .from("modules")
-    .select("filiere_id, level, semester, name");
+    .select("filiere_id, level, semester, name")
+    .eq("academic_year", CURRENT_ACADEMIC_YEAR);
   const have = new Set(
     (existing ?? []).map(
       (m) => `${m.filiere_id}|${m.level}|${m.semester}|${m.name}`
@@ -125,6 +127,7 @@ export async function seedModules(_formData?: FormData): Promise<void> {
     level: string;
     semester: string;
     name: string;
+    academic_year: string;
   }[] = [];
 
   for (const p of programs) {
@@ -146,6 +149,7 @@ export async function seedModules(_formData?: FormData): Promise<void> {
             level,
             semester: sem.name,
             name: course,
+            academic_year: CURRENT_ACADEMIC_YEAR,
           });
         }
       }
@@ -191,11 +195,17 @@ export async function createModule(
   if (!ctx) return { ok: false, message: "Action réservée à l'administration." };
   const name = str(formData, "name");
   if (!name) return { ok: false, message: "Le nom du module est requis." };
+  // Maquette versionnée : l'année est OBLIGATOIRE et explicite (jamais déduite).
+  const academicYear = str(formData, "academic_year");
+  if (!academicYear) {
+    return { ok: false, message: "Année académique manquante (maquette versionnée)." };
+  }
   const { error } = await ctx.supabase.from("modules").insert({
     filiere_id: filiereId,
     name,
     level: str(formData, "level") || null,
     semester: str(formData, "semester") || null,
+    academic_year: academicYear,
   });
   if (error) return { ok: false, message: error.message };
   revalidatePath(`/espace/classes/${filiereId}`);

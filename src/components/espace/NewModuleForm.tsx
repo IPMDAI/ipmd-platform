@@ -7,7 +7,13 @@ import { ActionButton } from "@/components/ui/Button";
 import { NIVEAUX, SEMESTERS } from "@/lib/referentiel";
 import type { FormResult } from "@/types";
 
-export function NewModuleForm({ filiereId }: { filiereId: string }) {
+export function NewModuleForm({
+  filiereId,
+  academicYear,
+}: {
+  filiereId: string;
+  academicYear: string;
+}) {
   const bound = createModule.bind(null, filiereId);
   const [state, action, pending] = useActionState<FormResult | null, FormData>(
     bound,
@@ -25,6 +31,10 @@ export function NewModuleForm({ filiereId }: { filiereId: string }) {
       className="space-y-3 rounded-2xl bg-white p-6 shadow-sm ring-1 ring-black/5"
     >
       <h2 className="text-lg font-bold text-ipmd-black">Nouveau module</h2>
+      <input type="hidden" name="academic_year" value={academicYear} />
+      <p className="text-xs font-medium text-black/50">
+        Ajouté à la maquette <strong>{academicYear}</strong>.
+      </p>
       <Field label="Nom du module" htmlFor="m-name" required>
         <input
           id="m-name"
