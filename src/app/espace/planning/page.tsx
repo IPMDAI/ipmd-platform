@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { requireAdmin } from "@/lib/require-admin";
 import { Container } from "@/components/ui/Container";
+import { CURRENT_ACADEMIC_YEAR } from "@/lib/referentiel";
+import { PlanningClassPicker } from "@/components/espace/PlanningClassPicker";
 
 export const metadata: Metadata = {
   title: "Planning",
@@ -43,27 +45,10 @@ export default async function PlanningPage() {
               .
             </p>
           ) : (
-            <ul className="mt-8 grid gap-4 sm:grid-cols-2">
-              {classList.map((c) => (
-                <li key={c.id}>
-                  <Link
-                    href={`/espace/planning/${c.id}`}
-                    className="block rounded-2xl bg-white p-5 shadow-sm ring-1 ring-black/5 transition-all hover:-translate-y-0.5 hover:shadow-md hover:ring-ipmd-red/30"
-                  >
-                    <h2 className="text-base font-bold text-ipmd-black">
-                      {c.name}
-                    </h2>
-                    <p className="text-xs text-black/50">
-                      {[c.level, c.academic_year].filter(Boolean).join(" · ") ||
-                        "—"}
-                    </p>
-                    <span className="mt-2 inline-block text-xs font-semibold text-ipmd-red">
-                      Construire le planning →
-                    </span>
-                  </Link>
-                </li>
-              ))}
-            </ul>
+            <PlanningClassPicker
+              classes={classList}
+              defaultYear={CURRENT_ACADEMIC_YEAR}
+            />
           )}
         </div>
       </Container>
