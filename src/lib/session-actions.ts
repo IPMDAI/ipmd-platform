@@ -3,6 +3,11 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { SESSION_STATUS_VALUES } from "@/lib/sessions";
+import {
+  blockReasonFor,
+  resolveScheduling,
+  type CalendarPeriod,
+} from "@/lib/planning-rules";
 import type { FormResult } from "@/types";
 
 async function getStaff() {
@@ -49,7 +54,7 @@ export async function generateSessions(
     86400000;
   if (days > 120) return { ok: false, message: "Période trop longue (max ~4 mois)." };
 
-  const [{ data: slots }, { data: holidays }] = await Promise.all([
+  const [{ data: slots }, { data: holidays }, { data: klass }] = await Promise.all([
     ctx.supabase
       .from("timetable_slots")
       .select("day_of_week, start_time, end_time, subject, teacher_id, room_id, type, modality")
@@ -59,11 +64,21 @@ export async function generateSessions(
       .select("day")
       .gte("day", start)
       .lte("day", end),
+    ctx.supabase.from("classes").select("academic_year").eq("id", classId).maybeSingle(),
   ]);
   if (!slots || slots.length === 0) {
     return { ok: false, message: "Aucun créneau au planning de cette classe." };
   }
   const holiSet = new Set((holidays ?? []).map((h) => h.day));
+
+  // Calendrier académique de l'année : on NE génère PAS de séance sur une date
+  // bloquée (férié/vacances), ni de cours réguliers pendant les examens.
+  // generateSessions ne crée JAMAIS d'exception : il saute simplement la date.
+  const { data: calRows } = await ctx.supabase
+    .from("academic_calendar")
+    .select("start_date, end_date, blocks_all, blocks_regular")
+    .eq("academic_year", klass?.academic_year ?? "");
+  const periods: CalendarPeriod[] = (calRows ?? []) as CalendarPeriod[];
 
   // Instantané nom / fonction / salle (le staff peut lire ces données).
   const teacherIds = [...new Set(slots.map((s) => s.teacher_id).filter(Boolean))] as string[];
@@ -92,6 +107,8 @@ export async function generateSessions(
     const dow = ourDow(iso);
     for (const s of slots) {
       if (s.day_of_week !== dow) continue;
+      // Date bloquée (férié / vacances / examens pour un type régulier) → on saute.
+      if (blockReasonFor(iso, s.type, holiSet, periods)) continue;
       rows.push({
         class_id: classId,
         teacher_id: s.teacher_id,
@@ -106,7 +123,7 @@ export async function generateSessions(
         semester,
         type: s.type, // la séance hérite du type + modalité de son créneau
         modality: s.modality,
-        status: holiSet.has(iso) ? "ferie" : "prevue",
+        status: "prevue",
       });
     }
     cur.setUTCDate(cur.getUTCDate() + 1);
@@ -149,6 +166,25 @@ export async function rescheduleSession(
   const start = ((formData.get("new_start") as string) ?? "").trim() || orig.start_time;
   const end = ((formData.get("new_end") as string) ?? "").trim() || orig.end_time;
 
+  // Blocage calendrier sur la nouvelle date. Une dérogation motivée (par un rôle
+  // autorisé) est possible : autorisée côté SERVEUR uniquement, tracée.
+  const { data: klass } = await ctx.supabase
+    .from("classes")
+    .select("academic_year")
+    .eq("id", orig.class_id)
+    .maybeSingle();
+  const { data: blockReason } = await ctx.supabase.rpc("planning_block_reason", {
+    p_year: klass?.academic_year ?? "",
+    p_date: newDate,
+    p_type: orig.type,
+  });
+  const decision = resolveScheduling({
+    blockReason: (blockReason as string | null) ?? null,
+    exceptionReason: ((formData.get("exception_reason") as string) ?? "").trim(),
+    actorRole: ctx.role,
+  });
+  if (!decision.allowed) return { ok: false, message: decision.message ?? "Date bloquée." };
+
   const { error } = await ctx.supabase.from("course_sessions").upsert(
     {
       class_id: orig.class_id,
@@ -165,6 +201,12 @@ export async function rescheduleSession(
       type: orig.type, // le rattrapage conserve le type + la modalité d'origine
       modality: orig.modality,
       status: "prevue",
+      // Dérogation tracée : motif du formulaire, autorisateur = auth.uid() serveur.
+      exception_reason: decision.withException
+        ? ((formData.get("exception_reason") as string) ?? "").trim()
+        : null,
+      exception_authorized_by: decision.withException ? ctx.userId : null,
+      exception_authorized_at: decision.withException ? new Date().toISOString() : null,
     },
     { onConflict: "class_id,session_date,start_time", ignoreDuplicates: true }
   );

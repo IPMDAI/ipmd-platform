@@ -127,9 +127,25 @@ export async function addTimetableSlot(
   });
   if (error) return { ok: false, message: error.message };
 
+  // Alerte souple (jamais bloquante) : type inhabituel pour ce jour.
+  const { data: klass } = await ctx.supabase
+    .from("classes")
+    .select("academic_year")
+    .eq("id", classId)
+    .maybeSingle();
+  const { data: alert } = await ctx.supabase.rpc("weekly_rule_alert", {
+    p_year: klass?.academic_year ?? "",
+    p_program: "campus_jour",
+    p_dow: day,
+    p_type: type,
+  });
+
   revalidatePath(`/espace/planning/${classId}`);
   revalidatePath("/espace/mon-emploi-du-temps");
-  return { ok: true, message: "Créneau ajouté." };
+  return {
+    ok: true,
+    message: alert ? `Créneau ajouté. ⚠️ ${alert as string}` : "Créneau ajouté.",
+  };
 }
 
 /** Supprime un créneau (action de formulaire simple). */
