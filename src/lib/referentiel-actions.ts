@@ -121,6 +121,10 @@ export async function seedModules(_formData?: FormData): Promise<void> {
       (m) => `${m.filiere_id}|${m.level}|${m.semester}|${m.name}`
     )
   );
+  // SÉCURITÉ : ne JAMAIS toucher une maquette déjà construite. Toute filière qui
+  // a déjà au moins un module pour l'année est ignorée — sinon un module renommé
+  // ou supprimé (ex. maquette LMD à la main) serait recréé en doublon.
+  const populated = new Set((existing ?? []).map((m) => m.filiere_id));
 
   const rows: {
     filiere_id: string;
@@ -134,6 +138,7 @@ export async function seedModules(_formData?: FormData): Promise<void> {
     if (p.universe !== "campus") continue; // une formation campus = une filière
     const fid = byName.get(p.title);
     if (!fid) continue;
+    if (populated.has(fid)) continue; // maquette déjà peuplée → on n'y touche pas
     const detail = programDetails[p.id];
     if (!detail) continue;
 
