@@ -70,7 +70,7 @@ export default async function StudentFinancePage({
         .maybeSingle(),
       supabase
         .from("payments")
-        .select("id, amount, method, label, kind, reference, observation, paid_at, status")
+        .select("id, amount, method, label, kind, reference, observation, paid_at, status, payer_email, payer_phone")
         .eq("student_id", studentId)
         .order("paid_at", { ascending: false }),
       supabase
@@ -128,6 +128,13 @@ export default async function StudentFinancePage({
       };
     }),
   ];
+  // Parents liés → pré-remplissage du bloc Payeur (snapshot stocké sur le paiement).
+  const linkedParents = parents.map((p) => ({
+    id: p.id,
+    name: p.full_name || p.email || "—",
+    email: p.email ?? null,
+    relationship: relOf.get(p.id) ?? null,
+  }));
   const sendsByPayment = new Map<string, { recipient: string; channel: string; sent_at: string }[]>();
   for (const s of sends ?? []) {
     const arr = sendsByPayment.get(s.payment_id) ?? [];
@@ -332,7 +339,19 @@ export default async function StudentFinancePage({
                       </div>
                       <ReceiptSendPanel
                         paymentId={p.id}
-                        recipients={recipients}
+                        recipients={
+                          p.payer_email
+                            ? [
+                                ...recipients,
+                                {
+                                  target: "payer",
+                                  label: "Payeur",
+                                  email: p.payer_email,
+                                  whatsapp: p.payer_phone ?? null,
+                                },
+                              ]
+                            : recipients
+                        }
                         receiptUrl={`${SITE}/espace/recu/${p.id}`}
                         history={sendsByPayment.get(p.id) ?? []}
                       />
@@ -352,7 +371,7 @@ export default async function StudentFinancePage({
                 discountApplied={fin.discountRate > 0}
                 levels={(levels ?? []).map((l) => ({ level: l.level, amount: Number(l.amount) }))}
               />
-              <AddPaymentForm studentId={studentId} />
+              <AddPaymentForm studentId={studentId} linkedParents={linkedParents} />
               <AccessForm
                 studentId={studentId}
                 status={finance?.status ?? null}

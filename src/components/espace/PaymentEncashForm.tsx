@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { encashPaymentProof } from "@/lib/payment-encash-actions";
 import { PAYMENT_METHODS, formatFCFA } from "@/lib/finance";
 import { inputBase } from "@/components/forms/FormField";
+import { PayerPaymentFields } from "@/components/espace/PayerPaymentFields";
 import type { FormResult } from "@/types";
 
 /**
@@ -109,6 +110,11 @@ export function PaymentEncashForm({
           className={`${inputBase} mt-1 py-1.5 text-sm`}
         />
       </label>
+
+      {/* Payeur (tous moyens) + détails techniques Chèque / Wave. */}
+      <div className="sm:col-span-2">
+        <PayerPaymentFields method={method} />
+      </div>
 
       <div className="sm:col-span-2 flex flex-wrap items-center gap-3">
         <button

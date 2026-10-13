@@ -8,6 +8,7 @@ import { PaymentReceipt } from "@/components/espace/documents/PaymentReceipt";
 import { matricule, academicYear } from "@/lib/documents";
 import { signDoc, verifyUrl } from "@/lib/doc-verify";
 import { computeFinance } from "@/lib/finance";
+import { PAYER_RELATIONSHIP_LABEL } from "@/lib/payment-payer";
 
 export const metadata: Metadata = {
   title: "Reçu de paiement",
@@ -24,7 +25,7 @@ export default async function RecuPage({
   // RLS : le paiement n'est lisible que par l'étudiant, son parent ou un admin.
   const { data: payment } = await supabase
     .from("payments")
-    .select("id, student_id, candidature_id, amount, method, label, paid_at, kind, reference")
+    .select("id, student_id, candidature_id, amount, method, label, paid_at, kind, reference, payer_name, payer_relationship, payer_email, cheque_drawer, cheque_bank, cheque_number, wave_payer_number, wave_transaction_id, wave_merchant")
     .eq("id", paymentId)
     .single();
   if (!payment) notFound();
@@ -113,7 +114,13 @@ export default async function RecuPage({
 
           <div className="mt-6">
             <PaymentReceipt
-              payment={payment}
+              payment={{
+                ...payment,
+                payer_relationship_label: payment.payer_relationship
+                  ? PAYER_RELATIONSHIP_LABEL[payment.payer_relationship] ??
+                    payment.payer_relationship
+                  : null,
+              }}
               studentName={name}
               matricule={mat}
               verifyHref={verifyHref}

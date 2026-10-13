@@ -9,6 +9,8 @@ import {
   sendScolariteEmail,
   buildRows,
 } from "@/lib/email";
+import { resolvePaymentPayer } from "@/lib/payment-payer";
+import { autoSendReceipt } from "@/lib/receipt-email";
 import type { FormResult } from "@/types";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://ipmd.pro";
@@ -192,6 +194,22 @@ export async function addPayment(
   }
   const kind = str(formData, "kind") === "inscription" ? "inscription" : "scolarite";
 
+  // Payeur + détails techniques (Chèque/Wave) : validation stricte partagée.
+  const payer = resolvePaymentPayer({
+    method: str(formData, "method"),
+    payer_name: str(formData, "payer_name"),
+    payer_relationship: str(formData, "payer_relationship"),
+    payer_email: str(formData, "payer_email"),
+    payer_phone: str(formData, "payer_phone"),
+    cheque_drawer: str(formData, "cheque_drawer"),
+    cheque_bank: str(formData, "cheque_bank"),
+    cheque_number: str(formData, "cheque_number"),
+    wave_payer_number: str(formData, "wave_payer_number"),
+    wave_transaction_id: str(formData, "wave_transaction_id"),
+    wave_merchant: str(formData, "wave_merchant"),
+  });
+  if (!payer.ok) return { ok: false, message: payer.message };
+
   const { data: inserted, error } = await ctx.supabase
     .from("payments")
     .insert({
@@ -204,10 +222,16 @@ export async function addPayment(
       observation: str(formData, "observation") || null,
       recorded_by: ctx.userId,
       paid_at: str(formData, "paid_at") || undefined,
+      ...payer.values,
     })
     .select("id")
     .single();
   if (error) return { ok: false, message: error.message };
+
+  // Reçu automatique : étudiant + copie payeur tiers (best-effort, non bloquant).
+  if (inserted?.id) {
+    await autoSendReceipt(ctx.supabase, inserted.id as string).catch(() => {});
+  }
 
   // CERTIFIANT (Option A) — remise −15 % « comptant » réalisée UNIQUEMENT si ce
   // versement de scolarité, UNIQUE et premier, solde toute la scolarité au tarif
@@ -449,6 +473,14 @@ export async function sendReceiptEmail(
   const ctx = await getStaff();
   if (!ctx) return { ok: false, message: "Réservé à l'administration." };
   if (!canSendEmail) return { ok: false, message: "Service email non configuré." };
+
+  // Renvoi au PAYEUR (tiers) : même reçu/PDF, email snapshot du paiement.
+  if (target === "payer") {
+    const r = await autoSendReceipt(ctx.supabase, paymentId, "payer");
+    return r.sent > 0
+      ? { ok: true, message: "Reçu (PDF) renvoyé au payeur." }
+      : { ok: false, message: "Aucun email payeur enregistré pour ce paiement." };
+  }
 
   const { data: payment } = await ctx.supabase
     .from("payments")

@@ -11,7 +11,22 @@ type Payment = {
   paid_at: string;
   kind?: string | null;
   reference?: string | null;
+  payer_name?: string | null;
+  payer_relationship_label?: string | null;
+  cheque_drawer?: string | null;
+  cheque_bank?: string | null;
+  cheque_number?: string | null;
+  wave_payer_number?: string | null;
+  wave_transaction_id?: string | null;
+  wave_merchant?: string | null;
 };
+
+const Row = ({ k, v }: { k: string; v: string }) => (
+  <tr className="border-b border-black/5">
+    <td className="px-4 py-3 text-black/55">{k}</td>
+    <td className="px-4 py-3 text-right font-semibold text-ipmd-black">{v}</td>
+  </tr>
+);
 
 function frDate(iso: string): string {
   return new Date(iso).toLocaleDateString("fr-FR", {
@@ -113,6 +128,35 @@ export function PaymentReceipt({
                     {payment.method || "—"}
                   </td>
                 </tr>
+                {payment.payer_name && (
+                  <Row
+                    k="Payeur"
+                    v={
+                      payment.payer_name +
+                      (payment.payer_relationship_label
+                        ? ` (${payment.payer_relationship_label})`
+                        : "")
+                    }
+                  />
+                )}
+                {payment.method === "Chèque" && payment.cheque_bank && (
+                  <Row k="Banque" v={payment.cheque_bank} />
+                )}
+                {payment.method === "Chèque" && payment.cheque_drawer && (
+                  <Row k="Chèque émis par" v={payment.cheque_drawer} />
+                )}
+                {payment.method === "Chèque" && payment.cheque_number && (
+                  <Row k="N° chèque" v={payment.cheque_number} />
+                )}
+                {payment.method === "Wave" && payment.wave_payer_number && (
+                  <Row k="N° Wave" v={payment.wave_payer_number} />
+                )}
+                {payment.method === "Wave" && payment.wave_transaction_id && (
+                  <Row k="Réf. transaction" v={payment.wave_transaction_id} />
+                )}
+                {payment.method === "Wave" && payment.wave_merchant && (
+                  <Row k="Compte marchand" v={payment.wave_merchant} />
+                )}
                 {payment.reference && (
                   <tr className="border-b border-black/5">
                     <td className="px-4 py-3 text-black/55">Référence</td>

@@ -2,6 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/require-admin";
+import { resolvePaymentPayer } from "@/lib/payment-payer";
+import { autoSendReceipt } from "@/lib/receipt-email";
 import type { FormResult } from "@/types";
 
 /**
@@ -52,6 +54,23 @@ export async function encashPaymentProof(
   const reference = str(formData, "reference") || null;
   const paidAt = str(formData, "paid_at") || null; // défaut côté RPC = current_date
 
+  // Payeur + détails techniques : MÊME validation que la saisie manuelle.
+  const payer = resolvePaymentPayer({
+    method,
+    payer_name: str(formData, "payer_name"),
+    payer_relationship: str(formData, "payer_relationship"),
+    payer_email: str(formData, "payer_email"),
+    payer_phone: str(formData, "payer_phone"),
+    cheque_drawer: str(formData, "cheque_drawer"),
+    cheque_bank: str(formData, "cheque_bank"),
+    cheque_number: str(formData, "cheque_number"),
+    wave_payer_number: str(formData, "wave_payer_number"),
+    wave_transaction_id: str(formData, "wave_transaction_id"),
+    wave_merchant: str(formData, "wave_merchant"),
+  });
+  if (!payer.ok) return { ok: false, message: payer.message };
+  const pv = payer.values;
+
   // Appel via le CLIENT UTILISATEUR (requireAdmin) — jamais service-role — pour que
   // auth.uid() (recorded_by) et current_user_role() (garde) soient peuplés.
   const { data, error } = await ctx.supabase.rpc("encash_payment_proof", {
@@ -60,6 +79,16 @@ export async function encashPaymentProof(
     p_method: method,
     p_reference: reference,
     p_paid_at: paidAt,
+    p_payer_name: pv.payer_name,
+    p_payer_relationship: pv.payer_relationship,
+    p_payer_email: pv.payer_email,
+    p_payer_phone: pv.payer_phone,
+    p_cheque_drawer: pv.cheque_drawer,
+    p_cheque_bank: pv.cheque_bank,
+    p_cheque_number: pv.cheque_number,
+    p_wave_payer_number: pv.wave_payer_number,
+    p_wave_transaction_id: pv.wave_transaction_id,
+    p_wave_merchant: pv.wave_merchant,
   });
 
   if (error) {
@@ -78,6 +107,11 @@ export async function encashPaymentProof(
                 ? "Action réservée à l'administration."
                 : `Échec de l'encaissement : ${m}`;
     return { ok: false, message: friendly };
+  }
+
+  // Reçu automatique : étudiant + copie payeur tiers (best-effort, non bloquant).
+  if (data) {
+    await autoSendReceipt(ctx.supabase, data as string).catch(() => {});
   }
 
   revalidatePath("/espace/finance/preuves");

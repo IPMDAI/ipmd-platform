@@ -17,6 +17,10 @@ import {
   FINANCIAL_STATUS,
   PAYER_NOTES,
 } from "@/lib/finance";
+import {
+  PayerPaymentFields,
+  type LinkedParent,
+} from "@/components/espace/PayerPaymentFields";
 import type { FormResult } from "@/types";
 
 function Feedback({ state }: { state: FormResult | null }) {
@@ -105,12 +109,22 @@ export function SetFinanceForm({
   );
 }
 
-export function AddPaymentForm({ studentId }: { studentId: string }) {
+export function AddPaymentForm({
+  studentId,
+  linkedParents,
+}: {
+  studentId: string;
+  linkedParents?: LinkedParent[];
+}) {
   const bound = addPayment.bind(null, studentId);
   const [state, action, pending] = useActionState<FormResult | null, FormData>(bound, null);
   const ref = useRef<HTMLFormElement>(null);
+  const [method, setMethod] = useState("");
   useEffect(() => {
-    if (state?.ok) ref.current?.reset();
+    if (state?.ok) {
+      ref.current?.reset();
+      setMethod("");
+    }
   }, [state]);
 
   return (
@@ -132,7 +146,14 @@ export function AddPaymentForm({ studentId }: { studentId: string }) {
       </div>
       <div className="grid grid-cols-2 gap-3">
         <Field label="Moyen" htmlFor="p-method" required>
-          <select id="p-method" name="method" defaultValue="" required className={inputBase}>
+          <select
+            id="p-method"
+            name="method"
+            value={method}
+            onChange={(e) => setMethod(e.target.value)}
+            required
+            className={inputBase}
+          >
             <option value="">—</option>
             {PAYMENT_METHODS.map((m) => (
               <option key={m} value={m}>
@@ -145,9 +166,13 @@ export function AddPaymentForm({ studentId }: { studentId: string }) {
           <input id="p-date" name="paid_at" type="date" required className={inputBase} />
         </Field>
       </div>
+
+      {/* Payeur (tous moyens) + détails techniques Chèque / Wave. */}
+      <PayerPaymentFields method={method} linkedParents={linkedParents} />
+
       <div className="grid grid-cols-2 gap-3">
-        <Field label="Référence" htmlFor="p-ref">
-          <input id="p-ref" name="reference" placeholder="N° transaction / référence" className={inputBase} />
+        <Field label="Référence (interne)" htmlFor="p-ref">
+          <input id="p-ref" name="reference" placeholder="Référence interne (optionnel)" className={inputBase} />
         </Field>
         <Field label="Libellé" htmlFor="p-label">
           <input id="p-label" name="label" placeholder="Ex. Tranche 1" className={inputBase} />
