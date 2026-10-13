@@ -12,6 +12,13 @@ import {
   convocationWhen,
   type Convocation,
 } from "@/lib/convocations";
+import { DocumentUpload } from "@/components/espace/DocumentUpload";
+import { DocDownloadButton } from "@/components/espace/DocDownloadButton";
+import {
+  DOC_STATUS,
+  type StudentDocument,
+  type DocSubmission,
+} from "@/lib/student-documents";
 import {
   WeeklyTimetable,
   type TimetableSlot,
@@ -199,6 +206,27 @@ export default async function EnfantDetailPage({
       .eq("user_id", userId)
       .in("convocation_id", convocations.map((c) => c.id));
     myAcks = new Set((acks ?? []).map((a) => a.convocation_id));
+  }
+
+  // Documents à fournir de l'enfant + historique des dépôts (RLS parent).
+  const { data: docRows } = await supabase
+    .from("student_documents")
+    .select("id, student_id, label, doc_key, status, requested_at")
+    .eq("student_id", id)
+    .order("requested_at", { ascending: false });
+  const studentDocs = (docRows ?? []) as StudentDocument[];
+  const subsByDoc = new Map<string, DocSubmission[]>();
+  if (studentDocs.length > 0) {
+    const { data: subRows } = await supabase
+      .from("student_document_submissions")
+      .select("id, student_document_id, path, original_name, uploaded_by, uploaded_at, status, reviewed_at, review_note")
+      .in("student_document_id", studentDocs.map((d) => d.id))
+      .order("uploaded_at", { ascending: false });
+    for (const s of (subRows ?? []) as DocSubmission[]) {
+      const arr = subsByDoc.get(s.student_document_id) ?? [];
+      arr.push(s);
+      subsByDoc.set(s.student_document_id, arr);
+    }
   }
 
   // Emploi du temps (timetable_slots de la classe — RLS « Parent reads class timetable »).
@@ -432,6 +460,52 @@ export default async function EnfantDetailPage({
                       <div className="mt-3">
                         <ConvocationAck convocationId={c.id} acked={myAcks.has(c.id)} />
                       </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          )}
+
+          {/* Documents à fournir */}
+          {studentDocs.length > 0 && (
+            <div className="mt-6">
+              <h2 className="text-lg font-bold text-ipmd-black">📎 Documents à fournir</h2>
+              <ul className="mt-3 space-y-3">
+                {studentDocs.map((d) => {
+                  const st = DOC_STATUS[d.status] ?? DOC_STATUS.a_fournir;
+                  const dsubs = subsByDoc.get(d.id) ?? [];
+                  const latest = dsubs[0];
+                  return (
+                    <li key={d.id} className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-black/5">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <p className="font-bold text-ipmd-black">{d.label}</p>
+                        <span className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] font-bold ${st.cls}`}>
+                          {st.label}
+                        </span>
+                      </div>
+                      {latest?.status === "refuse" && latest.review_note && (
+                        <p className="mt-1 text-xs text-ipmd-red">
+                          Motif du refus : {latest.review_note}
+                        </p>
+                      )}
+                      <div className="mt-3 flex flex-wrap items-center gap-2">
+                        <DocumentUpload studentId={id} studentDocumentId={d.id} label={d.label} />
+                        {latest && <DocDownloadButton path={latest.path} label="Dernier dépôt" />}
+                      </div>
+                      {dsubs.length > 0 && (
+                        <ul className="mt-2 space-y-0.5 border-t border-black/5 pt-2">
+                          {dsubs.map((s) => {
+                            const ss = DOC_STATUS[s.status] ?? DOC_STATUS.fourni;
+                            return (
+                              <li key={s.id} className="text-[11px] text-black/45">
+                                {fmtDate(s.uploaded_at)} · {ss.label}
+                                {s.status === "refuse" && s.review_note ? ` — ${s.review_note}` : ""}
+                              </li>
+                            );
+                          })}
+                        </ul>
+                      )}
                     </li>
                   );
                 })}
