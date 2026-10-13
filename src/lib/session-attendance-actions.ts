@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { notifySensitive } from "@/lib/sensitive-notify";
 import type { FormResult } from "@/types";
 
 /** Enregistre l'appel (présence par étudiant) d'une séance datée. */
@@ -33,6 +34,14 @@ export async function setSessionAttendance(
     return { ok: false, message: "Aucun étudiant dans cette classe." };
   }
 
+  // État précédent (pour ne notifier que les NOUVELLES absences, pas à chaque save).
+  const { data: prior } = await supabase
+    .from("session_attendance")
+    .select("student_id, present")
+    .eq("session_id", sessionId);
+  const priorPresent = new Map<string, boolean>();
+  for (const p of prior ?? []) priorPresent.set(p.student_id, p.present);
+
   // « p_<id> » coché = présent.
   const rows = studentIds.map((sid) => ({
     session_id: sessionId,
@@ -43,6 +52,16 @@ export async function setSessionAttendance(
     .from("session_attendance")
     .upsert(rows, { onConflict: "session_id,student_id" });
   if (error) return { ok: false, message: error.message };
+
+  // Notifie (sans donnée en clair) les parents des étudiants NOUVELLEMENT absents.
+  const newlyAbsent = rows.filter(
+    (r) => !r.present && priorPresent.get(r.student_id) !== false
+  );
+  if (newlyAbsent.length > 0) {
+    await Promise.allSettled(
+      newlyAbsent.map((r) => notifySensitive(r.student_id, "absence"))
+    );
+  }
 
   // Reporte les compteurs sur la fiche pédagogique.
   const present = rows.filter((r) => r.present).length;

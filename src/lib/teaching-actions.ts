@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { resolveGradeTypeAndCoef } from "@/lib/grades";
+import { notifySensitive } from "@/lib/sensitive-notify";
 import type { FormResult } from "@/types";
 
 /** Récupère le contexte enseignant (ou super_admin), sinon null. */
@@ -270,6 +271,9 @@ export async function addGrade(
     comment: str(formData, "comment") || null,
   });
   if (error) return { ok: false, message: error.message };
+
+  // Notification sensible (sans donnée en clair) : parents + étudiant → lien signé.
+  await notifySensitive(studentId, "note");
 
   revalidatePath(`/espace/cours/${courseId}/notes`);
   return { ok: true, message: "Note enregistrée." };
