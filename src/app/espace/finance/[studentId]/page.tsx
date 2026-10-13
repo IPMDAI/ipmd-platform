@@ -371,7 +371,11 @@ export default async function StudentFinancePage({
                 discountApplied={fin.discountRate > 0}
                 levels={(levels ?? []).map((l) => ({ level: l.level, amount: Number(l.amount) }))}
               />
-              <AddPaymentForm studentId={studentId} linkedParents={linkedParents} />
+              <AddPaymentForm
+                studentId={studentId}
+                linkedParents={linkedParents}
+                tranches={scheduleRows ?? []}
+              />
               <AccessForm
                 studentId={studentId}
                 status={finance?.status ?? null}

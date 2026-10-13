@@ -109,21 +109,29 @@ export function SetFinanceForm({
   );
 }
 
+type Tranche = { id: string; label: string | null; amount: number; due_date: string | null };
+
 export function AddPaymentForm({
   studentId,
   linkedParents,
+  tranches,
 }: {
   studentId: string;
   linkedParents?: LinkedParent[];
+  tranches?: Tranche[];
 }) {
   const bound = addPayment.bind(null, studentId);
   const [state, action, pending] = useActionState<FormResult | null, FormData>(bound, null);
   const ref = useRef<HTMLFormElement>(null);
   const [method, setMethod] = useState("");
+  const [labelChoice, setLabelChoice] = useState(""); // "" | <label tranche> | "__free__"
+  const fmtTranche = (t: Tranche) =>
+    `${t.label || "Tranche"} — ${Math.round(t.amount).toLocaleString("fr-FR").replace(/ /g, " ")} FCFA${t.due_date ? ` · ${t.due_date.split("-").reverse().join("/")}` : ""}`;
   useEffect(() => {
     if (state?.ok) {
       ref.current?.reset();
       setMethod("");
+      setLabelChoice("");
     }
   }, [state]);
 
@@ -174,9 +182,46 @@ export function AddPaymentForm({
         <Field label="Référence (interne)" htmlFor="p-ref">
           <input id="p-ref" name="reference" placeholder="Référence interne (optionnel)" className={inputBase} />
         </Field>
-        <Field label="Libellé" htmlFor="p-label">
-          <input id="p-label" name="label" placeholder="Ex. Tranche 1" className={inputBase} />
-        </Field>
+        {tranches && tranches.length > 0 ? (
+          <Field label="Libellé / Tranche" htmlFor="p-label-sel">
+            <select
+              id="p-label-sel"
+              value={labelChoice}
+              onChange={(e) => {
+                const v = e.target.value;
+                setLabelChoice(v);
+                // Sélection d'une tranche → pré-remplit le montant (modifiable).
+                const t = tranches.find((x) => (x.label || "") === v);
+                if (t) {
+                  const amt = document.getElementById("p-amount") as HTMLInputElement | null;
+                  if (amt) amt.value = String(Math.round(t.amount));
+                }
+              }}
+              className={inputBase}
+            >
+              <option value="">—</option>
+              {tranches.map((t) => (
+                <option key={t.id} value={t.label || ""}>
+                  {fmtTranche(t)}
+                </option>
+              ))}
+              <option value="__free__">Autre (préciser)…</option>
+            </select>
+            {labelChoice === "__free__" ? (
+              <input
+                name="label"
+                placeholder="Libellé libre"
+                className={`${inputBase} mt-2`}
+              />
+            ) : (
+              <input type="hidden" name="label" value={labelChoice} />
+            )}
+          </Field>
+        ) : (
+          <Field label="Libellé" htmlFor="p-label">
+            <input id="p-label" name="label" placeholder="Ex. Tranche 1" className={inputBase} />
+          </Field>
+        )}
       </div>
       <Field label="Observation (optionnel)" htmlFor="p-obs">
         <input id="p-obs" name="observation" className={inputBase} />
