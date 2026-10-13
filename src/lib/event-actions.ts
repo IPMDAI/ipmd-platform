@@ -3,8 +3,16 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { STAFF_ROLES } from "@/lib/messaging";
-import { EVENT_KIND_VALUES } from "@/lib/events";
+import { EVENT_KIND_VALUES, eventWhen } from "@/lib/events";
+import {
+  canSendEmail,
+  emailDocument,
+  escapeHtml,
+  sendScolariteEmail,
+} from "@/lib/email";
 import type { FormResult } from "@/types";
+
+const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || "https://ipmd.pro").replace(/\/$/, "");
 
 function str(formData: FormData, key: string): string {
   const v = formData.get(key);
@@ -101,8 +109,48 @@ export async function inviteToEvent(
     );
   if (error) return { ok: false, message: error.message };
 
+  // Email d'invitation (best-effort) : ne bloque jamais l'invitation.
+  let emailed = false;
+  if (canSendEmail) {
+    try {
+      const [{ data: ev }, { data: person }] = await Promise.all([
+        ctx.supabase
+          .from("events")
+          .select("title, starts_at, ends_at, location, status")
+          .eq("id", eventId)
+          .maybeSingle(),
+        ctx.supabase.from("profiles").select("email, full_name").eq("id", userId).maybeSingle(),
+      ]);
+      if (ev && ev.status !== "annule" && person?.email) {
+        const when = eventWhen(ev.starts_at, ev.ends_at);
+        const html = emailDocument(
+          "Invitation — Vie IPMD",
+          `<p style="font-size:14px;color:#374151">Bonjour${
+            person.full_name ? ` ${escapeHtml(person.full_name)}` : ""
+          },</p>
+           <p style="font-size:14px;color:#374151">Vous êtes invité(e) à l'événement <strong>${escapeHtml(
+             ev.title
+           )}</strong>.</p>
+           <p style="font-size:14px;color:#374151">🗓️ ${escapeHtml(when)}${
+             ev.location ? ` · 📍 ${escapeHtml(ev.location)}` : ""
+           }</p>
+           <p style="text-align:center;margin:24px 0"><a href="${SITE_URL}/espace/vie-ipmd" style="background:#e4002b;color:#fff;padding:12px 22px;border-radius:10px;text-decoration:none;font-weight:bold;display:inline-block">Voir et répondre dans mon espace</a></p>`
+        );
+        const n = await sendScolariteEmail([person.email], `IPMD — Invitation : ${ev.title}`, html);
+        emailed = n > 0;
+      }
+    } catch {
+      // best-effort
+    }
+  }
+
   revalidatePath("/espace/evenements");
-  return { ok: true, message: "Invitation envoyée." };
+  return {
+    ok: true,
+    message:
+      "Invitation enregistrée." +
+      (canSendEmail ? (emailed ? " Email envoyé." : " (Email non envoyé.)") : ""),
+  };
 }
 
 /** Staff : supprime un événement (et ses RSVP). */
