@@ -17,21 +17,46 @@ export default function DefinirMotDePassePage() {
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
 
-  // Le lien d'invitation établit une session (détectée dans l'URL).
+  // Le lien d'invitation établit une session. Deux cas :
+  //  - lien robuste `?token_hash=…` → on vérifie le jeton EN JS (verifyOtp), ce qui
+  //    évite la consommation du lien par les scanners d'emails ;
+  //  - ancien lien (jeton déjà échangé) → session présente dans l'URL (hash).
   useEffect(() => {
     const supabase = createClient();
     if (!supabase) {
       setReady(true);
       return;
     }
-    supabase.auth.getSession().then(({ data }) => {
-      setHasSession(Boolean(data.session));
-      setReady(true);
-    });
-    const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => {
+    const sub = supabase.auth.onAuthStateChange((_e, session) => {
       setHasSession(Boolean(session));
     });
-    return () => sub.subscription.unsubscribe();
+    (async () => {
+      const params = new URLSearchParams(window.location.search);
+      const tokenHash = params.get("token_hash");
+      const type = params.get("type");
+      const hash = new URLSearchParams(window.location.hash.replace(/^#/, ""));
+      const accessToken = hash.get("access_token");
+      const refreshToken = hash.get("refresh_token");
+
+      if (tokenHash) {
+        // Lien robuste : on vérifie le jeton en JS (insensible aux scanners).
+        await supabase.auth
+          .verifyOtp({ token_hash: tokenHash, type: (type || "recovery") as "recovery" })
+          .catch(() => {});
+        window.history.replaceState({}, "", "/definir-mot-de-passe");
+      } else if (accessToken && refreshToken) {
+        // Lien classique (flux implicite) : le client PKCE n'ouvre pas la session
+        // depuis le #hash tout seul → on la pose explicitement.
+        await supabase.auth
+          .setSession({ access_token: accessToken, refresh_token: refreshToken })
+          .catch(() => {});
+        window.history.replaceState({}, "", "/definir-mot-de-passe");
+      }
+      const { data } = await supabase.auth.getSession();
+      setHasSession(Boolean(data.session));
+      setReady(true);
+    })();
+    return () => sub.data.subscription.unsubscribe();
   }, []);
 
   const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {

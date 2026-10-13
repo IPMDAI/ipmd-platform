@@ -9,6 +9,7 @@ import {
   escapeHtml,
   sendScolariteEmail,
 } from "@/lib/email";
+import { passwordSetupLink } from "@/lib/password-link";
 import type { FormResult } from "@/types";
 
 const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || "https://ipmd.pro").replace(/\/$/, "");
@@ -78,8 +79,8 @@ export async function grantFormerAccess(
       email,
       options: { redirectTo: `${SITE_URL}/definir-mot-de-passe` },
     });
-    const actionLink = link?.properties?.action_link;
-    if (actionLink) {
+    const actionLink = passwordSetupLink(SITE_URL, link);
+    if (link?.properties?.hashed_token) {
       const n = await sendScolariteEmail(
         [email],
         "IPMD — Activez votre accès",

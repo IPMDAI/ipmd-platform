@@ -17,6 +17,7 @@ import {
   sendScolariteEmail,
   escapeHtml,
 } from "@/lib/email";
+import { passwordSetupLink } from "@/lib/password-link";
 import type { FormResult } from "@/types";
 
 async function requireSuperAdmin() {
@@ -182,7 +183,7 @@ export async function inviteParent(
       email,
       options: { redirectTo: `${SITE_URL}/definir-mot-de-passe` },
     });
-    if (linkData?.properties?.action_link) actionLink = linkData.properties.action_link;
+    actionLink = passwordSetupLink(SITE_URL, linkData);
     const n = await sendScolariteEmail(
       [email],
       "IPMD — Activez votre espace parent",
@@ -326,9 +327,7 @@ export async function inviteFromCandidature(
     email,
     options: { redirectTo: `${SITE_URL}/definir-mot-de-passe` },
   });
-  if (linkData?.properties?.action_link) {
-    actionLink = linkData.properties.action_link;
-  }
+  actionLink = passwordSetupLink(SITE_URL, linkData);
 
   // 2. Rôle + nom + univers (via le client Super Admin, autorisé par la garde).
   const profileUpdate: Record<string, unknown> = {
@@ -812,7 +811,7 @@ export async function createReturningStudent(
       email,
       options: { redirectTo: `${SITE_URL}/definir-mot-de-passe` },
     });
-    if (linkData?.properties?.action_link) actionLink = linkData.properties.action_link;
+    actionLink = passwordSetupLink(SITE_URL, linkData);
 
     const balance = totalDue - paidAmount;
     const rows = buildRows([
