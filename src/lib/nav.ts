@@ -96,6 +96,7 @@ const LEARNER_NAV: NavGroup[] = [
     title: "Scolarité",
     items: [
       { label: "Mes documents", href: "/espace/documents", icon: "🪪" },
+      { label: "Mes démarches", href: "/espace/mes-demarches", icon: "📎" },
       { label: "Ma scolarité", href: "/espace/mes-paiements", icon: "💳" },
       { label: "Règlement intérieur", href: "/espace/reglement", icon: "📜" },
     ],
