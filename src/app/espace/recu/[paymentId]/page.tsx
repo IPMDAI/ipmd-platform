@@ -75,12 +75,23 @@ export default async function RecuPage({
     name = cand?.full_name || cand?.email || "Candidat";
   }
 
+  // Retour adapté au rôle : parent → fiche de l'enfant ; étudiant → sa scolarité ;
+  // staff → dossier ; pré-inscription → preuves.
+  const isParent = (me?.role ?? "") === "parent";
   const backHref = isPre
     ? "/espace/finance/preuves"
     : isStaff
       ? `/espace/finance/${payment.student_id}`
-      : "/espace/mes-paiements";
-  const backLabel = isPre ? "← Preuves à vérifier" : isStaff ? "← Retour au dossier" : "← Ma scolarité";
+      : isParent
+        ? `/espace/mon-enfant/${payment.student_id}`
+        : "/espace/mes-paiements";
+  const backLabel = isPre
+    ? "← Preuves à vérifier"
+    : isStaff
+      ? "← Retour au dossier"
+      : isParent
+        ? "← Retour à mon enfant"
+        : "← Ma scolarité";
 
   const dateStr = new Date(payment.paid_at).toLocaleDateString("fr-FR", {
     day: "2-digit",

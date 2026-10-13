@@ -4,15 +4,21 @@ import { notFound } from "next/navigation";
 import { requireUser } from "@/lib/require-user";
 import { Container } from "@/components/ui/Container";
 import { StudentAttendance } from "@/components/espace/StudentAttendance";
-import { DAY_OPTIONS, DAY_LABELS, formatTime } from "@/lib/schedule";
+import { StudentSessions } from "@/components/espace/StudentSessions";
+import { AnnouncementsPanel } from "@/components/espace/AnnouncementsPanel";
+import {
+  WeeklyTimetable,
+  type TimetableSlot,
+} from "@/components/espace/WeeklyTimetable";
+import { weekDates, weekLabel } from "@/lib/holidays";
 import { averageOn20, averageValue, mention } from "@/lib/grades";
-import { formatFCFA } from "@/lib/finance";
-
-/** Aujourd'hui au format planning (1 = Lundi … 7 = Dimanche). */
-function todayDow(): number {
-  const js = new Date().getDay();
-  return js === 0 ? 7 : js;
-}
+import {
+  formatFCFA,
+  computeFinance,
+  computeSchedule,
+  SCHED_STATUS,
+  type Installment,
+} from "@/lib/finance";
 
 export const metadata: Metadata = {
   title: "Suivi",
@@ -29,15 +35,36 @@ type Grade = {
   comment: string | null;
 };
 
+/** Aujourd'hui au format planning (1 = Lundi … 7 = Dimanche). */
+function todayDow(): number {
+  const js = new Date().getDay();
+  return js === 0 ? 7 : js;
+}
+
+function fmtDate(iso: string): string {
+  return new Date(iso).toLocaleDateString("fr-FR", {
+    day: "2-digit",
+    month: "long",
+    year: "numeric",
+  });
+}
+
+/** Libellé + couleur de l'état d'accès (inscription). */
+const ACCESS_BADGE: Record<string, { label: string; cls: string }> = {
+  actif: { label: "Inscrit · accès actif", cls: "bg-green-50 text-green-700" },
+  pause: { label: "Accès en pause", cls: "bg-amber-50 text-amber-800" },
+  bloque: { label: "Accès bloqué", cls: "bg-ipmd-red/10 text-ipmd-red" },
+};
+
 export default async function EnfantDetailPage({
   params,
 }: {
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const { supabase } = await requireUser();
+  const { supabase, userId } = await requireUser();
 
-  // La RLS ne renvoie l'enfant que si l'utilisateur en est le parent.
+  // La RLS ne renvoie l'enfant que si l'utilisateur en est le parent (ou admin).
   const { data: child } = await supabase
     .from("profiles")
     .select("id, full_name, email")
@@ -45,23 +72,42 @@ export default async function EnfantDetailPage({
     .single();
   if (!child) notFound();
 
-  // Cours de l'enfant.
-  const { data: enr } = await supabase
-    .from("enrollments")
-    .select("course_id")
-    .eq("student_id", id);
-  const courseIds = (enr ?? []).map((e) => e.course_id);
+  const { data: me } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", userId)
+    .single();
+  const viewerRole = me?.role ?? "parent";
 
-  const courseTitle = new Map<string, string>();
-  let courses: { id: string; title: string; field: string | null }[] = [];
-  if (courseIds.length > 0) {
-    const { data } = await supabase
-      .from("courses")
-      .select("id, title, field")
-      .in("id", courseIds)
-      .order("title");
-    courses = data ?? [];
-    for (const c of courses) courseTitle.set(c.id, c.title);
+  // Classe de l'enfant (RLS parent : policy « Parents read children class »).
+  const { data: member } = await supabase
+    .from("class_members")
+    .select("class_id")
+    .eq("student_id", id)
+    .maybeSingle();
+
+  let klass: {
+    name: string | null;
+    level: string | null;
+    academic_year: string | null;
+    filiere_id: string | null;
+  } | null = null;
+  let filiereName: string | null = null;
+  if (member?.class_id) {
+    const { data: k } = await supabase
+      .from("classes")
+      .select("name, level, academic_year, filiere_id")
+      .eq("id", member.class_id)
+      .single();
+    klass = k ?? null;
+    if (k?.filiere_id) {
+      const { data: fil } = await supabase
+        .from("filieres")
+        .select("name")
+        .eq("id", k.filiere_id)
+        .single();
+      filiereName = fil?.name ?? null;
+    }
   }
 
   // Notes de l'enfant.
@@ -71,7 +117,6 @@ export default async function EnfantDetailPage({
     .eq("student_id", id)
     .order("created_at", { ascending: false });
   const grades = (gradeRows ?? []) as Grade[];
-
   const byCourse = new Map<string, Grade[]>();
   for (const g of grades) {
     const arr = byCourse.get(g.course_id) ?? [];
@@ -79,72 +124,114 @@ export default async function EnfantDetailPage({
     byCourse.set(g.course_id, arr);
   }
 
-  // Emploi du temps.
-  let sessions: {
-    id: string;
-    course_id: string;
-    day_of_week: number;
-    start_time: string;
-    end_time: string;
-    room: string | null;
-  }[] = [];
-  if (courseIds.length > 0) {
+  // Intitulés de cours (pour regrouper les notes).
+  const courseTitle = new Map<string, string>();
+  const gradeCourseIds = [...new Set(grades.map((g) => g.course_id))];
+  if (gradeCourseIds.length > 0) {
     const { data } = await supabase
-      .from("schedule_sessions")
-      .select("id, course_id, day_of_week, start_time, end_time, room")
-      .in("course_id", courseIds)
-      .order("start_time");
-    sessions = data ?? [];
-  }
-  const byDay = new Map<number, typeof sessions>();
-  for (const s of sessions) {
-    const arr = byDay.get(s.day_of_week) ?? [];
-    arr.push(s);
-    byDay.set(s.day_of_week, arr);
+      .from("courses")
+      .select("id, title")
+      .in("id", gradeCourseIds);
+    for (const c of data ?? []) courseTitle.set(c.id, c.title);
   }
 
-  // Présence de l'enfant (appel par séance datée).
+  // Présence (comptage pour le résumé).
   const { data: attRows } = await supabase
     .from("session_attendance")
-    .select("session_id, present")
+    .select("present")
     .eq("student_id", id);
-  const sessionInfo = new Map<string, { date: string; courseTitle: string }>();
-  const attSessionIds = (attRows ?? []).map((a) => a.session_id);
-  if (attSessionIds.length > 0) {
-    const { data: sessRows } = await supabase
-      .from("course_sessions")
-      .select("id, session_date, subject")
-      .in("id", attSessionIds);
-    for (const s of sessRows ?? [])
-      sessionInfo.set(s.id, { date: s.session_date, courseTitle: s.subject });
-  }
   const presentCount = (attRows ?? []).filter((a) => a.present).length;
-  const absences = (attRows ?? [])
-    .filter((a) => !a.present)
-    .map((a) => sessionInfo.get(a.session_id))
-    .filter(Boolean) as { date: string; courseTitle: string }[];
+  const absenceCount = (attRows ?? []).filter((a) => !a.present).length;
 
-  // Scolarité / paiements de l'enfant.
-  const { data: finance } = await supabase
-    .from("student_finance")
-    .select("total_due")
-    .eq("student_id", id)
-    .maybeSingle();
-  const { data: payRows } = await supabase
-    .from("payments")
-    .select("amount")
-    .eq("student_id", id)
-    .eq("status", "paye");
-  const totalDue = Number(finance?.total_due ?? 0);
-  const totalPaid = (payRows ?? []).reduce((a, p) => a + Number(p.amount), 0);
-  const balance = totalDue - totalPaid;
+  // Finance : frais, paiements, échéancier.
+  const [{ data: finance }, { data: payRows }, { data: schedRows }] =
+    await Promise.all([
+      supabase
+        .from("student_finance")
+        .select(
+          "registration_fee, tuition_due, discount_rate, scholarship_amount, level, program, access_state"
+        )
+        .eq("student_id", id)
+        .maybeSingle(),
+      supabase
+        .from("payments")
+        .select("id, amount, kind, status, label, method, paid_at")
+        .eq("student_id", id)
+        .order("paid_at", { ascending: false }),
+      supabase
+        .from("payment_schedules")
+        .select("id, label, amount, due_date")
+        .eq("student_id", id),
+    ]);
+
+  const payments = payRows ?? [];
+  const fin = computeFinance(finance, payments);
+  const today = new Date().toISOString().slice(0, 10);
+  const installments: Installment[] = (schedRows ?? []).map((s) => ({
+    id: s.id,
+    label: s.label,
+    amount: Number(s.amount),
+    due_date: s.due_date,
+  }));
+  const { rows: schedule, next } = computeSchedule(installments, fin.paidScolarite, today);
+  const paidPayments = payments.filter((p) => p.status == null || p.status === "paye");
+
+  // Emploi du temps (timetable_slots de la classe — RLS « Parent reads class timetable »).
+  const dates = weekDates();
+  const { data: holidayRows } = await supabase
+    .from("holidays")
+    .select("day, label")
+    .gte("day", dates[1])
+    .lte("day", dates[6]);
+  const holidays: Record<string, string> = {};
+  for (const h of holidayRows ?? []) holidays[h.day] = h.label;
+
+  let slots: TimetableSlot[] = [];
+  if (member?.class_id) {
+    const { data: rows } = await supabase
+      .from("timetable_slots")
+      .select("id, subject, teacher_id, room_id, day_of_week, start_time, end_time, status, type, modality")
+      .eq("class_id", member.class_id)
+      .order("start_time");
+    const teacherIds = [...new Set((rows ?? []).map((r) => r.teacher_id).filter(Boolean))] as string[];
+    const roomIds = [...new Set((rows ?? []).map((r) => r.room_id).filter(Boolean))] as string[];
+    const teacherName = new Map<string, string>();
+    if (teacherIds.length > 0) {
+      const { data: t } = await supabase
+        .from("profiles")
+        .select("id, full_name, email")
+        .in("id", teacherIds);
+      for (const p of t ?? []) teacherName.set(p.id, p.full_name || p.email);
+    }
+    const roomName = new Map<string, string>();
+    if (roomIds.length > 0) {
+      const { data: r } = await supabase.from("rooms").select("id, name").in("id", roomIds);
+      for (const x of r ?? []) roomName.set(x.id, x.name);
+    }
+    slots = (rows ?? []).map((s) => ({
+      id: s.id,
+      day_of_week: s.day_of_week,
+      start_time: s.start_time,
+      end_time: s.end_time,
+      subject: s.subject,
+      teacherName: s.teacher_id ? teacherName.get(s.teacher_id) : null,
+      roomName: s.room_id ? roomName.get(s.room_id) : null,
+      status: s.status ?? "prevu",
+      type: s.type,
+      modality: s.modality,
+    }));
+  }
 
   // Résumé en tête.
   const avg = averageValue(grades);
   const dow = todayDow();
-  const todaySessions = sessions
+  const todaySlots = slots
     .filter((s) => s.day_of_week === dow)
     .sort((a, b) => (a.start_time < b.start_time ? -1 : 1));
+
+  const accessBadge = finance?.access_state
+    ? ACCESS_BADGE[finance.access_state]
+    : null;
 
   return (
     <section className="min-h-[70vh] bg-ipmd-light">
@@ -159,7 +246,38 @@ export default async function EnfantDetailPage({
           <h1 className="mt-3 text-2xl font-extrabold tracking-tight text-ipmd-black">
             {child.full_name || child.email}
           </h1>
-          <div className="mt-2 flex flex-wrap gap-2">
+
+          {/* Contexte scolarité : classe / filière / niveau / année / statut */}
+          <div className="mt-2 flex flex-wrap items-center gap-2">
+            {klass?.name && (
+              <span className="rounded-full bg-ipmd-black px-3 py-1 text-xs font-semibold text-white">
+                {klass.name}
+              </span>
+            )}
+            {filiereName && (
+              <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-ipmd-black ring-1 ring-black/10">
+                {filiereName}
+              </span>
+            )}
+            {klass?.level && (
+              <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-ipmd-black ring-1 ring-black/10">
+                {klass.level}
+              </span>
+            )}
+            {klass?.academic_year && (
+              <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-black/55 ring-1 ring-black/10">
+                {klass.academic_year}
+              </span>
+            )}
+            {accessBadge && (
+              <span className={`rounded-full px-3 py-1 text-xs font-bold ${accessBadge.cls}`}>
+                {accessBadge.label}
+              </span>
+            )}
+          </div>
+
+          {/* Actions documents */}
+          <div className="mt-4 flex flex-wrap gap-2">
             <Link
               href={`/espace/bulletin/${id}`}
               className="inline-flex items-center gap-2 rounded-full bg-ipmd-black px-4 py-2 text-sm font-semibold text-white transition-opacity hover:opacity-90"
@@ -180,10 +298,6 @@ export default async function EnfantDetailPage({
             </Link>
           </div>
 
-          <div className="mt-6">
-            <StudentAttendance studentId={id} />
-          </div>
-
           {/* Résumé : l'essentiel d'un coup d'œil */}
           <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <div className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-black/5">
@@ -194,9 +308,7 @@ export default async function EnfantDetailPage({
                 {avg !== null ? `${avg}/20` : "—"}
               </p>
               {avg !== null && (
-                <p className="text-xs font-semibold text-ipmd-red">
-                  {mention(avg)}
-                </p>
+                <p className="text-xs font-semibold text-ipmd-red">{mention(avg)}</p>
               )}
             </div>
             <div className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-black/5">
@@ -205,46 +317,185 @@ export default async function EnfantDetailPage({
               </p>
               <p className="mt-1 text-2xl font-extrabold text-green-600">
                 {presentCount}
-                <span className="text-sm font-semibold text-black/40">
-                  {" "}
-                  prés.
-                </span>
+                <span className="text-sm font-semibold text-black/40"> prés.</span>
               </p>
               <p className="text-xs font-semibold text-ipmd-red">
-                {absences.length} absence(s)
+                {absenceCount} absence(s)
               </p>
             </div>
             <div className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-black/5">
               <p className="text-xs font-semibold uppercase tracking-wider text-black/40">
-                Solde
+                Reste à payer
               </p>
               <p
                 className={`mt-1 text-2xl font-extrabold ${
-                  balance <= 0 ? "text-green-600" : "text-ipmd-red"
+                  fin.balance <= 0 ? "text-green-600" : "text-ipmd-red"
                 }`}
               >
-                {balance <= 0 ? "À jour" : formatFCFA(balance)}
+                {fin.balance <= 0 ? "À jour" : formatFCFA(fin.balance)}
               </p>
             </div>
             <div className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-black/5">
               <p className="text-xs font-semibold uppercase tracking-wider text-black/40">
-                Aujourd&apos;hui ({DAY_LABELS[dow] ?? ""})
+                Prochaine échéance
               </p>
-              {todaySessions.length === 0 ? (
-                <p className="mt-1 text-sm text-black/55">Pas de cours 🎉</p>
+              {next ? (
+                <>
+                  <p className="mt-1 text-lg font-extrabold text-ipmd-black">
+                    {formatFCFA(next.amount)}
+                  </p>
+                  <p className="text-xs font-semibold text-black/55">
+                    {fmtDate(next.due_date)}
+                  </p>
+                </>
               ) : (
-                <ul className="mt-1 space-y-1">
-                  {todaySessions.slice(0, 3).map((s) => (
-                    <li key={s.id} className="text-sm text-ipmd-black">
-                      <span className="font-bold text-ipmd-red">
-                        {formatTime(s.start_time)}
-                      </span>{" "}
-                      {courseTitle.get(s.course_id) ?? "Cours"}
-                    </li>
-                  ))}
-                </ul>
+                <p className="mt-1 text-lg font-extrabold text-green-600">
+                  {schedule.length > 0 ? "Soldé ✓" : "—"}
+                </p>
               )}
             </div>
+          </div>
+
+          {/* Aujourd'hui */}
+          {todaySlots.length > 0 && (
+            <div className="mt-6 rounded-2xl bg-white p-5 shadow-sm ring-1 ring-black/5">
+              <h3 className="font-bold text-ipmd-black">🗓️ Aujourd&apos;hui</h3>
+              <ul className="mt-2 space-y-1.5">
+                {todaySlots.map((s) => (
+                  <li key={s.id} className="text-sm text-ipmd-black">
+                    <span className="font-bold text-ipmd-red">
+                      {s.start_time.slice(0, 5)}–{s.end_time.slice(0, 5)}
+                    </span>{" "}
+                    {s.subject}
+                    {s.roomName && (
+                      <span className="text-black/45"> · 📍 {s.roomName}</span>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {/* Scolarité : totaux + échéancier + paiements/reçus */}
+          <h2 className="mt-8 text-lg font-bold text-ipmd-black">Scolarité</h2>
+          <div className="mt-3 grid gap-4 sm:grid-cols-3">
+            <div className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-black/5">
+              <p className="text-xs font-semibold uppercase text-black/40">Total dû</p>
+              <p className="mt-1 text-base font-extrabold text-ipmd-black">
+                {formatFCFA(fin.totalDue)}
+              </p>
+            </div>
+            <div className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-black/5">
+              <p className="text-xs font-semibold uppercase text-black/40">Payé</p>
+              <p className="mt-1 text-base font-extrabold text-green-600">
+                {formatFCFA(fin.totalPaid)}
+              </p>
+            </div>
+            <div className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-black/5">
+              <p className="text-xs font-semibold uppercase text-black/40">Reste</p>
+              <p
+                className={`mt-1 text-base font-extrabold ${
+                  fin.balance <= 0 ? "text-green-600" : "text-ipmd-red"
+                }`}
+              >
+                {fin.balance <= 0 ? "Soldé ✓" : formatFCFA(fin.balance)}
+              </p>
+            </div>
+          </div>
+
+          {/* Échéancier */}
+          {schedule.length > 0 && (
+            <div className="mt-4">
+              <h3 className="mb-2 text-sm font-bold uppercase tracking-wider text-black/40">
+                Échéancier
+              </h3>
+              <ul className="divide-y divide-black/5 overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-black/5">
+                {schedule.map((s) => {
+                  const st = SCHED_STATUS[s.status];
+                  return (
+                    <li key={s.id} className="flex items-center justify-between gap-3 px-5 py-3">
+                      <div className="min-w-0">
+                        <p className="font-semibold text-ipmd-black">
+                          {formatFCFA(s.amount)}
+                          {s.label && (
+                            <span className="ml-2 text-xs font-normal text-black/45">
+                              {s.label}
+                            </span>
+                          )}
+                        </p>
+                        <p className="text-xs text-black/50">
+                          Échéance : {fmtDate(s.due_date)}
+                        </p>
+                      </div>
+                      <span className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-bold ${st.cls}`}>
+                        {st.label}
+                      </span>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          )}
+
+          {/* Paiements + reçus */}
+          {paidPayments.length > 0 && (
+            <div className="mt-4">
+              <h3 className="mb-2 text-sm font-bold uppercase tracking-wider text-black/40">
+                Paiements & reçus
+              </h3>
+              <ul className="divide-y divide-black/5 overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-black/5">
+                {paidPayments.map((p) => (
+                  <li key={p.id} className="flex items-center justify-between gap-3 px-5 py-3">
+                    <div className="min-w-0">
+                      <p className="font-semibold text-ipmd-black">
+                        {formatFCFA(p.amount)}
+                        <span className="ml-2 rounded-full bg-ipmd-light px-2 py-0.5 text-[10px] font-bold text-black/55">
+                          {p.kind === "inscription" ? "Inscription" : "Scolarité"}
+                        </span>
+                      </p>
+                      <p className="text-xs text-black/50">
+                        {fmtDate(p.paid_at)}
+                        {p.method ? ` · ${p.method}` : ""}
+                        {p.label ? ` · ${p.label}` : ""}
+                      </p>
+                    </div>
+                    <Link
+                      href={`/espace/recu/${p.id}`}
+                      className="shrink-0 rounded-lg bg-ipmd-black px-3 py-1.5 text-xs font-semibold text-white transition-opacity hover:opacity-90"
+                    >
+                      📄 Reçu
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {/* Emploi du temps */}
+          <h2 className="mt-8 text-lg font-bold text-ipmd-black">Emploi du temps</h2>
+          {!member?.class_id ? (
+            <p className="mt-3 rounded-2xl bg-white p-5 text-sm text-black/55 shadow-sm ring-1 ring-black/5">
+              {child.full_name || "L'enfant"} n&apos;est affecté·e à aucune classe
+              pour l&apos;instant.
+            </p>
+          ) : (
+            <div className="mt-3 space-y-6">
+              <StudentSessions classId={member.class_id} />
+              {slots.length > 0 && (
+                <div>
+                  <h3 className="mb-2 text-sm font-bold uppercase tracking-wider text-black/40">
+                    Grille hebdomadaire type · semaine du {weekLabel(dates)}
+                  </h3>
+                  <WeeklyTimetable slots={slots} weekDates={dates} holidays={holidays} />
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Présence */}
+          <h2 className="mt-8 text-lg font-bold text-ipmd-black">Présence</h2>
+          <div className="mt-3">
+            <StudentAttendance studentId={id} />
           </div>
 
           {/* Notes */}
@@ -304,129 +555,8 @@ export default async function EnfantDetailPage({
             </div>
           )}
 
-          {/* Présence */}
-          <h2 className="mt-8 text-lg font-bold text-ipmd-black">Présence</h2>
-          <div className="mt-3 rounded-2xl bg-white p-5 shadow-sm ring-1 ring-black/5">
-            <p className="text-sm text-black/60">
-              <span className="font-bold text-green-600">{presentCount}</span>{" "}
-              présence(s) ·{" "}
-              <span className="font-bold text-ipmd-red">{absences.length}</span>{" "}
-              absence(s)
-            </p>
-            {absences.length > 0 && (
-              <ul className="mt-3 space-y-1.5">
-                {absences.map((a, i) => (
-                  <li key={i} className="text-sm text-black/60">
-                    <span className="font-semibold text-ipmd-red">Absent</span> ·{" "}
-                    {new Date(a.date).toLocaleDateString("fr-FR", {
-                      day: "2-digit",
-                      month: "long",
-                      year: "numeric",
-                    })}{" "}
-                    · {a.courseTitle}
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-
-          {/* Scolarité / paiements */}
-          <h2 className="mt-8 text-lg font-bold text-ipmd-black">Scolarité</h2>
-          <div className="mt-3 grid gap-4 sm:grid-cols-3">
-            <div className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-black/5">
-              <p className="text-xs font-semibold uppercase text-black/40">Dû</p>
-              <p className="mt-1 text-base font-extrabold text-ipmd-black">
-                {formatFCFA(totalDue)}
-              </p>
-            </div>
-            <div className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-black/5">
-              <p className="text-xs font-semibold uppercase text-black/40">Payé</p>
-              <p className="mt-1 text-base font-extrabold text-green-600">
-                {formatFCFA(totalPaid)}
-              </p>
-            </div>
-            <div className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-black/5">
-              <p className="text-xs font-semibold uppercase text-black/40">
-                Solde
-              </p>
-              <p
-                className={`mt-1 text-base font-extrabold ${
-                  balance <= 0 ? "text-green-600" : "text-ipmd-red"
-                }`}
-              >
-                {balance <= 0 ? "À jour" : formatFCFA(balance)}
-              </p>
-            </div>
-          </div>
-
-          {/* Emploi du temps */}
-          <h2 className="mt-8 text-lg font-bold text-ipmd-black">
-            Emploi du temps
-          </h2>
-          {sessions.length === 0 ? (
-            <p className="mt-3 rounded-2xl bg-white p-5 text-sm text-black/55 shadow-sm ring-1 ring-black/5">
-              Aucune séance planifiée.
-            </p>
-          ) : (
-            <div className="mt-3 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
-              {DAY_OPTIONS.map((day) => {
-                const slots = byDay.get(day.value) ?? [];
-                return (
-                  <div
-                    key={day.value}
-                    className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-black/5"
-                  >
-                    <h3 className="border-b border-black/5 pb-2 text-sm font-bold uppercase tracking-wide text-ipmd-black">
-                      {day.label}
-                    </h3>
-                    {slots.length === 0 ? (
-                      <p className="mt-3 text-xs text-black/35">—</p>
-                    ) : (
-                      <ul className="mt-3 space-y-3">
-                        {slots.map((s) => (
-                          <li key={s.id} className="rounded-xl bg-ipmd-light p-3">
-                            <p className="text-xs font-bold text-ipmd-red">
-                              {formatTime(s.start_time)} – {formatTime(s.end_time)}
-                            </p>
-                            <p className="mt-0.5 text-sm font-semibold text-ipmd-black">
-                              {courseTitle.get(s.course_id) ?? "Cours"}
-                            </p>
-                            {s.room && (
-                              <p className="mt-0.5 text-xs text-black/50">
-                                📍 {s.room}
-                              </p>
-                            )}
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          )}
-
-          {/* Cours */}
-          <h2 className="mt-8 text-lg font-bold text-ipmd-black">Cours suivis</h2>
-          {courses.length === 0 ? (
-            <p className="mt-3 rounded-2xl bg-white p-5 text-sm text-black/55 shadow-sm ring-1 ring-black/5">
-              Aucun cours pour l&apos;instant.
-            </p>
-          ) : (
-            <ul className="mt-3 flex flex-wrap gap-2">
-              {courses.map((c) => (
-                <li
-                  key={c.id}
-                  className="rounded-full bg-white px-4 py-2 text-sm font-semibold text-ipmd-black shadow-sm ring-1 ring-black/5"
-                >
-                  {c.title}
-                  {c.field && (
-                    <span className="ml-2 text-xs text-ipmd-red">{c.field}</span>
-                  )}
-                </li>
-              ))}
-            </ul>
-          )}
+          {/* Annonces de l'administration (audience parent / tout le monde) */}
+          <AnnouncementsPanel role={viewerRole} userId={userId} />
         </div>
       </Container>
     </section>
