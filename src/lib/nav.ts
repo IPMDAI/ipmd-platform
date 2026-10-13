@@ -113,6 +113,7 @@ const PARENT_NAV: NavGroup[] = [
     items: [
       { label: "Mon enfant", href: "/espace/mon-enfant", icon: "👨‍👩‍👧" },
       { label: "Vie IPMD", href: "/espace/vie-ipmd", icon: "🎉" },
+      { label: "Opportunités", href: "/espace/opportunites", icon: "✨" },
     ],
   },
 ];
