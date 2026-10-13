@@ -477,7 +477,11 @@ export async function setPayerEmailAndSend(
   const ctx = await getStaff();
   if (!ctx) return { ok: false, message: "Réservé à l'administration." };
   const to = (email ?? "").trim();
-  if (!to.includes("@")) return { ok: false, message: "Adresse email invalide." };
+  // Validation stricte (un seul @, un domaine avec point) : évite d'enregistrer
+  // une adresse mal formée (ex. « x@y@fr ») qui serait ensuite rejetée à l'envoi.
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(to)) {
+    return { ok: false, message: "Adresse email invalide (vérifiez le format, ex. nom@domaine.fr)." };
+  }
   if (!canSendEmail) return { ok: false, message: "Service email non configuré." };
 
   const { error } = await ctx.supabase
