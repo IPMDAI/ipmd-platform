@@ -1,7 +1,12 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { sendReceiptEmail, logReceiptShare } from "@/lib/finance-actions";
+import {
+  sendReceiptEmail,
+  logReceiptShare,
+  setPayerEmailAndSend,
+} from "@/lib/finance-actions";
+import { inputBase } from "@/components/forms/FormField";
 
 type Recipient = { target: string; label: string; email: string | null; whatsapp: string | null };
 type Send = { recipient: string; channel: string; sent_at: string };
@@ -28,6 +33,15 @@ export function ReceiptSendPanel({
 }) {
   const [pending, start] = useTransition();
   const [msg, setMsg] = useState<string | null>(null);
+  const [payerEmail, setPayerEmail] = useState("");
+  const hasPayer = recipients.some((r) => r.target === "payer");
+
+  const sendToPayerEmail = () =>
+    start(async () => {
+      const r = await setPayerEmailAndSend(paymentId, payerEmail.trim());
+      setMsg(r.message);
+      if (r.ok) setPayerEmail("");
+    });
 
   const sendEmail = (target: string) =>
     start(async () => {
@@ -110,6 +124,27 @@ export function ReceiptSendPanel({
           </button>
           {msg && <span className="text-[11px] text-black/55">{msg}</span>}
         </div>
+
+        {/* Payeur sans email au moment du paiement : l'ajouter + envoyer plus tard. */}
+        {!hasPayer && (
+          <div className="flex items-center gap-2 border-t border-black/5 pt-2">
+            <input
+              type="email"
+              value={payerEmail}
+              onChange={(e) => setPayerEmail(e.target.value)}
+              placeholder="Email du payeur (ajouter + envoyer)"
+              className={`${inputBase} h-8 flex-1 py-1 text-[12px]`}
+            />
+            <button
+              type="button"
+              disabled={pending || !payerEmail.includes("@")}
+              onClick={sendToPayerEmail}
+              className="shrink-0 rounded-md bg-ipmd-black px-2 py-1 text-[11px] font-semibold text-white disabled:opacity-40"
+            >
+              ✉️ Payeur
+            </button>
+          </div>
+        )}
 
         {/* Historique */}
         {history.length > 0 && (

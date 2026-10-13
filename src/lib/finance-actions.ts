@@ -10,7 +10,7 @@ import {
   buildRows,
 } from "@/lib/email";
 import { resolvePaymentPayer } from "@/lib/payment-payer";
-import { autoSendReceipt } from "@/lib/receipt-email";
+import { autoSendReceipt, sendReceiptToEmail } from "@/lib/receipt-email";
 import type { FormResult } from "@/types";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://ipmd.pro";
@@ -463,6 +463,33 @@ export async function setPaymentStatus(
   revalidatePath(`/espace/finance/${pay?.student_id ?? ""}`);
   revalidatePath("/espace/finance/paiements");
   revalidatePath("/espace/finance");
+}
+
+/**
+ * Ajoute (ou corrige) l'email du PAYEUR sur un paiement existant PUIS lui envoie
+ * le reçu (même PDF, même numéro). Utile quand l'email n'était pas disponible à
+ * la saisie. N'altère aucun autre champ du paiement.
+ */
+export async function setPayerEmailAndSend(
+  paymentId: string,
+  email: string
+): Promise<FormResult> {
+  const ctx = await getStaff();
+  if (!ctx) return { ok: false, message: "Réservé à l'administration." };
+  const to = (email ?? "").trim();
+  if (!to.includes("@")) return { ok: false, message: "Adresse email invalide." };
+  if (!canSendEmail) return { ok: false, message: "Service email non configuré." };
+
+  const { error } = await ctx.supabase
+    .from("payments")
+    .update({ payer_email: to })
+    .eq("id", paymentId);
+  if (error) return { ok: false, message: error.message };
+
+  const r = await sendReceiptToEmail(ctx.supabase, paymentId, to);
+  return r.sent > 0
+    ? { ok: true, message: `Email enregistré. Reçu envoyé au payeur (${to}).` }
+    : { ok: false, message: "Email enregistré, mais l'envoi a échoué." };
 }
 
 /** Envoie le reçu d'un paiement par email à un destinataire (étudiant ou parent) + journalise. */
