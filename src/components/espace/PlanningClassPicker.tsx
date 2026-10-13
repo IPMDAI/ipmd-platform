@@ -108,22 +108,37 @@ export function PlanningClassPicker({
         </p>
       ) : (
         <ul className="mt-4 grid gap-4 sm:grid-cols-2">
-          {filtered.map((c) => (
-            <li key={c.id}>
-              <Link
-                href={`/espace/planning/${c.id}`}
-                className="block rounded-2xl bg-white p-5 shadow-sm ring-1 ring-black/5 transition-all hover:-translate-y-0.5 hover:shadow-md hover:ring-ipmd-red/30"
-              >
-                <h2 className="text-base font-bold text-ipmd-black">{c.name}</h2>
-                <p className="text-xs text-black/50">
-                  {[c.level, c.academic_year].filter(Boolean).join(" · ") || "—"}
-                </p>
-                <span className="mt-2 inline-block text-xs font-semibold text-ipmd-red">
-                  Construire le planning →
-                </span>
-              </Link>
-            </li>
-          ))}
+          {filtered.map((c) => {
+            // La « rentrée » (ex. « Octobre 2026 ») est dans le nom, apres le « — ».
+            const parts = c.name.split("—");
+            const base =
+              parts.length > 1 ? parts.slice(0, -1).join("—").trim() : c.name;
+            const rentree =
+              parts.length > 1 ? parts[parts.length - 1].trim() : null;
+            const showRentree = rentree && rentree !== c.academic_year;
+            return (
+              <li key={c.id}>
+                <Link
+                  href={`/espace/planning/${c.id}`}
+                  className="block rounded-2xl bg-white p-5 shadow-sm ring-1 ring-black/5 transition-all hover:-translate-y-0.5 hover:shadow-md hover:ring-ipmd-red/30"
+                >
+                  <h2 className="text-base font-bold text-ipmd-black">{base}</h2>
+                  <p className="mt-0.5 text-xs text-black/50">
+                    {c.level ? `${c.level} · ` : ""}
+                    Année académique {c.academic_year ?? "—"}
+                  </p>
+                  {showRentree && (
+                    <span className="mt-1.5 inline-flex items-center gap-1 rounded-full bg-ipmd-light px-2 py-0.5 text-[11px] font-semibold text-black/60 ring-1 ring-black/5">
+                      🗓️ Rentrée {rentree}
+                    </span>
+                  )}
+                  <span className="mt-2 block text-xs font-semibold text-ipmd-red">
+                    Construire le planning →
+                  </span>
+                </Link>
+              </li>
+            );
+          })}
         </ul>
       )}
     </div>
