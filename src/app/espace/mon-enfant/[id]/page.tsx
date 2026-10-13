@@ -6,6 +6,12 @@ import { Container } from "@/components/ui/Container";
 import { StudentAttendance } from "@/components/espace/StudentAttendance";
 import { StudentSessions } from "@/components/espace/StudentSessions";
 import { AnnouncementsPanel } from "@/components/espace/AnnouncementsPanel";
+import { ConvocationAck } from "@/components/espace/ConvocationAck";
+import {
+  CONVOCATION_STATUS,
+  convocationWhen,
+  type Convocation,
+} from "@/lib/convocations";
 import {
   WeeklyTimetable,
   type TimetableSlot,
@@ -175,6 +181,15 @@ export default async function EnfantDetailPage({
   }));
   const { rows: schedule, next } = computeSchedule(installments, fin.paidScolarite, today);
   const paidPayments = payments.filter((p) => p.status == null || p.status === "paye");
+
+  // Convocations de l'enfant (RLS parent : « Parent reads child convocations »).
+  const { data: convocRows } = await supabase
+    .from("convocations")
+    .select("id, student_id, title, reason, scheduled_at, location, status, created_at, acknowledged_at")
+    .eq("student_id", id)
+    .neq("status", "annulee")
+    .order("created_at", { ascending: false });
+  const convocations = (convocRows ?? []) as Convocation[];
 
   // Emploi du temps (timetable_slots de la classe — RLS « Parent reads class timetable »).
   const dates = weekDates();
@@ -372,6 +387,46 @@ export default async function EnfantDetailPage({
                     )}
                   </li>
                 ))}
+              </ul>
+            </div>
+          )}
+
+          {/* Convocations */}
+          {convocations.length > 0 && (
+            <div className="mt-6">
+              <h2 className="text-lg font-bold text-ipmd-black">📨 Convocations</h2>
+              <ul className="mt-3 space-y-3">
+                {convocations.map((c) => {
+                  const st = CONVOCATION_STATUS[c.status] ?? CONVOCATION_STATUS.envoyee;
+                  const when = convocationWhen(c.scheduled_at);
+                  return (
+                    <li
+                      key={c.id}
+                      className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-ipmd-red/20"
+                    >
+                      <div className="flex flex-wrap items-start justify-between gap-2">
+                        <p className="font-bold text-ipmd-black">{c.title}</p>
+                        <span className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] font-bold ${st.cls}`}>
+                          {st.label}
+                        </span>
+                      </div>
+                      <p className="mt-1 text-xs text-black/55">
+                        {when ? `🗓️ ${when}` : ""}
+                        {c.location ? `${when ? " · " : ""}📍 ${c.location}` : ""}
+                      </p>
+                      {c.reason && (
+                        <p className="mt-2 whitespace-pre-line text-sm text-black/70">
+                          {c.reason}
+                        </p>
+                      )}
+                      {c.status === "envoyee" && (
+                        <div className="mt-3">
+                          <ConvocationAck convocationId={c.id} />
+                        </div>
+                      )}
+                    </li>
+                  );
+                })}
               </ul>
             </div>
           )}
