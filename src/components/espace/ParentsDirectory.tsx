@@ -14,14 +14,17 @@ export type DirectoryParent = {
   pays: string | null;
   comm_opt_commercial: boolean;
   childCount: number;
+  invited_at: string | null;
+  activated_at: string | null;
 };
 
-type Filter = "tous" | "opt_in" | "avec_enfant" | "sans_enfant";
+type Filter = "tous" | "opt_in" | "avec_enfant" | "sans_enfant" | "en_attente";
 
 const FILTERS: { value: Filter; label: string }[] = [
   { value: "tous", label: "Tous" },
   { value: "avec_enfant", label: "Avec enfant lié" },
   { value: "sans_enfant", label: "Sans enfant" },
+  { value: "en_attente", label: "En attente d'activation" },
   { value: "opt_in", label: "Opt-in offres" },
 ];
 
@@ -35,6 +38,7 @@ export function ParentsDirectory({ parents }: { parents: DirectoryParent[] }) {
       if (filter === "opt_in" && !p.comm_opt_commercial) return false;
       if (filter === "avec_enfant" && p.childCount === 0) return false;
       if (filter === "sans_enfant" && p.childCount > 0) return false;
+      if (filter === "en_attente" && !(p.invited_at && !p.activated_at)) return false;
       if (!needle) return true;
       const hay = [
         p.full_name,
@@ -115,16 +119,27 @@ export function ParentsDirectory({ parents }: { parents: DirectoryParent[] }) {
                       {loc ? ` · ${loc}` : ""}
                     </p>
                   </div>
-                  <span
-                    className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold ${
-                      p.comm_opt_commercial
-                        ? "bg-green-600/10 text-green-700"
-                        : "bg-black/5 text-black/45"
-                    }`}
-                    title="Consentement aux communications commerciales / opportunités"
-                  >
-                    {p.comm_opt_commercial ? "Opt-in offres" : "Pas d'offres"}
-                  </span>
+                  <div className="flex shrink-0 flex-wrap items-center gap-1.5">
+                    {p.activated_at ? (
+                      <span className="rounded-full bg-green-600/10 px-2 py-0.5 text-[10px] font-bold text-green-700">
+                        Activé ✓
+                      </span>
+                    ) : p.invited_at ? (
+                      <span className="rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-bold text-amber-800">
+                        Invité · en attente
+                      </span>
+                    ) : null}
+                    <span
+                      className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
+                        p.comm_opt_commercial
+                          ? "bg-green-600/10 text-green-700"
+                          : "bg-black/5 text-black/45"
+                      }`}
+                      title="Consentement aux communications commerciales / opportunités"
+                    >
+                      {p.comm_opt_commercial ? "Opt-in offres" : "Pas d'offres"}
+                    </span>
+                  </div>
                 </div>
                 <ParentMessageForm parentId={p.id} parentName={p.full_name || p.email} />
               </li>

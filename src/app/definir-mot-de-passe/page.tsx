@@ -7,6 +7,7 @@ import { Container } from "@/components/ui/Container";
 import { ActionButton } from "@/components/ui/Button";
 import { Logo } from "@/components/ui/Logo";
 import { Field, inputBase } from "@/components/forms/FormField";
+import { markActivated } from "@/lib/profile-actions";
 
 export default function DefinirMotDePassePage() {
   const router = useRouter();
@@ -55,6 +56,12 @@ export default function DefinirMotDePassePage() {
     if (error) {
       setError(error.message);
       return;
+    }
+    // Marque le compte comme activé (best-effort, suivi des invitations).
+    try {
+      await markActivated();
+    } catch {
+      // sans incidence sur l'activation du mot de passe
     }
     setDone(true);
     setTimeout(() => router.push("/espace"), 1200);

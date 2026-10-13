@@ -4,6 +4,7 @@ import { requireAdmin } from "@/lib/require-admin";
 import { Container } from "@/components/ui/Container";
 import { LinkParentForm } from "@/components/espace/LinkParentForm";
 import { ParentsDirectory } from "@/components/espace/ParentsDirectory";
+import { InviteParentForm } from "@/components/espace/InviteParentForm";
 import { unlinkParentChild } from "@/lib/admin-actions";
 import { PARENT_RELATIONSHIP_LABEL } from "@/lib/academic";
 
@@ -12,14 +13,15 @@ export const metadata: Metadata = {
 };
 
 export default async function ParentsPage() {
-  const { supabase } = await requireAdmin();
+  const { supabase, role } = await requireAdmin();
+  const canInvite = role === "super_admin";
 
   const [{ data: parents }, { data: students }, { data: links }] =
     await Promise.all([
       supabase
         .from("profiles")
         .select(
-          "id, full_name, email, profession, fonction, entreprise, ville, pays, comm_opt_commercial"
+          "id, full_name, email, profession, fonction, entreprise, ville, pays, comm_opt_commercial, invited_at, activated_at"
         )
         .eq("role", "parent")
         .order("full_name"),
@@ -47,6 +49,8 @@ export default async function ParentsPage() {
   const directoryParents = (parents ?? []).map((p) => ({
     ...p,
     comm_opt_commercial: p.comm_opt_commercial ?? false,
+    invited_at: p.invited_at ?? null,
+    activated_at: p.activated_at ?? null,
     childCount: childCount.get(p.id) ?? 0,
   }));
 
@@ -118,8 +122,9 @@ export default async function ParentsPage() {
               )}
             </div>
 
-            {/* Formulaire */}
-            <div className="order-1 lg:order-2">
+            {/* Formulaires */}
+            <div className="order-1 space-y-6 lg:order-2">
+              {canInvite && <InviteParentForm students={students ?? []} />}
               <LinkParentForm
                 parents={parents ?? []}
                 students={students ?? []}

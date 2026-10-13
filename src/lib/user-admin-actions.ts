@@ -15,6 +15,7 @@ import {
   emailDocument,
   buildRows,
   sendScolariteEmail,
+  escapeHtml,
 } from "@/lib/email";
 import type { FormResult } from "@/types";
 
@@ -100,6 +101,108 @@ export async function createUserAccount(
 const SITE_URL = (
   process.env.NEXT_PUBLIC_SITE_URL || "https://ipmd.pro"
 ).replace(/\/$/, "");
+
+/**
+ * Invite un PARENT/tuteur : crée son compte (rôle parent), le lie éventuellement à
+ * un étudiant, et lui envoie un email pour définir son mot de passe. Super Admin only.
+ */
+export async function inviteParent(
+  _prev: FormResult | null,
+  formData: FormData
+): Promise<FormResult> {
+  const ctx = await requireSuperAdmin();
+  if (!ctx) return { ok: false, message: "Action réservée au Super Admin." };
+  if (!canAdminUsers) {
+    return {
+      ok: false,
+      message:
+        "Invitation non configurée (clé SUPABASE_SERVICE_ROLE_KEY manquante sur Vercel).",
+    };
+  }
+
+  const email = str(formData, "email").toLowerCase();
+  const fullName = str(formData, "full_name");
+  const studentId = str(formData, "student_id");
+  const relationship = str(formData, "relationship");
+  if (!email.includes("@")) return { ok: false, message: "Email invalide." };
+  if (!fullName) return { ok: false, message: "Nom et prénom requis." };
+
+  const admin = createAdminClient();
+  if (!admin) return { ok: false, message: "Service indisponible." };
+
+  // 1. Création du compte (mot de passe aléatoire ; le parent le définira).
+  const { data: created, error } = await admin.auth.admin.createUser({
+    email,
+    password: `${crypto.randomUUID()}Aa1!`,
+    email_confirm: true,
+    user_metadata: { full_name: fullName },
+  });
+  const newId = created?.user?.id;
+  if (error || !newId) {
+    const { data: existing } = await admin
+      .from("profiles")
+      .select("id")
+      .eq("email", email)
+      .maybeSingle();
+    if (existing?.id) {
+      return { ok: false, message: "Un compte existe déjà avec cet email." };
+    }
+    return {
+      ok: false,
+      message: `Le compte n'a pas pu être créé${error ? " : " + error.message : ""}.`,
+    };
+  }
+
+  // 2. Rôle parent + nom + date d'invitation (client Super Admin → garde OK).
+  const { error: upErr } = await ctx.supabase
+    .from("profiles")
+    .update({
+      role: "parent",
+      full_name: fullName,
+      invited_at: new Date().toISOString(),
+    })
+    .eq("id", newId);
+  if (upErr) {
+    return { ok: false, message: `Compte créé, mais rôle non appliqué : ${upErr.message}` };
+  }
+
+  // 3. Rattachement optionnel à un étudiant.
+  if (studentId) {
+    await ctx.supabase
+      .from("parent_links")
+      .insert({ parent_id: newId, student_id: studentId, relationship: relationship || null });
+  }
+
+  // 4. Email d'invitation (lien « définir mon mot de passe »).
+  let emailed = false;
+  if (canSendEmail) {
+    let actionLink = `${SITE_URL}/mot-de-passe-oublie`;
+    const { data: linkData } = await admin.auth.admin.generateLink({
+      type: "recovery",
+      email,
+      options: { redirectTo: `${SITE_URL}/definir-mot-de-passe` },
+    });
+    if (linkData?.properties?.action_link) actionLink = linkData.properties.action_link;
+    const n = await sendScolariteEmail(
+      [email],
+      "IPMD — Activez votre espace parent",
+      emailDocument(
+        "Bienvenue sur votre espace parent IPMD",
+        `<p style="font-size:14px;color:#374151">Bonjour ${escapeHtml(fullName)},</p>
+         <p style="font-size:14px;color:#374151">L'IPMD vous invite à activer votre espace parent pour suivre la scolarité de votre enfant (notes, emploi du temps, finances, convocations, documents…).</p>
+         <p style="text-align:center;margin:24px 0"><a href="${actionLink}" style="background:#e4002b;color:#fff;padding:12px 22px;border-radius:10px;text-decoration:none;font-weight:bold;display:inline-block">Définir mon mot de passe</a></p>
+         <p style="font-size:12px;color:#6b7280;word-break:break-all">Si le bouton ne fonctionne pas, copiez ce lien : ${actionLink}</p>`
+      )
+    );
+    emailed = n > 0;
+  }
+
+  revalidatePath("/espace/parents");
+  return {
+    ok: true,
+    message: `Invitation envoyée à ${email}.${canSendEmail && !emailed ? " (Email non envoyé.)" : ""}`,
+  };
+}
 
 /**
  * Crée le compte d'un candidat accepté et lui envoie un email d'invitation

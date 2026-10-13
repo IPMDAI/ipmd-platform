@@ -103,6 +103,24 @@ export async function setMyAvatar(avatarUrl: string | null): Promise<FormResult>
   return { ok: true, message: avatarUrl ? "Photo mise à jour." : "Photo retirée." };
 }
 
+/**
+ * Marque le compte comme ACTIVÉ (1re définition de mot de passe), une seule fois.
+ * Appelé depuis /definir-mot-de-passe. Sert au suivi d'activation des invitations.
+ */
+export async function markActivated(): Promise<void> {
+  const supabase = await createClient();
+  if (!supabase) return;
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return;
+  await supabase
+    .from("profiles")
+    .update({ activated_at: new Date().toISOString() })
+    .eq("id", user.id)
+    .is("activated_at", null);
+}
+
 /** Change le mot de passe de l'utilisateur connecté. */
 export async function changeMyPassword(
   _prev: FormResult | null,
