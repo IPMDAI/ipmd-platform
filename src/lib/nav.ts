@@ -156,6 +156,9 @@ export function getNavForRole(
   let base: NavGroup[];
   if (role === "admin" || role === "super_admin") base = ADMIN_NAV;
   else if (role === "pedagogie") base = PEDAGOGIE_NAV;
+  // D1 : Directeur des Études → nav staff minimal (Tableau de bord). Le menu
+  // académique dédié sera ajouté en D2 avec l'ouverture des permissions.
+  else if (role === "directeur_etudes") base = STAFF_NAV;
   else if (role === "scolarite") base = STAFF_NAV;
   else if (role === "enseignant") base = TEACHER_NAV;
   else if (role === "parent") base = PARENT_NAV;

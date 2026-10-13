@@ -18,6 +18,7 @@ export type DashSection = { title: string; tiles: DashTile[] };
 export const roleLabels: Record<string, string> = {
   super_admin: "Super Admin",
   admin: "Administration",
+  directeur_etudes: "Directeur des Études",
   scolarite: "Scolarité",
   pedagogie: "Pédagogie",
   enseignant: "Enseignant",
@@ -32,6 +33,7 @@ export const roleLabels: Record<string, string> = {
 export const roleTagline: Record<string, string> = {
   super_admin: "Recteur / DSI — pilotage global de l'établissement",
   admin: "Scolarité, ressources humaines et finance",
+  directeur_etudes: "Pilotage académique et pédagogique de l'IPMD",
   scolarite: "Inscriptions, dossiers et finance des étudiants",
   pedagogie: "Cours, planning et suivi pédagogique",
   enseignant: "Vos cours, devoirs et notes",
@@ -55,6 +57,7 @@ export const ROLE_OPTIONS: { value: string; label: string }[] = [
   { value: "dirigeant", label: "Dirigeant" },
   { value: "scolarite", label: "Scolarité" },
   { value: "pedagogie", label: "Pédagogie" },
+  { value: "directeur_etudes", label: "Directeur des Études" },
   { value: "admin", label: "Administration" },
   { value: "super_admin", label: "Super Admin" },
 ];
@@ -235,6 +238,30 @@ export const dashboardSections: Record<string, DashSection[]> = {
     {
       title: "Relations",
       tiles: [ADMIN_TILES.annonces, ADMIN_TILES.messagerie, ADMIN_TILES.moderation, ADMIN_TILES.marketing, ADMIN_TILES.partenaires, ADMIN_TILES.candidatures, ADMIN_TILES.messages, ADMIN_TILES.parents],
+    },
+  ],
+  // D1 : le rôle existe et atterrit sur un espace cohérent. Les fonctions
+  // académiques sont affichées en « Bientôt » (pas de lien mort) ; elles seront
+  // activées en D2 (ouverture des permissions/RLS), puis D3-D7.
+  directeur_etudes: [
+    {
+      title: "Pédagogie & planning",
+      tiles: [
+        { title: "Classes & filières", icon: "🏫", status: "soon", description: "Filières, promotions et affectation (activation en cours)." },
+        { title: "Planning", icon: "🗓️", status: "soon", description: "Emploi du temps par classe (activation en cours)." },
+        { title: "Séances", icon: "📅", status: "soon", description: "Séances datées, statuts, rattrapages (activation en cours)." },
+        { title: "Présences", icon: "✅", status: "soon", description: "Appel et suivi des absences (activation en cours)." },
+        { title: "Fiches pédagogiques", icon: "🗂️", status: "soon", description: "Fiches de séance à valider (activation en cours)." },
+      ],
+    },
+    {
+      title: "Suivi académique",
+      tiles: [
+        { title: "Étudiants", icon: "🎓", status: "soon", description: "Annuaire et suivi pédagogique (activation en cours)." },
+        { title: "Bulletins & relevés", icon: "📄", status: "soon", description: "Résultats et moyennes (activation en cours)." },
+        { title: "Convocations", icon: "📣", status: "soon", description: "Convoquer étudiants et parents (activation en cours)." },
+        { title: "Annonces académiques", icon: "📢", status: "soon", description: "Communiquer avec étudiants et parents (activation en cours)." },
+      ],
     },
   ],
 };
