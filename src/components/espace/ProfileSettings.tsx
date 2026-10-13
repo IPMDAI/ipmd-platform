@@ -1,11 +1,24 @@
 "use client";
 
-import { useActionState } from "react";
-import { updateMyProfile, changeMyPassword } from "@/lib/profile-actions";
+import { useActionState, useState, useTransition } from "react";
+import {
+  updateMyProfile,
+  changeMyPassword,
+  setCommercialOptIn,
+} from "@/lib/profile-actions";
 import { Field, inputBase } from "@/components/forms/FormField";
 import { ActionButton } from "@/components/ui/Button";
 import { AvatarUpload } from "@/components/espace/AvatarUpload";
 import type { FormResult } from "@/types";
+
+export type ParentProfile = {
+  profession: string | null;
+  fonction: string | null;
+  entreprise: string | null;
+  ville: string | null;
+  pays: string | null;
+  commOptCommercial: boolean;
+};
 
 function Result({ state }: { state: FormResult | null }) {
   if (!state) return null;
@@ -20,6 +33,47 @@ function Result({ state }: { state: FormResult | null }) {
   );
 }
 
+/** Préférences de communication (parent) : opt-in commercial, école toujours garanti. */
+function CommunicationSettings({ initial }: { initial: boolean }) {
+  const [optIn, setOptIn] = useState(initial);
+  const [msg, setMsg] = useState<string | null>(null);
+  const [pending, start] = useTransition();
+
+  const toggle = () =>
+    start(async () => {
+      const next = !optIn;
+      const r = await setCommercialOptIn(next);
+      if (r.ok) setOptIn(next);
+      setMsg(r.message);
+    });
+
+  return (
+    <div className="space-y-4 rounded-2xl bg-white p-6 shadow-sm ring-1 ring-black/5">
+      <h2 className="text-lg font-bold text-ipmd-black">Mes communications</h2>
+      <label className="flex cursor-pointer items-start gap-3">
+        <input
+          type="checkbox"
+          checked={optIn}
+          disabled={pending}
+          onChange={toggle}
+          className="mt-0.5 h-5 w-5 shrink-0 rounded border-black/20 text-ipmd-red focus:ring-ipmd-red"
+        />
+        <span className="text-sm text-ipmd-black">
+          Recevoir les offres de formations, certifications, événements et
+          opportunités IPMD.
+        </span>
+      </label>
+      <p className="rounded-lg bg-ipmd-light/70 px-3 py-2 text-xs text-black/55">
+        Les informations scolaires et administratives concernant votre enfant
+        restent accessibles et peuvent continuer à vous être envoyées.
+      </p>
+      {msg && (
+        <p className="text-sm font-medium text-green-600">{msg}</p>
+      )}
+    </div>
+  );
+}
+
 export function ProfileSettings({
   userId,
   fullName,
@@ -28,6 +82,7 @@ export function ProfileSettings({
   birthDate,
   birthPlace,
   avatarUrl,
+  parent,
 }: {
   userId: string;
   fullName: string;
@@ -36,6 +91,7 @@ export function ProfileSettings({
   birthDate?: string | null;
   birthPlace?: string | null;
   avatarUrl?: string | null;
+  parent?: ParentProfile;
 }) {
   const [nameState, nameAction, namePending] = useActionState<
     FormResult | null,
@@ -114,11 +170,68 @@ export function ProfileSettings({
           Utilisés sur ton bulletin et tes documents officiels.
         </p>
 
+        {/* Profil professionnel — parents / tuteurs uniquement. */}
+        {parent && (
+          <div className="space-y-3 border-t border-black/5 pt-4">
+            <h3 className="text-sm font-bold text-ipmd-black">
+              Mon profil professionnel
+            </h3>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <Field label="Profession" htmlFor="p-profession">
+                <input
+                  id="p-profession"
+                  name="profession"
+                  defaultValue={parent.profession ?? ""}
+                  className={inputBase}
+                />
+              </Field>
+              <Field label="Fonction" htmlFor="p-fonction">
+                <input
+                  id="p-fonction"
+                  name="fonction"
+                  defaultValue={parent.fonction ?? ""}
+                  className={inputBase}
+                />
+              </Field>
+            </div>
+            <Field label="Entreprise" htmlFor="p-entreprise">
+              <input
+                id="p-entreprise"
+                name="entreprise"
+                defaultValue={parent.entreprise ?? ""}
+                className={inputBase}
+              />
+            </Field>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <Field label="Ville" htmlFor="p-ville">
+                <input
+                  id="p-ville"
+                  name="ville"
+                  defaultValue={parent.ville ?? ""}
+                  className={inputBase}
+                />
+              </Field>
+              <Field label="Pays" htmlFor="p-pays">
+                <input
+                  id="p-pays"
+                  name="pays"
+                  defaultValue={parent.pays ?? ""}
+                  placeholder="Ex. Côte d'Ivoire"
+                  className={inputBase}
+                />
+              </Field>
+            </div>
+          </div>
+        )}
+
         <ActionButton type="submit" disabled={namePending}>
           {namePending ? "Enregistrement…" : "Enregistrer"}
         </ActionButton>
         <Result state={nameState} />
       </form>
+
+      {/* Communications — parents / tuteurs uniquement. */}
+      {parent && <CommunicationSettings initial={parent.commOptCommercial} />}
 
       {/* Mot de passe */}
       <form

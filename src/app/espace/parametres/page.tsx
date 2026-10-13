@@ -14,11 +14,24 @@ export default async function ParametresPage() {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("full_name, email, role, birth_date, birth_place, avatar_url")
+    .select(
+      "full_name, email, role, birth_date, birth_place, avatar_url, profession, fonction, entreprise, ville, pays, comm_opt_commercial"
+    )
     .eq("id", userId)
     .single();
 
   const role = profile?.role ?? "etudiant";
+  const parent =
+    role === "parent"
+      ? {
+          profession: profile?.profession ?? null,
+          fonction: profile?.fonction ?? null,
+          entreprise: profile?.entreprise ?? null,
+          ville: profile?.ville ?? null,
+          pays: profile?.pays ?? null,
+          commOptCommercial: profile?.comm_opt_commercial ?? false,
+        }
+      : undefined;
 
   return (
     <section className="min-h-[70vh] bg-ipmd-light">
@@ -46,6 +59,7 @@ export default async function ParametresPage() {
               birthDate={profile?.birth_date ?? null}
               birthPlace={profile?.birth_place ?? null}
               avatarUrl={profile?.avatar_url ?? null}
+              parent={parent}
             />
           </div>
         </div>

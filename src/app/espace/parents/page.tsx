@@ -17,7 +17,9 @@ export default async function ParentsPage() {
     await Promise.all([
       supabase
         .from("profiles")
-        .select("id, full_name, email")
+        .select(
+          "id, full_name, email, profession, fonction, entreprise, ville, pays, comm_opt_commercial"
+        )
         .eq("role", "parent")
         .order("full_name"),
       supabase
@@ -113,6 +115,55 @@ export default async function ParentsPage() {
                 students={students ?? []}
               />
             </div>
+          </div>
+
+          {/* Annuaire des parents (lecture) — profil pro + consentement comm. */}
+          <div className="mt-10">
+            <div className="mb-4 flex items-baseline gap-3">
+              <h2 className="text-lg font-bold text-ipmd-black">
+                Annuaire des parents
+              </h2>
+              <span className="rounded-full bg-ipmd-black px-2.5 py-1 text-xs font-bold text-white">
+                {(parents ?? []).length}
+              </span>
+            </div>
+            {(parents ?? []).length === 0 ? (
+              <p className="rounded-2xl bg-white p-6 text-sm text-black/55 shadow-sm ring-1 ring-black/5">
+                Aucun parent enregistré.
+              </p>
+            ) : (
+              <ul className="divide-y divide-black/5 overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-black/5">
+                {(parents ?? []).map((p) => {
+                  const pro = [p.fonction, p.entreprise].filter(Boolean).join(" · ");
+                  const loc = [p.ville, p.pays].filter(Boolean).join(", ");
+                  return (
+                    <li key={p.id} className="flex flex-wrap items-center justify-between gap-2 p-4">
+                      <div className="min-w-0">
+                        <p className="text-sm font-semibold text-ipmd-black">
+                          {p.full_name || p.email}
+                        </p>
+                        <p className="text-xs text-black/50">
+                          {p.email}
+                          {p.profession ? ` · ${p.profession}` : ""}
+                          {pro ? ` · ${pro}` : ""}
+                          {loc ? ` · ${loc}` : ""}
+                        </p>
+                      </div>
+                      <span
+                        className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold ${
+                          p.comm_opt_commercial
+                            ? "bg-green-600/10 text-green-700"
+                            : "bg-black/5 text-black/45"
+                        }`}
+                        title="Consentement aux communications commerciales / opportunités"
+                      >
+                        {p.comm_opt_commercial ? "Opt-in offres" : "Pas d'offres"}
+                      </span>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
           </div>
         </div>
       </Container>
