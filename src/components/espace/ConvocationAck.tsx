@@ -3,9 +3,15 @@
 import { useState, useTransition } from "react";
 import { acknowledgeConvocation } from "@/lib/convocation-actions";
 
-/** Bouton « J'ai pris connaissance » (parent / étudiant). */
-export function ConvocationAck({ convocationId }: { convocationId: string }) {
-  const [done, setDone] = useState(false);
+/** Bouton « J'ai pris connaissance » (accusé INDIVIDUEL du destinataire connecté). */
+export function ConvocationAck({
+  convocationId,
+  acked = false,
+}: {
+  convocationId: string;
+  acked?: boolean;
+}) {
+  const [done, setDone] = useState(acked);
   const [pending, start] = useTransition();
 
   const ack = () =>

@@ -1,7 +1,8 @@
-/** Statuts d'une convocation + rendu badge. */
+/** Statuts d'une convocation (cycle de vie administratif) + rendu badge.
+ *  L'accusé de réception est INDIVIDUEL (table convocation_acknowledgements),
+ *  il n'est pas porté par ce statut global. */
 export const CONVOCATION_STATUS: Record<string, { label: string; cls: string }> = {
   envoyee: { label: "Envoyée", cls: "bg-amber-50 text-amber-800" },
-  vue: { label: "Vue", cls: "bg-blue-50 text-blue-700" },
   honoree: { label: "Honorée", cls: "bg-green-50 text-green-700" },
   annulee: { label: "Annulée", cls: "bg-black/5 text-black/45" },
 };

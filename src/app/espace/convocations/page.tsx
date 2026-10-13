@@ -5,6 +5,7 @@ import { Container } from "@/components/ui/Container";
 import { ConvocationForm } from "@/components/espace/ConvocationForm";
 import { cancelConvocation } from "@/lib/convocation-actions";
 import { CONVOCATION_STATUS, convocationWhen, type Convocation } from "@/lib/convocations";
+import { PARENT_RELATIONSHIP_LABEL } from "@/lib/academic";
 
 export const metadata: Metadata = {
   title: "Convocations",
@@ -28,6 +29,40 @@ export default async function ConvocationsPage() {
   const convocations = (rows ?? []) as Convocation[];
   const nameMap = new Map<string, string>();
   for (const s of students ?? []) nameMap.set(s.id, s.full_name || s.email);
+
+  // Destinataires réels (étudiant + parents liés) + accusés individuels.
+  const studentIds = [...new Set(convocations.map((c) => c.student_id))];
+  const convocIds = convocations.map((c) => c.id);
+  const parentsByStudent = new Map<string, { id: string; relationship: string | null }[]>();
+  const ackSet = new Set<string>(); // clé `${convocation_id}:${user_id}`
+  if (studentIds.length > 0) {
+    const [{ data: links }, { data: acks }] = await Promise.all([
+      supabase
+        .from("parent_links")
+        .select("parent_id, student_id, relationship")
+        .in("student_id", studentIds),
+      convocIds.length > 0
+        ? supabase
+            .from("convocation_acknowledgements")
+            .select("convocation_id, user_id")
+            .in("convocation_id", convocIds)
+        : Promise.resolve({ data: [] as { convocation_id: string; user_id: string }[] }),
+    ]);
+    const parentIds = [...new Set((links ?? []).map((l) => l.parent_id))];
+    if (parentIds.length > 0) {
+      const { data: parents } = await supabase
+        .from("profiles")
+        .select("id, full_name, email")
+        .in("id", parentIds);
+      for (const p of parents ?? []) nameMap.set(p.id, p.full_name || p.email);
+    }
+    for (const l of links ?? []) {
+      const arr = parentsByStudent.get(l.student_id) ?? [];
+      arr.push({ id: l.parent_id, relationship: l.relationship });
+      parentsByStudent.set(l.student_id, arr);
+    }
+    for (const a of acks ?? []) ackSet.add(`${a.convocation_id}:${a.user_id}`);
+  }
 
   return (
     <section className="min-h-[70vh] bg-ipmd-light">
@@ -91,6 +126,34 @@ export default async function ConvocationsPage() {
                           <p className="mt-2 whitespace-pre-line text-sm text-black/65">
                             {c.reason}
                           </p>
+                        )}
+                        {/* Accusés par destinataire réel (étudiant + parents liés). */}
+                        {c.status !== "annulee" && (
+                          <div className="mt-2 flex flex-wrap gap-1.5">
+                            {[
+                              { uid: c.student_id, label: "Étudiant" },
+                              ...(parentsByStudent.get(c.student_id) ?? []).map((p) => ({
+                                uid: p.id,
+                                label: `${PARENT_RELATIONSHIP_LABEL[p.relationship ?? ""] ?? "Parent"}${
+                                  nameMap.get(p.id) ? ` ${nameMap.get(p.id)}` : ""
+                                }`,
+                              })),
+                            ].map((r) => {
+                              const seen = ackSet.has(`${c.id}:${r.uid}`);
+                              return (
+                                <span
+                                  key={r.uid}
+                                  className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+                                    seen
+                                      ? "bg-green-50 text-green-700"
+                                      : "bg-black/5 text-black/45"
+                                  }`}
+                                >
+                                  {r.label} : {seen ? "Vu ✓" : "Non vu"}
+                                </span>
+                              );
+                            })}
+                          </div>
                         )}
                         {c.status !== "annulee" && (
                           <form action={cancelConvocation.bind(null, c.id)} className="mt-2">

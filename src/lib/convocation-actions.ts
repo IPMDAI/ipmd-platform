@@ -124,8 +124,9 @@ export async function cancelConvocation(
 }
 
 /**
- * Le parent (ou l'étudiant) accuse réception d'une convocation.
- * RLS : l'update n'est autorisé que pour le parent lié / l'étudiant concerné.
+ * Accusé de réception INDIVIDUEL : l'utilisateur connecté (parent OU étudiant)
+ * enregistre SON propre accusé. Les autres destinataires gardent leur état.
+ * RLS : insert autorisé seulement pour soi, sur une convocation accessible.
  */
 export async function acknowledgeConvocation(
   convocationId: string
@@ -138,11 +139,12 @@ export async function acknowledgeConvocation(
   if (!user) return { ok: false, message: "Veuillez vous connecter." };
 
   const { error } = await supabase
-    .from("convocations")
-    .update({ status: "vue", acknowledged_at: new Date().toISOString() })
-    .eq("id", convocationId)
-    .eq("status", "envoyee");
-  if (error) return { ok: false, message: error.message };
+    .from("convocation_acknowledgements")
+    .insert({ convocation_id: convocationId, user_id: user.id });
+  // 23505 = déjà accusé → on considère l'opération réussie (idempotent).
+  if (error && error.code !== "23505") {
+    return { ok: false, message: error.message };
+  }
 
   revalidatePath("/espace/mon-enfant");
   return { ok: true, message: "Réception confirmée." };

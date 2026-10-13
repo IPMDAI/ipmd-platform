@@ -190,6 +190,16 @@ export default async function EnfantDetailPage({
     .neq("status", "annulee")
     .order("created_at", { ascending: false });
   const convocations = (convocRows ?? []) as Convocation[];
+  // Accusés de réception de CE destinataire (individuels).
+  let myAcks = new Set<string>();
+  if (convocations.length > 0) {
+    const { data: acks } = await supabase
+      .from("convocation_acknowledgements")
+      .select("convocation_id")
+      .eq("user_id", userId)
+      .in("convocation_id", convocations.map((c) => c.id));
+    myAcks = new Set((acks ?? []).map((a) => a.convocation_id));
+  }
 
   // Emploi du temps (timetable_slots de la classe — RLS « Parent reads class timetable »).
   const dates = weekDates();
@@ -419,11 +429,9 @@ export default async function EnfantDetailPage({
                           {c.reason}
                         </p>
                       )}
-                      {c.status === "envoyee" && (
-                        <div className="mt-3">
-                          <ConvocationAck convocationId={c.id} />
-                        </div>
-                      )}
+                      <div className="mt-3">
+                        <ConvocationAck convocationId={c.id} acked={myAcks.has(c.id)} />
+                      </div>
                     </li>
                   );
                 })}
