@@ -46,6 +46,14 @@ export default async function ReprisePage() {
             Pour intégrer les étudiants et enseignants déjà existants (sans compte, parfois non
             soldés). Chaque création envoie un lien « définir mot de passe ».
           </p>
+          <p className="mt-2 rounded-xl bg-blue-50 px-4 py-2 text-xs text-blue-800 ring-1 ring-blue-200">
+            Un ancien est <strong>déjà</strong> dans la base (compte + scolarité) mais ne peut pas se
+            connecter ? N&apos;utilisez pas ce formulaire (il créerait un doublon). Utilisez{" "}
+            <Link href="/espace/acces-ancien" className="font-semibold underline">
+              Donner l&apos;accès à un ancien
+            </Link>{" "}
+            : on met son vrai email sur son compte existant + lien de connexion.
+          </p>
 
           <div className="mt-8">
             <ImportZohoStudents />

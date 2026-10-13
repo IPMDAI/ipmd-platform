@@ -58,6 +58,7 @@ const ADMIN_NAV: NavGroup[] = [
       { label: "Partenaires", href: "/espace/partenaires", icon: "🤝" },
       { label: "Utilisateurs", href: "/espace/utilisateurs", icon: "🔑" },
       { label: "Reprise des anciens", href: "/espace/reprise", icon: "♻️" },
+      { label: "Accès anciens", href: "/espace/acces-ancien", icon: "🔓" },
       { label: "Parents & élèves", href: "/espace/parents", icon: "👨‍👩‍👧" },
       { label: "Convocations", href: "/espace/convocations", icon: "📨" },
       { label: "Documents à fournir", href: "/espace/documents-a-fournir", icon: "📎" },
