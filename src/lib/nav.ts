@@ -186,7 +186,10 @@ const DIRECTEUR_ETUDES_NAV: NavGroup[] = [
  * ni aucun autre rôle). La page /espace/equipes redouble la garde côté serveur. */
 const SUPER_ADMIN_GROUP: NavGroup = {
   title: "Administration avancée",
-  items: [{ label: "Équipes & Accès", href: "/espace/equipes", icon: "🛡️" }],
+  items: [
+    { label: "Équipes & Accès", href: "/espace/equipes", icon: "🛡️" },
+    { label: "Journal d'activité", href: "/espace/audit", icon: "📜" },
+  ],
 };
 
 export function getNavForRole(
