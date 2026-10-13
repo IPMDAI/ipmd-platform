@@ -1,9 +1,10 @@
 /**
  * Moyens de paiement proposés pour les NOUVEAUX encaissements.
- * BACI et Chèque ont été retirés des choix (communications & nouveaux paiements).
+ * BACI reste retiré des choix. « Chèque » est RÉINTÉGRÉ (paiements par chèque
+ * acceptés de nouveau — cohérent avec les paiements « Chèque » déjà en base).
  * ⚠️ Rétrocompatibilité : `payments.method` est un texte libre — les anciennes
- * lignes « Versement BACI » / « Chèque » / « Espèces »… restent intactes en base
- * et s'affichent normalement ; seule la liste de saisie change.
+ * lignes « Versement BACI » / « Espèces »… restent intactes en base et
+ * s'affichent normalement ; seule la liste de saisie change.
  */
 export const PAYMENT_METHODS = [
   "Wave",
@@ -11,6 +12,7 @@ export const PAYMENT_METHODS = [
   "Espèces",
   "Versement AFG Bank",
   "Virement AFG Bank",
+  "Chèque",
   "Autre",
 ];
 
