@@ -18,6 +18,7 @@ import {
   escapeHtml,
 } from "@/lib/email";
 import { passwordSetupLink } from "@/lib/password-link";
+import { CIVILITY_VALUES, formatOfficialName } from "@/lib/academic";
 import type { FormResult } from "@/types";
 
 async function requireSuperAdmin() {
@@ -122,11 +123,29 @@ export async function inviteParent(
   }
 
   const email = str(formData, "email").toLowerCase();
-  const fullName = str(formData, "full_name");
+  // Civilité (titre) — distincte de la relation. Jamais déduite : on n'accepte
+  // que les valeurs du menu, et un titre libre si « autre ».
+  const rawCivility = str(formData, "civility");
+  const civilityOther = str(formData, "civility_other");
+  const civility =
+    rawCivility === "autre"
+      ? civilityOther
+      : CIVILITY_VALUES.includes(rawCivility)
+        ? rawCivility
+        : "";
+  const lastName = str(formData, "last_name"); // NOM (convention : en premier)
+  const firstNames = str(formData, "first_names"); // Prénom(s)
+  const phone = str(formData, "phone");
   const studentId = str(formData, "student_id");
   const relationship = str(formData, "relationship");
-  if (!email.includes("@")) return { ok: false, message: "Email invalide." };
-  if (!fullName) return { ok: false, message: "Nom et prénom requis." };
+
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
+    return { ok: false, message: "Email invalide (ex. nom@domaine.com)." };
+  if (!lastName) return { ok: false, message: "Nom requis." };
+  if (!firstNames) return { ok: false, message: "Prénom(s) requis." };
+
+  // Affichage officiel IPMD : « [Civilité] NOM Prénom(s) ».
+  const fullName = formatOfficialName(civility, lastName, firstNames);
 
   const admin = createAdminClient();
   if (!admin) return { ok: false, message: "Service indisponible." };
@@ -160,6 +179,10 @@ export async function inviteParent(
     .update({
       role: "parent",
       full_name: fullName,
+      civility: civility || null,
+      last_name: lastName,
+      first_names: firstNames,
+      phone: phone || null,
       invited_at: new Date().toISOString(),
     })
     .eq("id", newId);

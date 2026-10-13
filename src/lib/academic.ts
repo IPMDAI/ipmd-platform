@@ -108,9 +108,41 @@ export const PARENT_RELATIONSHIPS = [
   { value: "pere", label: "Père" },
   { value: "mere", label: "Mère" },
   { value: "tuteur", label: "Tuteur" },
+  { value: "tutrice", label: "Tutrice" },
   { value: "autre", label: "Autre" },
 ] as const;
 
 export const PARENT_RELATIONSHIP_LABEL: Record<string, string> = Object.fromEntries(
   PARENT_RELATIONSHIPS.map((r) => [r.value, r.label])
 );
+
+/**
+ * Civilité (titre) — distincte de la relation parent/enfant.
+ * « Autre » laisse saisir un titre libre. Jamais déduite automatiquement.
+ */
+export const CIVILITIES = [
+  { value: "M.", label: "M." },
+  { value: "Mme", label: "Mme" },
+  { value: "Dr", label: "Dr" },
+  { value: "Pr", label: "Pr" },
+  { value: "Me", label: "Me (Maître)" },
+  { value: "autre", label: "Autre…" },
+] as const;
+
+export const CIVILITY_VALUES: string[] = CIVILITIES.map((c) => c.value);
+
+/**
+ * Affichage officiel IPMD : « [Civilité] NOM Prénom(s) ».
+ * Convention : NOM en premier, puis prénom(s). Civilité facultative.
+ * Ex. ("Dr", "KOUASSI", "Jean Marc") → "Dr KOUASSI Jean Marc".
+ */
+export function formatOfficialName(
+  civility: string | null | undefined,
+  lastName: string | null | undefined,
+  firstNames: string | null | undefined
+): string {
+  return [civility, lastName, firstNames]
+    .map((p) => (p ?? "").trim())
+    .filter(Boolean)
+    .join(" ");
+}

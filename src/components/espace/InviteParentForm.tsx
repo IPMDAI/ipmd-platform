@@ -1,8 +1,8 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { inviteParent } from "@/lib/user-admin-actions";
-import { PARENT_RELATIONSHIPS } from "@/lib/academic";
+import { CIVILITIES, PARENT_RELATIONSHIPS } from "@/lib/academic";
 import { Field, inputBase } from "@/components/forms/FormField";
 import { ActionButton } from "@/components/ui/Button";
 import type { FormResult } from "@/types";
@@ -14,6 +14,7 @@ export function InviteParentForm({ students }: { students: Student[] }) {
     inviteParent,
     null
   );
+  const [civility, setCivility] = useState("");
 
   return (
     <form
@@ -23,14 +24,67 @@ export function InviteParentForm({ students }: { students: Student[] }) {
       <h2 className="text-lg font-bold text-ipmd-black">Inviter un parent</h2>
       <p className="text-xs text-black/50">
         Crée le compte et envoie un email pour définir le mot de passe.
+        Affichage officiel : <span className="font-medium">Civilité NOM Prénom(s)</span>.
       </p>
 
-      <Field label="Nom et prénom" htmlFor="i-name" required>
-        <input id="i-name" name="full_name" required className={inputBase} />
-      </Field>
-      <Field label="Email" htmlFor="i-email" required>
-        <input id="i-email" name="email" type="email" required className={inputBase} />
-      </Field>
+      <div className="grid gap-3 sm:grid-cols-[auto_1fr]">
+        <Field label="Civilité" htmlFor="i-civ">
+          <select
+            id="i-civ"
+            name="civility"
+            value={civility}
+            onChange={(e) => setCivility(e.target.value)}
+            className={inputBase}
+          >
+            <option value="">— Aucune —</option>
+            {CIVILITIES.map((c) => (
+              <option key={c.value} value={c.value}>
+                {c.label}
+              </option>
+            ))}
+          </select>
+        </Field>
+        {civility === "autre" && (
+          <Field label="Civilité (préciser)" htmlFor="i-civ-other">
+            <input
+              id="i-civ-other"
+              name="civility_other"
+              placeholder="Ex. Pasteur, Imam…"
+              className={inputBase}
+            />
+          </Field>
+        )}
+      </div>
+
+      <div className="grid gap-3 sm:grid-cols-2">
+        <Field label="Nom" htmlFor="i-last" required>
+          <input
+            id="i-last"
+            name="last_name"
+            required
+            placeholder="KOUASSI"
+            className={inputBase}
+          />
+        </Field>
+        <Field label="Prénom(s)" htmlFor="i-first" required>
+          <input
+            id="i-first"
+            name="first_names"
+            required
+            placeholder="Jean Marc"
+            className={inputBase}
+          />
+        </Field>
+      </div>
+
+      <div className="grid gap-3 sm:grid-cols-2">
+        <Field label="Email" htmlFor="i-email" required>
+          <input id="i-email" name="email" type="email" required className={inputBase} />
+        </Field>
+        <Field label="Téléphone (optionnel)" htmlFor="i-phone">
+          <input id="i-phone" name="phone" type="tel" className={inputBase} />
+        </Field>
+      </div>
 
       <div className="grid gap-3 sm:grid-cols-2">
         <Field label="Enfant à lier (optionnel)" htmlFor="i-student">
