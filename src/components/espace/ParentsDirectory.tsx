@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Link from "next/link";
 import { ParentMessageForm } from "@/components/espace/ParentMessageForm";
 
 export type DirectoryParent = {
@@ -107,7 +108,9 @@ export function ParentsDirectory({ parents }: { parents: DirectoryParent[] }) {
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <div className="min-w-0">
                     <p className="text-sm font-semibold text-ipmd-black">
-                      {p.full_name || p.email}
+                      <Link href={`/espace/parents/${p.id}`} className="hover:text-ipmd-red hover:underline">
+                        {p.full_name || p.email}
+                      </Link>
                       <span className="ml-2 rounded-full bg-ipmd-light px-2 py-0.5 text-[10px] font-bold text-black/55">
                         {p.childCount} enfant{p.childCount > 1 ? "s" : ""}
                       </span>
