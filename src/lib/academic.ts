@@ -132,6 +132,21 @@ export const CIVILITIES = [
 export const CIVILITY_VALUES: string[] = CIVILITIES.map((c) => c.value);
 
 /**
+ * Email « placeholder » d'import (anciens étudiants sans vraie adresse) :
+ * `prenom.nom.NN@archiveAAAA.ipmd.local`. Jamais à montrer à un parent/élève.
+ */
+export function isPlaceholderEmail(email: string | null | undefined): boolean {
+  if (!email) return true;
+  const e = email.toLowerCase();
+  return e.endsWith(".ipmd.local") || /@(archive|import)/.test(e);
+}
+
+/** Email affichable (sinon null) : masque les adresses d'import fictives. */
+export function displayEmail(email: string | null | undefined): string | null {
+  return isPlaceholderEmail(email) ? null : (email as string);
+}
+
+/**
  * Affichage officiel IPMD : « [Civilité] NOM Prénom(s) ».
  * Convention : NOM en premier, puis prénom(s). Civilité facultative.
  * Ex. ("Dr", "KOUASSI", "Jean Marc") → "Dr KOUASSI Jean Marc".

@@ -25,6 +25,7 @@ import {
 } from "@/components/espace/WeeklyTimetable";
 import { weekDates, weekLabel } from "@/lib/holidays";
 import { averageOn20, averageValue, mention } from "@/lib/grades";
+import { displayEmail } from "@/lib/academic";
 import {
   formatFCFA,
   computeFinance,
@@ -254,7 +255,8 @@ export default async function EnfantDetailPage({
         .from("profiles")
         .select("id, full_name, email")
         .in("id", teacherIds);
-      for (const p of t ?? []) teacherName.set(p.id, p.full_name || p.email);
+      for (const p of t ?? [])
+        teacherName.set(p.id, p.full_name || displayEmail(p.email) || "Enseignant");
     }
     const roomName = new Map<string, string>();
     if (roomIds.length > 0) {
@@ -297,7 +299,7 @@ export default async function EnfantDetailPage({
             ← Mes enfants
           </Link>
           <h1 className="mt-3 text-2xl font-extrabold tracking-tight text-ipmd-black">
-            {child.full_name || child.email}
+            {child.full_name || displayEmail(child.email) || "Mon enfant"}
           </h1>
 
           {/* Contexte scolarité : classe / filière / niveau / année / statut */}

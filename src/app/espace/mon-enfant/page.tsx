@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { requireUser } from "@/lib/require-user";
 import { Container } from "@/components/ui/Container";
+import { displayEmail } from "@/lib/academic";
 
 export const metadata: Metadata = {
   title: "Suivi de mon enfant",
@@ -17,11 +18,16 @@ export default async function MonEnfantPage() {
 
   const ids = (links ?? []).map((l) => l.student_id);
 
-  let children: { id: string; full_name: string | null; email: string }[] = [];
+  let children: {
+    id: string;
+    full_name: string | null;
+    email: string;
+    matricule: string | null;
+  }[] = [];
   if (ids.length > 0) {
     const { data } = await supabase
       .from("profiles")
-      .select("id, full_name, email")
+      .select("id, full_name, email, matricule")
       .in("id", ids);
     children = data ?? [];
   }
@@ -51,22 +57,29 @@ export default async function MonEnfantPage() {
             </p>
           ) : (
             <ul className="mt-8 grid gap-4 sm:grid-cols-2">
-              {children.map((c) => (
-                <li key={c.id}>
-                  <Link
-                    href={`/espace/mon-enfant/${c.id}`}
-                    className="block rounded-2xl bg-white p-5 shadow-sm ring-1 ring-black/5 transition-all hover:-translate-y-0.5 hover:shadow-md hover:ring-ipmd-red/30"
-                  >
-                    <h2 className="text-base font-bold text-ipmd-black">
-                      {c.full_name || c.email}
-                    </h2>
-                    <p className="text-sm text-black/50">{c.email}</p>
-                    <span className="mt-2 inline-block text-xs font-semibold text-ipmd-red">
-                      Voir le suivi →
-                    </span>
-                  </Link>
-                </li>
-              ))}
+              {children.map((c) => {
+                // Sous-titre propre : matricule si dispo, sinon vrai email,
+                // jamais l'email d'import fictif (@archive….ipmd.local).
+                const subtitle = c.matricule || displayEmail(c.email);
+                return (
+                  <li key={c.id}>
+                    <Link
+                      href={`/espace/mon-enfant/${c.id}`}
+                      className="block rounded-2xl bg-white p-5 shadow-sm ring-1 ring-black/5 transition-all hover:-translate-y-0.5 hover:shadow-md hover:ring-ipmd-red/30"
+                    >
+                      <h2 className="text-base font-bold text-ipmd-black">
+                        {c.full_name || "Mon enfant"}
+                      </h2>
+                      {subtitle && (
+                        <p className="text-sm text-black/50">{subtitle}</p>
+                      )}
+                      <span className="mt-2 inline-block text-xs font-semibold text-ipmd-red">
+                        Voir le suivi →
+                      </span>
+                    </Link>
+                  </li>
+                );
+              })}
             </ul>
           )}
         </div>
