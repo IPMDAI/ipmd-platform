@@ -3,7 +3,7 @@ import Link from "next/link";
 import { requireAdmin } from "@/lib/require-admin";
 import { Container } from "@/components/ui/Container";
 import { LinkParentForm } from "@/components/espace/LinkParentForm";
-import { ParentMessageForm } from "@/components/espace/ParentMessageForm";
+import { ParentsDirectory } from "@/components/espace/ParentsDirectory";
 import { unlinkParentChild } from "@/lib/admin-actions";
 import { PARENT_RELATIONSHIP_LABEL } from "@/lib/academic";
 
@@ -40,6 +40,15 @@ export default async function ParentsPage() {
   }
 
   const linkList = links ?? [];
+
+  // Nombre d'enfants liés par parent (pour l'annuaire + filtres).
+  const childCount = new Map<string, number>();
+  for (const l of linkList) childCount.set(l.parent_id, (childCount.get(l.parent_id) ?? 0) + 1);
+  const directoryParents = (parents ?? []).map((p) => ({
+    ...p,
+    comm_opt_commercial: p.comm_opt_commercial ?? false,
+    childCount: childCount.get(p.id) ?? 0,
+  }));
 
   return (
     <section className="min-h-[70vh] bg-ipmd-light">
@@ -118,60 +127,17 @@ export default async function ParentsPage() {
             </div>
           </div>
 
-          {/* Annuaire des parents (lecture) — profil pro + consentement comm. */}
-          <div className="mt-10">
-            <div className="mb-4 flex items-baseline gap-3">
-              <h2 className="text-lg font-bold text-ipmd-black">
-                Annuaire des parents
-              </h2>
-              <span className="rounded-full bg-ipmd-black px-2.5 py-1 text-xs font-bold text-white">
-                {(parents ?? []).length}
-              </span>
-            </div>
-            {(parents ?? []).length === 0 ? (
+          {/* Annuaire des parents — recherche, filtres, profil pro, message. */}
+          {(parents ?? []).length === 0 ? (
+            <div className="mt-10">
+              <h2 className="mb-4 text-lg font-bold text-ipmd-black">Annuaire des parents</h2>
               <p className="rounded-2xl bg-white p-6 text-sm text-black/55 shadow-sm ring-1 ring-black/5">
                 Aucun parent enregistré.
               </p>
-            ) : (
-              <ul className="divide-y divide-black/5 overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-black/5">
-                {(parents ?? []).map((p) => {
-                  const pro = [p.fonction, p.entreprise].filter(Boolean).join(" · ");
-                  const loc = [p.ville, p.pays].filter(Boolean).join(", ");
-                  return (
-                    <li key={p.id} className="p-4">
-                      <div className="flex flex-wrap items-center justify-between gap-2">
-                        <div className="min-w-0">
-                          <p className="text-sm font-semibold text-ipmd-black">
-                            {p.full_name || p.email}
-                          </p>
-                          <p className="text-xs text-black/50">
-                            {p.email}
-                            {p.profession ? ` · ${p.profession}` : ""}
-                            {pro ? ` · ${pro}` : ""}
-                            {loc ? ` · ${loc}` : ""}
-                          </p>
-                        </div>
-                        <span
-                          className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold ${
-                            p.comm_opt_commercial
-                              ? "bg-green-600/10 text-green-700"
-                              : "bg-black/5 text-black/45"
-                          }`}
-                          title="Consentement aux communications commerciales / opportunités"
-                        >
-                          {p.comm_opt_commercial ? "Opt-in offres" : "Pas d'offres"}
-                        </span>
-                      </div>
-                      <ParentMessageForm
-                        parentId={p.id}
-                        parentName={p.full_name || p.email}
-                      />
-                    </li>
-                  );
-                })}
-              </ul>
-            )}
-          </div>
+            </div>
+          ) : (
+            <ParentsDirectory parents={directoryParents} />
+          )}
         </div>
       </Container>
     </section>
