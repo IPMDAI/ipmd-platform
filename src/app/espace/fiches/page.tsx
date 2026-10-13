@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { requireAdmin } from "@/lib/require-admin";
+import { requireAcademic } from "@/lib/require-admin";
 import { Container } from "@/components/ui/Container";
 
 export const metadata: Metadata = {
@@ -18,7 +18,7 @@ function frDate(iso: string): string {
 }
 
 export default async function FichesPage() {
-  const { supabase } = await requireAdmin();
+  const { supabase } = await requireAcademic();
 
   const { data: reports } = await supabase
     .from("session_reports")

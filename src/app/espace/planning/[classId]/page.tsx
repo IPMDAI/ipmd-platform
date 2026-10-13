@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { requireAdmin } from "@/lib/require-admin";
+import { requireAcademic } from "@/lib/require-admin";
 import { Container } from "@/components/ui/Container";
 import { NewSlotForm } from "@/components/espace/NewSlotForm";
 import { NotifyClassButton } from "@/components/espace/NotifyClassButton";
@@ -26,7 +26,7 @@ export default async function ClassPlanningPage({
   params: Promise<{ classId: string }>;
 }) {
   const { classId } = await params;
-  const { supabase } = await requireAdmin();
+  const { supabase } = await requireAcademic();
 
   const { data: klass } = await supabase
     .from("classes")

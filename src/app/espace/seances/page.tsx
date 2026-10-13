@@ -13,7 +13,7 @@ export const metadata: Metadata = {
   title: "Séances",
 };
 
-const STAFF = ["admin", "super_admin", "pedagogie"];
+const STAFF = ["admin", "super_admin", "pedagogie", "directeur_etudes"];
 
 function dayLabel(iso: string): string {
   const js = new Date(iso + "T00:00:00Z").getUTCDay();

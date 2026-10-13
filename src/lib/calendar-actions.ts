@@ -18,7 +18,7 @@ async function getStaff() {
     .select("role")
     .eq("id", user.id)
     .single();
-  if (!["admin", "super_admin", "pedagogie"].includes(me?.role ?? "")) return null;
+  if (!["admin", "super_admin", "pedagogie", "directeur_etudes"].includes(me?.role ?? "")) return null;
   return { supabase };
 }
 

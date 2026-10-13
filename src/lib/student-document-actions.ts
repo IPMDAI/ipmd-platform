@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { STAFF_ROLES } from "@/lib/messaging";
+import { ACADEMIC_STAFF_ROLES } from "@/lib/academic";
 import {
   canSendEmail,
   emailDocument,
@@ -29,7 +29,7 @@ async function staffCtx() {
     .select("role")
     .eq("id", user.id)
     .single();
-  if (!STAFF_ROLES.includes(me?.role ?? "")) return null;
+  if (!ACADEMIC_STAFF_ROLES.includes(me?.role ?? "")) return null;
   return { supabase, userId: user.id };
 }
 

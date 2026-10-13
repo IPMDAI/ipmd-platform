@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { requireAdmin } from "@/lib/require-admin";
+import { requireAcademic } from "@/lib/require-admin";
 import { Container } from "@/components/ui/Container";
 import { RequiredDocForm } from "@/components/espace/RequiredDocForm";
 import { DocReview } from "@/components/espace/DocReview";
@@ -23,7 +23,7 @@ function frDate(iso: string): string {
 }
 
 export default async function DocumentsAFournirPage() {
-  const { supabase } = await requireAdmin();
+  const { supabase } = await requireAcademic();
 
   const [{ data: students }, { data: docTypes }, { data: docs }, { data: subs }] =
     await Promise.all([

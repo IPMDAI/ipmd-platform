@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { requireAdmin } from "@/lib/require-admin";
+import { requireAcademic } from "@/lib/require-admin";
 import { Container } from "@/components/ui/Container";
 import {
   StudentDirectory,
@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 };
 
 export default async function EtudiantsPage() {
-  const { supabase } = await requireAdmin();
+  const { supabase } = await requireAcademic();
 
   const { data: students } = await supabase
     .from("profiles")

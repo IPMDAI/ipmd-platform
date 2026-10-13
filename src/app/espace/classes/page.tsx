@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { requireAdmin } from "@/lib/require-admin";
+import { requireAcademic } from "@/lib/require-admin";
 import { Container } from "@/components/ui/Container";
 import {
   NewFiliereForm,
@@ -38,7 +38,7 @@ function frDate(iso: string): string {
 }
 
 export default async function ClassesPage() {
-  const { supabase, role } = await requireAdmin();
+  const { supabase, role } = await requireAcademic();
   const isSuper = role === "super_admin";
 
   const [

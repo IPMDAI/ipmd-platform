@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { requireAdmin } from "@/lib/require-admin";
+import { requireAcademic } from "@/lib/require-admin";
 import { Container } from "@/components/ui/Container";
 import { NewModuleForm } from "@/components/espace/NewModuleForm";
 import { deleteModule } from "@/lib/referentiel-actions";
@@ -43,7 +43,7 @@ export default async function FiliereModulesPage({
 }) {
   const { filiereId } = await params;
   const { annee } = await searchParams;
-  const { supabase } = await requireAdmin();
+  const { supabase } = await requireAcademic();
 
   const { data: filiere } = await supabase
     .from("filieres")

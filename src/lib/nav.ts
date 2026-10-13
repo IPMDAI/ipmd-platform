@@ -142,6 +142,46 @@ const PEDAGOGIE_NAV: NavGroup[] = [
   },
 ];
 
+/**
+ * Directeur des Études (D2) : encadrement académique/pédagogique. N'inclut
+ * aucune entrée finance / paie / RH / comptes / sécurité. « Mes cours » /
+ * « Emploi du temps » n'affichent que ses cours réellement affectés
+ * (courses.teacher_id = auth.uid()).
+ */
+const DIRECTEUR_ETUDES_NAV: NavGroup[] = [
+  { items: [HOME] },
+  {
+    title: "Pédagogie & planning",
+    items: [
+      { label: "Classes & filières", href: "/espace/classes", icon: "🏫" },
+      { label: "Années & Rentrées", href: "/espace/annees-rentrees", icon: "📅" },
+      { label: "Calendrier académique", href: "/espace/calendrier", icon: "🗓️" },
+      { label: "Salles", href: "/espace/salles", icon: "🚪" },
+      { label: "Planning", href: "/espace/planning", icon: "🗓️" },
+      { label: "Séances", href: "/espace/seances", icon: "📅" },
+      { label: "Présences", href: "/espace/presences", icon: "✅" },
+      { label: "Fiches pédagogiques", href: "/espace/fiches", icon: "🗂️" },
+    ],
+  },
+  {
+    title: "Suivi académique",
+    items: [
+      { label: "Étudiants", href: "/espace/etudiants", icon: "🎓" },
+      { label: "Bulletins", href: "/espace/bulletins", icon: "📄" },
+      { label: "Convocations", href: "/espace/convocations", icon: "📨" },
+      { label: "Documents à fournir", href: "/espace/documents-a-fournir", icon: "📎" },
+      { label: "Annonces académiques", href: "/espace/annonces", icon: "📢" },
+    ],
+  },
+  {
+    title: "Mes cours affectés",
+    items: [
+      { label: "Mes cours", href: "/espace/cours", icon: "📚" },
+      { label: "Emploi du temps", href: "/espace/emploi-du-temps", icon: "🗓️" },
+    ],
+  },
+];
+
 /** Entrée « Équipes & Accès » — RÉSERVÉE super_admin (jamais visible pour admin
  * ni aucun autre rôle). La page /espace/equipes redouble la garde côté serveur. */
 const SUPER_ADMIN_GROUP: NavGroup = {
@@ -156,9 +196,7 @@ export function getNavForRole(
   let base: NavGroup[];
   if (role === "admin" || role === "super_admin") base = ADMIN_NAV;
   else if (role === "pedagogie") base = PEDAGOGIE_NAV;
-  // D1 : Directeur des Études → nav staff minimal (Tableau de bord). Le menu
-  // académique dédié sera ajouté en D2 avec l'ouverture des permissions.
-  else if (role === "directeur_etudes") base = STAFF_NAV;
+  else if (role === "directeur_etudes") base = DIRECTEUR_ETUDES_NAV;
   else if (role === "scolarite") base = STAFF_NAV;
   else if (role === "enseignant") base = TEACHER_NAV;
   else if (role === "parent") base = PARENT_NAV;

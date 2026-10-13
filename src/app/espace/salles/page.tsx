@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { requireAdmin } from "@/lib/require-admin";
+import { requireAcademic } from "@/lib/require-admin";
 import { Container } from "@/components/ui/Container";
 import { NewRoomForm } from "@/components/espace/referentiel-forms";
 import { deleteRoom } from "@/lib/referentiel-actions";
@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 };
 
 export default async function SallesPage() {
-  const { supabase } = await requireAdmin();
+  const { supabase } = await requireAcademic();
 
   const { data: rooms } = await supabase
     .from("rooms")

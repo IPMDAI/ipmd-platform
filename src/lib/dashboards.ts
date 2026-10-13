@@ -240,27 +240,30 @@ export const dashboardSections: Record<string, DashSection[]> = {
       tiles: [ADMIN_TILES.annonces, ADMIN_TILES.messagerie, ADMIN_TILES.moderation, ADMIN_TILES.marketing, ADMIN_TILES.partenaires, ADMIN_TILES.candidatures, ADMIN_TILES.messages, ADMIN_TILES.parents],
     },
   ],
-  // D1 : le rôle existe et atterrit sur un espace cohérent. Les fonctions
-  // académiques sont affichées en « Bientôt » (pas de lien mort) ; elles seront
-  // activées en D2 (ouverture des permissions/RLS), puis D3-D7.
+  // D2 : fonctions académiques actives (RLS + guards ouverts). Finance/RH/comptes
+  // restent fermés (non listés ici).
   directeur_etudes: [
     {
       title: "Pédagogie & planning",
       tiles: [
-        { title: "Classes & filières", icon: "🏫", status: "soon", description: "Filières, promotions et affectation (activation en cours)." },
-        { title: "Planning", icon: "🗓️", status: "soon", description: "Emploi du temps par classe (activation en cours)." },
-        { title: "Séances", icon: "📅", status: "soon", description: "Séances datées, statuts, rattrapages (activation en cours)." },
-        { title: "Présences", icon: "✅", status: "soon", description: "Appel et suivi des absences (activation en cours)." },
-        { title: "Fiches pédagogiques", icon: "🗂️", status: "soon", description: "Fiches de séance à valider (activation en cours)." },
+        { title: "Classes & filières", icon: "🏫", status: "ready", href: "/espace/classes", description: "Filières, promotions et affectation." },
+        { title: "Années & Rentrées", icon: "📅", status: "ready", href: "/espace/annees-rentrees", description: "Années académiques et rentrées." },
+        { title: "Calendrier académique", icon: "🗓️", status: "ready", href: "/espace/calendrier", description: "Jalons et périodes de l'année." },
+        { title: "Salles", icon: "🚪", status: "ready", href: "/espace/salles", description: "Salles disponibles pour le planning." },
+        { title: "Planning", icon: "🗓️", status: "ready", href: "/espace/planning", description: "Emploi du temps par classe." },
+        { title: "Séances", icon: "📅", status: "ready", href: "/espace/seances", description: "Séances datées, statuts, rattrapages." },
+        { title: "Présences", icon: "✅", status: "ready", href: "/espace/presences", description: "Appel et suivi des absences." },
+        { title: "Fiches pédagogiques", icon: "🗂️", status: "ready", href: "/espace/fiches", description: "Fiches de séance à valider." },
       ],
     },
     {
       title: "Suivi académique",
       tiles: [
-        { title: "Étudiants", icon: "🎓", status: "soon", description: "Annuaire et suivi pédagogique (activation en cours)." },
-        { title: "Bulletins & relevés", icon: "📄", status: "soon", description: "Résultats et moyennes (activation en cours)." },
-        { title: "Convocations", icon: "📣", status: "soon", description: "Convoquer étudiants et parents (activation en cours)." },
-        { title: "Annonces académiques", icon: "📢", status: "soon", description: "Communiquer avec étudiants et parents (activation en cours)." },
+        { title: "Étudiants", icon: "🎓", status: "ready", href: "/espace/etudiants", description: "Annuaire et suivi pédagogique." },
+        { title: "Bulletins", icon: "📄", status: "ready", href: "/espace/bulletins", description: "Résultats et moyennes (lecture)." },
+        { title: "Convocations", icon: "📨", status: "ready", href: "/espace/convocations", description: "Convoquer étudiants et parents." },
+        { title: "Documents à fournir", icon: "📎", status: "ready", href: "/espace/documents-a-fournir", description: "Demander et valider les pièces." },
+        { title: "Annonces académiques", icon: "📢", status: "ready", href: "/espace/annonces", description: "Communiquer avec étudiants et parents." },
       ],
     },
   ],

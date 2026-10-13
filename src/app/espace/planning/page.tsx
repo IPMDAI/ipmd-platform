@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { requireAdmin } from "@/lib/require-admin";
+import { requireAcademic } from "@/lib/require-admin";
 import { Container } from "@/components/ui/Container";
 import { CURRENT_ACADEMIC_YEAR } from "@/lib/referentiel";
 import { PlanningClassPicker } from "@/components/espace/PlanningClassPicker";
@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 };
 
 export default async function PlanningPage() {
-  const { supabase } = await requireAdmin();
+  const { supabase } = await requireAcademic();
 
   const { data: classes } = await supabase
     .from("classes")

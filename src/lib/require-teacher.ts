@@ -21,7 +21,12 @@ export async function requireTeacher() {
     .single();
 
   const role = me?.role;
-  if (role !== "enseignant" && role !== "super_admin") redirect("/espace");
+  // `directeur_etudes` peut enseigner, mais UNIQUEMENT sur ses cours réellement
+  // affectés (RLS `owns_course` = courses.teacher_id = auth.uid()). Il n'est
+  // jamais enseignant global : l'accès à la page ne lui donne aucune donnée
+  // d'un cours qui ne lui est pas affecté.
+  if (role !== "enseignant" && role !== "super_admin" && role !== "directeur_etudes")
+    redirect("/espace");
 
   return { supabase, role, userId: user.id };
 }

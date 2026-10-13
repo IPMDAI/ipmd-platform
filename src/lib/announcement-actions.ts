@@ -31,7 +31,8 @@ async function getAdmin() {
     .select("role")
     .eq("id", user.id)
     .single();
-  if (me?.role !== "admin" && me?.role !== "super_admin") return null;
+  if (me?.role !== "admin" && me?.role !== "super_admin" && me?.role !== "directeur_etudes")
+    return null;
   return { supabase, userId: user.id };
 }
 

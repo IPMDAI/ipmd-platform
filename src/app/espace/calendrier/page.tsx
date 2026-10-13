@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { requireAdmin } from "@/lib/require-admin";
+import { requireAcademic } from "@/lib/require-admin";
 import { Container } from "@/components/ui/Container";
 import { MilestoneForm, type Milestone } from "@/components/espace/MilestoneForm";
 import { DeleteMilestoneButton } from "@/components/espace/DeleteMilestoneButton";
@@ -21,7 +21,7 @@ export default async function CalendrierPage({
   searchParams: Promise<{ annee?: string }>;
 }) {
   const { annee } = await searchParams;
-  const { supabase } = await requireAdmin();
+  const { supabase } = await requireAcademic();
 
   const { data: yearRows } = await supabase.from("academic_calendar").select("academic_year");
   const years = [

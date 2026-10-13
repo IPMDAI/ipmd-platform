@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { requireAdmin } from "@/lib/require-admin";
+import { requireAcademic } from "@/lib/require-admin";
 import { Container } from "@/components/ui/Container";
 
 export const metadata: Metadata = {
@@ -23,7 +23,7 @@ function rateClass(rate: number): string {
 }
 
 export default async function PresencesPage() {
-  const { supabase } = await requireAdmin();
+  const { supabase } = await requireAcademic();
 
   // Nouveau système : appel par séance datée.
   const [{ data: att }, { data: sessions }] = await Promise.all([

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { requireAdmin } from "@/lib/require-admin";
+import { requireAcademic } from "@/lib/require-admin";
 import { Container } from "@/components/ui/Container";
 import {
   AnneesRentrees,
@@ -16,7 +16,7 @@ export const metadata: Metadata = {
 const NON_DIPLOMA_LEVELS = ["Bootcamp", "Executive"];
 
 export default async function AnneesRentreesPage() {
-  const { supabase, role } = await requireAdmin();
+  const { supabase, role } = await requireAcademic();
   const isSuper = role === "super_admin";
 
   const [{ data: yearRows }, { data: intakeRows }, { data: offeringRows }, { data: classRows }, { data: filiereRows }, { data: levelRows }] =

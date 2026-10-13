@@ -1,3 +1,16 @@
+/**
+ * Rôles « encadrement académique » autorisés à gérer convocations, documents à
+ * fournir, etc. Inclut `directeur_etudes` (D2). Distinct de `STAFF_ROLES`
+ * (messagerie) que l'on ne modifie pas : le DÉ ne gère pas les boîtes de service.
+ */
+export const ACADEMIC_STAFF_ROLES = [
+  "super_admin",
+  "admin",
+  "scolarite",
+  "pedagogie",
+  "directeur_etudes",
+];
+
 /** Statuts de validation académique (gouvernance IPMD). */
 export const ACADEMIC_STATUSES: { value: string; label: string }[] = [
   { value: "brouillon", label: "Brouillon" },

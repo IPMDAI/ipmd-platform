@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { requireAdmin } from "@/lib/require-admin";
+import { requireAcademic } from "@/lib/require-admin";
 import { Container } from "@/components/ui/Container";
 import { NewAnnouncementForm } from "@/components/espace/NewAnnouncementForm";
 import { deleteAnnouncement } from "@/lib/announcement-actions";
@@ -19,7 +19,7 @@ function frDate(iso: string): string {
 }
 
 export default async function AnnoncesPage() {
-  const { supabase } = await requireAdmin();
+  const { supabase } = await requireAcademic();
 
   const [{ data: rows }, { data: filiereRows }] = await Promise.all([
     supabase

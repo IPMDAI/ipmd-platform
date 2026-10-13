@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { requireAdmin } from "@/lib/require-admin";
+import { requireAcademic } from "@/lib/require-admin";
 import { Container } from "@/components/ui/Container";
 import { EditModuleForm } from "@/components/espace/EditModuleForm";
 import { AddSupportForm } from "@/components/espace/AddSupportForm";
@@ -19,7 +19,7 @@ export default async function ModulePage({
   params: Promise<{ moduleId: string }>;
 }) {
   const { moduleId } = await params;
-  const { supabase, role } = await requireAdmin();
+  const { supabase, role } = await requireAcademic();
   const isSuper = role === "super_admin";
 
   const { data: module } = await supabase
