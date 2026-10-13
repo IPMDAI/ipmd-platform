@@ -171,6 +171,7 @@ const DIRECTEUR_ETUDES_NAV: NavGroup[] = [
       { label: "Convocations", href: "/espace/convocations", icon: "📨" },
       { label: "Documents à fournir", href: "/espace/documents-a-fournir", icon: "📎" },
       { label: "Annonces académiques", href: "/espace/annonces", icon: "📢" },
+      { label: "Correction de notes", href: "/espace/correction-notes", icon: "🖊️" },
     ],
   },
   {
