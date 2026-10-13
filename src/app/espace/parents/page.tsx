@@ -3,6 +3,7 @@ import Link from "next/link";
 import { requireAdmin } from "@/lib/require-admin";
 import { Container } from "@/components/ui/Container";
 import { LinkParentForm } from "@/components/espace/LinkParentForm";
+import { ParentMessageForm } from "@/components/espace/ParentMessageForm";
 import { unlinkParentChild } from "@/lib/admin-actions";
 import { PARENT_RELATIONSHIP_LABEL } from "@/lib/academic";
 
@@ -137,28 +138,34 @@ export default async function ParentsPage() {
                   const pro = [p.fonction, p.entreprise].filter(Boolean).join(" · ");
                   const loc = [p.ville, p.pays].filter(Boolean).join(", ");
                   return (
-                    <li key={p.id} className="flex flex-wrap items-center justify-between gap-2 p-4">
-                      <div className="min-w-0">
-                        <p className="text-sm font-semibold text-ipmd-black">
-                          {p.full_name || p.email}
-                        </p>
-                        <p className="text-xs text-black/50">
-                          {p.email}
-                          {p.profession ? ` · ${p.profession}` : ""}
-                          {pro ? ` · ${pro}` : ""}
-                          {loc ? ` · ${loc}` : ""}
-                        </p>
+                    <li key={p.id} className="p-4">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <div className="min-w-0">
+                          <p className="text-sm font-semibold text-ipmd-black">
+                            {p.full_name || p.email}
+                          </p>
+                          <p className="text-xs text-black/50">
+                            {p.email}
+                            {p.profession ? ` · ${p.profession}` : ""}
+                            {pro ? ` · ${pro}` : ""}
+                            {loc ? ` · ${loc}` : ""}
+                          </p>
+                        </div>
+                        <span
+                          className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold ${
+                            p.comm_opt_commercial
+                              ? "bg-green-600/10 text-green-700"
+                              : "bg-black/5 text-black/45"
+                          }`}
+                          title="Consentement aux communications commerciales / opportunités"
+                        >
+                          {p.comm_opt_commercial ? "Opt-in offres" : "Pas d'offres"}
+                        </span>
                       </div>
-                      <span
-                        className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold ${
-                          p.comm_opt_commercial
-                            ? "bg-green-600/10 text-green-700"
-                            : "bg-black/5 text-black/45"
-                        }`}
-                        title="Consentement aux communications commerciales / opportunités"
-                      >
-                        {p.comm_opt_commercial ? "Opt-in offres" : "Pas d'offres"}
-                      </span>
+                      <ParentMessageForm
+                        parentId={p.id}
+                        parentName={p.full_name || p.email}
+                      />
                     </li>
                   );
                 })}

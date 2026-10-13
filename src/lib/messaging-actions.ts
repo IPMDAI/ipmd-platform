@@ -64,6 +64,77 @@ export async function sendInternalMessage(
   return { ok: true, message: "Message envoyé à l'administration." };
 }
 
+/**
+ * Un service IPMD envoie un message DIRECT à un utilisateur précis (ex. un parent).
+ * Réservé au staff (la policy RESTRICTIVE côté DB double la garde). Notifie par email.
+ */
+export async function sendDirectMessage(
+  recipientId: string,
+  _prev: FormResult | null,
+  formData: FormData
+): Promise<FormResult> {
+  const supabase = await createClient();
+  if (!supabase) return { ok: false, message: "Service indisponible." };
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false, message: "Veuillez vous connecter." };
+  const { data: me } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .single();
+  if (!STAFF_ROLES.includes(me?.role ?? "")) {
+    return { ok: false, message: "Action réservée aux services IPMD." };
+  }
+
+  const subject = str(formData, "subject");
+  const body = str(formData, "body");
+  if (!recipientId) return { ok: false, message: "Destinataire manquant." };
+  if (!subject || !body) return { ok: false, message: "Objet et message requis." };
+
+  const { error } = await supabase.from("internal_messages").insert({
+    sender_id: user.id,
+    recipient_id: recipientId,
+    category: "autre",
+    subject,
+    body,
+    status: "nouveau",
+  });
+  if (error) return { ok: false, message: error.message };
+
+  // Notifie le destinataire par email (best-effort).
+  if (canSendEmail) {
+    const lookup = createAdminClient() ?? supabase;
+    const { data: p } = await lookup
+      .from("profiles")
+      .select("email, full_name")
+      .eq("id", recipientId)
+      .single();
+    if (p?.email) {
+      await sendEmailTo(
+        [p.email],
+        `IPMD — ${subject}`,
+        emailDocument(
+          "Message de l'IPMD",
+          `<p style="font-size:14px;color:#374151">Bonjour${
+            p.full_name ? ` ${escapeHtml(p.full_name)}` : ""
+          },</p>
+           <p style="font-size:14px;color:#374151">Vous avez reçu un message de l'IPMD :</p>
+           <p style="font-size:14px;line-height:1.7;color:#374151;white-space:pre-line;background:#f6f7f9;border-radius:12px;padding:12px"><strong>${escapeHtml(
+             subject
+           )}</strong><br/><br/>${escapeHtml(body)}</p>
+           <p style="font-size:13px;color:#6b7280">Connectez-vous à votre espace IPMD (Messagerie) pour poursuivre l'échange.</p>`
+        )
+      );
+    }
+  }
+
+  revalidatePath("/espace/parents");
+  revalidatePath("/espace/messagerie");
+  return { ok: true, message: "Message envoyé." };
+}
+
 /** Archive / désarchive un message (service). */
 export async function archiveInternalMessage(
   messageId: string,

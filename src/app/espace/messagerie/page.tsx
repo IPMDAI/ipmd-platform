@@ -19,6 +19,7 @@ export const metadata: Metadata = {
 type Msg = {
   id: string;
   sender_id: string;
+  recipient_id: string | null;
   category: string;
   subject: string;
   body: string;
@@ -56,7 +57,7 @@ export default async function MessageriePage({
   let query = supabase
     .from("internal_messages")
     .select(
-      "id, sender_id, category, subject, body, admin_reply, status, created_at, recipient_role"
+      "id, sender_id, recipient_id, category, subject, body, admin_reply, status, created_at, recipient_role"
     )
     .order("created_at", { ascending: false });
   if (isStaff) query = query.eq("archived", archivedView);
@@ -136,7 +137,37 @@ export default async function MessageriePage({
                   : "Tu n'as pas encore écrit à un service."}
               </p>
             ) : (
-              messages.map((m) => (
+              messages.map((m) => {
+                // Message DIRECT reçu de l'IPMD (ex. pour un parent) : rendu dédié.
+                const inbound =
+                  !isStaff && m.recipient_id === userId && m.sender_id !== userId;
+                if (inbound) {
+                  return (
+                    <div
+                      key={m.id}
+                      className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-ipmd-red/20"
+                    >
+                      <div className="flex flex-wrap items-start justify-between gap-2">
+                        <h2 className="font-bold text-ipmd-black">{m.subject}</h2>
+                        <div className="flex items-center gap-2">
+                          <span className="rounded-full bg-ipmd-red/10 px-2.5 py-1 text-[11px] font-bold text-ipmd-red">
+                            📨 Message de l&apos;IPMD
+                          </span>
+                          <span className="text-xs text-black/40">
+                            {frDate(m.created_at)}
+                          </span>
+                        </div>
+                      </div>
+                      <p className="mt-3 whitespace-pre-line text-sm leading-relaxed text-black/70">
+                        {m.body}
+                      </p>
+                      <p className="mt-3 text-xs text-black/45">
+                        Pour répondre, écrivez à un service via le formulaire ci-dessus.
+                      </p>
+                    </div>
+                  );
+                }
+                return (
                 <div
                   key={m.id}
                   className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-black/5"
@@ -206,7 +237,8 @@ export default async function MessageriePage({
                     </>
                   )}
                 </div>
-              ))
+                );
+              })
             )}
           </div>
         </div>
