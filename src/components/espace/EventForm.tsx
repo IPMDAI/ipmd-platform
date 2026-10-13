@@ -50,6 +50,15 @@ export function EventForm() {
         </Field>
       </div>
 
+      <div className="grid gap-3 sm:grid-cols-2">
+        <Field label="Limite d'inscription (optionnel)" htmlFor="e-deadline">
+          <input id="e-deadline" name="registration_deadline" type="datetime-local" className={inputBase} />
+        </Field>
+        <Field label="Capacité (optionnel)" htmlFor="e-cap">
+          <input id="e-cap" name="capacity" type="number" min={1} placeholder="Ex. 50" className={inputBase} />
+        </Field>
+      </div>
+
       <Field label="Lieu" htmlFor="e-loc">
         <input id="e-loc" name="location" placeholder="Ex. Campus IPMD, Cocody" className={inputBase} />
       </Field>

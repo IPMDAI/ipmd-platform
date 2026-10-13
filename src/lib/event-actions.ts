@@ -45,6 +45,9 @@ export async function createEvent(
   let audience = str(formData, "audience");
   if (!["all", "parent", "etudiant"].includes(audience)) audience = "all";
   const endsRaw = str(formData, "ends_at");
+  const deadlineRaw = str(formData, "registration_deadline");
+  const capacityRaw = str(formData, "capacity");
+  const capacity = capacityRaw ? Math.max(1, Number.parseInt(capacityRaw, 10)) : null;
 
   const { error } = await ctx.supabase.from("events").insert({
     title,
@@ -54,7 +57,9 @@ export async function createEvent(
     ends_at: endsRaw ? new Date(endsRaw).toISOString() : null,
     location: str(formData, "location") || null,
     audience,
-    published: formData.get("published") === "on",
+    status: formData.get("published") === "on" ? "publie" : "brouillon",
+    registration_deadline: deadlineRaw ? new Date(deadlineRaw).toISOString() : null,
+    capacity: capacity && !Number.isNaN(capacity) ? capacity : null,
     created_by: ctx.userId,
   });
   if (error) return { ok: false, message: error.message };
@@ -64,16 +69,40 @@ export async function createEvent(
   return { ok: true, message: "Événement créé." };
 }
 
-/** Staff : publie / dépublie un événement. */
-export async function toggleEventPublished(
+/** Staff : change le statut (brouillon/publie/annule). Annuler ≠ supprimer. */
+export async function setEventStatus(
   eventId: string,
-  published: boolean
+  status: "brouillon" | "publie" | "annule"
 ): Promise<void> {
   const ctx = await staffCtx();
   if (!ctx) return;
-  await ctx.supabase.from("events").update({ published }).eq("id", eventId);
+  if (!["brouillon", "publie", "annule"].includes(status)) return;
+  await ctx.supabase.from("events").update({ status }).eq("id", eventId);
   revalidatePath("/espace/evenements");
   revalidatePath("/espace/vie-ipmd");
+}
+
+/** Staff : invite (ou ré-invite) un utilisateur précis à un événement (mode ciblé). */
+export async function inviteToEvent(
+  eventId: string,
+  _prev: FormResult | null,
+  formData: FormData
+): Promise<FormResult> {
+  const ctx = await staffCtx();
+  if (!ctx) return { ok: false, message: "Action réservée aux services IPMD." };
+  const userId = str(formData, "user_id");
+  if (!userId) return { ok: false, message: "Sélectionnez un destinataire." };
+
+  const { error } = await ctx.supabase
+    .from("event_invitations")
+    .upsert(
+      { event_id: eventId, user_id: userId, invited_by: ctx.userId, invited_at: new Date().toISOString() },
+      { onConflict: "event_id,user_id" }
+    );
+  if (error) return { ok: false, message: error.message };
+
+  revalidatePath("/espace/evenements");
+  return { ok: true, message: "Invitation envoyée." };
 }
 
 /** Staff : supprime un événement (et ses RSVP). */
@@ -97,6 +126,33 @@ export async function setRsvp(
   if (!user) return { ok: false, message: "Veuillez vous connecter." };
   if (!["oui", "non", "peut_etre"].includes(response)) {
     return { ok: false, message: "Réponse invalide." };
+  }
+
+  // Garde : statut publié + avant la date limite.
+  const { data: ev } = await supabase
+    .from("events")
+    .select("status, registration_deadline, capacity")
+    .eq("id", eventId)
+    .maybeSingle();
+  if (!ev || ev.status !== "publie") {
+    return { ok: false, message: "Les réponses ne sont pas ouvertes pour cet événement." };
+  }
+  if (ev.registration_deadline && new Date(ev.registration_deadline) <= new Date()) {
+    return { ok: false, message: "La date limite d'inscription est passée." };
+  }
+
+  // Garde capacité : on ne bloque que la confirmation « oui » si complet
+  // (sauf si l'utilisateur était déjà confirmé). Compte via fonction SECURITY DEFINER.
+  if (ev.capacity != null && response === "oui") {
+    const [{ data: mine }, { data: count }] = await Promise.all([
+      supabase.from("event_rsvps").select("response").eq("event_id", eventId).eq("user_id", user.id).maybeSingle(),
+      supabase.rpc("event_oui_count", { p_event: eventId }),
+    ]);
+    const already = mine?.response === "oui";
+    const confirmed = typeof count === "number" ? count : 0;
+    if (!already && confirmed >= ev.capacity) {
+      return { ok: false, message: "Événement complet : plus de place disponible." };
+    }
   }
 
   const { error } = await supabase
