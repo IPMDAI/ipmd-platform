@@ -15,6 +15,7 @@ import {
   SESSION_TYPE_VALUES,
   MODALITY_VALUES,
 } from "@/lib/schedule";
+import { resolveSlotModule } from "@/lib/slot-module";
 import type { FormResult } from "@/types";
 
 async function getAdmin() {
@@ -69,7 +70,8 @@ export async function addTimetableSlot(
   const ctx = await getAdmin();
   if (!ctx) return { ok: false, message: "Action réservée à l'administration." };
 
-  const subject = str(formData, "subject");
+  const freeSubject = str(formData, "subject");
+  const moduleId = str(formData, "module_id") || null;
   const teacherId = str(formData, "teacher_id") || null;
   const roomId = str(formData, "room_id") || null;
   const day = Number.parseInt(str(formData, "day_of_week"), 10);
@@ -79,7 +81,6 @@ export async function addTimetableSlot(
   const type = str(formData, "type");
   const modality = str(formData, "modality");
 
-  if (!subject) return { ok: false, message: "La matière est requise." };
   if (!day || !start || !end) {
     return { ok: false, message: "Jour et horaires sont requis." };
   }
@@ -92,6 +93,34 @@ export async function addTimetableSlot(
   if (end <= start) {
     return { ok: false, message: "L'heure de fin doit suivre le début." };
   }
+
+  // Rattachement au module officiel de la maquette (validation SERVEUR stricte).
+  // Le client ne peut pas imposer un libellé pour un créneau rattaché à un module.
+  const { data: klass } = await ctx.supabase
+    .from("classes")
+    .select("filiere_id, level, academic_year")
+    .eq("id", classId)
+    .maybeSingle();
+  let moduleRow = null;
+  if (moduleId) {
+    const { data: m } = await ctx.supabase
+      .from("modules")
+      .select("id, name, status, filiere_id, level, academic_year")
+      .eq("id", moduleId)
+      .maybeSingle();
+    moduleRow = m ?? null;
+  }
+  const resolved = resolveSlotModule({
+    type,
+    moduleId,
+    module: moduleRow,
+    freeSubject,
+    classFiliereId: klass?.filiere_id ?? null,
+    classLevel: klass?.level ?? null,
+    classYear: klass?.academic_year ?? null,
+  });
+  if (!resolved.ok) return { ok: false, message: resolved.message };
+  const subject = resolved.subject;
 
   // Détection de conflit (classe / prof / salle) sur le même jour.
   const { data: existing } = await ctx.supabase
@@ -117,6 +146,7 @@ export async function addTimetableSlot(
   const { error } = await ctx.supabase.from("timetable_slots").insert({
     class_id: classId,
     subject,
+    module_id: resolved.moduleId,
     teacher_id: teacherId,
     room_id: roomId,
     day_of_week: day,
@@ -128,11 +158,6 @@ export async function addTimetableSlot(
   if (error) return { ok: false, message: error.message };
 
   // Alerte souple (jamais bloquante) : type inhabituel pour ce jour.
-  const { data: klass } = await ctx.supabase
-    .from("classes")
-    .select("academic_year")
-    .eq("id", classId)
-    .maybeSingle();
   const { data: alert } = await ctx.supabase.rpc("weekly_rule_alert", {
     p_year: klass?.academic_year ?? "",
     p_program: "campus_jour",

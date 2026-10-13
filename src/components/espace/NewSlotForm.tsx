@@ -1,22 +1,32 @@
 "use client";
 
-import { useActionState, useEffect, useRef } from "react";
+import { useActionState, useEffect, useMemo, useRef, useState } from "react";
 import { addTimetableSlot } from "@/lib/planning-actions";
 import { Field, inputBase } from "@/components/forms/FormField";
 import { ActionButton } from "@/components/ui/Button";
-import { DAY_OPTIONS, SESSION_TYPES, MODALITIES } from "@/lib/schedule";
+import {
+  DAY_OPTIONS,
+  SESSION_TYPES,
+  MODALITIES,
+  moduleRequirement,
+} from "@/lib/schedule";
 import type { FormResult } from "@/types";
 
 type Named = { id: string; name: string };
+type ModuleItem = { id: string; name: string; semester: string | null };
 
 export function NewSlotForm({
   classId,
   teachers,
   rooms,
+  modules,
+  hasFiliere,
 }: {
   classId: string;
   teachers: Named[];
   rooms: Named[];
+  modules: ModuleItem[];
+  hasFiliere: boolean;
 }) {
   const bound = addTimetableSlot.bind(null, classId);
   const [state, action, pending] = useActionState<FormResult | null, FormData>(
@@ -24,9 +34,37 @@ export function NewSlotForm({
     null
   );
   const ref = useRef<HTMLFormElement>(null);
+
+  const [type, setType] = useState("");
+  const [moduleId, setModuleId] = useState("");
+
   useEffect(() => {
-    if (state?.ok) ref.current?.reset();
+    if (state?.ok) {
+      ref.current?.reset();
+      setType("");
+      setModuleId("");
+    }
   }, [state]);
+
+  // Modules groupés par semestre (S1 avant S2).
+  const bySemester = useMemo(() => {
+    const g = new Map<string, ModuleItem[]>();
+    for (const m of modules) {
+      const k = m.semester ?? "Autres";
+      if (!g.has(k)) g.set(k, []);
+      g.get(k)!.push(m);
+    }
+    return [...g.entries()].sort((a, b) => a[0].localeCompare(b[0]));
+  }, [modules]);
+
+  const req = type ? moduleRequirement(type) : null; // null tant que type non choisi
+  const showModule = req === "required" || req === "optional";
+  const moduleMandatory = req === "required";
+  const noModulePossible = showModule && (!hasFiliere || modules.length === 0);
+  // Intitulé libre : type hors module, OU type facultatif sans module choisi.
+  const showFreeSubject =
+    req === "none" || (req === "optional" && !moduleId);
+  const blocked = moduleMandatory && noModulePossible;
 
   return (
     <form
@@ -36,19 +74,20 @@ export function NewSlotForm({
     >
       <h2 className="text-lg font-bold text-ipmd-black">Ajouter un créneau</h2>
 
-      <Field label="Matière" htmlFor="p-subject" required>
-        <input
-          id="p-subject"
-          name="subject"
-          required
-          placeholder="Ex. Marketing digital"
-          className={inputBase}
-        />
-      </Field>
-
+      {/* Type + modalité d'abord : ils pilotent le choix du module. */}
       <div className="grid grid-cols-2 gap-3">
         <Field label="Type" htmlFor="p-type" required>
-          <select id="p-type" name="type" required defaultValue="" className={inputBase}>
+          <select
+            id="p-type"
+            name="type"
+            required
+            value={type}
+            onChange={(e) => {
+              setType(e.target.value);
+              setModuleId("");
+            }}
+            className={inputBase}
+          >
             <option value="" disabled>
               — Choisir —
             </option>
@@ -72,6 +111,62 @@ export function NewSlotForm({
           </select>
         </Field>
       </div>
+
+      {/* Module officiel (selon le type). */}
+      {showModule &&
+        (noModulePossible ? (
+          <div className="rounded-xl bg-amber-50 p-3 text-xs font-medium text-amber-800 ring-1 ring-amber-200">
+            {!hasFiliere
+              ? "Cette classe n'est rattachée à aucune filière : impossible de sélectionner un module officiel."
+              : "Aucun module actif dans la maquette de cette classe pour cette année."}
+            {moduleMandatory && " Ce type de séance exige un module."}
+          </div>
+        ) : (
+          <Field
+            label={moduleMandatory ? "Module (officiel)" : "Module (optionnel)"}
+            htmlFor="p-module"
+            required={moduleMandatory}
+          >
+            <select
+              id="p-module"
+              name="module_id"
+              required={moduleMandatory}
+              value={moduleId}
+              onChange={(e) => setModuleId(e.target.value)}
+              className={inputBase}
+            >
+              <option value="">
+                {moduleMandatory ? "— Choisir un module —" : "— Aucun (transversal) —"}
+              </option>
+              {bySemester.map(([sem, mods]) => (
+                <optgroup key={sem} label={sem}>
+                  {mods.map((m) => (
+                    <option key={m.id} value={m.id}>
+                      {m.name}
+                    </option>
+                  ))}
+                </optgroup>
+              ))}
+            </select>
+          </Field>
+        ))}
+
+      {/* Intitulé libre (hors module, ou facultatif sans module). */}
+      {showFreeSubject && (
+        <Field
+          label={req === "none" ? "Intitulé" : "Intitulé (hors module)"}
+          htmlFor="p-subject"
+          required
+        >
+          <input
+            id="p-subject"
+            name="subject"
+            required
+            placeholder="Ex. Journée portes ouvertes"
+            className={inputBase}
+          />
+        </Field>
+      )}
 
       <Field label="Professeur" htmlFor="p-teacher">
         <select id="p-teacher" name="teacher_id" defaultValue="" className={inputBase}>
@@ -114,7 +209,7 @@ export function NewSlotForm({
         </Field>
       </div>
 
-      <ActionButton type="submit" disabled={pending}>
+      <ActionButton type="submit" disabled={pending || blocked}>
         {pending ? "Ajout…" : "Ajouter au planning"}
       </ActionButton>
 

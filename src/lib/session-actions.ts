@@ -57,7 +57,7 @@ export async function generateSessions(
   const [{ data: slots }, { data: holidays }, { data: klass }] = await Promise.all([
     ctx.supabase
       .from("timetable_slots")
-      .select("day_of_week, start_time, end_time, subject, teacher_id, room_id, type, modality")
+      .select("day_of_week, start_time, end_time, subject, module_id, teacher_id, room_id, type, modality")
       .eq("class_id", classId),
     ctx.supabase
       .from("holidays")
@@ -113,6 +113,7 @@ export async function generateSessions(
         class_id: classId,
         teacher_id: s.teacher_id,
         subject: s.subject,
+        module_id: s.module_id, // la séance hérite du module officiel du créneau
         room_id: s.room_id,
         teacher_name: s.teacher_id ? tName.get(s.teacher_id) ?? null : null,
         teacher_function: s.teacher_id ? tFn.get(s.teacher_id) ?? null : null,
@@ -157,7 +158,7 @@ export async function rescheduleSession(
   const { data: orig } = await ctx.supabase
     .from("course_sessions")
     .select(
-      "class_id, teacher_id, subject, room_id, teacher_name, teacher_function, room_name, start_time, end_time, semester, type, modality"
+      "class_id, teacher_id, subject, module_id, room_id, teacher_name, teacher_function, room_name, start_time, end_time, semester, type, modality"
     )
     .eq("id", originalId)
     .single();
@@ -190,6 +191,7 @@ export async function rescheduleSession(
       class_id: orig.class_id,
       teacher_id: orig.teacher_id,
       subject: orig.subject,
+      module_id: orig.module_id, // un rattrapage conserve le même module
       room_id: orig.room_id,
       teacher_name: orig.teacher_name,
       teacher_function: orig.teacher_function,

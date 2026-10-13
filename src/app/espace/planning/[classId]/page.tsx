@@ -30,12 +30,12 @@ export default async function ClassPlanningPage({
 
   const { data: klass } = await supabase
     .from("classes")
-    .select("id, name, level, academic_year")
+    .select("id, name, level, academic_year, filiere_id")
     .eq("id", classId)
     .single();
   if (!klass) notFound();
 
-  const [{ data: slots }, { data: teachers }, { data: rooms }] =
+  const [{ data: slots }, { data: teachers }, { data: rooms }, { data: moduleRows }] =
     await Promise.all([
       supabase
         .from("timetable_slots")
@@ -48,7 +48,25 @@ export default async function ClassPlanningPage({
         .eq("role", "enseignant")
         .order("full_name"),
       supabase.from("rooms").select("id, name").order("name"),
+      // Modules officiels de la maquette de cette classe (actif uniquement ;
+      // jamais reserve / en_attente). Filière + niveau + année.
+      klass.filiere_id
+        ? supabase
+            .from("modules")
+            .select("id, name, semester")
+            .eq("filiere_id", klass.filiere_id)
+            .eq("level", klass.level)
+            .eq("academic_year", klass.academic_year)
+            .eq("status", "actif")
+            .order("semester")
+            .order("name")
+        : Promise.resolve({ data: [] as { id: string; name: string; semester: string | null }[] }),
     ]);
+  const modules = (moduleRows ?? []) as {
+    id: string;
+    name: string;
+    semester: string | null;
+  }[];
 
   const teacherName = new Map(
     (teachers ?? []).map((t) => [t.id, t.full_name || t.email])
@@ -208,6 +226,8 @@ export default async function ClassPlanningPage({
                   name: t.full_name || t.email,
                 }))}
                 rooms={(rooms ?? []).map((r) => ({ id: r.id, name: r.name }))}
+                modules={modules}
+                hasFiliere={!!klass.filiere_id}
               />
             </div>
           </div>

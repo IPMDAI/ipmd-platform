@@ -66,6 +66,23 @@ export const SESSION_TYPE_LABEL: Record<string, string> = Object.fromEntries(
   SESSION_TYPES.map((t) => [t.value, t.label])
 );
 
+/**
+ * Rattachement à un module officiel de la maquette, selon le type de séance :
+ *  - "required"  : un module actif DOIT être sélectionné (cours, td, examens…) ;
+ *  - "optional"  : module possible (si choisi → liaison réelle), sinon intitulé libre ;
+ *  - "none"      : hors module (ex. Journée IPMD) → intitulé libre, module_id NULL.
+ */
+export const MODULE_REQUIRED_TYPES: string[] = [
+  "cours", "td", "tp", "devoir_surveille", "controle_continu", "examen",
+  "rattrapage", "hackathon", "projet", "presentation", "soutenance",
+];
+export const MODULE_OPTIONAL_TYPES: string[] = ["atelier", "recherche_terrain"];
+export function moduleRequirement(type: string): "required" | "optional" | "none" {
+  if (MODULE_REQUIRED_TYPES.includes(type)) return "required";
+  if (MODULE_OPTIONAL_TYPES.includes(type)) return "optional";
+  return "none";
+}
+
 /** Modalités (présentiel / distanciel). Obligatoire, pas de défaut. */
 export const MODALITIES = [
   { value: "presentiel", label: "Présentiel" },
