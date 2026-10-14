@@ -180,15 +180,23 @@ export default async function AuditPage({
                       r.old_value as Record<string, unknown> | null,
                       r.new_value as Record<string, unknown> | null
                     );
+                    // Priorité au snapshot figé (lisible même si le compte/entité
+                    // a disparu) ; repli sur la résolution live puis l'uuid court.
+                    const ctx = (r.context_snapshot as Record<string, string> | null) ?? {};
+                    const actorLabel = (r.actor_name as string) || nm(r.actor_id as string);
+                    const studentLabel = ctx.student_name || (r.student_id ? nm(r.student_id as string) : null);
+                    const teacherLabel = ctx.teacher_name || (r.teacher_id ? nm(r.teacher_id as string) : null);
+                    const entityExtra = ctx.course_name || ctx.entity_label || null;
                     return (
                       <tr key={r.id as string} className="align-top">
                         <td className="px-4 py-3 whitespace-nowrap text-black/60">
                           {fmtWhen(r.occurred_at as string)}
                         </td>
                         <td className="px-4 py-3">
-                          <div className="font-semibold text-ipmd-black">{nm(r.actor_id as string)}</div>
+                          <div className="font-semibold text-ipmd-black">{actorLabel}</div>
                           <div className="text-xs text-black/45">
                             {roleLabels[r.actor_role as string] ?? r.actor_role ?? "—"}
+                            {r.actor_email ? ` · ${r.actor_email}` : ""}
                           </div>
                         </td>
                         <td className="px-4 py-3">
@@ -198,12 +206,21 @@ export default async function AuditPage({
                           <div className="mt-1 text-xs text-black/45">{r.action as string}</div>
                         </td>
                         <td className="px-4 py-3 text-black/70">
-                          <div>{r.entity_type as string}</div>
-                          {r.student_id ? (
-                            <div className="text-xs text-black/45">Étudiant : {nm(r.student_id as string)}</div>
+                          <div>
+                            {r.entity_type as string}
+                            {entityExtra ? ` · ${entityExtra}` : ""}
+                          </div>
+                          {studentLabel ? (
+                            <div className="text-xs text-black/45">Étudiant : {studentLabel}</div>
                           ) : null}
-                          {r.teacher_id ? (
-                            <div className="text-xs text-black/45">Enseignant : {nm(r.teacher_id as string)}</div>
+                          {teacherLabel ? (
+                            <div className="text-xs text-black/45">Enseignant : {teacherLabel}</div>
+                          ) : null}
+                          {ctx.class_name ? (
+                            <div className="text-xs text-black/45">Classe : {ctx.class_name}</div>
+                          ) : null}
+                          {ctx.module_name ? (
+                            <div className="text-xs text-black/45">Module : {ctx.module_name}</div>
                           ) : null}
                         </td>
                         <td className="px-4 py-3">
