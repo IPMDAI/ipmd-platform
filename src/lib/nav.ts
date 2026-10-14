@@ -175,6 +175,12 @@ const DIRECTEUR_ETUDES_NAV: NavGroup[] = [
     ],
   },
   {
+    title: "Personnel",
+    items: [
+      { label: "Besoins en personnel", href: "/espace/besoins", icon: "🧑‍🏫" },
+    ],
+  },
+  {
     title: "Mes cours affectés",
     items: [
       { label: "Mes cours", href: "/espace/cours", icon: "📚" },

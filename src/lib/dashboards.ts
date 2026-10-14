@@ -266,5 +266,11 @@ export const dashboardSections: Record<string, DashSection[]> = {
         { title: "Annonces académiques", icon: "📢", status: "ready", href: "/espace/annonces", description: "Communiquer avec étudiants et parents." },
       ],
     },
+    {
+      title: "Personnel",
+      tiles: [
+        { title: "Besoins en personnel", icon: "🧑‍🏫", status: "ready", href: "/espace/besoins", description: "Exprimer un besoin et suivre sa décision (AG)." },
+      ],
+    },
   ],
 };
