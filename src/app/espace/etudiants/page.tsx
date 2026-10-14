@@ -22,15 +22,16 @@ export default async function EtudiantsPage() {
   const list = students ?? [];
   const ids = list.map((s) => s.id);
 
-  // Année scolaire + statut d'accès (actif/pause/bloqué) via RPC restreinte :
-  // JAMAIS les montants. Fonctionne pour le staff académique, dont le DÉ.
+  // Année scolaire + standing financier (à jour / en retard / accès en pause) via
+  // RPC restreinte : JAMAIS les montants. Source de vérité unique côté base
+  // (student_financial_standing). Réservée à directeur_etudes / admin / super_admin.
   const yearOf = new Map<string, string>();
-  const accessOf = new Map<string, string>();
+  const standingOf = new Map<string, string>();
   if (ids.length > 0) {
     const { data: fins } = await supabase.rpc("students_access_states", { p_ids: ids });
-    for (const f of (fins ?? []) as { student_id: string; access_state: string | null; academic_year: string | null }[]) {
+    for (const f of (fins ?? []) as { student_id: string; standing: string | null; academic_year: string | null }[]) {
       if (f.academic_year) yearOf.set(f.student_id, f.academic_year);
-      if (f.access_state) accessOf.set(f.student_id, f.access_state);
+      if (f.standing) standingOf.set(f.student_id, f.standing);
     }
   }
 
@@ -100,7 +101,7 @@ export default async function EtudiantsPage() {
       className: cls?.name ?? null,
       filiereName: cls?.filiere_id ? filiereName.get(cls.filiere_id) ?? null : null,
       academicYear: yearOf.get(s.id) ?? null,
-      accessState: accessOf.get(s.id) ?? null,
+      standing: standingOf.get(s.id) ?? null,
       contacts: {
         phone: s.phone ?? null,
         whatsapp: s.whatsapp ?? null,

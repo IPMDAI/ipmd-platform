@@ -1,0 +1,64 @@
+-- D5 (option C) — Source de vérité UNIQUE du « standing » financier, calculée à
+-- la lecture (jamais stockée → jamais périmée). Reproduit EXACTEMENT la règle de
+-- computeSchedule/computeFinance (TS) : imputation cumulative des paiements
+-- scolarité (status validé, hors inscription) sur les échéances triées par date.
+-- Retourne SEULEMENT un label : a_jour / en_retard / acces_en_pause. Aucun montant.
+
+create or replace function public.student_financial_standing(p_student uuid)
+returns text
+language plpgsql security definer set search_path to 'public' stable as $$
+declare v_access text; v_paid numeric; v_due numeric;
+begin
+  -- Priorité 1 : accès officiel (pause = inscription non soldée ; bloque = blocage manuel).
+  select access_state into v_access from public.student_finance where student_id = p_student;
+  if v_access in ('pause', 'bloque') then
+    return 'acces_en_pause';
+  end if;
+
+  -- Paiements SCOLARITÉ validés (status null = historique payé ; exclut l'inscription).
+  select coalesce(sum(amount), 0) into v_paid
+  from public.payments
+  where student_id = p_student
+    and (status is null or status = 'paye')
+    and coalesce(kind, '') <> 'inscription';
+
+  -- Σ des échéances ARRIVÉES (due_date <= aujourd'hui). En retard ssi la couverture
+  -- cumulée ne suffit pas à couvrir tout ce qui est dû à ce jour (équiv. exact :
+  -- il existe une échéance arrivée dont le cumul dépasse le payé).
+  select coalesce(sum(amount), 0) into v_due
+  from public.payment_schedules
+  where student_id = p_student
+    and due_date <= current_date;
+
+  if v_paid < v_due then
+    return 'en_retard';
+  end if;
+  return 'a_jour';
+end $$;
+
+-- La fonction n'est appelable QUE par la RPC (qui s'exécute en tant que owner) :
+-- aucun rôle applicatif ne peut l'invoquer directement.
+revoke execute on function public.student_financial_standing(uuid)
+  from public, anon, authenticated, service_role;
+
+-- La RPC d'annuaire expose le standing. Toujours réservée à directeur_etudes /
+-- admin / super_admin ; jamais de montant. (DROP car le type de retour change :
+-- access_state -> standing.)
+drop function if exists public.students_access_states(uuid[]);
+create or replace function public.students_access_states(p_ids uuid[])
+returns table(student_id uuid, standing text, academic_year text)
+language sql security definer set search_path to 'public' stable as $$
+  select sf.student_id,
+         public.student_financial_standing(sf.student_id),
+         sf.academic_year
+  from public.student_finance sf
+  where sf.student_id = any(p_ids)
+    and public.current_user_role() in (
+      'directeur_etudes'::public.user_role,
+      'admin'::public.user_role,
+      'super_admin'::public.user_role
+    );
+$$;
+
+revoke execute on function public.students_access_states(uuid[]) from public, anon;
+grant execute on function public.students_access_states(uuid[]) to authenticated;

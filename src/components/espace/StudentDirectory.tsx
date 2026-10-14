@@ -5,7 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { ContactEditForm, type Contacts } from "@/components/espace/ContactEditForm";
 import { StudentCivilForm, type ClassOption } from "@/components/espace/StudentCivilForm";
-import { ACCESS_STATES } from "@/lib/finance";
+import { FINANCIAL_STANDING } from "@/lib/finance";
 
 export type StudentRow = {
   id: string;
@@ -19,8 +19,8 @@ export type StudentRow = {
   birthDate: string | null;
   birthPlace: string | null;
   classId: string | null;
-  /** Statut d'accès (actif/pause/bloque) — suivi académique, sans montants. */
-  accessState?: string | null;
+  /** Standing financier (a_jour/en_retard/acces_en_pause) — sans montants. */
+  standing?: string | null;
 };
 
 function initialsOf(name: string): string {
@@ -128,12 +128,12 @@ export function StudentDirectory({
                       </span>
                     )}
                   </p>
-                  {s.accessState && ACCESS_STATES[s.accessState] && (
+                  {s.standing && FINANCIAL_STANDING[s.standing] && (
                     <span
-                      className={`mt-1 inline-block rounded-full px-2 py-0.5 text-[11px] font-semibold ${ACCESS_STATES[s.accessState].cls}`}
-                      title="Statut d'accès (suivi académique)"
+                      className={`mt-1 inline-block rounded-full px-2 py-0.5 text-[11px] font-semibold ${FINANCIAL_STANDING[s.standing].cls}`}
+                      title="Standing financier (suivi académique, sans montant)"
                     >
-                      {ACCESS_STATES[s.accessState].label}
+                      {FINANCIAL_STANDING[s.standing].label}
                     </span>
                   )}
                   </div>

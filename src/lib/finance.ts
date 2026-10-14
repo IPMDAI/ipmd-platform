@@ -54,6 +54,17 @@ export const ACCESS_STATES: Record<string, { label: string; cls: string }> = {
   bloque: { label: "Accès bloqué", cls: "bg-ipmd-red/10 text-ipmd-red" },
 };
 
+/**
+ * Standing financier (suivi académique) — source de vérité UNIQUE côté base
+ * (`student_financial_standing`), calculé à la lecture. À jour / En retard /
+ * Accès en pause, sans aucun montant.
+ */
+export const FINANCIAL_STANDING: Record<string, { label: string; cls: string }> = {
+  a_jour: { label: "À jour", cls: "bg-green-50 text-green-700" },
+  en_retard: { label: "En retard", cls: "bg-ipmd-red/10 text-ipmd-red" },
+  acces_en_pause: { label: "Accès en pause", cls: "bg-amber-50 text-amber-700" },
+};
+
 /** Statuts financiers (libellé + couleur). */
 export const FINANCIAL_STATUS: Record<string, { label: string; cls: string }> = {
   inscription_non_soldee: { label: "Inscription non soldée", cls: "bg-ipmd-red/10 text-ipmd-red" },
