@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { ContactEditForm, type Contacts } from "@/components/espace/ContactEditForm";
@@ -20,7 +20,7 @@ export type StudentRow = {
   birthDate: string | null;
   birthPlace: string | null;
   classId: string | null;
-  /** Standing financier (a_jour/en_retard/acces_en_pause) — sans montants. */
+  /** Standing financier (a_jour/en_retard/acces_en_pause/a_verifier) — sans montants. */
   standing?: string | null;
 };
 
@@ -34,19 +34,11 @@ function initialsOf(name: string): string {
     .toUpperCase();
 }
 
-function normalize(s: string): string {
-  return s
-    .normalize("NFD")
-    .replace(/\p{Diacritic}/gu, "")
-    .toLowerCase();
-}
-
 /**
  * Une fiche étudiant. Au chargement : lecture seule (identité, matricule,
  * filière/classe, badge standing, actions). Les formulaires d'édition lourds
  * (ContactEditForm / StudentCivilForm) ne sont montés QUE sur clic « Modifier »,
- * et UNIQUEMENT si l'utilisateur en a le droit (`canEdit`). Cela évite de rendre
- * 2×96 formulaires d'un coup.
+ * et UNIQUEMENT si `canEdit`.
  */
 function StudentCard({
   s,
@@ -138,6 +130,10 @@ function StudentCard({
   );
 }
 
+/**
+ * Liste des fiches étudiants d'UNE page (recherche + pagination gérées côté
+ * serveur par la page). Ne monte aucun formulaire d'édition au rendu.
+ */
 export function StudentDirectory({
   students,
   classes,
@@ -147,64 +143,18 @@ export function StudentDirectory({
   classes: ClassOption[];
   canEdit?: boolean;
 }) {
-  const [query, setQuery] = useState("");
-  const [year, setYear] = useState("");
-
-  const years = useMemo(
-    () => [...new Set(students.map((s) => s.academicYear).filter(Boolean) as string[])].sort().reverse(),
-    [students]
-  );
-
-  const results = useMemo(() => {
-    const q = normalize(query.trim());
-    return students.filter((s) => {
-      if (year && s.academicYear !== year) return false;
-      if (!q) return true;
-      return normalize(
-        `${s.name} ${s.email} ${s.matricule ?? ""} ${s.className ?? ""} ${s.filiereName ?? ""} ${s.contacts.phone ?? ""} ${s.contacts.whatsapp ?? ""} ${s.contacts.personal_email ?? ""} ${s.contacts.school_email ?? ""}`
-      ).includes(q);
-    });
-  }, [students, query, year]);
-
+  if (students.length === 0) {
+    return (
+      <p className="rounded-2xl bg-white p-6 text-sm text-black/55 shadow-sm ring-1 ring-black/5">
+        Aucun étudiant ne correspond.
+      </p>
+    );
+  }
   return (
-    <div>
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <input
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Rechercher un étudiant, un matricule, une classe…"
-          className="w-full rounded-xl border border-black/10 bg-white px-4 py-2.5 text-sm text-ipmd-black outline-none ring-ipmd-red/20 transition-shadow focus:ring-2 sm:max-w-sm"
-        />
-        <div className="flex items-center gap-2">
-          {years.length > 0 && (
-            <select
-              value={year}
-              onChange={(e) => setYear(e.target.value)}
-              className="rounded-xl border border-black/10 bg-white px-3 py-2.5 text-sm text-ipmd-black"
-            >
-              <option value="">Toutes les années</option>
-              {years.map((y) => (
-                <option key={y} value={y}>{y}</option>
-              ))}
-            </select>
-          )}
-          <span className="text-sm text-black/45">
-            {results.length} / {students.length}
-          </span>
-        </div>
-      </div>
-
-      {results.length === 0 ? (
-        <p className="mt-8 rounded-2xl bg-white p-6 text-sm text-black/55 shadow-sm ring-1 ring-black/5">
-          Aucun étudiant ne correspond.
-        </p>
-      ) : (
-        <ul className="mt-5 divide-y divide-black/5 overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-black/5">
-          {results.map((s) => (
-            <StudentCard key={s.id} s={s} classes={classes} canEdit={canEdit} />
-          ))}
-        </ul>
-      )}
-    </div>
+    <ul className="divide-y divide-black/5 overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-black/5">
+      {students.map((s) => (
+        <StudentCard key={s.id} s={s} classes={classes} canEdit={canEdit} />
+      ))}
+    </ul>
   );
 }
