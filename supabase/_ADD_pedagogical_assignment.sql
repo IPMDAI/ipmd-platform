@@ -162,9 +162,13 @@ begin
       'old_teacher_name', v_old_name, 'new_teacher_name', v_new_name)));
 end $$;
 
--- 4b) CRÉNEAU : timetable_slots.teacher_id → audit via trigger audit_row (seul).
+-- 4b) CRÉNEAU : RÉAFFECTATION d'un créneau existant (changement de teacher_id).
+-- Motif OBLIGATOIRE (≠ création d'un nouveau créneau avec enseignant initial, qui
+-- passe par addTimetableSlot/INSERT sans motif). Audit via le trigger audit_row
+-- (SEUL écrivain), enrichi du motif par le même GUC app.audit_reason que la séance.
+drop function if exists public.directeur_etudes_assign_slot_teacher(uuid, uuid, uuid);
 create or replace function public.directeur_etudes_assign_slot_teacher(
-  p_slot uuid, p_new_teacher uuid, p_expected_teacher uuid)
+  p_slot uuid, p_new_teacher uuid, p_expected_teacher uuid, p_reason text)
 returns void language plpgsql security definer set search_path to 'public' as $$
 declare v_found boolean := false;
 begin
@@ -172,10 +176,12 @@ begin
        'admin'::public.user_role, 'super_admin'::public.user_role) then
     raise exception 'réservé au Directeur des Études / Administration';
   end if;
+  if coalesce(btrim(p_reason),'') = '' then raise exception 'motif obligatoire'; end if;
   if not public.is_pedagogically_eligible_teacher(p_new_teacher) then
     raise exception 'enseignant non éligible pédagogiquement';
   end if;
   perform set_config('app.teacher_assign', txid_current()::text, true);
+  perform set_config('app.audit_reason', p_reason, true);
   update public.timetable_slots set teacher_id = p_new_teacher
    where id = p_slot and teacher_id is not distinct from p_expected_teacher;
   get diagnostics v_found = row_count;
@@ -210,8 +216,8 @@ begin
 end $$;
 
 revoke execute on function public.directeur_etudes_assign_module_teacher(uuid,uuid,uuid,text) from public, anon;
-revoke execute on function public.directeur_etudes_assign_slot_teacher(uuid,uuid,uuid) from public, anon;
+revoke execute on function public.directeur_etudes_assign_slot_teacher(uuid,uuid,uuid,text) from public, anon;
 revoke execute on function public.directeur_etudes_substitute_session_teacher(uuid,uuid,uuid,text) from public, anon;
 grant  execute on function public.directeur_etudes_assign_module_teacher(uuid,uuid,uuid,text) to authenticated;
-grant  execute on function public.directeur_etudes_assign_slot_teacher(uuid,uuid,uuid) to authenticated;
+grant  execute on function public.directeur_etudes_assign_slot_teacher(uuid,uuid,uuid,text) to authenticated;
 grant  execute on function public.directeur_etudes_substitute_session_teacher(uuid,uuid,uuid,text) to authenticated;
