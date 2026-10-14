@@ -11,8 +11,7 @@ language sql security definer set search_path to 'public' as $$
     and public.current_user_role() in (
       'directeur_etudes'::public.user_role,
       'admin'::public.user_role,
-      'super_admin'::public.user_role,
-      'scolarite'::public.user_role
+      'super_admin'::public.user_role
     );
 $$;
 
