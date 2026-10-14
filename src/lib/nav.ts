@@ -94,6 +94,7 @@ const LEARNER_NAV: NavGroup[] = [
       { label: "Mes notes", href: "/espace/mes-notes", icon: "📊" },
       { label: "Mon bulletin", href: "/espace/mon-bulletin", icon: "📄" },
       { label: "Mon stage", href: "/espace/mon-stage", icon: "🧳" },
+      { label: "Mes travaux", href: "/espace/mes-travaux", icon: "📝" },
     ],
   },
   {
@@ -182,6 +183,7 @@ const DIRECTEUR_ETUDES_NAV: NavGroup[] = [
     items: [
       { label: "Entreprises d'accueil", href: "/espace/entreprises", icon: "🏢" },
       { label: "Stages", href: "/espace/stages", icon: "🧳" },
+      { label: "Mémoires & travaux", href: "/espace/travaux", icon: "📝" },
     ],
   },
   {
