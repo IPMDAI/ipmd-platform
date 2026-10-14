@@ -6,8 +6,10 @@ import { Container } from "@/components/ui/Container";
 import { EditModuleForm } from "@/components/espace/EditModuleForm";
 import { AddSupportForm } from "@/components/espace/AddSupportForm";
 import { StatusSelect } from "@/components/espace/StatusSelect";
+import { TeacherAssignForm } from "@/components/espace/TeacherAssignForm";
 import { statusBadgeClass, STATUS_LABEL } from "@/lib/academic";
 import { deleteModuleSupport } from "@/lib/module-actions";
+import { assignModuleTeacher } from "@/lib/pedagogical-assign-actions";
 
 export const metadata: Metadata = {
   title: "Fiche module",
@@ -50,9 +52,38 @@ export default async function ModulePage({
     id: t.id,
     name: t.full_name || t.email,
   }));
-  const teacherName =
-    teacherList.find((t) => t.id === module.teacher_id)?.name ?? null;
   const supportList = supports ?? [];
+
+  // Enseignants ÉLIGIBLES (fiche pédagogique validée/active) pour l'affectation,
+  // via la RPC sécurisée + indice de charge (nb de modules déjà portés).
+  const { data: elig } = await supabase.rpc("pedagogical_teachers");
+  const eligibleRaw = ((elig ?? []) as { profile_id: string; full_name: string | null; statut: string | null }[]).filter(
+    (e) => e.statut === "valide" || e.statut === "actif"
+  );
+  const chargeMap = new Map<string, number>();
+  if (eligibleRaw.length > 0) {
+    const { data: mods } = await supabase
+      .from("modules")
+      .select("teacher_id")
+      .in("teacher_id", eligibleRaw.map((e) => e.profile_id));
+    for (const m of mods ?? []) if (m.teacher_id) chargeMap.set(m.teacher_id, (chargeMap.get(m.teacher_id) ?? 0) + 1);
+  }
+  const eligibleTeachers = eligibleRaw.map((e) => ({
+    id: e.profile_id,
+    name: e.full_name ?? "—",
+    charge: `${chargeMap.get(e.profile_id) ?? 0} module(s)`,
+  }));
+
+  // Nom de l'enseignant courant résolu même si c'est le DÉ-enseignant (absent de
+  // la liste role=enseignant) — via l'union avec les éligibles.
+  const combinedTeachers = [...teacherList];
+  const seenIds = new Set(teacherList.map((t) => t.id));
+  for (const e of eligibleTeachers)
+    if (!seenIds.has(e.id)) {
+      combinedTeachers.push({ id: e.id, name: e.name });
+      seenIds.add(e.id);
+    }
+  const teacherName = combinedTeachers.find((t) => t.id === module.teacher_id)?.name ?? null;
 
   return (
     <section className="min-h-[70vh] bg-ipmd-light">
@@ -183,8 +214,21 @@ export default async function ModulePage({
               <EditModuleForm
                 module={module}
                 filiereId={module.filiere_id}
-                teachers={teacherList}
+                teachers={combinedTeachers}
               />
+              <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-black/5">
+                <h2 className="text-base font-bold text-ipmd-black">Affectation de l&apos;enseignant</h2>
+                <p className="mt-0.5 mb-3 text-xs text-black/50">
+                  Enseignant éligible (fiche validée/active) + motif. Action tracée au journal.
+                </p>
+                <TeacherAssignForm
+                  action={assignModuleTeacher.bind(null, moduleId, module.filiere_id)}
+                  eligible={eligibleTeachers}
+                  currentTeacherId={module.teacher_id}
+                  currentTeacherName={teacherName}
+                  submitLabel="Affecter l'enseignant"
+                />
+              </div>
               <AddSupportForm moduleId={moduleId} />
             </div>
           </div>

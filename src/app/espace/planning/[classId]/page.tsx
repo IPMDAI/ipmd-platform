@@ -6,7 +6,9 @@ import { Container } from "@/components/ui/Container";
 import { NewSlotForm } from "@/components/espace/NewSlotForm";
 import { NotifyClassButton } from "@/components/espace/NotifyClassButton";
 import { SlotStatusSelect } from "@/components/espace/SlotStatusSelect";
+import { SlotTeacherReassign } from "@/components/espace/SlotTeacherReassign";
 import { removeTimetableSlot } from "@/lib/planning-actions";
+import { assignSlotTeacher } from "@/lib/pedagogical-assign-actions";
 import {
   DAY_OPTIONS,
   formatTime,
@@ -72,6 +74,12 @@ export default async function ClassPlanningPage({
     (teachers ?? []).map((t) => [t.id, t.full_name || t.email])
   );
   const roomName = new Map((rooms ?? []).map((r) => [r.id, r.name]));
+
+  // Enseignants ÉLIGIBLES (fiche validée/active) pour la réaffectation de créneau.
+  const { data: eligRaw } = await supabase.rpc("pedagogical_teachers");
+  const eligibleTeachers = ((eligRaw ?? []) as { profile_id: string; full_name: string | null; statut: string | null }[])
+    .filter((e) => e.statut === "valide" || e.statut === "actif")
+    .map((e) => ({ id: e.profile_id, name: e.full_name ?? "—" }));
 
   const byDay = new Map<number, typeof slots>();
   for (const s of slots ?? []) {
@@ -207,6 +215,12 @@ export default async function ClassPlanningPage({
                               classId={classId}
                               slotId={s.id}
                               current={s.status ?? "prevu"}
+                            />
+                            <SlotTeacherReassign
+                              action={assignSlotTeacher.bind(null, s.id, classId)}
+                              eligible={eligibleTeachers}
+                              currentTeacherId={s.teacher_id ?? null}
+                              currentTeacherName={s.teacher_id ? teacherName.get(s.teacher_id) ?? null : null}
                             />
                           </li>
                         ))}
