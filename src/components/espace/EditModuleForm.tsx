@@ -89,19 +89,17 @@ export function EditModuleForm({
       </div>
 
       <Field label="Enseignant" htmlFor="em-teacher">
-        <select
+        <div
           id="em-teacher"
-          name="teacher_id"
-          defaultValue={module.teacher_id ?? ""}
-          className={inputBase}
+          className={`${inputBase} flex items-center justify-between bg-black/[0.02] text-black/70`}
         >
-          <option value="">— Aucun —</option>
-          {teachers.map((t) => (
-            <option key={t.id} value={t.id}>
-              {t.name}
-            </option>
-          ))}
-        </select>
+          <span>{teachers.find((t) => t.id === module.teacher_id)?.name ?? "— Aucun —"}</span>
+          <span className="text-[11px] font-medium text-black/40">affectation via le pilotage</span>
+        </div>
+        <p className="mt-1 text-[11px] text-black/45">
+          L&apos;affectation d&apos;un enseignant au module se fait via le pilotage pédagogique
+          (enseignant éligible, motif, tracé) — non modifiable ici.
+        </p>
       </Field>
 
       <div className="grid grid-cols-2 gap-3">

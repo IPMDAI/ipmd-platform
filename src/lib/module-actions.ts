@@ -46,11 +46,13 @@ export async function updateModule(
   const name = str(formData, "name");
   if (!name) return { ok: false, message: "Le nom du module est requis." };
 
+  // teacher_id n'est PLUS modifié ici (D7-2) : l'affectation d'un enseignant
+  // passe par la RPC dédiée `directeur_etudes_assign_module_teacher` (éligibilité
+  // + motif + audit). Un changement direct de teacher_id est refusé en base.
   const fields: Record<string, unknown> = {
     name,
     level: str(formData, "level") || null,
     semester: str(formData, "semester") || null,
-    teacher_id: str(formData, "teacher_id") || null,
     hours: numOrNull(str(formData, "hours")),
     coefficient: numOrNull(str(formData, "coefficient")),
     objectives: str(formData, "objectives") || null,
