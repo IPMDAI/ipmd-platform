@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import type { FormResult } from "@/types";
 import { NEED_TYPES, PRIORITIES } from "@/lib/staffing";
+import { notifyStaffing } from "@/lib/staffing-notify";
 
 /**
  * Actions « Besoins en personnel » côté DIRECTEUR DES ÉTUDES (D6-2).
@@ -119,6 +120,8 @@ export async function submitStaffingRequest(
     return { ok: false, message: m };
   }
 
+  // Transition réussie → notifier l'AG (best-effort, jamais bloquant).
+  await notifyStaffing(id, "submitted");
   revalidatePath("/espace/besoins");
   return { ok: true, message: "Besoin soumis à l'Administrateur Général." };
 }

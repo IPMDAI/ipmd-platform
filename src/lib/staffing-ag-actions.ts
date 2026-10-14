@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import type { FormResult } from "@/types";
+import { notifyStaffing } from "@/lib/staffing-notify";
 
 /**
  * Actions « Besoins en personnel » côté ADMINISTRATEUR GÉNÉRAL (D6-3).
@@ -62,6 +63,8 @@ export async function decideStaffing(
   });
   if (error) return { ok: false, message: mapRpcError(error.message || "") };
 
+  // Transition réussie → notifier le DÉ demandeur (best-effort).
+  await notifyStaffing(id, approve ? "validated" : "refused");
   revalidatePath("/espace/besoins-ag");
   revalidatePath("/espace/besoins");
   return { ok: true, message: approve ? "Besoin validé." : "Besoin refusé." };
@@ -85,6 +88,8 @@ export async function assignStaffing(
   });
   if (error) return { ok: false, message: mapRpcError(error.message || "") };
 
+  // Transition réussie → notifier le DÉ demandeur (best-effort).
+  await notifyStaffing(id, "assigned");
   revalidatePath("/espace/besoins-ag");
   revalidatePath("/espace/besoins");
   return { ok: true, message: "Profil affecté." };
@@ -102,6 +107,8 @@ export async function closeStaffing(
   const { error } = await g.supabase.rpc("staffing_close", { p_id: id });
   if (error) return { ok: false, message: mapRpcError(error.message || "") };
 
+  // Transition réussie → notifier le DÉ demandeur (best-effort).
+  await notifyStaffing(id, "closed");
   revalidatePath("/espace/besoins-ag");
   revalidatePath("/espace/besoins");
   return { ok: true, message: "Besoin clôturé." };
