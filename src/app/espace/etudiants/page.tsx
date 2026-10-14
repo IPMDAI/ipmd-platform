@@ -22,14 +22,16 @@ export default async function EtudiantsPage() {
   const list = students ?? [];
   const ids = list.map((s) => s.id);
 
-  // Année scolaire de chaque étudiant (dossier financier).
+  // Année scolaire + statut d'accès (actif/pause/bloqué) via RPC restreinte :
+  // JAMAIS les montants. Fonctionne pour le staff académique, dont le DÉ.
   const yearOf = new Map<string, string>();
+  const accessOf = new Map<string, string>();
   if (ids.length > 0) {
-    const { data: fins } = await supabase
-      .from("student_finance")
-      .select("student_id, academic_year")
-      .in("student_id", ids);
-    for (const f of fins ?? []) if (f.academic_year) yearOf.set(f.student_id, f.academic_year);
+    const { data: fins } = await supabase.rpc("students_access_states", { p_ids: ids });
+    for (const f of (fins ?? []) as { student_id: string; access_state: string | null; academic_year: string | null }[]) {
+      if (f.academic_year) yearOf.set(f.student_id, f.academic_year);
+      if (f.access_state) accessOf.set(f.student_id, f.access_state);
+    }
   }
 
   // Classe + filière de chaque étudiant.
@@ -98,6 +100,7 @@ export default async function EtudiantsPage() {
       className: cls?.name ?? null,
       filiereName: cls?.filiere_id ? filiereName.get(cls.filiere_id) ?? null : null,
       academicYear: yearOf.get(s.id) ?? null,
+      accessState: accessOf.get(s.id) ?? null,
       contacts: {
         phone: s.phone ?? null,
         whatsapp: s.whatsapp ?? null,
