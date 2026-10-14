@@ -263,6 +263,7 @@ export const dashboardSections: Record<string, DashSection[]> = {
       title: "Suivi académique",
       tiles: [
         { title: "Étudiants", icon: "🎓", status: "ready", href: "/espace/etudiants", description: "Annuaire et suivi pédagogique." },
+        { title: "Enseignants & charge", icon: "👨‍🏫", status: "ready", href: "/espace/enseignants-charge", description: "Charge pédagogique par enseignant (lecture)." },
         { title: "Bulletins", icon: "📄", status: "ready", href: "/espace/bulletins", description: "Résultats et moyennes (lecture)." },
         { title: "Convocations", icon: "📨", status: "ready", href: "/espace/convocations", description: "Convoquer étudiants et parents." },
         { title: "Documents à fournir", icon: "📎", status: "ready", href: "/espace/documents-a-fournir", description: "Demander et valider les pièces." },

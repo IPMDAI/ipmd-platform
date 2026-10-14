@@ -168,6 +168,7 @@ const DIRECTEUR_ETUDES_NAV: NavGroup[] = [
     title: "Suivi académique",
     items: [
       { label: "Étudiants", href: "/espace/etudiants", icon: "🎓" },
+      { label: "Enseignants & charge", href: "/espace/enseignants-charge", icon: "👨‍🏫" },
       { label: "Bulletins", href: "/espace/bulletins", icon: "📄" },
       { label: "Convocations", href: "/espace/convocations", icon: "📨" },
       { label: "Documents à fournir", href: "/espace/documents-a-fournir", icon: "📎" },
