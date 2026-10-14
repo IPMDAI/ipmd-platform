@@ -122,7 +122,7 @@ export default async function ParticipantsPage() {
                 d&apos;une candidature bootcamp (cible « Participant »).
               </p>
             ) : (
-              <StudentDirectory students={rows} classes={classOptions} />
+              <StudentDirectory students={rows} classes={classOptions} canEdit />
             )}
           </div>
         </div>

@@ -12,11 +12,15 @@ export const metadata: Metadata = {
 };
 
 export default async function EtudiantsPage() {
-  const { supabase } = await requireAcademic();
+  const { supabase, role } = await requireAcademic();
+  // Édition administrative (contacts / état civil / affectation) réservée à
+  // l'Administration. Le Directeur des Études consulte en lecture seule → les
+  // formulaires d'édition ne sont pas montés pour lui.
+  const canEdit = role === "admin" || role === "super_admin";
 
   const { data: students } = await supabase
     .from("profiles")
-    .select("id, full_name, email, avatar_url, phone, whatsapp, personal_email, school_email, birth_date, birth_place")
+    .select("id, full_name, email, matricule, avatar_url, phone, whatsapp, personal_email, school_email, birth_date, birth_place")
     .eq("role", "etudiant")
     .order("full_name");
   const list = students ?? [];
@@ -97,6 +101,7 @@ export default async function EtudiantsPage() {
       id: s.id,
       name: s.full_name || "—",
       email: s.email,
+      matricule: s.matricule ?? null,
       avatarUrl: s.avatar_url ?? null,
       className: cls?.name ?? null,
       filiereName: cls?.filiere_id ? filiereName.get(cls.filiere_id) ?? null : null,
@@ -138,7 +143,7 @@ export default async function EtudiantsPage() {
                 utilisateurs.
               </p>
             ) : (
-              <StudentDirectory students={rows} classes={classOptions} />
+              <StudentDirectory students={rows} classes={classOptions} canEdit={canEdit} />
             )}
           </div>
         </div>
