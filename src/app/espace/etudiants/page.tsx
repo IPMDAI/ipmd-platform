@@ -106,7 +106,9 @@ export default async function EtudiantsPage() {
       className: cls?.name ?? null,
       filiereName: cls?.filiere_id ? filiereName.get(cls.filiere_id) ?? null : null,
       academicYear: yearOf.get(s.id) ?? null,
-      standing: standingOf.get(s.id) ?? null,
+      // Standing de la RPC ; si l'étudiant n'a pas de dossier financier (absent
+      // de la RPC) → « à vérifier » EXPLICITE, jamais un faux « à jour ».
+      standing: standingOf.get(s.id) ?? "a_verifier",
       contacts: {
         phone: s.phone ?? null,
         whatsapp: s.whatsapp ?? null,
