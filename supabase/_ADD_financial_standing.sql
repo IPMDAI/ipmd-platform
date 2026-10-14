@@ -47,23 +47,23 @@ revoke execute on function public.student_financial_standing(uuid)
   from public, anon, authenticated, service_role;
 
 -- La RPC d'annuaire expose le standing. Toujours réservée à directeur_etudes /
--- admin / super_admin ; jamais de montant. Part de student_finance (indexé,
--- rapide). Un étudiant SANS dossier financier n'a pas de ligne ici → le front
--- lui applique explicitement le standing 'a_verifier' (jamais un faux « à jour »).
+-- admin / super_admin ; jamais de montant. Part des IDS DEMANDÉS (unnest) → la
+-- BASE renvoie un standing pour CHAQUE étudiant demandé, y compris sans dossier
+-- financier (student_financial_standing → 'a_verifier'). La page n'appelant la
+-- RPC qu'avec les ~25 ids affichés, c'est rapide quel que soit l'effectif total.
 drop function if exists public.students_access_states(uuid[]);
 create or replace function public.students_access_states(p_ids uuid[])
 returns table(student_id uuid, standing text, academic_year text)
 language sql security definer set search_path to 'public' stable as $$
-  select sf.student_id,
-         public.student_financial_standing(sf.student_id),
-         sf.academic_year
-  from public.student_finance sf
-  where sf.student_id = any(p_ids)
-    and public.current_user_role() in (
-      'directeur_etudes'::public.user_role,
-      'admin'::public.user_role,
-      'super_admin'::public.user_role
-    );
+  select pid,
+         public.student_financial_standing(pid),
+         (select sf.academic_year from public.student_finance sf where sf.student_id = pid)
+  from unnest(p_ids) as pid
+  where public.current_user_role() in (
+    'directeur_etudes'::public.user_role,
+    'admin'::public.user_role,
+    'super_admin'::public.user_role
+  );
 $$;
 
 revoke execute on function public.students_access_states(uuid[]) from public, anon;

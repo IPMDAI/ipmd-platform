@@ -36,16 +36,21 @@ export default async function EtudiantsPage({
   let qb = supabase
     .from("profiles")
     .select(
-      "id, full_name, email, matricule, avatar_url, phone, whatsapp, personal_email, school_email, birth_date, birth_place",
+      "id, full_name, first_names, last_name, email, matricule, avatar_url, phone, whatsapp, personal_email, school_email, birth_date, birth_place",
       { count: "exact" }
     )
     .eq("role", "etudiant");
   if (q) {
     const esc = q.replace(/[,()%*]/g, " ").trim();
-    if (esc) qb = qb.or(`full_name.ilike.%${esc}%,matricule.ilike.%${esc}%,email.ilike.%${esc}%`);
+    if (esc)
+      qb = qb.or(
+        `full_name.ilike.%${esc}%,last_name.ilike.%${esc}%,first_names.ilike.%${esc}%,matricule.ilike.%${esc}%,email.ilike.%${esc}%`
+      );
   }
+  // Tri stable (full_name + id en départage) pour une pagination déterministe.
   const { data: students, count } = await qb
     .order("full_name")
+    .order("id")
     .range(from, from + PER_PAGE - 1);
   const list = students ?? [];
   const total = count ?? 0;
@@ -120,9 +125,10 @@ export default async function EtudiantsPage({
       className: cls?.name ?? null,
       filiereName: cls?.filiere_id ? filiereName.get(cls.filiere_id) ?? null : null,
       academicYear: yearOf.get(s.id) ?? null,
-      // Standing de la RPC ; sans dossier financier → « à vérifier » EXPLICITE,
-      // jamais un faux « à jour ».
-      standing: standingOf.get(s.id) ?? "a_verifier",
+      // Standing fourni par la BASE pour CHAQUE étudiant demandé (la RPC renvoie
+      // 'a_verifier' quand le dossier financier est absent) — aucun défaut
+      // fabriqué côté page.
+      standing: standingOf.get(s.id) ?? null,
       contacts: {
         phone: s.phone ?? null,
         whatsapp: s.whatsapp ?? null,
