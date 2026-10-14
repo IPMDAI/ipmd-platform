@@ -32,6 +32,7 @@ const ADMIN_NAV: NavGroup[] = [
       { label: "Jours fériés", href: "/espace/jours-feries", icon: "📆" },
       { label: "Présences", href: "/espace/presences", icon: "✅" },
       { label: "Fiches pédagogiques", href: "/espace/fiches", icon: "🗂️" },
+      { label: "Besoins en personnel", href: "/espace/besoins-ag", icon: "🧑‍🏫" },
       { label: "Recrutement profs", href: "/espace/recrutement", icon: "🧑‍🏫" },
       { label: "Enseignants", href: "/espace/enseignants", icon: "👨‍🏫" },
     ],
