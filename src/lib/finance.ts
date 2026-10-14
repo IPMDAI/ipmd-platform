@@ -63,6 +63,8 @@ export const FINANCIAL_STANDING: Record<string, { label: string; cls: string }> 
   a_jour: { label: "À jour", cls: "bg-green-50 text-green-700" },
   en_retard: { label: "En retard", cls: "bg-ipmd-red/10 text-ipmd-red" },
   acces_en_pause: { label: "Accès en pause", cls: "bg-amber-50 text-amber-700" },
+  // Dossier financier absent/indéterminé : état EXPLICITE, jamais un faux « à jour ».
+  a_verifier: { label: "Statut à vérifier", cls: "bg-black/5 text-black/60 ring-1 ring-black/10" },
 };
 
 /** Statuts financiers (libellé + couleur). */
