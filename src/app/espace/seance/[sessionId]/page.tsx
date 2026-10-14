@@ -5,6 +5,8 @@ import { requireUser } from "@/lib/require-user";
 import { Container } from "@/components/ui/Container";
 import { AttendanceForm } from "@/components/espace/AttendanceForm";
 import { SessionReportForm } from "@/components/espace/SessionReportForm";
+import { SessionTeacherSubstitute } from "@/components/espace/SessionTeacherSubstitute";
+import { substituteSessionTeacher } from "@/lib/pedagogical-assign-actions";
 import { formatTime, DAY_LABELS } from "@/lib/schedule";
 
 export const metadata: Metadata = {
@@ -32,15 +34,31 @@ export default async function SeanceDetailPage({
     .eq("id", userId)
     .single();
   const role = me?.role ?? "";
-  const isStaff = ["admin", "super_admin", "pedagogie"].includes(role);
+  // Le DÉ accède à la page séance (pilotage pédagogique) comme le staff.
+  const isStaff = ["admin", "super_admin", "pedagogie", "directeur_etudes"].includes(role);
+  // Peut substituer l'enseignant de la séance (via RPC D7-2) : DÉ + Administration.
+  const canSubstitute = ["directeur_etudes", "admin", "super_admin"].includes(role);
 
   const { data: session } = await supabase
     .from("course_sessions")
-    .select("id, class_id, teacher_id, subject, session_date, start_time, end_time")
+    .select("id, class_id, teacher_id, teacher_name, subject, session_date, start_time, end_time")
     .eq("id", sessionId)
     .single();
   if (!session) notFound();
   if (session.teacher_id !== userId && !isStaff) redirect("/espace");
+
+  // Enseignants ÉLIGIBLES pour une substitution (fiche validée/active), via RPC.
+  let eligibleTeachers: { id: string; name: string }[] = [];
+  if (canSubstitute) {
+    const { data: eligRaw } = await supabase.rpc("pedagogical_teachers");
+    eligibleTeachers = ((eligRaw ?? []) as { profile_id: string; full_name: string | null; statut: string | null }[])
+      .filter((e) => e.statut === "valide" || e.statut === "actif")
+      .map((e) => ({ id: e.profile_id, name: e.full_name ?? "—" }));
+  }
+  // Nom de l'enseignant courant : résolu depuis teacher_id (le snapshot
+  // teacher_name peut être antérieur à une substitution), repli sur le snapshot.
+  const plannedTeacherName =
+    eligibleTeachers.find((e) => e.id === session.teacher_id)?.name ?? session.teacher_name ?? null;
 
   // Élèves de la classe + appel existant.
   const { data: members } = await supabase
@@ -103,6 +121,21 @@ export default async function SeanceDetailPage({
             {formatTime(session.start_time)}–{formatTime(session.end_time)} ·{" "}
             {klass?.name ?? "Classe"}
           </p>
+
+          {/* Enseignant prévu + substitution exceptionnelle (DÉ / Administration) */}
+          <div className="mt-6 rounded-2xl bg-white p-5 shadow-sm ring-1 ring-black/5">
+            <p className="text-sm text-black/60">
+              Enseignant prévu : <strong className="text-ipmd-black">{plannedTeacherName || "—"}</strong>
+            </p>
+            {canSubstitute && (
+              <SessionTeacherSubstitute
+                action={substituteSessionTeacher.bind(null, sessionId)}
+                eligible={eligibleTeachers}
+                currentTeacherId={session.teacher_id ?? null}
+                currentTeacherName={plannedTeacherName}
+              />
+            )}
+          </div>
 
           {/* Appel */}
           <div className="mt-8 rounded-2xl bg-white p-6 shadow-sm ring-1 ring-black/5">
