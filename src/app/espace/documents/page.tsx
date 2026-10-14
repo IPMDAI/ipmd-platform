@@ -135,6 +135,14 @@ export default async function DocumentsPage({
     })
   );
 
+  // Prérequis PÉDAGOGIQUE (D8-5) : soutenance validée ? Informatif pour l'AG
+  // avant de délivrer l'attestation de réussite — ne bloque jamais la décision.
+  let pedagogicalValidated = false;
+  if (isAdmin) {
+    const { data: pv } = await supabase.rpc("student_has_validated_defense", { p_student: targetId });
+    pedagogicalValidated = pv === true;
+  }
+
   // L'étudiant (non-admin) qui consulte SES documents ne voit que ceux
   // qui sont ACTIVÉS et PRÊTS (signature du signataire retenu + cachet).
   const viewerIsOwnerLearner = isLearner && !isAdmin && targetId === userId;
@@ -194,6 +202,21 @@ export default async function DocumentsPage({
 
                     {isAdmin && (
                       <div className="mt-3 space-y-2 border-t border-black/5 pt-3">
+                        {d.slug === "attestation-reussite" && (
+                          <div
+                            className={`rounded-lg px-2 py-1 text-[11px] font-semibold ${
+                              pedagogicalValidated
+                                ? "bg-emerald-50 text-emerald-700"
+                                : "bg-amber-50 text-amber-700"
+                            }`}
+                          >
+                            Validation pédagogique de soutenance :{" "}
+                            {pedagogicalValidated ? "✅ Acquise" : "⚠️ Non acquise"}
+                            <span className="block font-normal text-black/45">
+                              Informatif — l&apos;AG garde la décision institutionnelle.
+                            </span>
+                          </div>
+                        )}
                         <div className="flex flex-col gap-0.5 text-[11px]">
                           <span
                             className={`font-semibold ${

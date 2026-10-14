@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { requireUser } from "@/lib/require-user";
 import { Container } from "@/components/ui/Container";
+import { DocDownloadButton } from "@/components/espace/DocDownloadButton";
 import { INTERNSHIP_STATUS, type InternshipStatus } from "@/lib/internships";
 
 export const metadata: Metadata = { title: "Mon stage" };
@@ -40,6 +41,17 @@ export default async function MonStagePage() {
   const { supabase } = await requireUser();
   const { data } = await supabase.rpc("student_my_internships");
   const stages = (data ?? []) as MyInternship[];
+
+  // Convention SIGNÉE uniquement : la RLS (D8-5) ne rend visibles le dossier
+  // 'convention_stage' et sa submission QUE lorsque la convention est signée,
+  // et seulement la version exacte signée (jamais brouillon/autre version).
+  const { data: convDocs } = await supabase
+    .from("student_documents")
+    .select("student_document_submissions(id, original_name, path)")
+    .eq("doc_key", "convention_stage");
+  const signedConventions = (convDocs ?? [])
+    .flatMap((d) => (d.student_document_submissions ?? []) as { id: string; original_name: string | null; path: string | null }[])
+    .filter((s) => !!s.path);
 
   return (
     <section className="min-h-[70vh] bg-ipmd-light">
@@ -101,6 +113,21 @@ export default async function MonStagePage() {
                 );
               })}
             </ul>
+          )}
+
+          {signedConventions.length > 0 && (
+            <div className="mt-6 rounded-2xl bg-white p-5 shadow-sm ring-1 ring-black/5">
+              <h2 className="text-base font-bold text-ipmd-black">Ma convention signée</h2>
+              <p className="mt-0.5 text-xs text-black/50">Version officielle signée par l&apos;administration.</p>
+              <ul className="mt-3 space-y-2">
+                {signedConventions.map((s) => (
+                  <li key={s.id} className="flex flex-wrap items-center gap-2">
+                    <span className="text-sm text-ipmd-black">{s.original_name ?? "Convention signée"}</span>
+                    {s.path && <DocDownloadButton path={s.path} label="Télécharger" />}
+                  </li>
+                ))}
+              </ul>
+            </div>
           )}
         </div>
       </Container>

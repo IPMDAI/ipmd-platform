@@ -44,6 +44,7 @@ const ADMIN_NAV: NavGroup[] = [
       { label: "Participants (bootcamps)", href: "/espace/participants", icon: "📜" },
       { label: "Bulletins", href: "/espace/bulletins", icon: "📄" },
       { label: "Documents officiels", href: "/espace/documents", icon: "🪪" },
+      { label: "Conventions à signer", href: "/espace/conventions", icon: "✒️" },
       { label: "Signatures & cachets", href: "/espace/signatures", icon: "✍️" },
       { label: "Finance", href: "/espace/finance", icon: "💰" },
       { label: "Paie enseignants", href: "/espace/paie", icon: "💼" },
