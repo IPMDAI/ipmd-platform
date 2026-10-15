@@ -105,6 +105,68 @@ const SITE_URL = (
 ).replace(/\/$/, "");
 
 /**
+ * Envoie le lien d'activation (définition du mot de passe) à un compte EXISTANT.
+ * Super Admin only. Ne crée AUCUN compte, ne change AUCUN rôle, conserve le même
+ * `auth.users.id`. Réutilise le parcours Supabase `generateLink({type:"recovery"})`
+ * (redirection `/definir-mot-de-passe`) + l'email IPMD brandé via Resend, bouton
+ * « Définir mon mot de passe ». Aucun mot de passe ni token n'est retourné ni
+ * journalisé (le lien n'apparaît que dans l'email du destinataire).
+ */
+export async function sendActivationLink(userId: string): Promise<FormResult> {
+  const ctx = await requireSuperAdmin();
+  if (!ctx) return { ok: false, message: "Action réservée au Super Admin." };
+  if (!canAdminUsers) {
+    return { ok: false, message: "Service non configuré (clé service manquante sur Vercel)." };
+  }
+  if (!canSendEmail) {
+    return { ok: false, message: "Envoi d'email non configuré (RESEND_API_KEY manquante)." };
+  }
+  if (!userId) return { ok: false, message: "Compte manquant." };
+
+  // Compte EXISTANT uniquement — jamais de création.
+  const { data: profile } = await ctx.supabase
+    .from("profiles")
+    .select("id, email, full_name")
+    .eq("id", userId)
+    .maybeSingle();
+  if (!profile?.email) return { ok: false, message: "Compte introuvable." };
+
+  const admin = createAdminClient();
+  if (!admin) return { ok: false, message: "Service indisponible." };
+
+  // Lien recovery sécurisé via le mécanisme Supabase existant.
+  const { data: linkData, error: linkErr } = await admin.auth.admin.generateLink({
+    type: "recovery",
+    email: profile.email,
+    options: { redirectTo: `${SITE_URL}/definir-mot-de-passe` },
+  });
+  if (linkErr || !linkData) {
+    return { ok: false, message: "Lien d'activation non généré." };
+  }
+  const actionLink = passwordSetupLink(SITE_URL, linkData);
+
+  // Email IPMD brandé (Resend) — le lien ne figure que dans l'email.
+  const n = await sendScolariteEmail(
+    [profile.email],
+    "IPMD — Activez votre compte",
+    emailDocument(
+      "Activez votre compte IPMD",
+      `<p style="font-size:14px;color:#374151">Bonjour ${escapeHtml(profile.full_name ?? "")},</p>
+       <p style="font-size:14px;color:#374151">Pour activer votre compte IPMD, définissez vous-même votre mot de passe :</p>
+       <p style="text-align:center;margin:24px 0"><a href="${actionLink}" style="background:#e4002b;color:#fff;padding:12px 22px;border-radius:10px;text-decoration:none;font-weight:bold;display:inline-block">Définir mon mot de passe</a></p>
+       <p style="font-size:12px;color:#6b7280;word-break:break-all">Si le bouton ne fonctionne pas, copiez ce lien : ${actionLink}</p>
+       <p style="font-size:12px;color:#6b7280">Ce lien est strictement personnel. Si vous n'êtes pas concerné, ignorez cet email.</p>`
+    )
+  );
+
+  revalidatePath("/espace/utilisateurs");
+  return {
+    ok: n > 0,
+    message: n > 0 ? `Lien d'activation envoyé à ${profile.email}.` : "Email non envoyé.",
+  };
+}
+
+/**
  * Invite un PARENT/tuteur : crée son compte (rôle parent), le lie éventuellement à
  * un étudiant, et lui envoie un email pour définir son mot de passe. Super Admin only.
  */

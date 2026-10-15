@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { updateUserRole } from "@/lib/admin-actions";
+import { sendActivationLink } from "@/lib/user-admin-actions";
 import { ROLE_OPTIONS } from "@/lib/dashboards";
 
 type U = {
@@ -31,6 +32,20 @@ export function RoleManager({
     setFeedback(null);
     startTransition(async () => {
       const res = await updateUserRole(id, role);
+      setFeedback({ id, ok: res.ok, msg: res.message });
+    });
+  }
+
+  function onActivate(id: string, email: string) {
+    if (
+      !window.confirm(
+        `Envoyer le lien d'activation (définition du mot de passe) à ${email} ?`
+      )
+    )
+      return;
+    setFeedback(null);
+    startTransition(async () => {
+      const res = await sendActivationLink(id);
       setFeedback({ id, ok: res.ok, msg: res.message });
     });
   }
@@ -70,9 +85,18 @@ export function RoleManager({
                     feedback.ok ? "text-green-600" : "text-ipmd-red"
                   }`}
                 >
-                  {feedback.ok ? "✓ Enregistré" : feedback.msg}
+                  {feedback.ok ? feedback.msg || "✓ Enregistré" : feedback.msg}
                 </span>
               )}
+              <button
+                type="button"
+                onClick={() => onActivate(u.id, u.email)}
+                disabled={pending}
+                title="Envoyer le lien d'activation (définition du mot de passe)"
+                className="rounded-lg px-3 py-2 text-xs font-semibold text-ipmd-black ring-1 ring-black/15 transition-colors hover:bg-black/5 disabled:opacity-50"
+              >
+                ✉️ Lien d&apos;activation
+              </button>
               <select
                 value={u.role}
                 onChange={(e) => onChange(u.id, e.target.value)}
