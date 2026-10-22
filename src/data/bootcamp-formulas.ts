@@ -133,7 +133,64 @@ const EXECUTIVE_FORMULAS: BootcampFormula[] = [
   },
 ];
 
+/** UltraBoost · SeniorsHub — grille « certificats professionnels » (specialité). */
+const SPECIALITE_FORMULAS: BootcampFormula[] = [
+  {
+    id: "micro",
+    title: "Microcertificat Professionnel",
+    duration: "2 à 15 heures",
+    durationMonths: 0,
+    price: "30 000 FCFA",
+    pricePrefix: "À partir de",
+    registration: "15 000 FCFA",
+    certification: "Microcertificat Professionnel IPMD",
+    installments: "Paiement en 1 fois",
+  },
+  {
+    id: "professionnel",
+    title: "Certificat Professionnel",
+    duration: "30 h · 1 mois",
+    durationMonths: 1,
+    price: "385 000 FCFA",
+    registration: "50 000 FCFA",
+    certification: "Certificat Professionnel IPMD",
+    installments: "Paiement en 2× maximum",
+  },
+  {
+    id: "metier",
+    title: "Certificat Professionnel Métier / Reconversion",
+    duration: "90 h · 3 mois",
+    durationMonths: 3,
+    price: "585 000 FCFA",
+    registration: "100 000 FCFA",
+    certification: "Certificat Professionnel Métier / Reconversion IPMD",
+    installments: "Paiement en 3× maximum",
+  },
+  {
+    id: "competences",
+    title: "Certificat de Compétences Professionnelles",
+    duration: "180 h · 6 mois",
+    durationMonths: 6,
+    price: "1 550 000 FCFA",
+    registration: "200 000 FCFA",
+    certification: "Certificat de Compétences Professionnelles IPMD",
+    installments: "Paiement en 4× maximum",
+  },
+  {
+    id: "expertise",
+    title: "Certificat Supérieur d'Expertise Professionnelle",
+    duration: "280 h · 10 mois",
+    durationMonths: 10,
+    price: "2 850 000 FCFA",
+    registration: "300 000 FCFA",
+    certification: "Certificat Supérieur d'Expertise Professionnelle IPMD",
+    installments: "Paiement en 6× maximum",
+  },
+];
+
 /** Grille des 5 formules pour un univers donné. */
 export function getBootcampFormulas(universe: string): BootcampFormula[] {
-  return universe === "ultraexecutive" ? EXECUTIVE_FORMULAS : STANDARD_FORMULAS;
+  if (universe === "ultraexecutive") return EXECUTIVE_FORMULAS;
+  if (universe === "ultraboost" || universe === "seniorshub") return SPECIALITE_FORMULAS;
+  return STANDARD_FORMULAS;
 }
