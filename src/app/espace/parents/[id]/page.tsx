@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { requireAdmin } from "@/lib/require-admin";
 import { Container } from "@/components/ui/Container";
 import { ParentMessageForm } from "@/components/espace/ParentMessageForm";
+import { LinkStudentToParent } from "@/components/espace/LinkStudentToParent";
 import { PARENT_RELATIONSHIP_LABEL } from "@/lib/academic";
 import { SERVICE_LABEL } from "@/lib/messaging";
 
@@ -116,9 +117,12 @@ export default async function ParentDetailPage({
           </div>
 
           {/* Enfants liés */}
-          <h2 className="mt-8 text-lg font-bold text-ipmd-black">
-            Enfants liés ({children.length})
-          </h2>
+          <div className="mt-8 flex flex-wrap items-center justify-between gap-2">
+            <h2 className="text-lg font-bold text-ipmd-black">
+              Enfants liés ({children.length})
+            </h2>
+            <LinkStudentToParent parentId={parent.id} />
+          </div>
           {children.length === 0 ? (
             <p className="mt-3 rounded-2xl bg-white p-5 text-sm text-black/55 shadow-sm ring-1 ring-black/5">
               Aucun enfant rattaché.

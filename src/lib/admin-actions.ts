@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { VALID_ROLES } from "@/lib/dashboards";
 import type { FormResult } from "@/types";
 
@@ -66,10 +67,72 @@ async function getAdmin() {
     .eq("id", user.id)
     .single();
   if (me?.role !== "super_admin" && me?.role !== "admin") return null;
-  return { supabase };
+  return { supabase, user, role: me.role as string };
 }
 
-/** Relie un parent à un enfant (réservé aux admins). */
+/**
+ * Crée le lien parent↔enfant (`parent_links`) — SOURCE UNIQUE d'écriture, partagée
+ * par le sélecteur global et le bouton « + Lier un étudiant » d'une fiche parent.
+ * L'unicité (parent_id, student_id) empêche les doublons (23505). Journalise le
+ * rattachement dans `audit_log` (best-effort). Ne touche JAMAIS aux données
+ * académiques : écrit uniquement une ligne de relation.
+ */
+async function createParentLink(
+  ctx: NonNullable<Awaited<ReturnType<typeof getAdmin>>>,
+  parentId: string,
+  studentId: string,
+  relationship: string | null
+): Promise<FormResult> {
+  const { data: link, error } = await ctx.supabase
+    .from("parent_links")
+    .insert({ parent_id: parentId, student_id: studentId, relationship })
+    .select("id")
+    .single();
+
+  if (error) {
+    if (error.code === "23505") return { ok: false, message: "Ce lien existe déjà." };
+    return { ok: false, message: error.message };
+  }
+
+  // Journalisation (best-effort — n'empêche jamais le rattachement). L'INSERT dans
+  // audit_log (append-only, sans policy INSERT pour authenticated) passe par le client
+  // service-role, qui contourne la RLS ; indisponible en local → simplement ignoré.
+  try {
+    const admin = createAdminClient();
+    if (admin) {
+      const { data: rows } = await ctx.supabase
+        .from("profiles")
+        .select("id, full_name, email")
+        .in("id", [ctx.user.id, parentId, studentId]);
+      const byId = new Map((rows ?? []).map((p) => [p.id as string, p]));
+      const me = byId.get(ctx.user.id);
+      const parentName = byId.get(parentId)?.full_name || byId.get(parentId)?.email || parentId;
+      const childName = byId.get(studentId)?.full_name || byId.get(studentId)?.email || studentId;
+      const relLabel = relationship ? ` (${relationship})` : "";
+      await admin.from("audit_log").insert({
+        actor_id: ctx.user.id,
+        actor_role: ctx.role,
+        action_type: "create",
+        action: "parent_link_created",
+        entity_type: "parent_link",
+        entity_id: link.id,
+        student_id: studentId,
+        summary: `Rattachement parent→enfant : ${parentName}${relLabel} → ${childName}`,
+        new_value: { parent_id: parentId, student_id: studentId, relationship },
+        actor_name: me?.full_name ?? null,
+        actor_email: me?.email ?? null,
+      });
+    }
+  } catch {
+    // audit indisponible : le lien reste créé
+  }
+
+  revalidatePath("/espace/parents");
+  revalidatePath(`/espace/parents/${parentId}`);
+  return { ok: true, message: "Lien créé." };
+}
+
+/** Relie un parent à un enfant (réservé aux admins) — sélecteur global (FormData). */
 export async function linkParentChild(
   _prev: FormResult | null,
   formData: FormData
@@ -82,23 +145,64 @@ export async function linkParentChild(
   if (typeof parentId !== "string" || typeof studentId !== "string" || !parentId || !studentId) {
     return { ok: false, message: "Sélectionnez un parent et un enfant." };
   }
-
   const relRaw = formData.get("relationship");
   const relationship = typeof relRaw === "string" && relRaw ? relRaw : null;
 
-  const { error } = await ctx.supabase
+  return createParentLink(ctx, parentId, studentId, relationship);
+}
+
+/**
+ * Lie un étudiant EXISTANT à un parent donné (bouton « + Lier un étudiant » d'une
+ * fiche parent). Ne crée AUCUN compte, ne modifie AUCUNE donnée académique.
+ */
+export async function linkStudentToParent(
+  parentId: string,
+  studentId: string,
+  relationship: string | null
+): Promise<FormResult> {
+  const ctx = await getAdmin();
+  if (!ctx) return { ok: false, message: "Action réservée à l'administration." };
+  if (!parentId || !studentId) return { ok: false, message: "Parent ou étudiant manquant." };
+  return createParentLink(ctx, parentId, studentId, relationship);
+}
+
+/**
+ * Recherche d'étudiants EXISTANTS à rattacher à un parent (nom/prénom, email,
+ * matricule). Exclut ceux déjà liés à ce parent. Lecture seule, réservé aux admins.
+ */
+export async function searchStudentsForLink(
+  parentId: string,
+  query: string
+): Promise<{ id: string; full_name: string | null; email: string; matricule: string | null }[]> {
+  const ctx = await getAdmin();
+  if (!ctx) return [];
+  // Neutralise les caractères qui casseraient/injecteraient la syntaxe or()/ilike.
+  const q = query.trim().replace(/[,()*%\\]/g, " ").replace(/\s+/g, " ").trim();
+  if (q.length < 2) return [];
+
+  const { data: rows } = await ctx.supabase
+    .from("profiles")
+    .select("id, full_name, email, matricule")
+    .eq("role", "etudiant")
+    .or(`full_name.ilike.%${q}%,email.ilike.%${q}%,matricule.ilike.%${q}%`)
+    .order("full_name")
+    .limit(10);
+
+  // Exclut les étudiants déjà rattachés à CE parent (anti-doublon côté UI).
+  const { data: existing } = await ctx.supabase
     .from("parent_links")
-    .insert({ parent_id: parentId, student_id: studentId, relationship });
+    .select("student_id")
+    .eq("parent_id", parentId);
+  const linked = new Set((existing ?? []).map((l) => l.student_id as string));
 
-  if (error) {
-    if (error.code === "23505") {
-      return { ok: false, message: "Ce lien existe déjà." };
-    }
-    return { ok: false, message: error.message };
-  }
-
-  revalidatePath("/espace/parents");
-  return { ok: true, message: "Lien créé." };
+  return (rows ?? [])
+    .filter((r) => !linked.has(r.id as string))
+    .map((r) => ({
+      id: r.id as string,
+      full_name: (r.full_name as string) ?? null,
+      email: r.email as string,
+      matricule: (r.matricule as string) ?? null,
+    }));
 }
 
 /** Met à jour les coordonnées d'un profil (étudiant ou enseignant). */
