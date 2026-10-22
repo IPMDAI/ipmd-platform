@@ -20,6 +20,7 @@ export function RoleManager({
   currentUserId: string;
 }) {
   const [users, setUsers] = useState<U[]>(initialUsers);
+  const [query, setQuery] = useState("");
   const [pending, startTransition] = useTransition();
   const [feedback, setFeedback] = useState<{
     id: string;
@@ -58,10 +59,38 @@ export function RoleManager({
     );
   }
 
+  const q = query.trim().toLowerCase();
+  const visible = q
+    ? users.filter(
+        (u) =>
+          (u.full_name ?? "").toLowerCase().includes(q) ||
+          u.email.toLowerCase().includes(q) ||
+          u.role.toLowerCase().includes(q)
+      )
+    : users;
+
   return (
-    <div className="overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-black/5">
-      <ul className="divide-y divide-black/5">
-        {users.map((u) => (
+    <div className="space-y-3">
+      <input
+        type="search"
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
+        placeholder="Rechercher un compte (nom, email, rôle)…"
+        className="w-full rounded-xl border border-black/15 bg-white px-4 py-2.5 text-sm outline-none focus:border-ipmd-red focus:ring-2 focus:ring-ipmd-red/20"
+      />
+      <p className="text-xs text-black/45">
+        {visible.length} compte{visible.length > 1 ? "s" : ""}
+        {q ? ` sur ${users.length}` : ""}
+      </p>
+
+      {visible.length === 0 ? (
+        <p className="rounded-2xl bg-white p-6 text-sm text-black/55 shadow-sm ring-1 ring-black/5">
+          Aucun compte ne correspond à « {query} ».
+        </p>
+      ) : (
+        <div className="overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-black/5">
+          <ul className="divide-y divide-black/5">
+            {visible.map((u) => (
           <li
             key={u.id}
             className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between"
@@ -111,8 +140,10 @@ export function RoleManager({
               </select>
             </div>
           </li>
-        ))}
-      </ul>
+            ))}
+          </ul>
+        </div>
+      )}
     </div>
   );
 }
