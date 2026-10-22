@@ -102,16 +102,21 @@ export default async function PackPage({
     // plan (la remise −15 % se réalise au paiement en 1 fois). Aucun plan alternatif.
     plans = [];
   } else {
-    const { data: plansData } = await admin
-      .from("payment_plans")
-      .select("plan_months, discount_rate")
-      .eq("academic_year", pack.academic_year ?? "")
-      .eq("active", true)
-      .order("plan_months", { ascending: true });
-    plans = (plansData ?? []).map((p) => ({
-      plan_months: Number(p.plan_months),
-      discount_rate: Number(p.discount_rate),
-    }));
+    const [{ data: plansData }, { data: lvlCap }] = await Promise.all([
+      admin
+        .from("payment_plans")
+        .select("plan_months, discount_rate")
+        .eq("academic_year", pack.academic_year ?? "")
+        .eq("active", true)
+        .order("plan_months", { ascending: true }),
+      admin.from("tuition_levels").select("max_installments").eq("level", acceptedLevel ?? "").maybeSingle(),
+    ]);
+    // Plafond d'échéances RATTACHÉ AU NIVEAU (parcours intensif) : on n'offre jamais
+    // un plan au-delà du plafond du niveau (cohérent avec le verrou côté serveur).
+    const cap = lvlCap?.max_installments != null ? Number(lvlCap.max_installments) : null;
+    plans = (plansData ?? [])
+      .map((p) => ({ plan_months: Number(p.plan_months), discount_rate: Number(p.discount_rate) }))
+      .filter((p) => cap == null || p.plan_months <= cap);
   }
 
   // Dernière preuve de paiement (W2) pour l'inscription (état affiché au candidat).

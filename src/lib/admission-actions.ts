@@ -20,6 +20,7 @@ import {
   type ScheduleSnapshot,
 } from "@/lib/admission-schedule";
 import { loadScholarshipForCandidature } from "@/lib/scholarship-data";
+import { capPlanMonths } from "@/lib/level-billing";
 import { REGLEMENT_VERSION, getReglement, isBootcampUniverse } from "@/data/reglement";
 import { recordAndSendReglementAcceptance } from "@/lib/reglement-emails";
 import {
@@ -256,7 +257,15 @@ async function rebuildPackSchedule(
     return { ok: true, schedule: sched.schedule };
   }
 
-  const planMonths: PlanMonths = override.planMonths ?? resolvePlanMonths(pack.schedule_json as Record<string, unknown> ?? {}) ?? 10;
+  const rawPlanMonths = override.planMonths ?? resolvePlanMonths(pack.schedule_json as Record<string, unknown> ?? {}) ?? 10;
+  // Plafond d'échéances RATTACHÉ AU NIVEAU (parcours intensif) : le candidat ne peut
+  // jamais dépasser le plafond du niveau, même en re-choisissant son plan dans le pack.
+  const { data: lvlCap } = await admin
+    .from("tuition_levels")
+    .select("max_installments")
+    .eq("level", (pack.accepted_level as string) ?? "")
+    .maybeSingle();
+  const planMonths = capPlanMonths(rawPlanMonths, lvlCap?.max_installments ?? null) as PlanMonths;
 
   const [{ data: planRows }, { data: fsDisc }, { data: planCfg }, scholarship] = await Promise.all([
     admin.from("installment_plan").select("seq, pct, due_date").eq("academic_year", academicYear).eq("plan_months", planMonths),

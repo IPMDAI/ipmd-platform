@@ -19,6 +19,7 @@ import {
   type ScheduleSnapshot,
 } from "@/lib/admission-schedule";
 import { loadScholarshipForCandidature } from "@/lib/scholarship-data";
+import { resolveLevelBilling, capPlanMonths, type LevelRow } from "@/lib/level-billing";
 import { admissionDeadlineText } from "@/lib/admission-deadline";
 import { sendScolariteEmail, canSendEmail, type EmailAttachment } from "@/lib/email";
 import type { FormResult } from "@/types";
@@ -81,6 +82,14 @@ async function readCandidature(
 
 const MIGRATION_REQUISE =
   "Action indisponible : exécute d'abord la migration candidatures-workflow.sql dans Supabase.";
+
+/**
+ * Plan PAR DÉFAUT à l'admission diplômante = 10 mensualités (échelonné) ; le
+ * candidat pourra ensuite choisir un autre plan dans le pack. Plafonné par le
+ * niveau le cas échéant (parcours intensif → 8). Hoisté au module pour être
+ * partagé par `resolveAcademic` et `sendAdmission`.
+ */
+const DEFAULT_PLAN_MONTHS = 10;
 
 function revalidate() {
   revalidatePath("/espace/candidatures");
@@ -179,6 +188,8 @@ type AcademicResolution =
       academicYear: string | null;
       registrationFee: number;
       tuitionDue: number | null;
+      /** Plafond d'échéances rattaché au niveau (parcours intensif) ; null = aucun. */
+      maxInstallments: number | null;
     }
   | { ok: false; code: "CONFIG_MISSING" | "DUPLICATE_CLASS"; message: string };
 
@@ -206,6 +217,43 @@ async function resolveAcademic(
   const globalReg = Number(settings?.registration_fee ?? 300000);
   const academicYear = (settings?.academic_year as string) ?? null;
 
+  // Conditions commerciales éventuellement RATTACHÉES AU NIVEAU (tuition_levels).
+  const { data: lvl } = await supabase
+    .from("tuition_levels")
+    .select("amount, max_installments")
+    .eq("level", opts.level)
+    .maybeSingle();
+  const levelRow: LevelRow = lvl
+    ? {
+        amount: lvl.amount != null ? Number(lvl.amount) : null,
+        max_installments: lvl.max_installments != null ? Number(lvl.max_installments) : null,
+      }
+    : null;
+
+  // NIVEAU GOUVERNÉ (parcours intensif) : la scolarité + le plafond d'échéances
+  // sont portés par le niveau — SOURCE DE VÉRITÉ. La classe est ignorée et n'est PAS
+  // requise. Inscription = défaut Pro global. Identification par la donnée
+  // (`max_installments`), jamais par un libellé codé en dur.
+  if (levelRow?.max_installments != null) {
+    const b = resolveLevelBilling({
+      levelRow,
+      classTuition: null,
+      classRegistration: null,
+      globalRegistration: globalReg,
+      defaultPlanMonths: DEFAULT_PLAN_MONTHS,
+    });
+    return {
+      ok: true,
+      classId: null,
+      acceptedLevel: opts.level,
+      academicYear,
+      registrationFee: b.registrationFee,
+      tuitionDue: b.tuitionDue,
+      maxInstallments: levelRow.max_installments,
+    };
+  }
+
+  // NIVEAU CLASSIQUE : résolution historique par la classe (comportement inchangé).
   const { data: rows } = await supabase
     .from("classes")
     .select("id, name, tuition_amount, registration_fee")
@@ -231,23 +279,21 @@ async function resolveAcademic(
   }
 
   const cls = list[0];
-  const registrationFee = cls.registration_fee != null ? Number(cls.registration_fee) : globalReg;
-  let tuitionDue = cls.tuition_amount != null ? Number(cls.tuition_amount) : null;
-  if (tuitionDue == null) {
-    const { data: lvl } = await supabase
-      .from("tuition_levels")
-      .select("amount")
-      .eq("level", opts.level)
-      .maybeSingle();
-    tuitionDue = lvl?.amount != null ? Number(lvl.amount) : null;
-  }
+  const b = resolveLevelBilling({
+    levelRow,
+    classTuition: cls.tuition_amount != null ? Number(cls.tuition_amount) : null,
+    classRegistration: cls.registration_fee != null ? Number(cls.registration_fee) : null,
+    globalRegistration: globalReg,
+    defaultPlanMonths: DEFAULT_PLAN_MONTHS,
+  });
   return {
     ok: true,
     classId: cls.id as string,
     acceptedLevel: opts.level,
     academicYear,
-    registrationFee,
-    tuitionDue,
+    registrationFee: b.registrationFee,
+    tuitionDue: b.tuitionDue,
+    maxInstallments: null,
   };
 }
 
@@ -323,6 +369,8 @@ export async function sendAdmission(
   let registrationFee: number;
   let tuitionDue: number | null = null;
   let certSchedule: ScheduleSnapshot | null = null;
+  // Plafond d'échéances rattaché au niveau (parcours intensif) ; null = aucun plafond.
+  let capInstallments: number | null = null;
 
   if (isCert) {
     // CERTIFIANT (Option A) : tarif/inscription/versements viennent de la FORMULE.
@@ -414,6 +462,7 @@ export async function sendAdmission(
     academicYear = r.academicYear;
     registrationFee = r.registrationFee;
     tuitionDue = r.tuitionDue;
+    capInstallments = r.maxInstallments;
   } else {
     const { data: fs } = await ctx.supabase
       .from("finance_settings")
@@ -423,12 +472,14 @@ export async function sendAdmission(
     registrationFee = Number(fs?.registration_fee ?? 300000);
     academicYear = (fs?.academic_year as string) ?? null;
     if (opts.level) {
+      // Cas manuel sans filière : le niveau peut aussi porter un plafond (intensif).
       const { data: lvl } = await ctx.supabase
         .from("tuition_levels")
-        .select("amount")
+        .select("amount, max_installments")
         .eq("level", opts.level)
         .maybeSingle();
       tuitionDue = lvl?.amount != null ? Number(lvl.amount) : null;
+      capInstallments = lvl?.max_installments != null ? Number(lvl.max_installments) : null;
     }
   }
 
@@ -446,7 +497,8 @@ export async function sendAdmission(
   // (échelonné) ; le candidat pourra ensuite choisir un autre plan dans le pack.
   // Généré dès qu'un tarif est connu ; en MODE TEST sans tarif, aucun snapshot.
   // Bloque proprement l'admission si le plan est absent/invalide ou le tarif manquant.
-  const DEFAULT_PLAN_MONTHS = 10;
+  // Plan par défaut plafonné par le niveau (parcours intensif → 8 au lieu de 10).
+  const planMonths = capPlanMonths(DEFAULT_PLAN_MONTHS, capInstallments);
   let scheduleJson: unknown = certSchedule ?? null;
   if (!isCert && tuitionDue != null) {
     const [{ data: planRows }, { data: fsDisc }, { data: planCfg }, scholarship] = await Promise.all([
@@ -454,13 +506,13 @@ export async function sendAdmission(
         .from("installment_plan")
         .select("seq, pct, due_date")
         .eq("academic_year", academicYear ?? "")
-        .eq("plan_months", DEFAULT_PLAN_MONTHS),
+        .eq("plan_months", planMonths),
       ctx.supabase.from("finance_settings").select("lump_sum_discount").eq("id", 1).maybeSingle(),
       ctx.supabase
         .from("payment_plans")
         .select("discount_rate")
         .eq("academic_year", academicYear ?? "")
-        .eq("plan_months", DEFAULT_PLAN_MONTHS)
+        .eq("plan_months", planMonths)
         .maybeSingle(),
       loadScholarshipForCandidature(id),
     ]);
@@ -469,7 +521,7 @@ export async function sendAdmission(
       level: acceptedLevel,
       registrationFee,
       tuitionOfficial: tuitionDue,
-      planMonths: DEFAULT_PLAN_MONTHS,
+      planMonths,
       discountRate: Number(planCfg?.discount_rate ?? 0),
       lumpSumDiscount: Number(fsDisc?.lump_sum_discount ?? 0.15),
       planRows: (planRows ?? []).map((r) => ({
