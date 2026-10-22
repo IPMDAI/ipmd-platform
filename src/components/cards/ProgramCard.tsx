@@ -6,8 +6,16 @@ import { ProgramLevels } from "@/components/cards/ProgramLevels";
 import { ProgramDescription } from "@/components/cards/ProgramDescription";
 
 /** Carte d'un programme diplômant. */
-export function ProgramCard({ program }: { program: Program }) {
+export function ProgramCard({
+  program,
+  degreesOverride,
+}: {
+  program: Program;
+  /** Remplace l'affichage des diplômes (ex. page IPMD Professionnel = Licence • Master). */
+  degreesOverride?: string[];
+}) {
   const detail = getProgramDetail(program.id);
+  const degrees = degreesOverride ?? program.degrees;
 
   return (
     <article className="group flex flex-col overflow-hidden rounded-2xl border border-black/5 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
@@ -41,7 +49,7 @@ export function ProgramCard({ program }: { program: Program }) {
             Diplômes
           </p>
           <div className="mt-1.5 flex flex-wrap gap-1.5">
-            {program.degrees.map((d) => (
+            {degrees.map((d) => (
               <span
                 key={d}
                 className="rounded-md bg-ipmd-red/10 px-2 py-0.5 text-xs font-semibold text-ipmd-red"

@@ -47,7 +47,7 @@ export const universes: Universe[] = [
     kind: "diplome",
     audience: "Professionnels, salariés, cadres, entrepreneurs",
     target: "Salariés & Professionnels",
-    credentials: ["Licence", "Bachelor", "Master", "MBA"],
+    credentials: ["Licence", "Master"],
     subdomain: "pro.ipmd.pro",
     href: "/professionnel",
     icon: "💼",
