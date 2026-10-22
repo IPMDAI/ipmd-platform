@@ -88,7 +88,7 @@ export function buildAdmissionEmail(d: AdmissionLetterData): {
     }
     <p style="margin:0 0 6px;color:#374151;font-size:14px"><strong>Régler les frais d'inscription par Wave :</strong></p>
     <p style="margin:0 0 6px"><a href="${IPMD_WAVE_PAY_URL}" style="display:inline-block;background:#1dc8ff;color:#fff;text-decoration:none;font-weight:700;font-size:14px;padding:12px 20px;border-radius:9999px">💳 Payer par Wave</a></p>
-    <p style="margin:0 0 14px;color:#6b7280;font-size:12px;line-height:1.5">Astuce : ajoutez l'expéditeur <strong>IPMD</strong> à vos contacts pour rendre le lien cliquable. Autres moyens : Orange Money, versement / virement AFG (RIB fourni dans votre espace).</p>
+    <p style="margin:0 0 14px;color:#6b7280;font-size:12px;line-height:1.5">Autres moyens : Orange Money, versement / virement AFG (RIB fourni dans votre espace).</p>
     <p style="margin:0 0 12px;color:#374151;font-size:14px">Votre lettre d'admission officielle est jointe à cet email (PDF).</p>
     ${
       d.packUrl

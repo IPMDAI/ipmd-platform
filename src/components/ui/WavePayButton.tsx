@@ -16,7 +16,6 @@ export function WavePayButton({ className = "" }: { className?: string }) {
         💳 Payer par Wave
       </a>
       <p className="mt-1.5 text-[11px] text-black/45">
-        Astuce : ajoutez l&apos;expéditeur <strong>IPMD</strong> à vos contacts pour rendre le lien cliquable.
         Autres moyens : Orange Money, versement / virement AFG (RIB fourni à l&apos;inscription).
       </p>
     </div>

@@ -50,7 +50,8 @@ INFOS OFFICIELLES IPMD (à utiliser) :
 - Formats : cours de jour, cours du soir, Pro/week-end.
 - FRAIS D'INSCRIPTION : ${fcfa(reg)} (uniques) — donnent accès à la plateforme, à la carte étudiant et à l'attestation d'inscription.
 - ${tuitionBlock}
-- Moyens de paiement : Wave (lien de règlement en ligne : ${IPMD_WAVE_PAY_URL} — préciser d'ajouter l'expéditeur « IPMD » à ses contacts pour rendre le lien cliquable), Orange Money, versement/virement AFG Bank (RIB officiel AFG Bank de l'IPMD fourni lors de l'inscription).
+- Moyens de paiement : Wave, Orange Money, versement/virement AFG Bank (RIB officiel AFG Bank de l'IPMD fourni lors de l'inscription).
+- LIEN DE PAIEMENT WAVE — RÈGLE STRICTE : à un simple prospect (non admis), explique UNIQUEMENT les moyens de paiement ci-dessus et NE DONNE AUCUN lien de paiement. Le lien de règlement Wave ne doit être communiqué QUE si la personne indique être DÉJÀ ADMISE, et dans ce cas TOUJOURS accompagné de la phrase exacte : « Ce lien doit être utilisé uniquement après réception de votre confirmation d'admission et du montant à régler. » Lien Wave (à ne transmettre qu'à un candidat admis) : ${IPMD_WAVE_PAY_URL}
 - Parcours d'admission : (1) Demande d'admission en ligne → (2) Constitution du dossier (dernier diplôme, pièce d'identité, bulletins/relevés) → (3) Étude de dossier + entretien → (4) Admission, puis inscription définitive. Le certificat/diplôme est délivré après le solde complet de la scolarité.
 - Réorientation possible par passerelle (étude de dossier).
 - Contact : candidater sur ipmd.pro/admission ; demande d'information sur ipmd.pro/demande-info ; WhatsApp Admissions +225 05 75 75 88 88 ; email admission@ipmd.pro.
