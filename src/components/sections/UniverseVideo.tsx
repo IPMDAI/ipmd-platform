@@ -39,13 +39,23 @@ function getMedia(dir: string): Media[] {
   }
 }
 
-export function UniverseVideo({ universeId }: { universeId: string }) {
+export function UniverseVideo({
+  universeId,
+  className,
+  aspectClassName,
+}: {
+  universeId: string;
+  /** Padding vertical de la section (ex. "!py-8 sm:!py-10" pour resserrer). */
+  className?: string;
+  /** Ratio du média (ex. "aspect-video sm:aspect-[2/1]" pour un bandeau plus court). */
+  aspectClassName?: string;
+}) {
   const media = getMedia(`videos-${universeId}`);
   if (media.length === 0) return null;
 
   return (
-    <Section variant="white">
-      <UniverseMediaCarousel media={media} />
+    <Section variant="white" className={className}>
+      <UniverseMediaCarousel media={media} aspectClassName={aspectClassName} />
     </Section>
   );
 }

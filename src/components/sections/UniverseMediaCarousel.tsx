@@ -11,7 +11,14 @@ const AUTOPLAY_MS = 2000; // défilement automatique toutes les 2 s
  * Défile automatiquement (2 s), en pause uniquement quand une vidéo est en lecture.
  * Les médias remplissent tout le cadre (object-cover, pas de bandes noires).
  */
-export function UniverseMediaCarousel({ media }: { media: CarouselMedia[] }) {
+export function UniverseMediaCarousel({
+  media,
+  aspectClassName = "aspect-video",
+}: {
+  media: CarouselMedia[];
+  /** Ratio du cadre (défaut 16:9). Ex. "aspect-video sm:aspect-[2/1]" pour un bandeau plus court. */
+  aspectClassName?: string;
+}) {
   const [index, setIndex] = useState(0);
   const [videoPlaying, setVideoPlaying] = useState(false);
   const count = media.length;
@@ -32,7 +39,7 @@ export function UniverseMediaCarousel({ media }: { media: CarouselMedia[] }) {
 
   return (
     <div className="relative overflow-hidden rounded-3xl bg-ipmd-black shadow-xl ring-1 ring-black/5">
-      <div className="aspect-video w-full">
+      <div className={`${aspectClassName} w-full`}>
         {current.type === "video" ? (
           <video
             key={current.src}

@@ -97,7 +97,6 @@ const HERO_CHIPS = [
   "🎓 Du Bac+1 au Bac+5 • Licence • Master",
   "🌙 Cours du soir",
   "🎯 80 % de pratique",
-  "⚡ Parcours intensifs – 10 mois",
   "💳 Paiement en plusieurs échéances",
 ];
 
@@ -155,7 +154,14 @@ export default async function ProfessionnelPage() {
         </div>
       </PageHero>
 
-      {/* 2 — DEUX PARCOURS (classique vs intensif) — juste après le hero */}
+      {/* Grande image / carrousel média (public/videos-professionnel/) — juste sous le hero, resserré + plus court */}
+      <UniverseVideo
+        universeId="professionnel"
+        className="!py-8 sm:!py-10"
+        aspectClassName="aspect-video sm:aspect-[2/1]"
+      />
+
+      {/* 2 — DEUX PARCOURS (classique vs intensif) */}
       <Section variant="white" className="!py-12 sm:!py-16">
         <p className="text-sm font-bold uppercase tracking-wide text-ipmd-red">Votre parcours</p>
         <h2 className="mt-2 text-2xl font-extrabold tracking-tight text-ipmd-black sm:text-3xl">
@@ -176,7 +182,7 @@ export default async function ProfessionnelPage() {
               {["Licence 1", "Licence 2", "Licence 3", "Master 1", "Master 2"].map((l) => (
                 <span
                   key={l}
-                  className="rounded-lg bg-ipmd-light px-2.5 py-1 text-xs font-semibold text-ipmd-black"
+                  className="rounded-xl bg-ipmd-red/10 px-3.5 py-2 text-sm font-bold text-ipmd-red ring-1 ring-ipmd-red/20"
                 >
                   {l}
                 </span>
@@ -190,9 +196,8 @@ export default async function ProfessionnelPage() {
               ⚡ Parcours intensifs – 10 mois
             </span>
             <p className="mt-4 text-[15px] leading-relaxed text-black/70">
-              Préparez votre diplôme dans un{" "}
-              <strong className="text-ipmd-black">format accéléré, pratique et orienté métier</strong>,
-              sous réserve de l&apos;étude et de la validation de votre dossier.
+              <strong className="text-ipmd-black">Un format accéléré, pratique et orienté métier</strong>,
+              accessible sous conditions de niveau.
             </p>
             <ul className="mt-5 space-y-3">
               <li className="rounded-2xl bg-white p-4 ring-1 ring-ipmd-red/15">
@@ -223,10 +228,7 @@ export default async function ProfessionnelPage() {
         </div>
       </Section>
 
-      {/* Grande image / carrousel média (public/videos-professionnel/) */}
-      <UniverseVideo universeId="professionnel" />
-
-      {/* 2 — POURQUOI CHOISIR */}
+      {/* 3 — POURQUOI CHOISIR */}
       <Section variant="white" className="!py-12 sm:!py-16">
         <p className="text-sm font-bold uppercase tracking-wide text-ipmd-red">Vos avantages</p>
         <h2 className="mt-2 text-2xl font-extrabold tracking-tight text-ipmd-black sm:text-3xl">
