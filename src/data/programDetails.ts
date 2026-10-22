@@ -878,7 +878,7 @@ export const programDetails: Record<string, ProgramDetail> = {
   "campus-management": managementProgram,
   "campus-finance": financeProgram,
 
-  // ── IPMD Pro (mêmes programmes, sans frais Campus) ──
+  // ── IPMD Professionnel (mêmes programmes, sans frais Campus) ──
   "pro-marketing": withoutFees(marketingProgram),
   "pro-communication": withoutFees(communicationProgram),
   "pro-design": withoutFees(designProgram),

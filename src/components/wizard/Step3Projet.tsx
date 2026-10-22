@@ -526,7 +526,7 @@ export function Step3Projet({
           )}
         </div>
 
-        {/* 3) Filière Pro — filtrée par la session + le niveau */}
+        {/* 3) Filière IPMD Professionnel — filtrée par la session + le niveau */}
         <div className="mt-6">
           <p className="text-sm font-semibold text-ipmd-black">
             Filière IPMD Professionnel <span className="text-ipmd-red">*</span>

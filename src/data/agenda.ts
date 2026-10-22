@@ -154,7 +154,7 @@ export const AGENDA_BY_UNIVERSE: Record<string, Agenda> = {
 
   professionnel: {
     eyebrow: "Agenda annuel",
-    title: "IPMD Pro — rendez-vous des professionnels",
+    title: "IPMD Professionnel — rendez-vous des professionnels",
     intro:
       "Chaque mois, des rendez-vous pour les professionnels en formation : conférences métiers, networking et forums emploi. Horaires indicatifs : 18h – 20h.",
     months: [

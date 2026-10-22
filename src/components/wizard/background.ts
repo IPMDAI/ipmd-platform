@@ -130,7 +130,7 @@ export const positionRequiredFor = (status: string): boolean =>
 
 /**
  * Secteurs d'activité — liste générale d'aide à la saisie (Pro), datalist + saisie
- * libre (« Autre »). Volontairement générique (PAS les 8 programmes IPMD Pro).
+ * libre (« Autre »). Volontairement générique (PAS les 8 programmes IPMD Professionnel).
  */
 export const SECTORS = [
   "Informatique & Numérique",

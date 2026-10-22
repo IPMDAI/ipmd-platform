@@ -13,7 +13,7 @@ export type Opportunity = {
 
 export const OPPORTUNITIES: Opportunity[] = [
   {
-    title: "IPMD Pro",
+    title: "IPMD Professionnel",
     subtitle: "Diplômes en formation continue, pensés pour les salariés en activité.",
     href: "/professionnel",
     icon: "💼",

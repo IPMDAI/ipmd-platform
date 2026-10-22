@@ -44,7 +44,7 @@ ${gateRule}
 INFOS OFFICIELLES IPMD (à utiliser) :
 - École supérieure digitale, moderne, orientée IA. Pédagogie « 80% de pratique ». Slogan : « Ose. Agis. Impacte. »
 - 6 univers :
-  • DIPLÔMES : IPMD Campus (formation initiale — Licence, Bachelor, Master), IPMD Pro (formation continue pour actifs — Licence, Bachelor, Master, MBA), IPMD Executive (dirigeants — Executive Master, Executive MBA, DBA).
+  • DIPLÔMES : IPMD Campus (formation initiale — Licence, Bachelor, Master), IPMD Professionnel (formation continue pour actifs — Licence, Bachelor, Master, MBA), IPMD Executive (dirigeants — Executive Master, Executive MBA, DBA).
   • CERTIFICATS / BOOTCAMPS : UltraJobs (jeunes 18-30 ans), UltraBoost (professionnels), UltraExecutive (dirigeants).
 - Filières : Marketing digital, Communication digitale, Graphisme & Design, Développement d'applications, E-commerce & commerce international, Informatique & intelligence artificielle, Management de projet digital, Comptabilité & finance digitale.
 - Formats : cours de jour, cours du soir, Pro/week-end.

@@ -8,7 +8,7 @@ import { UniverseMediaCarousel } from "@/components/sections/UniverseMediaCarous
  *
  * 👉 Déposez vos fichiers dans `public/videos-<universeId>/` :
  *    - campus         → public/videos-campus/
- *    - professionnel  → public/videos-professionnel/   (IPMD Pro)
+ *    - professionnel  → public/videos-professionnel/   (IPMD Professionnel)
  *    - gouvernance    → public/videos-gouvernance/      (IPMD Executive)
  *    - ultrajobs      → public/videos-ultrajobs/
  *    - ultraboost     → public/videos-ultraboost/

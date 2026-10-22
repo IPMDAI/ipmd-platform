@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { UniverseShowcase } from "@/components/sections/UniverseShowcase";
 
 export const metadata: Metadata = {
-  title: "IPMD Pro — Diplômes",
+  title: "IPMD Professionnel — Diplômes",
   description:
     "Licence, Bachelor, Master et MBA pour les professionnels, salariés, cadres et entrepreneurs.",
 };

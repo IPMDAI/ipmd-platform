@@ -40,7 +40,7 @@ export const universes: Universe[] = [
   },
   {
     id: "professionnel",
-    name: "IPMD Pro",
+    name: "IPMD Professionnel",
     tagline: "Diplômes — formation continue",
     description:
       "Formations diplômantes pour les personnes en activité qui souhaitent monter en compétence sans interrompre leur parcours professionnel. Programmes adaptés aux salariés, cadres, entrepreneurs et professionnels en reconversion.",

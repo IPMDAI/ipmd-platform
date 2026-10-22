@@ -9,7 +9,7 @@ export const mainNav: NavItem[] = [
     children: [
       { label: "🎓 Diplômes", href: "/formations", heading: true },
       { label: "IPMD Campus", href: "/campus", description: "Licence, Bachelor, Master — étudiants" },
-      { label: "IPMD Pro", href: "/professionnel", description: "Diplômes en formation continue — salariés" },
+      { label: "IPMD Professionnel", href: "/professionnel", description: "Diplômes en formation continue — salariés" },
       { label: "IPMD Executive", href: "/gouvernance", description: "Diplômes exécutifs — dirigeants" },
       { label: "📜 Certificats (bootcamps)", href: "/formations", heading: true },
       { label: "UltraJobs", href: "/ultrajobs", description: "Bootcamps jeunes (18-30 ans)" },
@@ -53,7 +53,7 @@ export const footerNav = {
   formations: [
     { label: "IPMD Campus", href: "/campus" },
     { label: "UltraJobs", href: "/ultrajobs" },
-    { label: "IPMD Pro", href: "/professionnel" },
+    { label: "IPMD Professionnel", href: "/professionnel" },
     { label: "UltraBoost", href: "/ultraboost" },
     { label: "IPMD Executive", href: "/gouvernance" },
     { label: "UltraExecutive", href: "/ultraexecutive" },
@@ -79,7 +79,7 @@ export const footerNav = {
 export const futureSubdomains = [
   { label: "Campus", href: "https://campus.ipmd.pro" },
   { label: "UltraJobs", href: "https://ultrajobs.ipmd.pro" },
-  { label: "Pro", href: "https://pro.ipmd.pro" },
+  { label: "Professionnel", href: "https://pro.ipmd.pro" },
   { label: "UltraBoost", href: "https://ultraboost.ipmd.pro" },
   { label: "Executive", href: "https://executive.ipmd.pro" },
   { label: "UltraExecutive", href: "https://ultraexecutive.ipmd.pro" },
