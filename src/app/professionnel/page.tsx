@@ -101,11 +101,6 @@ const HERO_CHIPS = [
   "💳 Paiement en plusieurs échéances",
 ];
 
-const INTENSIVE_PARCOURS = [
-  "Licence Professionnelle intensive – 10 mois",
-  "Master Professionnel intensif – 10 mois",
-];
-
 export default async function ProfessionnelPage() {
   const programs = getProgramsByUniverse("professionnel");
   const sessions = await loadSessions();
@@ -160,6 +155,74 @@ export default async function ProfessionnelPage() {
         </div>
       </PageHero>
 
+      {/* 2 — DEUX PARCOURS (classique vs intensif) — juste après le hero */}
+      <Section variant="white" className="!py-12 sm:!py-16">
+        <p className="text-sm font-bold uppercase tracking-wide text-ipmd-red">Votre parcours</p>
+        <h2 className="mt-2 text-2xl font-extrabold tracking-tight text-ipmd-black sm:text-3xl">
+          Vous avez le choix entre deux parcours
+        </h2>
+        <div className="mt-8 grid gap-5 lg:grid-cols-2">
+          {/* Parcours classique */}
+          <div className="flex flex-col rounded-3xl border border-black/10 bg-white p-6 shadow-sm sm:p-8">
+            <span className="inline-flex w-fit items-center rounded-full bg-ipmd-black px-3 py-1 text-[11px] font-bold uppercase tracking-wide text-white">
+              Parcours classique
+            </span>
+            <p className="mt-4 text-[15px] leading-relaxed text-black/70">
+              Du <strong className="text-ipmd-black">Bac+1 au Bac+5</strong>, avec une progression
+              normale selon votre niveau d&apos;entrée : Licence 1, Licence 2, Licence 3, Master 1
+              et Master 2.
+            </p>
+            <div className="mt-5 flex flex-wrap gap-2">
+              {["Licence 1", "Licence 2", "Licence 3", "Master 1", "Master 2"].map((l) => (
+                <span
+                  key={l}
+                  className="rounded-lg bg-ipmd-light px-2.5 py-1 text-xs font-semibold text-ipmd-black"
+                >
+                  {l}
+                </span>
+              ))}
+            </div>
+          </div>
+
+          {/* Parcours intensifs – 10 mois */}
+          <div className="flex flex-col rounded-3xl border-2 border-ipmd-red/25 bg-gradient-to-br from-ipmd-red/[0.06] to-amber-50/70 p-6 shadow-sm sm:p-8">
+            <span className="inline-flex w-fit items-center gap-1 rounded-full bg-ipmd-red px-3 py-1 text-[11px] font-bold uppercase tracking-wide text-white">
+              ⚡ Parcours intensifs – 10 mois
+            </span>
+            <p className="mt-4 text-[15px] leading-relaxed text-black/70">
+              Préparez votre diplôme dans un{" "}
+              <strong className="text-ipmd-black">format accéléré, pratique et orienté métier</strong>,
+              sous réserve de l&apos;étude et de la validation de votre dossier.
+            </p>
+            <ul className="mt-5 space-y-3">
+              <li className="rounded-2xl bg-white p-4 ring-1 ring-ipmd-red/15">
+                <p className="font-bold text-ipmd-black">
+                  🎓 Licence Professionnelle intensive – 10 mois
+                </p>
+                <p className="mt-1 text-[13px] leading-relaxed text-black/60">
+                  Accessible aux candidats titulaires d&apos;un{" "}
+                  <strong className="text-ipmd-black">niveau minimum Bac+2</strong>{" "}
+                  ou d&apos;un diplôme admis en équivalence.
+                </p>
+              </li>
+              <li className="rounded-2xl bg-white p-4 ring-1 ring-ipmd-red/15">
+                <p className="font-bold text-ipmd-black">
+                  🎓 Master Professionnel intensif – 10 mois
+                </p>
+                <p className="mt-1 text-[13px] leading-relaxed text-black/60">
+                  Accessible aux candidats titulaires d&apos;un{" "}
+                  <strong className="text-ipmd-black">niveau Bac+3 ou Bac+4</strong>, sous réserve de
+                  l&apos;étude du dossier académique et professionnel.
+                </p>
+              </li>
+            </ul>
+          </div>
+        </div>
+        <div className="mt-6">
+          <Button href="/admission">Demander une admission</Button>
+        </div>
+      </Section>
+
       {/* Grande image / carrousel média (public/videos-professionnel/) */}
       <UniverseVideo universeId="professionnel" />
 
@@ -184,33 +247,7 @@ export default async function ProfessionnelPage() {
         </div>
       </Section>
 
-      {/* 3 — VOUS TRAVAILLEZ DÉJÀ ? */}
-      <Section variant="light" className="!py-12 sm:!py-16">
-        <div className="relative overflow-hidden rounded-3xl bg-ipmd-black px-8 py-12 text-white shadow-xl sm:px-12 sm:py-14">
-          <div
-            className="absolute -right-20 -top-20 h-72 w-72 rounded-full bg-ipmd-red/25 blur-3xl"
-            aria-hidden
-          />
-          <div className="relative max-w-3xl">
-            <h2 className="text-2xl font-extrabold tracking-tight sm:text-3xl">
-              Vous travaillez déjà ? Continuez votre carrière tout en préparant votre diplôme.
-            </h2>
-            <p className="mt-4 text-lg leading-relaxed text-white/75">
-              IPMD Professionnel est conçu pour les salariés, cadres, entrepreneurs et
-              professionnels qui souhaitent développer de nouvelles compétences, évoluer dans
-              leur carrière, se reconvertir ou obtenir un diplôme dans les métiers du digital et
-              de l&apos;intelligence artificielle.
-            </p>
-            <div className="mt-7">
-              <Button href="/admission" size="lg" variant="white">
-                Demander une admission
-              </Button>
-            </div>
-          </div>
-        </div>
-      </Section>
-
-      {/* 4 — CHOISISSEZ VOTRE PROCHAINE RENTRÉE */}
+      {/* 3 — CHOISISSEZ VOTRE PROCHAINE RENTRÉE */}
       <Section variant="white" className="!py-12 sm:!py-16">
         <p className="text-sm font-bold uppercase tracking-wide text-ipmd-red">Calendrier</p>
         <h2 className="mt-2 text-2xl font-extrabold tracking-tight text-ipmd-black sm:text-3xl">
@@ -252,43 +289,7 @@ export default async function ProfessionnelPage() {
         </div>
       </Section>
 
-      {/* 5 — PARCOURS INTENSIFS */}
-      <Section variant="light" className="!py-12 sm:!py-16">
-        <div className="overflow-hidden rounded-3xl border-2 border-ipmd-red/20 bg-gradient-to-br from-ipmd-red/[0.06] to-amber-50/70 p-8 sm:p-12">
-          <span className="inline-flex items-center gap-1 rounded-full bg-ipmd-red px-3 py-1 text-[11px] font-bold uppercase tracking-wide text-white">
-            ⚡ Intensif
-          </span>
-          <h2 className="mt-3 text-2xl font-extrabold tracking-tight text-ipmd-black sm:text-3xl">
-            Parcours intensifs – 10 mois
-          </h2>
-          <p className="mt-2 max-w-2xl text-black/60">
-            Obtenez votre diplôme sur un format accéléré de 10 mois, pensé pour les profils
-            pressés d&apos;évoluer.
-          </p>
-          <div className="mt-7 grid gap-4 sm:grid-cols-2">
-            {INTENSIVE_PARCOURS.map((p) => (
-              <div
-                key={p}
-                className="flex items-center gap-3 rounded-2xl bg-white p-5 shadow-sm ring-1 ring-ipmd-red/15"
-              >
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-ipmd-red/10 text-lg">
-                  🎓
-                </span>
-                <p className="font-bold text-ipmd-black">{p}</p>
-              </div>
-            ))}
-          </div>
-          <p className="mt-5 text-[13px] leading-relaxed text-black/55">
-            Admission sous réserve de l&apos;étude du dossier et de la validation du niveau
-            académique requis.
-          </p>
-          <div className="mt-6">
-            <Button href="/admission">Demander une admission</Button>
-          </div>
-        </div>
-      </Section>
-
-      {/* 6 — NOS FORMATIONS DIPLÔMANTES */}
+      {/* 4 — NOS FORMATIONS DIPLÔMANTES */}
       <Section variant="white" id="formations" className="!py-12 sm:!py-16">
         <p className="text-sm font-bold uppercase tracking-wide text-ipmd-red">Nos diplômes</p>
         <h2 className="mt-2 text-2xl font-extrabold tracking-tight text-ipmd-black sm:text-3xl">
