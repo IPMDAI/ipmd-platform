@@ -417,7 +417,7 @@ export function Step2Parcours({
             <div className="sm:col-span-2 mt-1 border-t border-black/5 pt-4">
               <p className="text-sm font-bold text-ipmd-black">Profil professionnel</p>
               <p className="mt-0.5 text-[12px] text-black/50">
-                IPMD Pro s'adresse aux professionnels en formation continue.
+                IPMD Professionnel s'adresse aux professionnels en formation continue.
               </p>
             </div>
             <BgProfStatusSelect value={value.professionalStatus} onChange={set("professionalStatus")} onBlur={blur("professionalStatus")} error={err("professionalStatus")} />

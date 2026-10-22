@@ -289,6 +289,11 @@ export function Step3Projet({
 
   const title = (
     <>
+      {variant === "pro" && (
+        <span className="mb-2 inline-flex items-center gap-1.5 rounded-full bg-ipmd-red/10 px-3 py-1 text-xs font-bold uppercase tracking-wide text-ipmd-red">
+          Candidature IPMD Professionnel
+        </span>
+      )}
       <h2 className="text-xl font-extrabold tracking-tight text-ipmd-black sm:text-2xl">
         Votre projet à l'IPMD
       </h2>
@@ -436,7 +441,7 @@ export function Step3Projet({
   // ─────────────────────────── PRO (cascade) ───────────────────────────
   if (variant === "pro") {
     const sessions = proSessions(catalog);
-    if (sessions.length === 0) return <div>{title}<EmptyState label="le parcours IPMD Pro" /></div>;
+    if (sessions.length === 0) return <div>{title}<EmptyState label="le parcours IPMD Professionnel" /></div>;
 
     const selectedSession = value.proIntakeId || (sessions.length === 1 ? sessions[0].intakeId : "");
     const selectedLevel = value.proLevel;
@@ -458,7 +463,7 @@ export function Step3Projet({
           {sessions.length > 1 ? (
             <>
               <label htmlFor="pj-pro-session" className="text-sm font-semibold text-ipmd-black">
-                Session Pro <span className="text-ipmd-red">*</span>
+                Session IPMD Professionnel <span className="text-ipmd-red">*</span>
               </label>
               <select
                 id="pj-pro-session"
@@ -477,7 +482,7 @@ export function Step3Projet({
           ) : (
             <>
               <p className="text-sm font-semibold text-ipmd-black">
-                Session Pro <span className="text-ipmd-red">*</span>
+                Session IPMD Professionnel <span className="text-ipmd-red">*</span>
               </p>
               <div className="mt-1.5 inline-flex items-center gap-2 rounded-xl border border-ipmd-red/30 bg-ipmd-red/[0.04] px-3.5 py-2.5 text-sm font-semibold text-ipmd-black">
                 <span className="flex h-4 w-4 items-center justify-center rounded-full border border-ipmd-red" aria-hidden="true">
@@ -524,7 +529,7 @@ export function Step3Projet({
         {/* 3) Filière Pro — filtrée par la session + le niveau */}
         <div className="mt-6">
           <p className="text-sm font-semibold text-ipmd-black">
-            Filière Pro <span className="text-ipmd-red">*</span>
+            Filière IPMD Professionnel <span className="text-ipmd-red">*</span>
           </p>
           {!selectedLevel ? (
             <p className="mt-2 rounded-xl border border-dashed border-black/15 bg-black/[0.015] p-3 text-[13px] text-black/50">
