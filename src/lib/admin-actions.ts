@@ -319,13 +319,71 @@ export async function setDocumentGrant(formData: FormData): Promise<void> {
   revalidatePath("/espace/documents");
 }
 
-/** Supprime un lien parent ↔ enfant (action de formulaire simple). */
+/**
+ * Supprime UNIQUEMENT la ligne `parent_links` correspondante (détachement).
+ * Ne supprime NI le parent, NI l'étudiant, NI notes/paiements/documents. Après
+ * suppression, le parent perd l'accès à cet étudiant via la RLS existante. Réservé
+ * aux admins. Journalise dans `audit_log` (acteur, parent, étudiant, relation
+ * supprimée) via le client service-role — exécuté CÔTÉ SERVEUR uniquement
+ * (fichier "use server"), la clé service_role n'est jamais envoyée au navigateur.
+ */
 export async function unlinkParentChild(
   linkId: string,
   _formData?: FormData
 ): Promise<void> {
   const ctx = await getAdmin();
   if (!ctx) return;
-  await ctx.supabase.from("parent_links").delete().eq("id", linkId);
+
+  // Lit le lien AVANT suppression (pour tracer la relation + les acteurs).
+  const { data: link } = await ctx.supabase
+    .from("parent_links")
+    .select("parent_id, student_id, relationship")
+    .eq("id", linkId)
+    .maybeSingle();
+
+  const { error } = await ctx.supabase.from("parent_links").delete().eq("id", linkId);
+  if (error || !link) {
+    revalidatePath("/espace/parents");
+    return;
+  }
+
+  // Journalisation best-effort (service-role, append-only, serveur uniquement).
+  try {
+    const admin = createAdminClient();
+    if (admin) {
+      const { data: rows } = await ctx.supabase
+        .from("profiles")
+        .select("id, full_name, email")
+        .in("id", [ctx.user.id, link.parent_id, link.student_id]);
+      const byId = new Map((rows ?? []).map((p) => [p.id as string, p]));
+      const me = byId.get(ctx.user.id);
+      const parentName =
+        byId.get(link.parent_id)?.full_name || byId.get(link.parent_id)?.email || link.parent_id;
+      const childName =
+        byId.get(link.student_id)?.full_name || byId.get(link.student_id)?.email || link.student_id;
+      const relLabel = link.relationship ? ` (${link.relationship})` : "";
+      await admin.from("audit_log").insert({
+        actor_id: ctx.user.id,
+        actor_role: ctx.role,
+        action_type: "delete",
+        action: "parent_link_removed",
+        entity_type: "parent_link",
+        entity_id: linkId,
+        student_id: link.student_id,
+        summary: `Détachement parent→enfant : ${parentName}${relLabel} ✕ ${childName}`,
+        old_value: {
+          parent_id: link.parent_id,
+          student_id: link.student_id,
+          relationship: link.relationship,
+        },
+        actor_name: me?.full_name ?? null,
+        actor_email: me?.email ?? null,
+      });
+    }
+  } catch {
+    // audit indisponible : le détachement reste effectif
+  }
+
   revalidatePath("/espace/parents");
+  revalidatePath(`/espace/parents/${link.parent_id}`);
 }

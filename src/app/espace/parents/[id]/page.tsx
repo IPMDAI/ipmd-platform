@@ -5,6 +5,7 @@ import { requireAdmin } from "@/lib/require-admin";
 import { Container } from "@/components/ui/Container";
 import { ParentMessageForm } from "@/components/espace/ParentMessageForm";
 import { LinkStudentToParent } from "@/components/espace/LinkStudentToParent";
+import { UnlinkChildButton } from "@/components/espace/UnlinkChildButton";
 import { PARENT_RELATIONSHIP_LABEL } from "@/lib/academic";
 import { SERVICE_LABEL } from "@/lib/messaging";
 
@@ -38,11 +39,15 @@ export default async function ParentDetailPage({
   // Enfants liés.
   const { data: links } = await supabase
     .from("parent_links")
-    .select("student_id, relationship")
+    .select("id, student_id, relationship")
     .eq("parent_id", id);
   const studentIds = (links ?? []).map((l) => l.student_id);
   const relOf = new Map<string, string | null>();
-  for (const l of links ?? []) relOf.set(l.student_id, l.relationship);
+  const linkIdOf = new Map<string, string>();
+  for (const l of links ?? []) {
+    relOf.set(l.student_id, l.relationship);
+    linkIdOf.set(l.student_id, l.id);
+  }
   let children: { id: string; full_name: string | null; email: string; matricule: string | null }[] = [];
   if (studentIds.length > 0) {
     const { data } = await supabase
@@ -161,6 +166,13 @@ export default async function ParentDetailPage({
                         >
                           📄 Bulletin
                         </Link>
+                        {linkIdOf.get(c.id) && (
+                          <UnlinkChildButton
+                            linkId={linkIdOf.get(c.id)!}
+                            childName={c.full_name || c.email}
+                            parentName={parent.full_name || parent.email}
+                          />
+                        )}
                       </div>
                     </div>
                   </li>
