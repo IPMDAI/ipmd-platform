@@ -6,6 +6,9 @@
  * lignes « Versement BACI » / « Espèces »… restent intactes en base et
  * s'affichent normalement ; seule la liste de saisie change.
  */
+/** Lien de règlement Wave officiel IPMD (paiement en ligne par Wave). */
+export const IPMD_WAVE_PAY_URL = "https://pay.wave.com/m/M_-dj1OTgrnGdT/c/ci/";
+
 export const PAYMENT_METHODS = [
   "Wave",
   "Orange Money",

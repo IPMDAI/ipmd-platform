@@ -3,6 +3,7 @@ import Link from "next/link";
 import { requireUser } from "@/lib/require-user";
 import { Container } from "@/components/ui/Container";
 import { formatFCFA, computeSchedule, SCHED_STATUS } from "@/lib/finance";
+import { WavePayButton } from "@/components/ui/WavePayButton";
 
 export const metadata: Metadata = {
   title: "Ma scolarité",
@@ -100,6 +101,13 @@ export default async function MesPaiementsPage() {
             >
               📑 Mon relevé de paiement
             </Link>
+          </div>
+
+          <div className="mt-4 rounded-2xl bg-white p-4 shadow-sm ring-1 ring-black/5">
+            <p className="text-sm font-semibold text-ipmd-black">Régler en ligne</p>
+            <div className="mt-2">
+              <WavePayButton />
+            </div>
           </div>
 
           {alertMsg && (

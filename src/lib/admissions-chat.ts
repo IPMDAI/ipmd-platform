@@ -1,4 +1,6 @@
 // Chat d'admission public — Claude Haiku (rapide & économique pour la FAQ).
+import { IPMD_WAVE_PAY_URL } from "@/lib/finance";
+
 export const ADMISSIONS_CHAT_MODEL = "claude-haiku-4-5";
 
 export type ChatFees = {
@@ -48,7 +50,7 @@ INFOS OFFICIELLES IPMD (à utiliser) :
 - Formats : cours de jour, cours du soir, Pro/week-end.
 - FRAIS D'INSCRIPTION : ${fcfa(reg)} (uniques) — donnent accès à la plateforme, à la carte étudiant et à l'attestation d'inscription.
 - ${tuitionBlock}
-- Moyens de paiement : Wave, Orange Money, versement/virement AFG Bank (RIB officiel AFG Bank de l'IPMD fourni lors de l'inscription).
+- Moyens de paiement : Wave (lien de règlement en ligne : ${IPMD_WAVE_PAY_URL} — préciser d'ajouter l'expéditeur « IPMD » à ses contacts pour rendre le lien cliquable), Orange Money, versement/virement AFG Bank (RIB officiel AFG Bank de l'IPMD fourni lors de l'inscription).
 - Parcours d'admission : (1) Demande d'admission en ligne → (2) Constitution du dossier (dernier diplôme, pièce d'identité, bulletins/relevés) → (3) Étude de dossier + entretien → (4) Admission, puis inscription définitive. Le certificat/diplôme est délivré après le solde complet de la scolarité.
 - Réorientation possible par passerelle (étude de dossier).
 - Contact : candidater sur ipmd.pro/admission ; demande d'information sur ipmd.pro/demande-info ; WhatsApp Admissions +225 05 75 75 88 88 ; email admission@ipmd.pro.

@@ -1,5 +1,5 @@
 import { emailDocument, buildRows, escapeHtml } from "@/lib/email";
-import { formatFCFA } from "@/lib/finance";
+import { formatFCFA, IPMD_WAVE_PAY_URL } from "@/lib/finance";
 
 /** Mention obligatoire sur tout élément financier du Lot C. */
 export const SCHEDULE_DISCLAIMER =
@@ -86,6 +86,9 @@ export function buildAdmissionEmail(d: AdmissionLetterData): {
         ? `<p style="margin:0 0 12px;padding:8px 12px;background:#fff7ed;border:1px solid #fed7aa;border-radius:8px;color:#9a3412;font-size:13px;line-height:1.5">⏳ <strong>Délai de confirmation :</strong> les frais d'inscription de <strong>${formatFCFA(d.registrationFee)}</strong> sont à régler <strong>${escapeHtml(d.deadlineText)}</strong> (sous 72 h) pour garantir votre place.</p>`
         : ""
     }
+    <p style="margin:0 0 6px;color:#374151;font-size:14px"><strong>Régler les frais d'inscription par Wave :</strong></p>
+    <p style="margin:0 0 6px"><a href="${IPMD_WAVE_PAY_URL}" style="display:inline-block;background:#1dc8ff;color:#fff;text-decoration:none;font-weight:700;font-size:14px;padding:12px 20px;border-radius:9999px">💳 Payer par Wave</a></p>
+    <p style="margin:0 0 14px;color:#6b7280;font-size:12px;line-height:1.5">Astuce : ajoutez l'expéditeur <strong>IPMD</strong> à vos contacts pour rendre le lien cliquable. Autres moyens : Orange Money, versement / virement AFG (RIB fourni dans votre espace).</p>
     <p style="margin:0 0 12px;color:#374151;font-size:14px">Votre lettre d'admission officielle est jointe à cet email (PDF).</p>
     ${
       d.packUrl
