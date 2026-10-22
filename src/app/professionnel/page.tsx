@@ -20,9 +20,9 @@ const PRO_DEGREES = ["Licence", "Master"];
 
 // Repli statique si la base est indisponible (le rendu reste correct hors connexion).
 const FALLBACK_SESSIONS = [
-  { dateISO: "2026-11-17" },
-  { dateISO: "2027-02-23" },
-  { dateISO: "2027-05-18" },
+  { dateISO: "2026-11-19" },
+  { dateISO: "2027-02-18" },
+  { dateISO: "2027-05-20" },
 ];
 
 function frFull(iso: string): string {
