@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { Section } from "@/components/ui/Section";
 import { Reveal } from "@/components/ui/Reveal";
 import { PageHero } from "@/components/sections/PageHero";
+import { UniverseVideo } from "@/components/sections/UniverseVideo";
 import { CtaBanner } from "@/components/sections/CtaBanner";
 import { ProgramCard } from "@/components/cards/ProgramCard";
 import { Button } from "@/components/ui/Button";
@@ -159,8 +160,11 @@ export default async function ProfessionnelPage() {
         </div>
       </PageHero>
 
+      {/* Grande image / carrousel média (public/videos-professionnel/) */}
+      <UniverseVideo universeId="professionnel" />
+
       {/* 2 — POURQUOI CHOISIR */}
-      <Section variant="white">
+      <Section variant="white" className="!py-12 sm:!py-16">
         <p className="text-sm font-bold uppercase tracking-wide text-ipmd-red">Vos avantages</p>
         <h2 className="mt-2 text-2xl font-extrabold tracking-tight text-ipmd-black sm:text-3xl">
           Pourquoi choisir IPMD Professionnel ?
@@ -181,7 +185,7 @@ export default async function ProfessionnelPage() {
       </Section>
 
       {/* 3 — VOUS TRAVAILLEZ DÉJÀ ? */}
-      <Section variant="light">
+      <Section variant="light" className="!py-12 sm:!py-16">
         <div className="relative overflow-hidden rounded-3xl bg-ipmd-black px-8 py-12 text-white shadow-xl sm:px-12 sm:py-14">
           <div
             className="absolute -right-20 -top-20 h-72 w-72 rounded-full bg-ipmd-red/25 blur-3xl"
@@ -207,7 +211,7 @@ export default async function ProfessionnelPage() {
       </Section>
 
       {/* 4 — CHOISISSEZ VOTRE PROCHAINE RENTRÉE */}
-      <Section variant="white">
+      <Section variant="white" className="!py-12 sm:!py-16">
         <p className="text-sm font-bold uppercase tracking-wide text-ipmd-red">Calendrier</p>
         <h2 className="mt-2 text-2xl font-extrabold tracking-tight text-ipmd-black sm:text-3xl">
           Choisissez votre prochaine rentrée
@@ -249,7 +253,7 @@ export default async function ProfessionnelPage() {
       </Section>
 
       {/* 5 — PARCOURS INTENSIFS */}
-      <Section variant="light">
+      <Section variant="light" className="!py-12 sm:!py-16">
         <div className="overflow-hidden rounded-3xl border-2 border-ipmd-red/20 bg-gradient-to-br from-ipmd-red/[0.06] to-amber-50/70 p-8 sm:p-12">
           <span className="inline-flex items-center gap-1 rounded-full bg-ipmd-red px-3 py-1 text-[11px] font-bold uppercase tracking-wide text-white">
             ⚡ Intensif
@@ -285,7 +289,7 @@ export default async function ProfessionnelPage() {
       </Section>
 
       {/* 6 — NOS FORMATIONS DIPLÔMANTES */}
-      <Section variant="white" id="formations">
+      <Section variant="white" id="formations" className="!py-12 sm:!py-16">
         <p className="text-sm font-bold uppercase tracking-wide text-ipmd-red">Nos diplômes</p>
         <h2 className="mt-2 text-2xl font-extrabold tracking-tight text-ipmd-black sm:text-3xl">
           Nos formations diplômantes
