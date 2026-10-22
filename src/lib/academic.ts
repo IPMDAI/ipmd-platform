@@ -56,7 +56,7 @@ export function statusBadgeClass(status: string | null): string {
 /** Types de classe (public visé). */
 export const CLASS_TYPES = [
   { value: "initial", label: "Initial Campus" },
-  { value: "pro", label: "Pro / Salarié" },
+  { value: "pro", label: "Formation pour professionnels en activité" },
   { value: "partenaire", label: "Partenaire académique" },
 ] as const;
 

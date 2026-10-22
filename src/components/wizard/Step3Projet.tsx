@@ -447,6 +447,13 @@ export function Step3Projet({
     const selectedLevel = value.proLevel;
     const selectedOfferingId = value.proOfferingId;
     const levels = selectedSession ? proLevelsForSession(catalog, selectedSession) : [];
+    // Séparation d'AFFICHAGE classiques / intensifs (UI only) : un niveau classique
+    // suit la forme « Licence N » / « Master N » ; tout autre libellé (parcours
+    // intensif « … intensive - 10 mois ») va dans le bloc mis en valeur. Robuste au
+    // libellé (pas de chaîne intensive codée en dur).
+    const isClassicLevel = (lvl: string) => /^(Licence|Master|Bachelor)\s+\d+$/.test(lvl.trim());
+    const classicLevels = levels.filter(isClassicLevel);
+    const intensiveLevels = levels.filter((l) => !isClassicLevel(l));
     const filieres =
       selectedSession && selectedLevel ? proFilieresForSessionLevel(catalog, selectedSession, selectedLevel) : [];
 
@@ -504,24 +511,71 @@ export function Step3Projet({
               Choisissez d'abord une session pour afficher les niveaux disponibles.
             </p>
           ) : (
-            <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-5">
-              {levels.map((lvl) => {
-                const active = selectedLevel === lvl;
-                return (
-                  <button
-                    key={lvl}
-                    type="button"
-                    onClick={() => selectLevel(lvl)}
-                    className={`rounded-xl border p-3 text-center text-sm font-medium transition ${
-                      active
-                        ? "border-ipmd-red bg-ipmd-red/[0.04] ring-2 ring-ipmd-red/30 text-ipmd-black"
-                        : "border-black/15 bg-white text-black/70 hover:border-black/30"
-                    }`}
-                  >
-                    {lvl}
-                  </button>
-                );
-              })}
+            <div className="mt-2 space-y-4">
+              {/* Parcours classiques */}
+              {classicLevels.length > 0 && (
+                <div>
+                  <p className="mb-1.5 text-[12px] font-semibold uppercase tracking-wide text-black/45">
+                    Parcours classiques
+                  </p>
+                  <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
+                    {classicLevels.map((lvl) => {
+                      const active = selectedLevel === lvl;
+                      return (
+                        <button
+                          key={lvl}
+                          type="button"
+                          onClick={() => selectLevel(lvl)}
+                          className={`rounded-xl border p-3 text-center text-sm font-medium transition ${
+                            active
+                              ? "border-ipmd-red bg-ipmd-red/[0.04] ring-2 ring-ipmd-red/30 text-ipmd-black"
+                              : "border-black/15 bg-white text-black/70 hover:border-black/30"
+                          }`}
+                        >
+                          {lvl}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Parcours intensifs – 10 mois (bloc distinct, mis en valeur) */}
+              {intensiveLevels.length > 0 && (
+                <div className="rounded-2xl border border-ipmd-red/25 bg-gradient-to-br from-ipmd-red/[0.06] to-amber-50/70 p-3.5">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="inline-flex items-center gap-1 rounded-full bg-ipmd-red px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wide text-white">
+                      ⚡ Intensif
+                    </span>
+                    <p className="text-sm font-extrabold text-ipmd-black">
+                      Parcours intensifs – 10 mois
+                    </p>
+                  </div>
+                  <div className="mt-2.5 grid grid-cols-1 gap-2 sm:grid-cols-2">
+                    {intensiveLevels.map((lvl) => {
+                      const active = selectedLevel === lvl;
+                      return (
+                        <button
+                          key={lvl}
+                          type="button"
+                          onClick={() => selectLevel(lvl)}
+                          className={`rounded-xl border p-3 text-center text-sm font-semibold transition ${
+                            active
+                              ? "border-ipmd-red bg-white ring-2 ring-ipmd-red/40 text-ipmd-black"
+                              : "border-ipmd-red/30 bg-white/80 text-ipmd-black hover:border-ipmd-red/60"
+                          }`}
+                        >
+                          {lvl}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <p className="mt-2.5 text-[12px] leading-relaxed text-black/55">
+                    Admission sous réserve de l'étude du dossier et de la validation du
+                    niveau académique requis.
+                  </p>
+                </div>
+              )}
             </div>
           )}
         </div>

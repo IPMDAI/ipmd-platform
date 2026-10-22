@@ -16,7 +16,7 @@ export const PROSPECT_STATUS_LIST = Object.entries(PROSPECT_STATUS)
 export const PROSPECT_FORMATS = [
   { value: "jour", label: "Cours de jour" },
   { value: "soir", label: "Cours du soir" },
-  { value: "pro", label: "Pro / Week-end" },
+  { value: "pro", label: "Cours du soir" },
 ];
 export const FORMAT_LABEL: Record<string, string> = Object.fromEntries(
   PROSPECT_FORMATS.map((f) => [f.value, f.label])
