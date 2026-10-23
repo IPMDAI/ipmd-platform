@@ -97,7 +97,16 @@ export function Footer() {
 
         <div className="mt-14 flex flex-col items-center justify-between gap-4 border-t border-white/10 pt-8 text-sm text-white/50 sm:flex-row">
           <p>© {year} IPMD — Institut Polytechnique des Métiers du Digital.</p>
-          <p>Ose. Agis. Impacte.</p>
+          <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2">
+            <Link
+              href="/politique-de-confidentialite"
+              className="transition-colors hover:text-white"
+            >
+              Politique de confidentialité
+            </Link>
+            <span className="hidden text-white/25 sm:inline">•</span>
+            <span>Ose. Agis. Impacte.</span>
+          </div>
         </div>
       </Container>
     </footer>
