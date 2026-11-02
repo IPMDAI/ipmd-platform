@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { postCandidateReply, type ThreadMessage } from "@/lib/dossier-actions";
+import { MessageComposer } from "@/components/ui/MessageComposer";
+import { MessageText } from "@/components/ui/MessageText";
 
 function time(iso: string): string {
   return new Date(iso).toLocaleString("fr-FR", {
@@ -75,7 +77,7 @@ export function DossierConversation({
                       : "bg-ipmd-light text-ipmd-black ring-1 ring-black/5"
                   }`}
                 >
-                  <p className="whitespace-pre-line leading-relaxed">{m.body}</p>
+                  <MessageText body={m.body} className="leading-relaxed" />
                   <p className={`mt-1 text-[10px] ${mine ? "text-white/50" : "text-black/40"}`}>
                     {mine ? "Vous" : m.author_name || "IPMD"} · {time(m.created_at)}
                   </p>
@@ -87,13 +89,11 @@ export function DossierConversation({
       )}
 
       <div className="mt-4">
-        <textarea
+        <MessageComposer
           value={body}
-          onChange={(e) => setBody(e.target.value)}
-          rows={3}
-          maxLength={4000}
+          onChange={setBody}
           placeholder="Écrire un message à l'IPMD…"
-          className="w-full rounded-xl border border-black/15 bg-white px-3.5 py-2.5 text-sm outline-none focus:border-ipmd-red focus:ring-2 focus:ring-ipmd-red/20"
+          maxLength={4000}
         />
         {err && <p className="mt-1 text-sm font-medium text-ipmd-red">{err}</p>}
         <button

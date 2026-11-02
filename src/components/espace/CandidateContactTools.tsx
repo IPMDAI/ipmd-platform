@@ -18,6 +18,8 @@ import {
   waLink,
   type DocKey,
 } from "@/lib/candidate-docs";
+import { MessageComposer } from "@/components/ui/MessageComposer";
+import { MessageText } from "@/components/ui/MessageText";
 
 function time(iso: string): string {
   return new Date(iso).toLocaleString("fr-FR", {
@@ -235,7 +237,7 @@ export function CandidateContactTools(props: Props) {
                             : "bg-ipmd-black text-white"
                         }`}
                       >
-                        <p className="whitespace-pre-line leading-relaxed">{m.body}</p>
+                        <MessageText body={m.body} className="leading-relaxed" />
                         <p className={`mt-1 text-[9px] ${fromTeam ? "text-black/40" : "text-white/50"}`}>
                           {fromTeam ? m.author_name || "IPMD" : "Candidat"} · {time(m.created_at)}
                           {isUnread && " · 🔴"}
@@ -250,12 +252,11 @@ export function CandidateContactTools(props: Props) {
             )}
 
             <div className="mt-2">
-              <textarea
+              <MessageComposer
                 value={reply}
-                onChange={(e) => setReply(e.target.value)}
-                rows={2}
+                onChange={setReply}
                 placeholder="Répondre au candidat…"
-                className="w-full rounded-xl border border-black/15 bg-white px-3 py-2 text-xs outline-none focus:border-ipmd-red focus:ring-2 focus:ring-ipmd-red/20"
+                maxLength={4000}
               />
               <button
                 type="button"
