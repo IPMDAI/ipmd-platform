@@ -455,14 +455,29 @@ export default async function CandidaturesPage({
   if (admin && isSuper && candidatures.length > 0) {
     const { data: msgRows } = await admin
       .from("candidature_messages")
-      .select("id, candidature_id, sender, body, author_name, created_at, read_at")
+      .select("id, candidature_id, sender, body, author_name, created_at, read_at, attachment_path, attachment_name")
       .in(
         "candidature_id",
         candidatures.map((c) => c.id)
       )
       .order("created_at", { ascending: true });
+
+    // URLs signées des pièces jointes de conversation (bucket privé).
+    const attPaths = (msgRows ?? [])
+      .map((m) => m.attachment_path as string | null)
+      .filter(Boolean) as string[];
+    const attUrls = new Map<string, string>();
+    if (attPaths.length > 0) {
+      const { data: signed } = await admin.storage
+        .from("candidature-docs")
+        .createSignedUrls(attPaths, 3600);
+      for (const s of signed ?? [])
+        if (s.path && s.signedUrl) attUrls.set(s.path, s.signedUrl);
+    }
+
     for (const m of msgRows ?? []) {
       const cid = m.candidature_id as string;
+      const attPath = (m.attachment_path as string | null) ?? null;
       const arr = msgsByCand.get(cid) ?? [];
       arr.push({
         id: m.id as string,
@@ -471,6 +486,9 @@ export default async function CandidaturesPage({
         author_name: (m.author_name as string | null) ?? null,
         created_at: m.created_at as string,
         read_at: (m.read_at as string | null) ?? null,
+        attachment_path: attPath,
+        attachment_name: (m.attachment_name as string | null) ?? null,
+        attachment_url: attPath ? attUrls.get(attPath) ?? null : null,
       });
       msgsByCand.set(cid, arr);
       if (m.sender === "candidate" && !m.read_at) {

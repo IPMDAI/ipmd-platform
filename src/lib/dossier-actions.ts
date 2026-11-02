@@ -445,18 +445,21 @@ export async function deleteCandidateNote(noteId: string): Promise<FormResult> {
 export async function sendCandidateMessage(
   candidatureId: string,
   body: string,
-  opts?: { notifyEmail?: boolean }
+  opts?: { notifyEmail?: boolean; attachmentPath?: string; attachmentName?: string }
 ): Promise<FormResult> {
   const ctx = await getAdminCtx();
   if (!ctx) return { ok: false, message: "Action réservée à l'administration." };
   const text = (body ?? "").trim();
-  if (!text) return { ok: false, message: "Message vide." };
+  const att = opts?.attachmentPath || null;
+  if (!text && !att) return { ok: false, message: "Message ou pièce jointe requis." };
 
   const { error } = await ctx.admin.from("candidature_messages").insert({
     candidature_id: candidatureId,
     sender: "admin",
     body: text,
     author_name: ctx.name,
+    attachment_path: att,
+    attachment_name: att ? opts?.attachmentName ?? "Pièce jointe" : null,
   });
   if (error) return { ok: false, message: error.message };
 
@@ -489,7 +492,11 @@ export async function sendCandidateMessage(
 }
 
 /** Réponse postée par le CANDIDAT depuis le lien sécurisé (sans compte). Token-gated. */
-export async function postCandidateReply(token: string, body: string): Promise<FormResult> {
+export async function postCandidateReply(
+  token: string,
+  body: string,
+  opts?: { attachmentPath?: string; attachmentName?: string }
+): Promise<FormResult> {
   const r = await resolveToken(token);
   if (!r.ok) {
     return {
@@ -501,7 +508,8 @@ export async function postCandidateReply(token: string, body: string): Promise<F
     };
   }
   const text = (body ?? "").trim();
-  if (!text) return { ok: false, message: "Message vide." };
+  const att = opts?.attachmentPath || null;
+  if (!text && !att) return { ok: false, message: "Message ou pièce jointe requis." };
   if (text.length > 4000) return { ok: false, message: "Message trop long (4000 caractères max)." };
 
   const { data: cand } = await r.admin
@@ -515,6 +523,8 @@ export async function postCandidateReply(token: string, body: string): Promise<F
     sender: "candidate",
     body: text,
     author_name: (cand?.full_name as string | null) ?? null,
+    attachment_path: att,
+    attachment_name: att ? opts?.attachmentName ?? "Pièce jointe" : null,
   });
   if (error) return { ok: false, message: "Une erreur est survenue. Réessayez." };
   return { ok: true, message: "Message envoyé à l'IPMD." };
@@ -541,6 +551,9 @@ export type ThreadMessage = {
   author_name: string | null;
   created_at: string;
   read_at: string | null;
+  attachment_path: string | null;
+  attachment_name: string | null;
+  attachment_url?: string | null;
 };
 
 /** Charge la conversation pour le lien sécurisé (candidat), et marque les messages IPMD comme lus. */
@@ -551,9 +564,25 @@ export async function loadCandidateThread(
   if (!r.ok) return { ok: false, reason: r.reason };
   const { data } = await r.admin
     .from("candidature_messages")
-    .select("id, sender, body, author_name, created_at, read_at")
+    .select("id, sender, body, author_name, created_at, read_at, attachment_path, attachment_name")
     .eq("candidature_id", r.candidatureId)
     .order("created_at", { ascending: true });
+  const rows = (data ?? []) as ThreadMessage[];
+
+  // URLs signées des pièces jointes (bucket privé) — générées côté serveur.
+  const paths = rows.map((m) => m.attachment_path).filter(Boolean) as string[];
+  const urlByPath = new Map<string, string>();
+  if (paths.length) {
+    const { data: signed } = await r.admin.storage
+      .from("candidature-docs")
+      .createSignedUrls(paths, 3600);
+    for (const s of signed ?? []) if (s.path && s.signedUrl) urlByPath.set(s.path, s.signedUrl);
+  }
+  const messages = rows.map((m) => ({
+    ...m,
+    attachment_url: m.attachment_path ? urlByPath.get(m.attachment_path) ?? null : null,
+  }));
+
   // Les messages de l'équipe sont marqués lus (le candidat vient de les ouvrir).
   await r.admin
     .from("candidature_messages")
@@ -561,5 +590,5 @@ export async function loadCandidateThread(
     .eq("candidature_id", r.candidatureId)
     .eq("sender", "admin")
     .is("read_at", null);
-  return { ok: true, messages: (data ?? []) as ThreadMessage[] };
+  return { ok: true, messages };
 }

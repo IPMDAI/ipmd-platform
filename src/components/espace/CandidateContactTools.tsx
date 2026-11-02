@@ -28,6 +28,7 @@ import { CandidateFollowUp } from "@/components/espace/CandidateFollowUp";
 import { MessageComposer } from "@/components/ui/MessageComposer";
 import { MessageText } from "@/components/ui/MessageText";
 import { teamMessageTemplates, fillTemplate } from "@/lib/message-templates";
+import { uploadConversationFile } from "@/lib/upload-client";
 
 function time(iso: string): string {
   return new Date(iso).toLocaleString("fr-FR", {
@@ -75,7 +76,39 @@ export function CandidateContactTools(props: Props) {
   const selectedKeys = CANDIDATE_DOCS.filter((d) => checked[d.key]).map((d) => d.key);
 
   const [reply, setReply] = useState("");
+  const [file, setFile] = useState<File | null>(null);
   const [noteDraft, setNoteDraft] = useState("");
+
+  // Envoi d'un message (texte et/ou pièce jointe). Téléverse d'abord le fichier
+  // vers le bucket privé, puis enregistre le message avec le chemin obtenu.
+  function sendMessage() {
+    const text = reply.trim();
+    if (!text && !file) return;
+    setMsg(null);
+    start(async () => {
+      let attachmentPath: string | undefined;
+      let attachmentName: string | undefined;
+      if (file) {
+        const up = await uploadConversationFile(file);
+        if ("error" in up) {
+          setMsg({ ok: false, text: up.error });
+          return;
+        }
+        attachmentPath = up.path;
+        attachmentName = up.name;
+      }
+      const res = await sendCandidateMessage(props.candidatureId, text, {
+        attachmentPath,
+        attachmentName,
+      });
+      setMsg({ ok: res.ok, text: res.message });
+      if (res.ok) {
+        router.refresh();
+        setReply("");
+        setFile(null);
+      }
+    });
+  }
 
   const firstName = (props.name || "").split(" ")[0] || "";
   const allTemplates = [
@@ -334,7 +367,19 @@ export function CandidateContactTools(props: Props) {
                             : "bg-ipmd-black text-white"
                         }`}
                       >
-                        <MessageText body={m.body} className="leading-relaxed" />
+                        {m.body && <MessageText body={m.body} className="leading-relaxed" />}
+                        {m.attachment_path && (
+                          <a
+                            href={m.attachment_url ?? "#"}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className={`${m.body ? "mt-1.5 " : ""}flex items-center gap-1 rounded-lg px-2 py-1 text-[11px] font-medium underline-offset-2 hover:underline ${
+                              fromTeam ? "bg-white/70 text-ipmd-red ring-1 ring-black/5" : "bg-white/15 text-white"
+                            }`}
+                          >
+                            📎 {m.attachment_name || "Pièce jointe"}
+                          </a>
+                        )}
                         <p className={`mt-1 text-[9px] ${fromTeam ? "text-black/40" : "text-white/50"}`}>
                           {fromTeam ? m.author_name || "IPMD" : "Candidat"} · {time(m.created_at)}
                           {fromTeam && (m.read_at ? " · ✓ Lu" : " · Envoyé")}
@@ -357,18 +402,39 @@ export function CandidateContactTools(props: Props) {
                 maxLength={4000}
                 draftKey={`ipmd-msgdraft-${props.candidatureId}`}
                 templates={allTemplates}
-                onSubmit={() => {
-                  if (reply.trim())
-                    run(() => sendCandidateMessage(props.candidatureId, reply.trim()), true);
-                }}
+                onSubmit={sendMessage}
               />
+              <div className="mt-1.5 flex items-center gap-2">
+                <label className={`${btn} cursor-pointer bg-ipmd-light text-ipmd-black hover:opacity-90`}>
+                  📎 Joindre
+                  <input
+                    type="file"
+                    accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"
+                    className="hidden"
+                    onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+                  />
+                </label>
+                {file && (
+                  <span className="flex min-w-0 items-center gap-1 text-[11px] text-black/60">
+                    <span className="truncate max-w-[160px]">{file.name}</span>
+                    <button
+                      type="button"
+                      onClick={() => setFile(null)}
+                      className="text-ipmd-red hover:underline"
+                      aria-label="Retirer la pièce jointe"
+                    >
+                      ✕
+                    </button>
+                  </span>
+                )}
+              </div>
               <button
                 type="button"
-                disabled={pending || reply.trim().length === 0}
-                onClick={() => run(() => sendCandidateMessage(props.candidatureId, reply.trim()), true)}
+                disabled={pending || (reply.trim().length === 0 && !file)}
+                onClick={sendMessage}
                 className={`${btn} mt-1.5 bg-ipmd-red text-white hover:opacity-90`}
               >
-                Envoyer le message
+                {pending ? "Envoi…" : "Envoyer le message"}
               </button>
             </div>
           </div>
