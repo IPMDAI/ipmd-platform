@@ -6,7 +6,9 @@ import { verifyDossierToken, dossierLinkUrl } from "@/lib/dossier-link";
 import { sendEmailTo, emailDocument, escapeHtml, canSendEmail } from "@/lib/email";
 import {
   CANDIDATE_DOCS,
+  DOC_BY_KEY,
   isDocKey,
+  isDocStatus,
   docLabels,
   buildDocsWhatsappText,
 } from "@/lib/candidate-docs";
@@ -23,7 +25,7 @@ type AdminClient = NonNullable<ReturnType<typeof createAdminClient>>;
 
 /** Vérifie que l'appelant est admin/super_admin et renvoie un client service-role + identité. */
 async function getAdminCtx(): Promise<
-  { admin: AdminClient; userId: string; name: string | null } | null
+  { admin: AdminClient; userId: string; role: string; name: string | null } | null
 > {
   const supabase = await createClient();
   if (!supabase) return null;
@@ -39,7 +41,12 @@ async function getAdminCtx(): Promise<
   if (me?.role !== "admin" && me?.role !== "super_admin") return null;
   const admin = createAdminClient();
   if (!admin) return null;
-  return { admin, userId: user.id, name: (me.full_name as string) || (me.email as string) || null };
+  return {
+    admin,
+    userId: user.id,
+    role: me.role as string,
+    name: (me.full_name as string) || (me.email as string) || null,
+  };
 }
 
 type TokenResolution =
@@ -227,6 +234,79 @@ export async function sendDossierLinkEmail(candidatureId: string): Promise<FormR
   );
   if (sent < 1) return { ok: false, message: "L'email n'a pas pu être envoyé. Réessayez." };
   return { ok: true, message: `Email envoyé à ${cand.email}.` };
+}
+
+/**
+ * Pose le statut d'UNE pièce (récapitulatif) : recue / a_verifier / validee / a_remplacer.
+ * Protections : admin only ; jamais de suppression/écrasement du fichier (doc_*) ; motif
+ * OBLIGATOIRE pour « à remplacer », qui re-demande aussi la pièce (requested_docs) ; valeurs
+ * fermées ; traçabilité (qui/quand) ; scopé à la candidature.
+ */
+export async function setDocStatus(
+  candidatureId: string,
+  docKey: string,
+  status: string,
+  reason?: string
+): Promise<FormResult> {
+  const ctx = await getAdminCtx();
+  if (!ctx) return { ok: false, message: "Action réservée à l'administration." };
+  if (!isDocKey(docKey)) return { ok: false, message: "Pièce inconnue." };
+  if (!isDocStatus(status)) return { ok: false, message: "Statut invalide." };
+  const motif = (reason ?? "").trim();
+  if (status === "a_remplacer" && !motif) {
+    return { ok: false, message: "Indiquez le motif du remplacement (ce que le candidat doit corriger)." };
+  }
+
+  const { data: cand } = await ctx.admin
+    .from("inscription_requests")
+    .select("doc_status, requested_docs")
+    .eq("id", candidatureId)
+    .maybeSingle();
+  if (!cand) return { ok: false, message: "Candidature introuvable." };
+
+  const map = { ...((cand.doc_status as Record<string, unknown>) ?? {}) };
+  map[docKey] = {
+    status,
+    reason: status === "a_remplacer" ? motif : null,
+    at: new Date().toISOString(),
+    by: ctx.name,
+  };
+
+  const update: Record<string, unknown> = { doc_status: map };
+  // « À remplacer » → re-demande la pièce pour que le candidat la redépose.
+  if (status === "a_remplacer") {
+    const req = new Set(((cand.requested_docs as string[] | null) ?? []).filter(isDocKey));
+    req.add(docKey);
+    update.requested_docs = Array.from(req);
+  }
+
+  const { error } = await ctx.admin
+    .from("inscription_requests")
+    .update(update)
+    .eq("id", candidatureId);
+  if (error) return { ok: false, message: error.message };
+
+  // Traçabilité best-effort (service-role, append-only).
+  try {
+    const admin2 = createAdminClient();
+    if (admin2) {
+      await admin2.from("audit_log").insert({
+        actor_id: ctx.userId,
+        actor_role: ctx.role,
+        action_type: "update",
+        action: "candidate_doc_status",
+        entity_type: "inscription_request",
+        entity_id: candidatureId,
+        summary: `Pièce « ${DOC_BY_KEY[docKey].short} » → ${status}${motif ? ` (${motif})` : ""}`,
+        new_value: { doc: docKey, status, reason: motif || null },
+        actor_name: ctx.name,
+      });
+    }
+  } catch {
+    /* audit indisponible */
+  }
+
+  return { ok: true, message: `« ${DOC_BY_KEY[docKey].short} » : ${status.replace("_", " ")}.` };
 }
 
 /** Marque les pièces comme vérifiées par l'équipe (efface le signal « nouveau dépôt »). */

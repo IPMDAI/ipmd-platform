@@ -89,7 +89,7 @@ export default async function CandidaturesPage({
     supabase
       .from("inscription_requests")
       .select(
-        "id, full_name, email, phone, whatsapp, universe, program_interest, entry_level, last_education, last_diploma, message, created_at, status, desired_role, doc_diploma, doc_bulletins, doc_id, doc_attestation, doc_cv, mode, catalog_offering_id, requested_docs, docs_submitted_at, docs_reviewed_at, dossier_token_version"
+        "id, full_name, email, phone, whatsapp, universe, program_interest, entry_level, last_education, last_diploma, message, created_at, status, desired_role, doc_diploma, doc_bulletins, doc_id, doc_attestation, doc_cv, mode, catalog_offering_id, requested_docs, docs_submitted_at, docs_reviewed_at, dossier_token_version, doc_status"
       )
       .order("created_at", { ascending: false }),
     supabase
@@ -747,6 +747,7 @@ export default async function CandidaturesPage({
                         docs_submitted_at?: string | null;
                         docs_reviewed_at?: string | null;
                         dossier_token_version?: number | null;
+                        doc_status?: Record<string, { status?: string; reason?: string | null }> | null;
                       };
                       const sub = cc.docs_submitted_at ?? null;
                       const rev = cc.docs_reviewed_at ?? null;
@@ -768,6 +769,7 @@ export default async function CandidaturesPage({
                             attestation: !!c.doc_attestation,
                           }}
                           requestedDocs={cc.requested_docs ?? []}
+                          docStatus={cc.doc_status ?? {}}
                           messages={msgsByCand.get(c.id) ?? []}
                           unread={unreadByCand.get(c.id) ?? 0}
                           newDeposit={newDeposit}

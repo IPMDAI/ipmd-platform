@@ -53,7 +53,7 @@ export default async function CompleterDossierPage({
   const { data: cand } = await admin
     .from("inscription_requests")
     .select(
-      "full_name, program_interest, doc_diploma, doc_id, doc_cv, doc_bulletins, doc_attestation, requested_docs, dossier_token_version"
+      "full_name, program_interest, doc_diploma, doc_id, doc_cv, doc_bulletins, doc_attestation, requested_docs, dossier_token_version, doc_status"
     )
     .eq("id", payload.candidatureId)
     .maybeSingle();
@@ -84,6 +84,13 @@ export default async function CompleterDossierPage({
     return { key: k, label: DOC_BY_KEY[k].label, required: !provided, provided };
   });
 
+  // Pièces à REMPLACER (motif affiché au candidat).
+  const docStatus =
+    (cand.doc_status as Record<string, { status?: string; reason?: string | null }>) ?? {};
+  const toReplace = keys
+    .filter((k) => docStatus[k]?.status === "a_remplacer")
+    .map((k) => ({ label: DOC_BY_KEY[k].label, reason: docStatus[k]?.reason ?? null }));
+
   const thread = await loadCandidateThread(t as string);
   const messages = thread.ok ? thread.messages : [];
 
@@ -106,6 +113,20 @@ export default async function CompleterDossierPage({
               }, merci de joindre les pièces ci-dessous. C'est rapide et sécurisé.`
             : "retrouvez ici vos échanges avec l'équipe Admissions de l'IPMD."}
         </p>
+
+        {toReplace.length > 0 && (
+          <div className="mt-5 rounded-xl border border-ipmd-red/25 bg-ipmd-red/[0.04] p-4">
+            <p className="text-sm font-bold text-ipmd-red">Pièce(s) à corriger</p>
+            <ul className="mt-1.5 space-y-1">
+              {toReplace.map((x) => (
+                <li key={x.label} className="text-[13px] text-ipmd-black">
+                  <span className="font-semibold">{x.label}</span>
+                  {x.reason ? ` — ${x.reason}` : " — merci de redéposer une version conforme."}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
 
         {docFields.length > 0 && (
           <div className="mt-6">

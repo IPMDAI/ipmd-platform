@@ -17,7 +17,9 @@ import {
   buildHelloWhatsappText,
   waLink,
   type DocKey,
+  type DocStatusEntry,
 } from "@/lib/candidate-docs";
+import { CandidateDocRecap } from "@/components/espace/CandidateDocRecap";
 import { MessageComposer } from "@/components/ui/MessageComposer";
 import { MessageText } from "@/components/ui/MessageText";
 import { teamMessageTemplates } from "@/lib/message-templates";
@@ -41,6 +43,7 @@ type Props = {
   link: string;
   provided: Record<DocKey, boolean>;
   requestedDocs: string[];
+  docStatus: Record<string, DocStatusEntry>;
   messages: ThreadMessage[];
   unread: number;
   newDeposit: boolean;
@@ -158,6 +161,14 @@ export function CandidateContactTools(props: Props) {
               📎 Enregistrer la demande
             </button>
           </div>
+
+          {/* Récapitulatif des pièces (statut par document) */}
+          <CandidateDocRecap
+            candidatureId={props.candidatureId}
+            provided={props.provided}
+            status={props.docStatus}
+            requested={props.requestedDocs}
+          />
 
           {/* 2. Partager le lien sécurisé */}
           <div>
