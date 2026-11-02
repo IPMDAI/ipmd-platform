@@ -455,7 +455,7 @@ export default async function CandidaturesPage({
   if (admin && isSuper && candidatures.length > 0) {
     const { data: msgRows } = await admin
       .from("candidature_messages")
-      .select("id, candidature_id, sender, body, author_name, created_at, read_at, attachment_path, attachment_name")
+      .select("id, candidature_id, sender, body, author_name, created_at, read_at, attachment_path, attachment_name, notify_status")
       .in(
         "candidature_id",
         candidatures.map((c) => c.id)
@@ -489,6 +489,7 @@ export default async function CandidaturesPage({
         attachment_path: attPath,
         attachment_name: (m.attachment_name as string | null) ?? null,
         attachment_url: attPath ? attUrls.get(attPath) ?? null : null,
+        notify_status: (m.notify_status as "sent" | "failed" | "skipped" | null) ?? null,
       });
       msgsByCand.set(cid, arr);
       if (m.sender === "candidate" && !m.read_at) {

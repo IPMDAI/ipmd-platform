@@ -7,6 +7,7 @@ import {
   sendDossierLinkEmail,
   revokeDossierLink,
   sendCandidateMessage,
+  retryMessageEmail,
   markCandidateMessagesRead,
   markDocsReviewed,
   addCandidateNote,
@@ -383,8 +384,23 @@ export function CandidateContactTools(props: Props) {
                         <p className={`mt-1 text-[9px] ${fromTeam ? "text-black/40" : "text-white/50"}`}>
                           {fromTeam ? m.author_name || "IPMD" : "Candidat"} · {time(m.created_at)}
                           {fromTeam && (m.read_at ? " · ✓ Lu" : " · Envoyé")}
+                          {fromTeam && m.notify_status === "sent" && " · ✉️ Notifié"}
+                          {fromTeam && m.notify_status === "skipped" && " · ✉️ pas d'email"}
                           {isUnread && " · 🔴"}
                         </p>
+                        {fromTeam && m.notify_status === "failed" && (
+                          <div className="mt-1 flex items-center gap-1.5 rounded-lg bg-amber-100 px-2 py-1 text-[10px] font-semibold text-amber-800 ring-1 ring-amber-200">
+                            <span>⚠️ Email non parti</span>
+                            <button
+                              type="button"
+                              disabled={pending}
+                              onClick={() => run(() => retryMessageEmail(m.id))}
+                              className="rounded bg-amber-600 px-1.5 py-0.5 text-white hover:opacity-90 disabled:opacity-50"
+                            >
+                              Réessayer
+                            </button>
+                          </div>
+                        )}
                       </div>
                     </li>
                   );

@@ -453,42 +453,103 @@ export async function sendCandidateMessage(
   const att = opts?.attachmentPath || null;
   if (!text && !att) return { ok: false, message: "Message ou pièce jointe requis." };
 
-  const { error } = await ctx.admin.from("candidature_messages").insert({
-    candidature_id: candidatureId,
-    sender: "admin",
-    body: text,
-    author_name: ctx.name,
-    attachment_path: att,
-    attachment_name: att ? opts?.attachmentName ?? "Pièce jointe" : null,
-  });
-  if (error) return { ok: false, message: error.message };
+  const { data: inserted, error } = await ctx.admin
+    .from("candidature_messages")
+    .insert({
+      candidature_id: candidatureId,
+      sender: "admin",
+      body: text,
+      author_name: ctx.name,
+      attachment_path: att,
+      attachment_name: att ? opts?.attachmentName ?? "Pièce jointe" : null,
+    })
+    .select("id")
+    .single();
+  if (error || !inserted) return { ok: false, message: error?.message ?? "Échec de l'enregistrement." };
 
   // Notification email best-effort (le candidat lit/répond depuis le lien sécurisé).
-  if (opts?.notifyEmail !== false && canSendEmail) {
-    const { data: cand } = await ctx.admin
-      .from("inscription_requests")
-      .select("full_name, email, dossier_token_version")
-      .eq("id", candidatureId)
-      .maybeSingle();
-    if (cand?.email) {
-      const link = dossierLinkUrl(candidatureId, Number(cand.dossier_token_version ?? 1));
-      const prenom = (cand.full_name as string | null)?.split(" ")[0] || "Bonjour";
-      const html = emailDocument(
-        "Nouveau message de l'IPMD",
-        `<p style="margin:0 0 12px;color:#0b0b0d;font-size:14px">Bonjour ${escapeHtml(prenom)},</p>
-         <p style="margin:0 0 12px;color:#374151;font-size:14px;line-height:1.6">
-           L'équipe Admissions IPMD vous a envoyé un message :</p>
-         <blockquote style="margin:0 0 16px;padding:10px 14px;background:#f9fafb;border-left:3px solid #e01228;color:#374151;font-size:14px;white-space:pre-line">${escapeHtml(text)}</blockquote>
-         <p style="margin:0 0 18px">
-           <a href="${link}" style="display:inline-block;background:#e01228;color:#fff;text-decoration:none;font-weight:700;font-size:14px;padding:12px 20px;border-radius:9999px">Lire et répondre</a>
-         </p>
-         <p style="margin:0;color:#9ca3af;font-size:12px">Vous pouvez aussi répondre directement à cet email.</p>`
-      );
-      await sendEmailTo([cand.email as string], "IPMD — Nouveau message de l'équipe Admissions", html, DOSSIER_REPLY_TO);
-    }
+  // On TRACE le résultat (notify_status) pour signaler un échec sur la fiche.
+  const outcome =
+    opts?.notifyEmail === false ? "skipped" : await notifyNewMessage(ctx.admin, candidatureId, text);
+  await ctx.admin
+    .from("candidature_messages")
+    .update({ notify_status: outcome })
+    .eq("id", inserted.id as string);
+
+  if (outcome === "failed") {
+    return {
+      ok: true,
+      message: "Message enregistré, mais l'email de notification n'est pas parti (réessayez depuis la conversation).",
+    };
+  }
+  return { ok: true, message: "Message envoyé." };
+}
+
+/**
+ * Envoie la notification « nouveau message » au candidat (best-effort) et renvoie
+ * l'issue : 'sent' (parti), 'failed' (tenté mais échoué), 'skipped' (pas d'email
+ * exploitable ou envoi non configuré). Ne lève jamais.
+ */
+async function notifyNewMessage(
+  admin: AdminClient,
+  candidatureId: string,
+  text: string
+): Promise<"sent" | "failed" | "skipped"> {
+  if (!canSendEmail) return "skipped";
+  const { data: cand } = await admin
+    .from("inscription_requests")
+    .select("full_name, email, dossier_token_version")
+    .eq("id", candidatureId)
+    .maybeSingle();
+  const email = (cand?.email as string | null) ?? "";
+  if (!email || !email.includes("@")) return "skipped";
+
+  const link = dossierLinkUrl(candidatureId, Number(cand?.dossier_token_version ?? 1));
+  const prenom = (cand?.full_name as string | null)?.split(" ")[0] || "Bonjour";
+  const extrait = text.trim()
+    ? `<blockquote style="margin:0 0 16px;padding:10px 14px;background:#f9fafb;border-left:3px solid #e01228;color:#374151;font-size:14px;white-space:pre-line">${escapeHtml(text)}</blockquote>`
+    : `<p style="margin:0 0 16px;color:#374151;font-size:14px">Une pièce jointe vous a été transmise.</p>`;
+  const html = emailDocument(
+    "Nouveau message de l'IPMD",
+    `<p style="margin:0 0 12px;color:#0b0b0d;font-size:14px">Bonjour ${escapeHtml(prenom)},</p>
+     <p style="margin:0 0 12px;color:#374151;font-size:14px;line-height:1.6">
+       L'équipe Admissions IPMD vous a envoyé un message :</p>
+     ${extrait}
+     <p style="margin:0 0 18px">
+       <a href="${link}" style="display:inline-block;background:#e01228;color:#fff;text-decoration:none;font-weight:700;font-size:14px;padding:12px 20px;border-radius:9999px">Lire et répondre</a>
+     </p>
+     <p style="margin:0;color:#9ca3af;font-size:12px">Vous pouvez aussi répondre directement à cet email.</p>`
+  );
+  const sent = await sendEmailTo([email], "IPMD — Nouveau message de l'équipe Admissions", html, DOSSIER_REPLY_TO);
+  return sent >= 1 ? "sent" : "failed";
+}
+
+/**
+ * Réessaie la notification email d'UN message de l'équipe resté « failed ».
+ * Admin only, scopé à la candidature du message. Met à jour notify_status.
+ */
+export async function retryMessageEmail(messageId: string): Promise<FormResult> {
+  const ctx = await getAdminCtx();
+  if (!ctx) return { ok: false, message: "Action réservée à l'administration." };
+  if (!canSendEmail) {
+    return { ok: false, message: "Envoi d'email non configuré (RESEND_API_KEY manquante)." };
   }
 
-  return { ok: true, message: "Message envoyé." };
+  const { data: m } = await ctx.admin
+    .from("candidature_messages")
+    .select("id, candidature_id, sender, body")
+    .eq("id", messageId)
+    .maybeSingle();
+  if (!m) return { ok: false, message: "Message introuvable." };
+  if (m.sender !== "admin") return { ok: false, message: "Seuls les messages de l'équipe sont concernés." };
+
+  const outcome = await notifyNewMessage(ctx.admin, m.candidature_id as string, (m.body as string) ?? "");
+  await ctx.admin.from("candidature_messages").update({ notify_status: outcome }).eq("id", m.id as string);
+
+  if (outcome === "sent") return { ok: true, message: "Email de notification renvoyé." };
+  if (outcome === "skipped")
+    return { ok: false, message: "Ce candidat n'a pas d'email exploitable." };
+  return { ok: false, message: "L'email n'est toujours pas parti. Réessayez plus tard ou utilisez WhatsApp/le lien." };
 }
 
 /** Réponse postée par le CANDIDAT depuis le lien sécurisé (sans compte). Token-gated. */
@@ -554,6 +615,8 @@ export type ThreadMessage = {
   attachment_path: string | null;
   attachment_name: string | null;
   attachment_url?: string | null;
+  // État de la notification email (équipe→candidat) — info admin, jamais exposée au candidat.
+  notify_status?: "sent" | "failed" | "skipped" | null;
 };
 
 /** Charge la conversation pour le lien sécurisé (candidat), et marque les messages IPMD comme lus. */
