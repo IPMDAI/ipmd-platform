@@ -20,6 +20,7 @@ import {
   type DocStatusEntry,
 } from "@/lib/candidate-docs";
 import { CandidateDocRecap } from "@/components/espace/CandidateDocRecap";
+import { CandidateFollowUp } from "@/components/espace/CandidateFollowUp";
 import { MessageComposer } from "@/components/ui/MessageComposer";
 import { MessageText } from "@/components/ui/MessageText";
 import { teamMessageTemplates } from "@/lib/message-templates";
@@ -44,6 +45,8 @@ type Props = {
   provided: Record<DocKey, boolean>;
   requestedDocs: string[];
   docStatus: Record<string, DocStatusEntry>;
+  followUpAt: string | null;
+  followUpNote: string | null;
   messages: ThreadMessage[];
   unread: number;
   newDeposit: boolean;
@@ -168,6 +171,13 @@ export function CandidateContactTools(props: Props) {
             provided={props.provided}
             status={props.docStatus}
             requested={props.requestedDocs}
+          />
+
+          {/* Rappel de relance */}
+          <CandidateFollowUp
+            candidatureId={props.candidatureId}
+            followUpAt={props.followUpAt}
+            note={props.followUpNote}
           />
 
           {/* 2. Partager le lien sécurisé */}

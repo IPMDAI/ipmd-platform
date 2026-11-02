@@ -321,6 +321,33 @@ export async function markDocsReviewed(candidatureId: string): Promise<FormResul
   return { ok: true, message: "Pièces marquées comme vérifiées." };
 }
 
+/**
+ * Programme (ou efface) un RAPPEL DE RELANCE sur une candidature. `dateISO` null →
+ * efface (relance « faite »). Admin only, scopé, aucune autre donnée touchée.
+ */
+export async function setFollowUp(
+  candidatureId: string,
+  dateISO: string | null,
+  note?: string
+): Promise<FormResult> {
+  const ctx = await getAdminCtx();
+  if (!ctx) return { ok: false, message: "Action réservée à l'administration." };
+
+  const update: Record<string, unknown> = {
+    follow_up_at: dateISO || null,
+    follow_up_note: dateISO ? (note ?? "").trim() || null : null,
+  };
+  const { error } = await ctx.admin
+    .from("inscription_requests")
+    .update(update)
+    .eq("id", candidatureId);
+  if (error) return { ok: false, message: error.message };
+  return {
+    ok: true,
+    message: dateISO ? "Relance programmée." : "Relance marquée comme faite.",
+  };
+}
+
 /** Révoque le lien de dépôt : incrémente la version → tous les anciens liens deviennent invalides. */
 export async function revokeDossierLink(candidatureId: string): Promise<FormResult> {
   const ctx = await getAdminCtx();

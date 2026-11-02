@@ -76,9 +76,9 @@ function toPanelScholarship(s: ScholarshipAdmin | undefined) {
 export default async function CandidaturesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ statut?: string; type?: string; univers?: string }>;
+  searchParams: Promise<{ statut?: string; type?: string; univers?: string; relance?: string }>;
 }) {
-  const { statut, type, univers } = await searchParams;
+  const { statut, type, univers, relance } = await searchParams;
   // Accès : super_admin OU staff `view_candidatures` (≥1 univers). admin legacy exclu.
   const access = await requireCandidaturesAccess();
   if (!access) redirect("/espace");
@@ -89,7 +89,7 @@ export default async function CandidaturesPage({
     supabase
       .from("inscription_requests")
       .select(
-        "id, full_name, email, phone, whatsapp, universe, program_interest, entry_level, last_education, last_diploma, message, created_at, status, desired_role, doc_diploma, doc_bulletins, doc_id, doc_attestation, doc_cv, mode, catalog_offering_id, requested_docs, docs_submitted_at, docs_reviewed_at, dossier_token_version, doc_status"
+        "id, full_name, email, phone, whatsapp, universe, program_interest, entry_level, last_education, last_diploma, message, created_at, status, desired_role, doc_diploma, doc_bulletins, doc_id, doc_attestation, doc_cv, mode, catalog_offering_id, requested_docs, docs_submitted_at, docs_reviewed_at, dossier_token_version, doc_status, follow_up_at, follow_up_note"
       )
       .order("created_at", { ascending: false }),
     supabase
@@ -385,20 +385,29 @@ export default async function CandidaturesPage({
     if (c.status === "nouveau") newByUniv[c.universe] = (newByUniv[c.universe] ?? 0) + 1;
   }
 
+  // Rappel de relance : dossiers « à relancer » = follow_up_at <= maintenant.
+  const nowMs = Date.now();
+  const isDue = (c: { follow_up_at?: string | null }) =>
+    !!c.follow_up_at && new Date(c.follow_up_at).getTime() <= nowMs;
+  const activeRelance = relance === "due";
+  const relanceDueCount = all.filter((c) => isDue(c as { follow_up_at?: string | null })).length;
+
   const candidatures = all.filter(
     (c) =>
       (!active || c.status === active) &&
       (!activeType || typeOf(c.universe) === activeType) &&
-      (!activeUniv || c.universe === activeUniv)
+      (!activeUniv || c.universe === activeUniv) &&
+      (!activeRelance || isDue(c as { follow_up_at?: string | null }))
   );
 
   // Construit une URL de filtre en conservant les autres filtres actifs.
-  const buildHref = (o: { statut?: string; type?: string; univers?: string }) => {
-    const m = { statut: active, type: activeType, univers: activeUniv, ...o };
+  const buildHref = (o: { statut?: string; type?: string; univers?: string; relance?: string }) => {
+    const m = { statut: active, type: activeType, univers: activeUniv, relance: activeRelance ? "due" : "", ...o };
     const qs = new URLSearchParams();
     if (m.statut) qs.set("statut", m.statut);
     if (m.type) qs.set("type", m.type);
     if (m.univers) qs.set("univers", m.univers);
+    if (m.relance) qs.set("relance", m.relance);
     const s = qs.toString();
     return s ? `/espace/candidatures?${s}` : "/espace/candidatures";
   };
@@ -552,6 +561,18 @@ export default async function CandidaturesPage({
             {CANDIDATURE_STATUSES.map((s) =>
               tab(s.value, s.label, counts[s.value] ?? 0)
             )}
+            {(relanceDueCount > 0 || activeRelance) && (
+              <Link
+                href={buildHref({ relance: activeRelance ? "" : "due" })}
+                className={`rounded-full px-3 py-1.5 text-sm font-semibold transition-colors ${
+                  activeRelance
+                    ? "bg-ipmd-red text-white"
+                    : "bg-ipmd-red/10 text-ipmd-red hover:bg-ipmd-red/20"
+                }`}
+              >
+                ⏰ À relancer {relanceDueCount}
+              </Link>
+            )}
           </div>
 
           {candidatures.length === 0 ? (
@@ -574,7 +595,21 @@ export default async function CandidaturesPage({
                     <h2 className="text-lg font-bold text-ipmd-black">
                       {c.full_name}
                     </h2>
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-wrap items-center gap-2">
+                      {(() => {
+                        const f = (c as { follow_up_at?: string | null }).follow_up_at;
+                        if (!f) return null;
+                        const due = new Date(f).getTime() <= Date.now();
+                        return (
+                          <span
+                            className={`rounded-full px-2 py-1 text-[10px] font-bold ${
+                              due ? "bg-ipmd-red text-white" : "bg-amber-100 text-amber-800"
+                            }`}
+                          >
+                            ⏰ {due ? "À relancer" : new Date(f).toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit" })}
+                          </span>
+                        );
+                      })()}
                       <span
                         className={`rounded-full px-2.5 py-1 text-[11px] font-bold ${candidatureBadgeClass(
                           c.status
@@ -748,6 +783,8 @@ export default async function CandidaturesPage({
                         docs_reviewed_at?: string | null;
                         dossier_token_version?: number | null;
                         doc_status?: Record<string, { status?: string; reason?: string | null }> | null;
+                        follow_up_at?: string | null;
+                        follow_up_note?: string | null;
                       };
                       const sub = cc.docs_submitted_at ?? null;
                       const rev = cc.docs_reviewed_at ?? null;
@@ -770,6 +807,8 @@ export default async function CandidaturesPage({
                           }}
                           requestedDocs={cc.requested_docs ?? []}
                           docStatus={cc.doc_status ?? {}}
+                          followUpAt={cc.follow_up_at ?? null}
+                          followUpNote={cc.follow_up_note ?? null}
                           messages={msgsByCand.get(c.id) ?? []}
                           unread={unreadByCand.get(c.id) ?? 0}
                           newDeposit={newDeposit}
