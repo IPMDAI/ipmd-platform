@@ -20,6 +20,7 @@ import {
 } from "@/lib/candidate-docs";
 import { MessageComposer } from "@/components/ui/MessageComposer";
 import { MessageText } from "@/components/ui/MessageText";
+import { teamMessageTemplates } from "@/lib/message-templates";
 
 function time(iso: string): string {
   return new Date(iso).toLocaleString("fr-FR", {
@@ -240,6 +241,7 @@ export function CandidateContactTools(props: Props) {
                         <MessageText body={m.body} className="leading-relaxed" />
                         <p className={`mt-1 text-[9px] ${fromTeam ? "text-black/40" : "text-white/50"}`}>
                           {fromTeam ? m.author_name || "IPMD" : "Candidat"} · {time(m.created_at)}
+                          {fromTeam && (m.read_at ? " · ✓ Lu" : " · Envoyé")}
                           {isUnread && " · 🔴"}
                         </p>
                       </div>
@@ -257,14 +259,16 @@ export function CandidateContactTools(props: Props) {
                 onChange={setReply}
                 placeholder="Répondre au candidat…"
                 maxLength={4000}
+                templates={teamMessageTemplates({ firstName, program: props.program })}
+                onSubmit={() => {
+                  if (reply.trim())
+                    run(() => sendCandidateMessage(props.candidatureId, reply.trim()), true);
+                }}
               />
               <button
                 type="button"
                 disabled={pending || reply.trim().length === 0}
-                onClick={() => {
-                  const text = reply.trim();
-                  run(() => sendCandidateMessage(props.candidatureId, text), true);
-                }}
+                onClick={() => run(() => sendCandidateMessage(props.candidatureId, reply.trim()), true)}
                 className={`${btn} mt-1.5 bg-ipmd-red text-white hover:opacity-90`}
               >
                 Envoyer le message

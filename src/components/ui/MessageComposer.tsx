@@ -7,16 +7,24 @@ import { useEffect, useRef } from "react";
  * (rien ne se cache), avec une barre d'outils minimale (Gras) et le support des
  * retours à la ligne / listes (1. 2. 3.). `value` est stocké par le parent.
  */
+export type ComposerTemplate = { label: string; text: string };
+
 export function MessageComposer({
   value,
   onChange,
   placeholder,
   maxLength,
+  templates,
+  onSubmit,
 }: {
   value: string;
   onChange: (v: string) => void;
   placeholder?: string;
   maxLength?: number;
+  /** Modèles insérés en 1 clic (remplacent le contenu, éditable ensuite). */
+  templates?: ComposerTemplate[];
+  /** Appelé sur Ctrl/⌘ + Entrée (envoi rapide). */
+  onSubmit?: () => void;
 }) {
   const ref = useRef<HTMLTextAreaElement>(null);
 
@@ -47,6 +55,21 @@ export function MessageComposer({
 
   return (
     <div>
+      {templates && templates.length > 0 && (
+        <div className="mb-2 flex flex-wrap gap-1.5">
+          {templates.map((t) => (
+            <button
+              key={t.label}
+              type="button"
+              onClick={() => onChange(maxLength ? t.text.slice(0, maxLength) : t.text)}
+              className="rounded-full bg-ipmd-light px-2.5 py-1 text-[11px] font-semibold text-ipmd-black ring-1 ring-black/10 transition-colors hover:ring-ipmd-red/40"
+              title="Insérer ce modèle (éditable ensuite)"
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
+      )}
       <div className="mb-1 flex flex-wrap items-center gap-2">
         <button
           type="button"
@@ -58,6 +81,7 @@ export function MessageComposer({
         </button>
         <span className="text-[10px] text-black/40">
           **gras** · Entrée = nouvelle ligne (listes 1. 2. 3.)
+          {onSubmit ? " · Ctrl+Entrée = envoyer" : ""}
         </span>
       </div>
       <textarea
@@ -65,6 +89,12 @@ export function MessageComposer({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         onInput={grow}
+        onKeyDown={(e) => {
+          if (onSubmit && (e.ctrlKey || e.metaKey) && e.key === "Enter") {
+            e.preventDefault();
+            onSubmit();
+          }
+        }}
         maxLength={maxLength}
         placeholder={placeholder}
         rows={3}

@@ -461,6 +461,7 @@ export default async function CandidaturesPage({
         body: m.body as string,
         author_name: (m.author_name as string | null) ?? null,
         created_at: m.created_at as string,
+        read_at: (m.read_at as string | null) ?? null,
       });
       msgsByCand.set(cid, arr);
       if (m.sender === "candidate" && !m.read_at) {

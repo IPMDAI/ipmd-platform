@@ -361,6 +361,7 @@ export type ThreadMessage = {
   body: string;
   author_name: string | null;
   created_at: string;
+  read_at: string | null;
 };
 
 /** Charge la conversation pour le lien sécurisé (candidat), et marque les messages IPMD comme lus. */
@@ -371,7 +372,7 @@ export async function loadCandidateThread(
   if (!r.ok) return { ok: false, reason: r.reason };
   const { data } = await r.admin
     .from("candidature_messages")
-    .select("id, sender, body, author_name, created_at")
+    .select("id, sender, body, author_name, created_at, read_at")
     .eq("candidature_id", r.candidatureId)
     .order("created_at", { ascending: true });
   // Les messages de l'équipe sont marqués lus (le candidat vient de les ouvrir).

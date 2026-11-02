@@ -50,6 +50,7 @@ export function DossierConversation({
         body: text,
         author_name: null,
         created_at: new Date().toISOString(),
+        read_at: null,
       },
     ]);
     setBody("");
@@ -94,6 +95,9 @@ export function DossierConversation({
           onChange={setBody}
           placeholder="Écrire un message à l'IPMD…"
           maxLength={4000}
+          onSubmit={() => {
+            if (!pending) send();
+          }}
         />
         {err && <p className="mt-1 text-sm font-medium text-ipmd-red">{err}</p>}
         <button
