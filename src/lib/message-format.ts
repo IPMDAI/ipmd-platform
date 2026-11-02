@@ -14,7 +14,9 @@ export function escapeMessageHtml(s: string): string {
 }
 
 export function renderMessageHtml(body: string): string {
-  // Échappement d'abord → on n'injecte ensuite QUE la balise <strong>.
+  // Échappement d'abord → on n'injecte ensuite QUE <strong>/<em> (contenu neutralisé).
   const esc = escapeMessageHtml(body);
-  return esc.replace(/\*\*([^*\n]+?)\*\*/g, "<strong>$1</strong>");
+  return esc
+    .replace(/\*\*([^*\n]+?)\*\*/g, "<strong>$1</strong>") // **gras**
+    .replace(/\*([^*\n]+?)\*/g, "<em>$1</em>"); // *italique* (après le gras : plus de ** restants)
 }

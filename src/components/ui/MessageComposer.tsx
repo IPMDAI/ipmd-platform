@@ -2,13 +2,14 @@
 
 import { useEffect, useRef } from "react";
 
-/**
- * Zone de saisie de message AUTO-EXTENSIBLE : le champ grandit pendant la frappe
- * (rien ne se cache), avec une barre d'outils minimale (Gras) et le support des
- * retours à la ligne / listes (1. 2. 3.). `value` est stocké par le parent.
- */
 export type ComposerTemplate = { label: string; text: string };
 
+/**
+ * Zone de saisie de message AUTO-EXTENSIBLE (rien ne se cache) avec mise en forme
+ * légère (gras **…**, italique *…*, puces, numérotation), retours à la ligne / listes
+ * préservés, modèles en 1 clic, brouillon automatique (par `draftKey`) et envoi
+ * rapide Ctrl/⌘ + Entrée. `value` est stocké par le parent.
+ */
 export function MessageComposer({
   value,
   onChange,
@@ -16,17 +17,19 @@ export function MessageComposer({
   maxLength,
   templates,
   onSubmit,
+  draftKey,
 }: {
   value: string;
   onChange: (v: string) => void;
   placeholder?: string;
   maxLength?: number;
-  /** Modèles insérés en 1 clic (remplacent le contenu, éditable ensuite). */
   templates?: ComposerTemplate[];
-  /** Appelé sur Ctrl/⌘ + Entrée (envoi rapide). */
   onSubmit?: () => void;
+  /** Clé de brouillon (localStorage) : restaure le message en cours par fiche. */
+  draftKey?: string;
 }) {
   const ref = useRef<HTMLTextAreaElement>(null);
+  const hydrated = useRef(false);
 
   function grow() {
     const el = ref.current;
@@ -35,23 +38,76 @@ export function MessageComposer({
     el.style.height = `${Math.min(el.scrollHeight, 360)}px`;
   }
 
-  // Ajuste la hauteur quand la valeur change (frappe, insertion de gras, reset).
   useEffect(grow, [value]);
 
-  function insertBold() {
+  // Brouillon : au montage, restaure si le champ est vide ; ensuite, sauvegarde/efface.
+  useEffect(() => {
+    if (!draftKey || hydrated.current) return;
+    hydrated.current = true;
+    try {
+      const saved = localStorage.getItem(draftKey);
+      if (saved && !value) onChange(saved);
+    } catch {
+      /* localStorage indisponible */
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [draftKey]);
+
+  useEffect(() => {
+    if (!draftKey || !hydrated.current) return;
+    try {
+      if (value) localStorage.setItem(draftKey, value);
+      else localStorage.removeItem(draftKey);
+    } catch {
+      /* ignore */
+    }
+  }, [value, draftKey]);
+
+  function clamp(s: string) {
+    return maxLength ? s.slice(0, maxLength) : s;
+  }
+
+  /** Entoure la sélection d'un marqueur (** gras, * italique). */
+  function wrap(marker: string) {
     const el = ref.current;
     if (!el) return;
     const s = el.selectionStart ?? value.length;
     const e = el.selectionEnd ?? value.length;
     const sel = value.slice(s, e) || "texte";
-    const next = `${value.slice(0, s)}**${sel}**${value.slice(e)}`;
-    onChange(maxLength ? next.slice(0, maxLength) : next);
+    const next = `${value.slice(0, s)}${marker}${sel}${marker}${value.slice(e)}`;
+    onChange(clamp(next));
     requestAnimationFrame(() => {
       el.focus();
-      el.setSelectionRange(s + 2, s + 2 + sel.length);
+      el.setSelectionRange(s + marker.length, s + marker.length + sel.length);
       grow();
     });
   }
+
+  /** Préfixe chaque ligne de la sélection (puce « • » ou numérotation « 1. »). */
+  function prefixLines(kind: "bullet" | "number") {
+    const el = ref.current;
+    if (!el) return;
+    const s = el.selectionStart ?? value.length;
+    const e = el.selectionEnd ?? value.length;
+    const lineStart = value.lastIndexOf("\n", s - 1) + 1;
+    let lineEnd = value.indexOf("\n", e);
+    if (lineEnd === -1) lineEnd = value.length;
+    const block = value.slice(lineStart, lineEnd) || "élément";
+    const lines = block.split("\n");
+    const out = lines
+      .map((l, i) => (kind === "bullet" ? `• ${l}` : `${i + 1}. ${l}`))
+      .join("\n");
+    const next = value.slice(0, lineStart) + out + value.slice(lineEnd);
+    onChange(clamp(next));
+    requestAnimationFrame(() => {
+      el.focus();
+      el.setSelectionRange(lineStart, lineStart + out.length);
+      grow();
+    });
+  }
+
+  const toolBtn =
+    "rounded-md bg-ipmd-light px-2 py-1 text-xs text-ipmd-black ring-1 ring-black/10 transition-colors hover:ring-ipmd-red/40";
 
   return (
     <div>
@@ -61,7 +117,7 @@ export function MessageComposer({
             <button
               key={t.label}
               type="button"
-              onClick={() => onChange(maxLength ? t.text.slice(0, maxLength) : t.text)}
+              onClick={() => onChange(clamp(t.text))}
               className="rounded-full bg-ipmd-light px-2.5 py-1 text-[11px] font-semibold text-ipmd-black ring-1 ring-black/10 transition-colors hover:ring-ipmd-red/40"
               title="Insérer ce modèle (éditable ensuite)"
             >
@@ -70,18 +126,21 @@ export function MessageComposer({
           ))}
         </div>
       )}
-      <div className="mb-1 flex flex-wrap items-center gap-2">
-        <button
-          type="button"
-          onClick={insertBold}
-          className="rounded-md bg-ipmd-light px-2 py-1 text-xs font-bold text-ipmd-black ring-1 ring-black/10 transition-colors hover:ring-ipmd-red/40"
-          title="Mettre en gras"
-        >
+      <div className="mb-1 flex flex-wrap items-center gap-1.5">
+        <button type="button" onClick={() => wrap("**")} className={`${toolBtn} font-bold`} title="Gras">
           B
         </button>
+        <button type="button" onClick={() => wrap("*")} className={`${toolBtn} italic`} title="Italique">
+          I
+        </button>
+        <button type="button" onClick={() => prefixLines("bullet")} className={toolBtn} title="Puces">
+          • Liste
+        </button>
+        <button type="button" onClick={() => prefixLines("number")} className={toolBtn} title="Numérotation">
+          1. Liste
+        </button>
         <span className="text-[10px] text-black/40">
-          **gras** · Entrée = nouvelle ligne (listes 1. 2. 3.)
-          {onSubmit ? " · Ctrl+Entrée = envoyer" : ""}
+          **gras** · *italique*{onSubmit ? " · Ctrl+Entrée = envoyer" : ""}
         </span>
       </div>
       <textarea

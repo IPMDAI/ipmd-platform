@@ -259,6 +259,7 @@ export function CandidateContactTools(props: Props) {
                 onChange={setReply}
                 placeholder="Répondre au candidat…"
                 maxLength={4000}
+                draftKey={`ipmd-msgdraft-${props.candidatureId}`}
                 templates={teamMessageTemplates({ firstName, program: props.program })}
                 onSubmit={() => {
                   if (reply.trim())

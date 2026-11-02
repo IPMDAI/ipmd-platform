@@ -95,6 +95,7 @@ export function DossierConversation({
           onChange={setBody}
           placeholder="Écrire un message à l'IPMD…"
           maxLength={4000}
+          draftKey="ipmd-dossier-msgdraft"
           onSubmit={() => {
             if (!pending) send();
           }}

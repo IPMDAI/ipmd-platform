@@ -26,3 +26,14 @@ test("4. retours à la ligne / listes préservés tels quels (rendus par white-s
 test("5. ** non fermé → laissé tel quel", () => {
   assert.equal(renderMessageHtml("texte ** incomplet"), "texte ** incomplet");
 });
+
+test("6. *italique* → <em>", () => {
+  assert.equal(renderMessageHtml("un mot *important* ici"), "un mot <em>important</em> ici");
+});
+
+test("7. gras + italique combinés", () => {
+  assert.equal(
+    renderMessageHtml("**gras** et *italique*"),
+    "<strong>gras</strong> et <em>italique</em>"
+  );
+});
