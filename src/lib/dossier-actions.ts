@@ -369,6 +369,34 @@ export async function revokeDossierLink(candidatureId: string): Promise<FormResu
 
 // ───────────────────────────── CONVERSATION ─────────────────────────────
 
+// ───────────────────────────── NOTES INTERNES (équipe) ─────────────────────────────
+
+export type NoteItem = { id: string; body: string; author_name: string | null; created_at: string };
+
+/** Ajoute une note INTERNE (jamais vue du candidat). Admin only. */
+export async function addCandidateNote(candidatureId: string, body: string): Promise<FormResult> {
+  const ctx = await getAdminCtx();
+  if (!ctx) return { ok: false, message: "Action réservée à l'administration." };
+  const text = (body ?? "").trim();
+  if (!text) return { ok: false, message: "Note vide." };
+  const { error } = await ctx.admin.from("candidature_notes").insert({
+    candidature_id: candidatureId,
+    body: text,
+    author_name: ctx.name,
+  });
+  if (error) return { ok: false, message: error.message };
+  return { ok: true, message: "Note ajoutée." };
+}
+
+/** Supprime une note interne. Admin only. */
+export async function deleteCandidateNote(noteId: string): Promise<FormResult> {
+  const ctx = await getAdminCtx();
+  if (!ctx) return { ok: false, message: "Action réservée à l'administration." };
+  const { error } = await ctx.admin.from("candidature_notes").delete().eq("id", noteId);
+  if (error) return { ok: false, message: error.message };
+  return { ok: true, message: "Note supprimée." };
+}
+
 /** Message posté par l'ÉQUIPE au candidat (+ email best-effort l'invitant à répondre via le lien). */
 export async function sendCandidateMessage(
   candidatureId: string,

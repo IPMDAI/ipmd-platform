@@ -9,7 +9,10 @@ import {
   sendCandidateMessage,
   markCandidateMessagesRead,
   markDocsReviewed,
+  addCandidateNote,
+  deleteCandidateNote,
   type ThreadMessage,
+  type NoteItem,
 } from "@/lib/dossier-actions";
 import {
   CANDIDATE_DOCS,
@@ -48,6 +51,7 @@ type Props = {
   followUpAt: string | null;
   followUpNote: string | null;
   messages: ThreadMessage[];
+  notes: NoteItem[];
   unread: number;
   newDeposit: boolean;
   submittedAt: string | null;
@@ -69,6 +73,7 @@ export function CandidateContactTools(props: Props) {
   const selectedKeys = CANDIDATE_DOCS.filter((d) => checked[d.key]).map((d) => d.key);
 
   const [reply, setReply] = useState("");
+  const [noteDraft, setNoteDraft] = useState("");
 
   const firstName = (props.name || "").split(" ")[0] || "";
   const waText =
@@ -97,6 +102,20 @@ export function CandidateContactTools(props: Props) {
     } catch {
       setMsg({ ok: false, text: "Copie impossible — sélectionnez le lien manuellement." });
     }
+  }
+
+  function addNote() {
+    const text = noteDraft.trim();
+    if (!text) return;
+    setMsg(null);
+    start(async () => {
+      const res = await addCandidateNote(props.candidatureId, text);
+      setMsg({ ok: res.ok, text: res.message });
+      if (res.ok) {
+        setNoteDraft("");
+        router.refresh();
+      }
+    });
   }
 
   const btn =
@@ -179,6 +198,53 @@ export function CandidateContactTools(props: Props) {
             followUpAt={props.followUpAt}
             note={props.followUpNote}
           />
+
+          {/* Notes internes — équipe uniquement, jamais vues du candidat */}
+          <div className="rounded-xl bg-amber-50/70 p-3 ring-1 ring-amber-200">
+            <p className="text-[11px] font-bold uppercase tracking-wide text-amber-800">
+              🔒 Notes internes — jamais vues du candidat
+            </p>
+            {props.notes.length > 0 && (
+              <ul className="mt-2 space-y-2">
+                {props.notes.map((nt) => (
+                  <li key={nt.id} className="rounded-lg bg-white p-2.5 ring-1 ring-amber-100">
+                    <MessageText body={nt.body} className="text-xs text-ipmd-black" />
+                    <div className="mt-1 flex items-center justify-between gap-2">
+                      <span className="text-[9px] text-black/40">
+                        {nt.author_name || "Équipe"} · {time(nt.created_at)}
+                      </span>
+                      <button
+                        type="button"
+                        disabled={pending}
+                        onClick={() => run(() => deleteCandidateNote(nt.id))}
+                        className="text-[10px] font-semibold text-ipmd-red hover:underline"
+                      >
+                        Supprimer
+                      </button>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+            <div className="mt-2">
+              <MessageComposer
+                value={noteDraft}
+                onChange={setNoteDraft}
+                placeholder="Note interne (préparer le suivi du candidat)…"
+                maxLength={4000}
+                draftKey={`ipmd-notedraft-${props.candidatureId}`}
+                onSubmit={addNote}
+              />
+              <button
+                type="button"
+                disabled={pending || noteDraft.trim().length === 0}
+                onClick={addNote}
+                className={`${btn} mt-1.5 bg-amber-600 text-white hover:opacity-90`}
+              >
+                + Ajouter la note
+              </button>
+            </div>
+          </div>
 
           {/* 2. Partager le lien sécurisé */}
           <div>

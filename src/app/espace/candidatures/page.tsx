@@ -13,7 +13,7 @@ import { AdmissionDeadlineAdmin } from "@/components/espace/AdmissionDeadlineAdm
 import { validateScheduleSnapshot } from "@/lib/admission-schedule";
 import { loadScholarshipsAdminForCandidatures, type ScholarshipAdmin } from "@/lib/scholarship-data";
 import { CandidateContactTools } from "@/components/espace/CandidateContactTools";
-import type { ThreadMessage } from "@/lib/dossier-actions";
+import type { ThreadMessage, NoteItem } from "@/lib/dossier-actions";
 import { CandidatureSearch } from "@/components/espace/CandidatureSearch";
 import { AdmissionPackAdmin } from "@/components/espace/AdmissionPackAdmin";
 import { LETTERS_ENABLED, TEST_MODE } from "@/lib/admission-config";
@@ -479,6 +479,30 @@ export default async function CandidaturesPage({
     }
   }
 
+  // Notes internes (équipe uniquement), chargées en lot (service-role).
+  const notesByCand = new Map<string, NoteItem[]>();
+  if (admin && isSuper && candidatures.length > 0) {
+    const { data: noteRows } = await admin
+      .from("candidature_notes")
+      .select("id, candidature_id, body, author_name, created_at")
+      .in(
+        "candidature_id",
+        candidatures.map((c) => c.id)
+      )
+      .order("created_at", { ascending: true });
+    for (const n of noteRows ?? []) {
+      const cid = n.candidature_id as string;
+      const arr = notesByCand.get(cid) ?? [];
+      arr.push({
+        id: n.id as string,
+        body: n.body as string,
+        author_name: (n.author_name as string | null) ?? null,
+        created_at: n.created_at as string,
+      });
+      notesByCand.set(cid, arr);
+    }
+  }
+
   const tab = (key: string, label: string, count: number) => {
     const on = active === key || (!active && key === "");
     return (
@@ -810,6 +834,7 @@ export default async function CandidaturesPage({
                           followUpAt={cc.follow_up_at ?? null}
                           followUpNote={cc.follow_up_note ?? null}
                           messages={msgsByCand.get(c.id) ?? []}
+                          notes={notesByCand.get(c.id) ?? []}
                           unread={unreadByCand.get(c.id) ?? 0}
                           newDeposit={newDeposit}
                           submittedAt={sub}
