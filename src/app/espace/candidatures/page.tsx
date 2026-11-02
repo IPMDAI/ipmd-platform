@@ -13,7 +13,7 @@ import { AdmissionDeadlineAdmin } from "@/components/espace/AdmissionDeadlineAdm
 import { validateScheduleSnapshot } from "@/lib/admission-schedule";
 import { loadScholarshipsAdminForCandidatures, type ScholarshipAdmin } from "@/lib/scholarship-data";
 import { CandidateContactTools } from "@/components/espace/CandidateContactTools";
-import type { ThreadMessage, NoteItem } from "@/lib/dossier-actions";
+import type { ThreadMessage, NoteItem, MessageTemplateRow } from "@/lib/dossier-actions";
 import { CandidatureSearch } from "@/components/espace/CandidatureSearch";
 import { AdmissionPackAdmin } from "@/components/espace/AdmissionPackAdmin";
 import { LETTERS_ENABLED, TEST_MODE } from "@/lib/admission-config";
@@ -503,6 +503,20 @@ export default async function CandidaturesPage({
     }
   }
 
+  // Modèles de messages personnalisés (équipe), chargés une fois (service-role).
+  let customTemplates: MessageTemplateRow[] = [];
+  if (admin && isSuper) {
+    const { data: tpl } = await admin
+      .from("message_templates")
+      .select("id, title, body")
+      .order("created_at", { ascending: false });
+    customTemplates = (tpl ?? []).map((t) => ({
+      id: t.id as string,
+      title: t.title as string,
+      body: t.body as string,
+    }));
+  }
+
   const tab = (key: string, label: string, count: number) => {
     const on = active === key || (!active && key === "");
     return (
@@ -555,6 +569,14 @@ export default async function CandidaturesPage({
             Pipeline d&apos;inscription : traite chaque demande de Nouveau à
             Inscrit.
           </p>
+          {isSuper && (
+            <Link
+              href="/espace/modeles-messages"
+              className="mt-2 inline-flex items-center gap-1 rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-ipmd-black ring-1 ring-black/10 transition-colors hover:ring-ipmd-red/40"
+            >
+              💬 Modèles de messages
+            </Link>
+          )}
 
           {/* Recherche (nom, email, téléphone, filière) — se combine aux filtres */}
           <CandidatureSearch />
@@ -835,6 +857,7 @@ export default async function CandidaturesPage({
                           followUpNote={cc.follow_up_note ?? null}
                           messages={msgsByCand.get(c.id) ?? []}
                           notes={notesByCand.get(c.id) ?? []}
+                          customTemplates={customTemplates}
                           unread={unreadByCand.get(c.id) ?? 0}
                           newDeposit={newDeposit}
                           submittedAt={sub}

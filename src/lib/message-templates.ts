@@ -4,6 +4,16 @@
  */
 export type MessageTemplate = { label: string; text: string };
 
+/** Remplit les variables d'un modèle personnalisé : {prenom}, {programme}. */
+export function fillTemplate(
+  body: string,
+  ctx: { firstName?: string | null; program?: string | null }
+): string {
+  return (body ?? "")
+    .replace(/\{prenom\}/gi, (ctx.firstName || "").trim() || "Bonjour")
+    .replace(/\{programme\}/gi, (ctx.program || "").trim());
+}
+
 export function teamMessageTemplates(ctx: {
   firstName?: string | null;
   program?: string | null;

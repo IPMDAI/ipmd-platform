@@ -13,6 +13,7 @@ import {
   deleteCandidateNote,
   type ThreadMessage,
   type NoteItem,
+  type MessageTemplateRow,
 } from "@/lib/dossier-actions";
 import {
   CANDIDATE_DOCS,
@@ -26,7 +27,7 @@ import { CandidateDocRecap } from "@/components/espace/CandidateDocRecap";
 import { CandidateFollowUp } from "@/components/espace/CandidateFollowUp";
 import { MessageComposer } from "@/components/ui/MessageComposer";
 import { MessageText } from "@/components/ui/MessageText";
-import { teamMessageTemplates } from "@/lib/message-templates";
+import { teamMessageTemplates, fillTemplate } from "@/lib/message-templates";
 
 function time(iso: string): string {
   return new Date(iso).toLocaleString("fr-FR", {
@@ -52,6 +53,7 @@ type Props = {
   followUpNote: string | null;
   messages: ThreadMessage[];
   notes: NoteItem[];
+  customTemplates: MessageTemplateRow[];
   unread: number;
   newDeposit: boolean;
   submittedAt: string | null;
@@ -76,6 +78,13 @@ export function CandidateContactTools(props: Props) {
   const [noteDraft, setNoteDraft] = useState("");
 
   const firstName = (props.name || "").split(" ")[0] || "";
+  const allTemplates = [
+    ...teamMessageTemplates({ firstName, program: props.program }),
+    ...props.customTemplates.map((t) => ({
+      label: t.title,
+      text: fillTemplate(t.body, { firstName, program: props.program }),
+    })),
+  ];
   const waText =
     selectedKeys.length > 0
       ? buildDocsWhatsappText({ firstName, program: props.program, docKeys: selectedKeys, link: props.link })
@@ -347,7 +356,7 @@ export function CandidateContactTools(props: Props) {
                 placeholder="Répondre au candidat…"
                 maxLength={4000}
                 draftKey={`ipmd-msgdraft-${props.candidatureId}`}
-                templates={teamMessageTemplates({ firstName, program: props.program })}
+                templates={allTemplates}
                 onSubmit={() => {
                   if (reply.trim())
                     run(() => sendCandidateMessage(props.candidatureId, reply.trim()), true);

@@ -369,6 +369,50 @@ export async function revokeDossierLink(candidatureId: string): Promise<FormResu
 
 // ───────────────────────────── CONVERSATION ─────────────────────────────
 
+// ───────────────────────────── MODÈLES PERSONNALISABLES ─────────────────────────────
+
+export type MessageTemplateRow = { id: string; title: string; body: string };
+
+/** Crée un modèle de message personnalisé (équipe). Admin only. */
+export async function createMessageTemplate(title: string, body: string): Promise<FormResult> {
+  const ctx = await getAdminCtx();
+  if (!ctx) return { ok: false, message: "Action réservée à l'administration." };
+  const t = (title ?? "").trim();
+  const b = (body ?? "").trim();
+  if (!t || !b) return { ok: false, message: "Titre et message requis." };
+  const { error } = await ctx.admin.from("message_templates").insert({ title: t, body: b });
+  if (error) return { ok: false, message: error.message };
+  return { ok: true, message: "Modèle créé." };
+}
+
+/** Met à jour un modèle. Admin only. */
+export async function updateMessageTemplate(
+  id: string,
+  title: string,
+  body: string
+): Promise<FormResult> {
+  const ctx = await getAdminCtx();
+  if (!ctx) return { ok: false, message: "Action réservée à l'administration." };
+  const t = (title ?? "").trim();
+  const b = (body ?? "").trim();
+  if (!t || !b) return { ok: false, message: "Titre et message requis." };
+  const { error } = await ctx.admin
+    .from("message_templates")
+    .update({ title: t, body: b, updated_at: new Date().toISOString() })
+    .eq("id", id);
+  if (error) return { ok: false, message: error.message };
+  return { ok: true, message: "Modèle mis à jour." };
+}
+
+/** Supprime un modèle. Admin only. */
+export async function deleteMessageTemplate(id: string): Promise<FormResult> {
+  const ctx = await getAdminCtx();
+  if (!ctx) return { ok: false, message: "Action réservée à l'administration." };
+  const { error } = await ctx.admin.from("message_templates").delete().eq("id", id);
+  if (error) return { ok: false, message: error.message };
+  return { ok: true, message: "Modèle supprimé." };
+}
+
 // ───────────────────────────── NOTES INTERNES (équipe) ─────────────────────────────
 
 export type NoteItem = { id: string; body: string; author_name: string | null; created_at: string };
