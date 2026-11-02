@@ -6,12 +6,15 @@ import { createUploadTicket } from "@/lib/upload-actions";
 import { completeDossier } from "@/lib/dossier-actions";
 import { ActionButton } from "@/components/ui/Button";
 import { Field } from "./FormField";
+import type { DocKey } from "@/lib/candidate-docs";
 import type { FormResult } from "@/types";
 
 const MAX_FILE = 15 * 1024 * 1024;
 
 type UploadReason = "ok" | "vide" | "trop-lourd" | "echec";
 type UploadResult = { path: string | null; reason: UploadReason };
+
+export type DossierDocField = { key: DocKey; label: string; required: boolean; provided: boolean };
 
 async function uploadDoc(
   supabase: NonNullable<ReturnType<typeof createClient>>,
@@ -23,8 +26,6 @@ async function uploadDoc(
   if (file.size > MAX_FILE) return { path: null, reason: "trop-lourd" };
   const ext = (file.name.split(".").pop() || "bin").toLowerCase().replace(/[^a-z0-9]/g, "");
   const path = `${folder}/${key}.${ext}`;
-  // Ticket d'upload signé (serveur, clé service_role) → envoi direct au stockage,
-  // contourne la RLS sans faire transiter le fichier par le serveur.
   const token = await createUploadTicket(path);
   if (!token) return { path: null, reason: "echec" };
   const { error } = await supabase.storage
@@ -37,19 +38,17 @@ const fileInput =
   "block w-full cursor-pointer rounded-xl border border-dashed border-black/25 bg-white px-3 py-3 text-sm text-black/55 shadow-sm transition-colors hover:border-ipmd-red/50 file:mr-3 file:cursor-pointer file:rounded-full file:border-0 file:bg-ipmd-red file:px-3 file:py-1.5 file:text-sm file:font-semibold file:text-white";
 
 /**
- * Formulaire public « Compléter mon dossier » : le candidat dépose son diplôme
- * et sa pièce d'identité (et éventuellement ses bulletins). Upload direct vers
- * le bucket candidature-docs (comme le formulaire d'admission), puis on
- * transmet les chemins à l'action serveur qui les rattache à la candidature.
+ * Formulaire public « Compléter mon dossier » : un champ par pièce DEMANDÉE.
+ * Les pièces déjà fournies sont optionnelles (remplacement) ; les manquantes
+ * requises. Upload direct vers le bucket candidature-docs, puis chemins transmis
+ * à l'action serveur (jeton vérifié côté serveur : signature + expiration + révocation).
  */
 export function DossierUploadForm({
   token,
-  needsDiploma,
-  needsId,
+  docs,
 }: {
   token: string;
-  needsDiploma: boolean;
-  needsId: boolean;
+  docs: DossierDocField[];
 }) {
   const [state, setState] = useState<FormResult | null>(null);
   const [pending, setPending] = useState(false);
@@ -69,25 +68,24 @@ export function DossierUploadForm({
       }
 
       const folder = crypto.randomUUID();
-      const q = (sel: string) =>
-        (form.querySelector(sel) as HTMLInputElement | null)?.files?.[0] ?? null;
-
-      const [dip, idf] = await Promise.all([
-        uploadDoc(supabase, folder, "diplome", q("#docDiploma")),
-        uploadDoc(supabase, folder, "piece-identite", q("#docId")),
-      ]);
-
-      // Les pièces encore manquantes sont obligatoires : on bloque si l'upload
-      // échoue (trop lourd, format, réseau) au lieu de valider un dossier vide.
+      const fd = new FormData();
+      fd.set("token", token);
       const problems: string[] = [];
-      const check = (label: string, needed: boolean, r: UploadResult) => {
-        if (!needed) return;
-        if (r.reason === "trop-lourd") problems.push(`${label} dépasse 15 Mo`);
-        else if (r.reason === "vide") problems.push(`${label} est manquant`);
-        else if (r.reason === "echec") problems.push(`${label} n'a pas pu être envoyé`);
-      };
-      check("le dernier diplôme", needsDiploma, dip);
-      check("la pièce d'identité", needsId, idf);
+
+      for (const d of docs) {
+        const input = form.querySelector(`#doc_${d.key}`) as HTMLInputElement | null;
+        const file = input?.files?.[0] ?? null;
+        if (!file || file.size === 0) {
+          // Requis manquant → problème ; remplacement non fourni → simplement ignoré.
+          if (d.required) problems.push(`${d.label} est manquant`);
+          continue;
+        }
+        const r = await uploadDoc(supabase, folder, d.key, file);
+        if (r.reason === "trop-lourd") problems.push(`${d.label} dépasse 15 Mo`);
+        else if (r.reason === "echec") problems.push(`${d.label} n'a pas pu être envoyé`);
+        else if (r.path) fd.set(`path_${d.key}`, r.path);
+      }
+
       if (problems.length > 0) {
         setState({
           ok: false,
@@ -99,34 +97,14 @@ export function DossierUploadForm({
         return;
       }
 
-      const fd = new FormData();
-      fd.set("token", token);
-      if (dip.path) fd.set("docDiplomaPath", dip.path);
-      if (idf.path) fd.set("docIdPath", idf.path);
-
-      // Bulletins (optionnels, multiples).
-      const bulletinInputs = form.querySelectorAll<HTMLInputElement>(
-        'input[name="docBulletins"]'
-      );
-      const bulletinPaths: string[] = [];
-      let i = 0;
-      for (const inp of Array.from(bulletinInputs)) {
-        const f = inp.files?.[0];
-        if (f && f.size > 0) {
-          i += 1;
-          const r = await uploadDoc(supabase, folder, `bulletins-${i}`, f);
-          if (r.path) bulletinPaths.push(r.path);
-        }
-      }
-      if (bulletinPaths.length > 0) fd.set("docBulletinsPaths", bulletinPaths.join(","));
-
       const res = await completeDossier(null, fd);
       setState(res);
       if (res.ok) setDone(true);
     } catch {
       setState({
         ok: false,
-        message: "Erreur lors de l'envoi des pièces. Vérifiez leur taille (15 Mo max) et réessayez.",
+        message:
+          "Erreur lors de l'envoi des pièces. Vérifiez leur taille (15 Mo max) et réessayez.",
       });
     } finally {
       setPending(false);
@@ -139,8 +117,7 @@ export function DossierUploadForm({
         <p className="text-3xl">✅</p>
         <p className="mt-2 font-bold text-green-800">Dossier transmis</p>
         <p className="mt-1 text-sm text-green-700">
-          {state?.message ??
-            "Merci ! Vos pièces ont bien été transmises à l'IPMD."}
+          {state?.message ?? "Merci ! Vos pièces ont bien été transmises à l'IPMD."}
         </p>
       </div>
     );
@@ -148,45 +125,23 @@ export function DossierUploadForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      {needsDiploma && (
-        <Field label="Dernier diplôme" htmlFor="docDiploma" required>
-          <input
-            id="docDiploma"
-            name="docDiploma"
-            type="file"
-            required
-            accept=".pdf,.jpg,.jpeg,.png"
-            className={fileInput}
-          />
-        </Field>
-      )}
-
-      {needsId && (
+      {docs.map((d) => (
         <Field
-          label="Pièce d'identité / passeport / titre de séjour"
-          htmlFor="docId"
-          required
+          key={d.key}
+          label={`${d.label}${d.provided ? " (déjà fourni — remplacer)" : ""}`}
+          htmlFor={`doc_${d.key}`}
+          required={d.required}
         >
           <input
-            id="docId"
-            name="docId"
+            id={`doc_${d.key}`}
+            name={`doc_${d.key}`}
             type="file"
-            required
+            required={d.required}
             accept=".pdf,.jpg,.jpeg,.png"
             className={fileInput}
           />
         </Field>
-      )}
-
-      <Field label="Bulletins / relevés de notes (facultatif)" htmlFor="docBulletins">
-        <input
-          id="docBulletins"
-          name="docBulletins"
-          type="file"
-          accept=".pdf,.jpg,.jpeg,.png"
-          className={fileInput}
-        />
-      </Field>
+      ))}
 
       <p className="text-xs text-black/45">
         Formats acceptés : PDF, JPG, PNG · 15 Mo max par fichier.

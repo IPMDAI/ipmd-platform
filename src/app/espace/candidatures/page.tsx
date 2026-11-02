@@ -12,7 +12,8 @@ import { ScholarshipPanel } from "@/components/espace/ScholarshipPanel";
 import { AdmissionDeadlineAdmin } from "@/components/espace/AdmissionDeadlineAdmin";
 import { validateScheduleSnapshot } from "@/lib/admission-schedule";
 import { loadScholarshipsAdminForCandidatures, type ScholarshipAdmin } from "@/lib/scholarship-data";
-import { DossierLinkActions } from "@/components/espace/DossierLinkActions";
+import { CandidateContactTools } from "@/components/espace/CandidateContactTools";
+import type { ThreadMessage } from "@/lib/dossier-actions";
 import { CandidatureSearch } from "@/components/espace/CandidatureSearch";
 import { AdmissionPackAdmin } from "@/components/espace/AdmissionPackAdmin";
 import { LETTERS_ENABLED, TEST_MODE } from "@/lib/admission-config";
@@ -88,7 +89,7 @@ export default async function CandidaturesPage({
     supabase
       .from("inscription_requests")
       .select(
-        "id, full_name, email, phone, whatsapp, universe, program_interest, entry_level, last_education, last_diploma, message, created_at, status, desired_role, doc_diploma, doc_bulletins, doc_id, doc_attestation, doc_cv, mode, catalog_offering_id"
+        "id, full_name, email, phone, whatsapp, universe, program_interest, entry_level, last_education, last_diploma, message, created_at, status, desired_role, doc_diploma, doc_bulletins, doc_id, doc_attestation, doc_cv, mode, catalog_offering_id, requested_docs, docs_submitted_at, docs_reviewed_at, dossier_token_version"
       )
       .order("created_at", { ascending: false }),
     supabase
@@ -438,6 +439,36 @@ export default async function CandidaturesPage({
     }
   }
 
+  // Conversation candidat ↔ IPMD (messages) + compteur de non-lus, chargés en lot
+  // (service-role). Réservé au super_admin (qui gère la communication d'admission).
+  const msgsByCand = new Map<string, ThreadMessage[]>();
+  const unreadByCand = new Map<string, number>();
+  if (admin && isSuper && candidatures.length > 0) {
+    const { data: msgRows } = await admin
+      .from("candidature_messages")
+      .select("id, candidature_id, sender, body, author_name, created_at, read_at")
+      .in(
+        "candidature_id",
+        candidatures.map((c) => c.id)
+      )
+      .order("created_at", { ascending: true });
+    for (const m of msgRows ?? []) {
+      const cid = m.candidature_id as string;
+      const arr = msgsByCand.get(cid) ?? [];
+      arr.push({
+        id: m.id as string,
+        sender: m.sender as "admin" | "candidate",
+        body: m.body as string,
+        author_name: (m.author_name as string | null) ?? null,
+        created_at: m.created_at as string,
+      });
+      msgsByCand.set(cid, arr);
+      if (m.sender === "candidate" && !m.read_at) {
+        unreadByCand.set(cid, (unreadByCand.get(cid) ?? 0) + 1);
+      }
+    }
+  }
+
   const tab = (key: string, label: string, count: number) => {
     const on = active === key || (!active && key === "");
     return (
@@ -706,17 +737,43 @@ export default async function CandidaturesPage({
                     />
                   )}
 
-                  {/* Dossier incomplet (diplômant) → réclamer les pièces (email) — super_admin only */}
+                  {/* Communication & pièces (demande de pièces, lien sécurisé, conversation) — super_admin only */}
                   {isSuper &&
-                    typeOf(c.universe) === "diplome" &&
-                    ["nouveau", "en_etude", "pieces_a_completer"].includes(c.status) &&
-                    (!c.doc_diploma || !c.doc_id) && (
-                      <DossierLinkActions
-                        url={dossierLinkUrl(c.id)}
-                        candidatureId={c.id}
-                        email={c.email}
-                      />
-                    )}
+                    c.status !== "inscrit" &&
+                    (() => {
+                      const cc = c as typeof c & {
+                        requested_docs?: string[] | null;
+                        docs_submitted_at?: string | null;
+                        docs_reviewed_at?: string | null;
+                        dossier_token_version?: number | null;
+                      };
+                      const sub = cc.docs_submitted_at ?? null;
+                      const rev = cc.docs_reviewed_at ?? null;
+                      const newDeposit = !!sub && (!rev || new Date(sub) > new Date(rev));
+                      return (
+                        <CandidateContactTools
+                          candidatureId={c.id}
+                          name={c.full_name}
+                          email={c.email}
+                          phone={c.phone}
+                          whatsapp={c.whatsapp}
+                          program={c.program_interest}
+                          link={dossierLinkUrl(c.id, Number(cc.dossier_token_version ?? 1))}
+                          provided={{
+                            diploma: !!c.doc_diploma,
+                            id: !!c.doc_id,
+                            cv: !!c.doc_cv,
+                            bulletins: !!c.doc_bulletins,
+                            attestation: !!c.doc_attestation,
+                          }}
+                          requestedDocs={cc.requested_docs ?? []}
+                          messages={msgsByCand.get(c.id) ?? []}
+                          unread={unreadByCand.get(c.id) ?? 0}
+                          newDeposit={newDeposit}
+                          submittedAt={sub}
+                        />
+                      );
+                    })()}
 
                   {/* W3 — état de la preuve de paiement (si déposée) */}
                   {isSuper && proofMap.has(c.id) && (

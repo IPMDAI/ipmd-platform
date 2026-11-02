@@ -91,7 +91,8 @@ export function emailDocument(title: string, bodyHtml: string): string {
 export async function sendEmailTo(
   recipients: string[],
   subject: string,
-  html: string
+  html: string,
+  replyTo?: string
 ): Promise<number> {
   if (!canSendEmail) return 0;
   const valid = recipients.filter((e) => e && e.includes("@"));
@@ -104,7 +105,13 @@ export async function sendEmailTo(
           Authorization: `Bearer ${RESEND_API_KEY}`,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ from: RESEND_FROM, to: [to], subject, html }),
+        body: JSON.stringify({
+          from: RESEND_FROM,
+          to: [to],
+          subject,
+          html,
+          ...(replyTo ? { reply_to: replyTo } : {}),
+        }),
       }).then((r) => {
         if (!r.ok) throw new Error(String(r.status));
       })
