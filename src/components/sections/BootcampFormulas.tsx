@@ -74,10 +74,12 @@ export function BootcampFormulas({
                 <span aria-hidden>🧾</span>
                 <span>Frais d&apos;inscription : <strong>{f.registration}</strong></span>
               </li>
-              <li className="flex gap-2">
-                <span aria-hidden>🎓</span>
-                <span>{f.certification}</span>
-              </li>
+              {f.certification && (
+                <li className="flex gap-2">
+                  <span aria-hidden>🎓</span>
+                  <span>{f.certification}</span>
+                </li>
+              )}
               {f.installments && (
                 <li className="flex gap-2">
                   <span aria-hidden>💳</span>

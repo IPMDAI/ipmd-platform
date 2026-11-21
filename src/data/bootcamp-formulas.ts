@@ -20,7 +20,7 @@ export type BootcampFormula = {
   /** Mention éventuelle « À partir de » (court variable des univers standard). */
   pricePrefix?: string;
   registration: string;
-  certification: string;
+  certification?: string;
   /** Facilité de paiement (ex. « Paiement en 3× maximum »). */
   installments?: string;
 };
@@ -84,52 +84,42 @@ const STANDARD_FORMULAS: BootcampFormula[] = [
 const EXECUTIVE_FORMULAS: BootcampFormula[] = [
   {
     id: "courte",
-    title: "Bootcamp court",
-    duration: "format court",
+    title: "Certificat exécutif — module court",
+    duration: "15 jours",
     durationMonths: 0,
     price: "385 000 FCFA",
     registration: "50 000 FCFA",
-    certification: "Microcertificat professionnel IPMD",
+    certification: "6 à 15 h de formation",
+    installments: "Paiement comptant",
   },
   {
     id: "un-mois",
-    title: "Bootcamp 1 mois",
+    title: "Certificat exécutif Niveau 1 — Écosystème digital et stratégie IA",
     duration: "1 mois",
     durationMonths: 1,
-    price: "850 000 FCFA",
+    price: "885 000 FCFA",
     registration: "100 000 FCFA",
-    certification: "Certificat professionnel IPMD — Fondamentaux",
+    certification: "30 h de formation",
     installments: "Paiement en 2× maximum",
   },
   {
     id: "trois-mois",
-    title: "Bootcamp 3 mois",
+    title: "Certificat exécutif Niveau 2",
     duration: "3 mois",
     durationMonths: 3,
-    price: "1 550 000 FCFA",
+    price: "2 885 000 FCFA",
     registration: "200 000 FCFA",
-    certification: "Certificat professionnel métier IPMD",
+    certification: "60 h de formation",
     installments: "Paiement en 3× maximum",
   },
   {
     id: "six-mois",
-    title: "Bootcamp 6 mois",
+    title: "Certificat exécutif Niveau 3",
     duration: "6 mois",
     durationMonths: 6,
-    price: "2 550 000 FCFA",
+    price: "4 880 000 FCFA",
     registration: "300 000 FCFA",
-    certification: "Certificat de compétences professionnelles IPMD",
     installments: "Paiement en 4× maximum",
-  },
-  {
-    id: "parcours",
-    title: "Parcours professionnel",
-    duration: "10 mois",
-    durationMonths: 10,
-    price: "3 550 000 FCFA",
-    registration: "500 000 FCFA",
-    certification: "Certificat supérieur d'expertise professionnelle IPMD",
-    installments: "Paiement en 10× maximum",
   },
 ];
 
