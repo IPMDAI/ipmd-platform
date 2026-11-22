@@ -75,17 +75,13 @@ export function BootcampFormulas({
               </div>
             )}
 
-            <div className="mt-3">
-              {f.pricePrefix && (
-                <span className="block text-[11px] font-semibold uppercase tracking-wide text-black/45">
-                  {f.pricePrefix}
-                </span>
-              )}
-              <span className="text-2xl font-extrabold text-ipmd-red">{f.price}</span>
-              <span className="ml-1 text-xs text-black/45">coût du bootcamp</span>
-            </div>
-
             <ul className="mt-4 space-y-2 text-[13px] text-black/70">
+              <li className="flex gap-2">
+                <span aria-hidden>💰</span>
+                <span>
+                  {f.pricePrefix ? `${f.pricePrefix} ` : ""}Coût du bootcamp : <strong className="text-ipmd-red">{f.price}</strong>
+                </span>
+              </li>
               <li className="flex gap-2">
                 <span aria-hidden>🧾</span>
                 <span>Frais d&apos;inscription : <strong>{f.registration}</strong></span>
