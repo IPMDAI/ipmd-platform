@@ -33,7 +33,7 @@ export type BootcampFormula = {
  * pas confirmée (à réconcilier au besoin avec les sessions réelles, table `intakes`).
  */
 const BOOTCAMP_INTAKE_BY_UNIVERSE: Record<string, string> = {
-  ultraexecutive: "16 février 2027",
+  ultraexecutive: "24 février 2027",
 };
 const DEFAULT_BOOTCAMP_INTAKE = "20 octobre 2026";
 export function getBootcampIntake(universe: string): string {
