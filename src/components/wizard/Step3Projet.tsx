@@ -10,6 +10,7 @@ import {
   campusDiplomaForLevel,
   campusFilieresForLevel,
   campusLevels,
+  bootcampThemesForFormula,
   certProgrammesForSession,
   certFormulaProgrammesForSession,
   certSessions,
@@ -838,6 +839,9 @@ export function Step3Projet({
       themeByCat.get(c)!.push(p);
     }
     const selectTheme = (itemId: string) => onChange({ ...value, certThemeItemId: itemId });
+    // Option A+ : Bootcamps rattachés à la formule choisie (prioritaires sur les
+    // thèmes métier historiques, qui restent le repli pour les autres univers).
+    const formulaBootcamps = bootcampThemesForFormula(catalog, value.certItemId);
 
     return (
       <div>
@@ -886,37 +890,33 @@ export function Step3Projet({
           )}
         </div>
 
-        {/* 3) Thème métier — facultatif */}
-        {selectedCertSession && themeByCat.size > 0 && (
+        {/* 3) Bootcamp (rattaché à la formule) ou thème métier historique — facultatif */}
+        {selectedCertSession && value.certItemId && formulaBootcamps.length > 0 ? (
           <div className="mt-6">
             <p className="text-sm font-semibold text-ipmd-black">
-              Thème métier <span className="text-[11px] font-normal text-black/45">(facultatif)</span>
+              Bootcamp <span className="text-[11px] font-normal text-black/45">(facultatif)</span>
             </p>
             <p className="mt-0.5 text-[12px] text-black/50">
-              Orientez votre formule vers un métier précis. Vous pourrez aussi le préciser plus tard.
+              Orientez votre certificat vers un Bootcamp précis. Vous pourrez aussi le préciser plus tard.
             </p>
-            <div className="mt-2 space-y-4">
-              {[...themeByCat.entries()].map(([cat, progs]) => (
-                <div key={cat}>
-                  <p className="text-[13px] font-bold text-black/70">{cat}</p>
-                  <div className="mt-1.5 grid grid-cols-1 gap-2 sm:grid-cols-2">
-                    {progs.map((p) => {
-                      const active = value.certThemeItemId === p.itemId;
-                      return (
-                        <button
-                          key={p.itemId}
-                          type="button"
-                          onClick={() => selectTheme(active ? "" : p.itemId)}
-                          className={optionClass(active)}
-                        >
-                          <Radio active={active} />
-                          <span className="text-sm font-medium text-ipmd-black">{p.name}</span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              ))}
+            <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
+              {formulaBootcamps.map((b) => {
+                const active = value.certThemeItemId === b.itemId;
+                return (
+                  <button
+                    key={b.itemId}
+                    type="button"
+                    onClick={() => selectTheme(active ? "" : b.itemId)}
+                    className={optionClass(active)}
+                  >
+                    <Radio active={active} />
+                    <span className="flex items-center gap-2 text-sm font-medium text-ipmd-black">
+                      {b.icon && <span aria-hidden>{b.icon}</span>}
+                      <span>{b.name}</span>
+                    </span>
+                  </button>
+                );
+              })}
             </div>
             {value.certThemeItemId && (
               <button
@@ -924,10 +924,53 @@ export function Step3Projet({
                 onClick={() => selectTheme("")}
                 className="mt-3 text-[12px] font-semibold text-ipmd-red hover:underline"
               >
-                Effacer le thème
+                Effacer le Bootcamp
               </button>
             )}
           </div>
+        ) : (
+          selectedCertSession && themeByCat.size > 0 && (
+            <div className="mt-6">
+              <p className="text-sm font-semibold text-ipmd-black">
+                Thème métier <span className="text-[11px] font-normal text-black/45">(facultatif)</span>
+              </p>
+              <p className="mt-0.5 text-[12px] text-black/50">
+                Orientez votre formule vers un métier précis. Vous pourrez aussi le préciser plus tard.
+              </p>
+              <div className="mt-2 space-y-4">
+                {[...themeByCat.entries()].map(([cat, progs]) => (
+                  <div key={cat}>
+                    <p className="text-[13px] font-bold text-black/70">{cat}</p>
+                    <div className="mt-1.5 grid grid-cols-1 gap-2 sm:grid-cols-2">
+                      {progs.map((p) => {
+                        const active = value.certThemeItemId === p.itemId;
+                        return (
+                          <button
+                            key={p.itemId}
+                            type="button"
+                            onClick={() => selectTheme(active ? "" : p.itemId)}
+                            className={optionClass(active)}
+                          >
+                            <Radio active={active} />
+                            <span className="text-sm font-medium text-ipmd-black">{p.name}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))}
+              </div>
+              {value.certThemeItemId && (
+                <button
+                  type="button"
+                  onClick={() => selectTheme("")}
+                  className="mt-3 text-[12px] font-semibold text-ipmd-red hover:underline"
+                >
+                  Effacer le thème
+                </button>
+              )}
+            </div>
+          )
         )}
 
         {/* 4) Mode de formation */}

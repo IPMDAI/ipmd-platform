@@ -45,6 +45,8 @@ export type CatalogProgram = {
   price?: number | null;
   registrationFee?: number | null;
 };
+/** Bootcamp (thème) rattaché à une formule — libellé + icône, sans prix propre. */
+export type BootcampTheme = { itemId: string; name: string; icon: string | null };
 export type CertificatItem = {
   id: string;
   name: string;
@@ -80,6 +82,9 @@ export type WizardCatalog = {
   /** Formules certifiantes (Lot B, is_formula=true) par univers — grille tarifaire,
    *  séparées des métiers. Vide tant que les formules ne sont pas `open`. */
   certFormulasByUniverse: Record<string, CatalogProgram[]>;
+  /** Bootcamps (thèmes) rattachés à une formule, indexés par itemId de la formule
+   *  parente. Chargés sans offering (lecture anon via type needs_intake=false). */
+  formulaThemesByFormulaItem: Record<string, BootcampTheme[]>;
   /** doc_key → libellé (document_types). */
   documentTypes: Record<string, string>;
   /** doc_key → nombre max de fichiers (document_types.max_files). Vide tant que la
@@ -95,6 +100,7 @@ export const EMPTY_CATALOG: WizardCatalog = {
   execPrograms: [],
   certByUniverse: {},
   certFormulasByUniverse: {},
+  formulaThemesByFormulaItem: {},
   documentTypes: {},
   documentMaxFiles: {},
   documentProfiles: {},
@@ -352,6 +358,15 @@ export function certFormulaItems(catalog: WizardCatalog, universe: string): Cata
     }
   }
   return out.sort((a, b) => (a.durationMonths ?? 0) - (b.durationMonths ?? 0) || a.name.localeCompare(b.name));
+}
+
+/** Bootcamps (thèmes) rattachés à une formule donnée — vide si aucun. */
+export function bootcampThemesForFormula(
+  catalog: WizardCatalog,
+  formulaItemId: string | null | undefined,
+): BootcampTheme[] {
+  if (!formulaItemId) return [];
+  return catalog.formulaThemesByFormulaItem[formulaItemId] ?? [];
 }
 
 /** Rang d'un niveau, robuste aux libellés réels (« Licence 1 » comme « L1 »). */

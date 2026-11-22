@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import {
   EMPTY_CATALOG,
   sortLevels,
+  type BootcampTheme,
   type CampusIntake,
   type CatalogProgram,
   type DocProfileRow,
@@ -33,6 +34,7 @@ export async function loadWizardCatalog(): Promise<WizardCatalog> {
     { data: catOfferData },
     { data: docTypeData },
     { data: docProfileData },
+    { data: bootcampData },
   ] = await Promise.all([
     supabase
       .from("intakes")
@@ -45,6 +47,15 @@ export async function loadWizardCatalog(): Promise<WizardCatalog> {
     supabase.from("catalog_offerings").select("id,item_id,intake_id,level").eq("status", "open"),
     supabase.from("document_types").select("doc_key,label,max_files"),
     supabase.from("document_profiles").select("profile_key,doc_key,requirement,sort_order,max_files,label"),
+    // Bootcamps (thèmes) rattachés à une formule — lecture anon sans offering
+    // (type needs_intake=false). Indexés par la formule parente côté UI.
+    supabase
+      .from("catalog_items")
+      .select("id,name,parent_formula_id,icon,sort_order")
+      .eq("is_formula", false)
+      .eq("status", "open")
+      .not("parent_formula_id", "is", null)
+      .order("sort_order"),
   ]);
 
   // ── Campus : rentrées ouvertes + leurs offres ouvertes (filière · niveau) ──
@@ -120,6 +131,17 @@ export async function loadWizardCatalog(): Promise<WizardCatalog> {
     }
   }
 
+  // ── Bootcamps (thèmes) par formule parente (sans offering, Option A) ──
+  const formulaThemesByFormulaItem: Record<string, BootcampTheme[]> = {};
+  for (const b of bootcampData ?? []) {
+    const pid = b.parent_formula_id as string;
+    (formulaThemesByFormulaItem[pid] ??= []).push({
+      itemId: b.id as string,
+      name: b.name as string,
+      icon: (b.icon as string) ?? null,
+    });
+  }
+
   // ── Profils documentaires (Étape 4) ──
   const documentTypes: Record<string, string> = {};
   const documentMaxFiles: Record<string, number> = {};
@@ -148,6 +170,7 @@ export async function loadWizardCatalog(): Promise<WizardCatalog> {
     execPrograms,
     certByUniverse,
     certFormulasByUniverse,
+    formulaThemesByFormulaItem,
     documentTypes,
     documentMaxFiles,
     documentProfiles,
