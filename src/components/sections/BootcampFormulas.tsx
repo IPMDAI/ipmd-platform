@@ -18,9 +18,11 @@ const fcfa = (n: number) => `${n.toLocaleString("fr-FR")} FCFA`;
 export function BootcampFormulas({
   universeId,
   dbFormulas = [],
+  showDisclaimer = true,
 }: {
   universeId: string;
   dbFormulas?: CatalogProgram[];
+  showDisclaimer?: boolean;
 }) {
   const base = getBootcampFormulas(universeId);
   const dbByMonths = new Map(dbFormulas.map((p) => [p.durationMonths ?? 0, p]));
@@ -109,9 +111,11 @@ export function BootcampFormulas({
         ))}
       </div>
 
-      <p className="mt-6 text-center text-xs text-black/50">
-        ⚠️ Les frais d&apos;inscription ne sont pas inclus dans le coût du bootcamp ou du parcours choisi.
-      </p>
+      {showDisclaimer && (
+        <p className="mt-6 text-center text-xs text-black/50">
+          ⚠️ Les frais d&apos;inscription ne sont pas inclus dans le coût du bootcamp ou du parcours choisi.
+        </p>
+      )}
     </Section>
   );
 }

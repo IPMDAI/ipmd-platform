@@ -1,15 +1,13 @@
 import type { Metadata } from "next";
 import { PageHero } from "@/components/sections/PageHero";
 import { UniverseVideo } from "@/components/sections/UniverseVideo";
-import { Section } from "@/components/ui/Section";
 import { Button } from "@/components/ui/Button";
 import { CtaBanner } from "@/components/sections/CtaBanner";
 import { BootcampFormulas } from "@/components/sections/BootcampFormulas";
-import { UltraJobsCatalog } from "@/components/ultrajobs/UltraJobsCatalog";
 import { ExperienceWorkspace } from "@/components/sections/ExperienceWorkspace";
 import { getUniverse } from "@/data/universes";
 import { loadWizardCatalog } from "@/lib/wizard-catalog";
-import { certUniqueItems, certFormulaItems } from "@/components/wizard/project";
+import { certFormulaItems } from "@/components/wizard/project";
 
 export const metadata: Metadata = {
   title: "UltraBoost — Executive Bootcamps",
@@ -20,7 +18,6 @@ export const metadata: Metadata = {
 export default async function UltraBoostPage() {
   const u = getUniverse("ultraboost");
   const catalog = await loadWizardCatalog();
-  const items = certUniqueItems(catalog, "ultraboost");
 
   return (
     <>
@@ -41,25 +38,11 @@ export default async function UltraBoostPage() {
 
       <ExperienceWorkspace universeId="ultraboost" />
 
-      <BootcampFormulas universeId="ultraboost" dbFormulas={certFormulaItems(catalog, "ultraboost")} />
-
-      <Section variant="dark">
-        <div className="flex flex-wrap items-center gap-3">
-          <span className="rounded-full bg-amber-400 px-3 py-1 text-xs font-bold uppercase tracking-wide text-ipmd-black">
-            Pour cadres &amp; professionnels
-          </span>
-          <h2 className="text-2xl font-extrabold tracking-tight text-white sm:text-3xl">
-            Nos Executive Bootcamps
-          </h2>
-        </div>
-        <p className="mt-3 max-w-2xl text-white/65">
-          Des bootcamps certifiants, intensifs et 100&nbsp;% pratiques pour cadres, dirigeants, managers et
-          professionnels.
-        </p>
-        <div className="mt-10">
-          <UltraJobsCatalog items={items} universe="ultraboost" />
-        </div>
-      </Section>
+      <BootcampFormulas
+        universeId="ultraboost"
+        dbFormulas={certFormulaItems(catalog, "ultraboost")}
+        showDisclaimer={false}
+      />
 
       <CtaBanner
         title="Prêt à booster votre carrière ?"

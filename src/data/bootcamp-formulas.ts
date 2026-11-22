@@ -206,9 +206,29 @@ const SPECIALITE_FORMULAS: BootcampFormula[] = [
   },
 ];
 
+/**
+ * UltraBoost — mêmes 5 formules que SPECIALITE, mais chaque carte affiche les
+ * 7 domaines de bootcamp disponibles (libellés, entre le titre et le coût).
+ * SeniorsHub conserve la grille SPECIALITE sans cette liste.
+ */
+const ULTRABOOST_BOOTCAMPS: { icon: string; label: string }[] = [
+  { icon: "📱", label: "Marketing digital" },
+  { icon: "🎨", label: "Graphisme & design" },
+  { icon: "📣", label: "Communication digitale" },
+  { icon: "📊", label: "Management de projet digital" },
+  { icon: "💳", label: "Finance digitale" },
+  { icon: "💻", label: "Développement d'applications" },
+  { icon: "🛒", label: "E-commerce" },
+];
+const ULTRABOOST_FORMULAS: BootcampFormula[] = SPECIALITE_FORMULAS.map((f) => ({
+  ...f,
+  bootcamps: ULTRABOOST_BOOTCAMPS,
+}));
+
 /** Grille des 5 formules pour un univers donné. */
 export function getBootcampFormulas(universe: string): BootcampFormula[] {
   if (universe === "ultraexecutive") return EXECUTIVE_FORMULAS;
-  if (universe === "ultraboost" || universe === "seniorshub") return SPECIALITE_FORMULAS;
+  if (universe === "ultraboost") return ULTRABOOST_FORMULAS;
+  if (universe === "seniorshub") return SPECIALITE_FORMULAS;
   return STANDARD_FORMULAS;
 }
