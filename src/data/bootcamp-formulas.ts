@@ -97,7 +97,7 @@ const STANDARD_FORMULAS: BootcampFormula[] = [
 const EXECUTIVE_FORMULAS: BootcampFormula[] = [
   {
     id: "courte",
-    title: "Certificat exécutif — module thématique court",
+    title: "ATTESTATION EXÉCUTIVE SPÉCIALISÉE",
     duration: "15 jours",
     durationMonths: 0,
     price: "585 000 FCFA",
@@ -122,7 +122,7 @@ const EXECUTIVE_FORMULAS: BootcampFormula[] = [
   },
   {
     id: "trois-mois",
-    title: "Certificat exécutif — Avancé",
+    title: "Certificat exécutif — Management",
     duration: "3 mois",
     durationMonths: 3,
     price: "2 885 000 FCFA",
@@ -137,7 +137,7 @@ const EXECUTIVE_FORMULAS: BootcampFormula[] = [
   },
   {
     id: "six-mois",
-    title: "Certificat exécutif — Excellence",
+    title: "Certificat exécutif — Gouvernance",
     duration: "6 mois",
     durationMonths: 6,
     price: "4 880 000 FCFA",
