@@ -25,7 +25,18 @@ export type BootcampFormula = {
   installments?: string;
 };
 
-export const BOOTCAMP_INTAKE = "20 octobre 2026";
+/**
+ * Rentrée affichée (bannière marketing) PAR UNIVERS. UltraExecutive a sa propre
+ * date ; les autres univers conservent la rentrée par défaut tant qu'elle n'est
+ * pas confirmée (à réconcilier au besoin avec les sessions réelles, table `intakes`).
+ */
+const BOOTCAMP_INTAKE_BY_UNIVERSE: Record<string, string> = {
+  ultraexecutive: "16 février 2027",
+};
+const DEFAULT_BOOTCAMP_INTAKE = "20 octobre 2026";
+export function getBootcampIntake(universe: string): string {
+  return BOOTCAMP_INTAKE_BY_UNIVERSE[universe] ?? DEFAULT_BOOTCAMP_INTAKE;
+}
 
 /** UltraJobs · UltraBoost · SeniorsHub — grille commune (court variable « dès »). */
 const STANDARD_FORMULAS: BootcampFormula[] = [
@@ -80,21 +91,21 @@ const STANDARD_FORMULAS: BootcampFormula[] = [
   },
 ];
 
-/** UltraExecutive — premium (court à prix FIXE 385 000, pas de « dès »). */
+/** UltraExecutive — premium (Essentiel / Avancé / Excellence, court à prix FIXE). */
 const EXECUTIVE_FORMULAS: BootcampFormula[] = [
   {
     id: "courte",
-    title: "Certificat exécutif — module court",
+    title: "Certificat exécutif — module thématique court",
     duration: "15 jours",
     durationMonths: 0,
-    price: "385 000 FCFA",
+    price: "585 000 FCFA",
     registration: "50 000 FCFA",
     certification: "6 à 15 h de formation",
     installments: "Paiement comptant",
   },
   {
     id: "un-mois",
-    title: "Certificat exécutif Niveau 1 — Écosystème digital et stratégie IA",
+    title: "Certificat exécutif — Essentiel",
     duration: "1 mois",
     durationMonths: 1,
     price: "885 000 FCFA",
@@ -104,7 +115,7 @@ const EXECUTIVE_FORMULAS: BootcampFormula[] = [
   },
   {
     id: "trois-mois",
-    title: "Certificat exécutif Niveau 2",
+    title: "Certificat exécutif — Avancé",
     duration: "3 mois",
     durationMonths: 3,
     price: "2 885 000 FCFA",
@@ -114,7 +125,7 @@ const EXECUTIVE_FORMULAS: BootcampFormula[] = [
   },
   {
     id: "six-mois",
-    title: "Certificat exécutif Niveau 3",
+    title: "Certificat exécutif — Excellence",
     duration: "6 mois",
     durationMonths: 6,
     price: "4 880 000 FCFA",

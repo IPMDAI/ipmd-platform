@@ -1,6 +1,6 @@
 import { Section } from "@/components/ui/Section";
 import { Button } from "@/components/ui/Button";
-import { getBootcampFormulas, BOOTCAMP_INTAKE } from "@/data/bootcamp-formulas";
+import { getBootcampFormulas, getBootcampIntake } from "@/data/bootcamp-formulas";
 import type { CatalogProgram } from "@/components/wizard/project";
 
 const fcfa = (n: number) => `${n.toLocaleString("fr-FR")} FCFA`;
@@ -44,7 +44,7 @@ export function BootcampFormulas({
           Bootcamps certifiants, <strong>+80 % de pratique</strong>, orientés métiers d&apos;avenir.
         </p>
         <p className="mt-4 inline-block rounded-full bg-ipmd-red px-4 py-1.5 text-sm font-bold text-white shadow-sm">
-          📅 Prochaine rentrée : {BOOTCAMP_INTAKE}
+          📅 Prochaine rentrée : {getBootcampIntake(universeId)}
         </p>
       </div>
 
