@@ -97,7 +97,7 @@ const STANDARD_FORMULAS: BootcampFormula[] = [
 const EXECUTIVE_FORMULAS: BootcampFormula[] = [
   {
     id: "courte",
-    title: "ATTESTATION EXÉCUTIVE SPÉCIALISÉE",
+    title: "Attestation exécutive spécialisée",
     duration: "15 jours",
     durationMonths: 0,
     price: "585 000 FCFA",
@@ -146,6 +146,7 @@ const EXECUTIVE_FORMULAS: BootcampFormula[] = [
     bootcamps: [
       { icon: "🏛️", label: "Gouvernance numérique & IA" },
       { icon: "💥", label: "Gouvernance de la disruption" },
+      { icon: "📈", label: "Gouvernance de l'e-business & stratégie digitale" },
     ],
   },
 ];
