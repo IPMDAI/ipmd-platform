@@ -23,6 +23,8 @@ export type BootcampFormula = {
   certification?: string;
   /** Facilité de paiement (ex. « Paiement en 3× maximum »). */
   installments?: string;
+  /** Bootcamps/thèmes présentés sous la formule (affichage, icône + libellé). */
+  bootcamps?: { icon: string; label: string }[];
 };
 
 /**
@@ -112,6 +114,11 @@ const EXECUTIVE_FORMULAS: BootcampFormula[] = [
     registration: "100 000 FCFA",
     certification: "30 h de formation",
     installments: "Paiement en 2× maximum",
+    bootcamps: [
+      { icon: "🌐", label: "Écosystème digital & IA" },
+      { icon: "🛒", label: "Écosystème E-Business" },
+      { icon: "⚡", label: "Écosystème Disruptions" },
+    ],
   },
   {
     id: "trois-mois",
@@ -122,6 +129,11 @@ const EXECUTIVE_FORMULAS: BootcampFormula[] = [
     registration: "200 000 FCFA",
     certification: "60 h de formation",
     installments: "Paiement en 3× maximum",
+    bootcamps: [
+      { icon: "🔄", label: "Transformation digitale" },
+      { icon: "🧠", label: "Management numérique & Stratégie IA" },
+      { icon: "⭐", label: "Management de l'e-réputation" },
+    ],
   },
   {
     id: "six-mois",
@@ -131,6 +143,10 @@ const EXECUTIVE_FORMULAS: BootcampFormula[] = [
     price: "4 880 000 FCFA",
     registration: "300 000 FCFA",
     installments: "Paiement en 4× maximum",
+    bootcamps: [
+      { icon: "🏛️", label: "Gouvernance numérique & IA" },
+      { icon: "💥", label: "Gouvernance de la disruption" },
+    ],
   },
 ];
 
