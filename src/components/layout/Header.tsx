@@ -8,11 +8,33 @@ import { Container } from "@/components/ui/Container";
 import { Button } from "@/components/ui/Button";
 import { Logo } from "@/components/ui/Logo";
 import { signOut } from "@/lib/auth-actions";
+import { createClient } from "@/lib/supabase/client";
 
 export function Header({ isAuthenticated = false }: { isAuthenticated?: boolean }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  // Auth détectée côté navigateur (session locale, sans aller-retour réseau) pour
+  // que le layout reste statique/cachable. `isAuthenticated` sert d'indice SSR initial.
+  const [authed, setAuthed] = useState(isAuthenticated);
+
+  useEffect(() => {
+    const supabase = createClient();
+    if (!supabase) return;
+    let active = true;
+    supabase.auth.getSession().then(({ data }) => {
+      if (active) setAuthed(!!data.session);
+    });
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setAuthed(!!session);
+    });
+    return () => {
+      active = false;
+      subscription.unsubscribe();
+    };
+  }, []);
 
   // Ferme le menu mobile à chaque changement de page.
   useEffect(() => {
@@ -100,7 +122,7 @@ export function Header({ isAuthenticated = false }: { isAuthenticated?: boolean 
         </nav>
 
         <div className="hidden items-center gap-4 lg:flex">
-          {isAuthenticated ? (
+          {authed ? (
             <>
               <form action={signOut}>
                 <button
@@ -131,7 +153,7 @@ export function Header({ isAuthenticated = false }: { isAuthenticated?: boolean 
 
         {/* Actions mobile : Connexion visible EN PERMANENCE + menu ☰ */}
         <div className="flex items-center gap-2 lg:hidden">
-          {isAuthenticated ? (
+          {authed ? (
             <Button href="/espace">Mon espace</Button>
           ) : (
             <Link
@@ -202,7 +224,7 @@ export function Header({ isAuthenticated = false }: { isAuthenticated?: boolean 
               </div>
             ))}
             <div className="space-y-2 pt-3">
-              {isAuthenticated ? (
+              {authed ? (
                 <>
                   <Button href="/espace" className="w-full">
                     Mon espace

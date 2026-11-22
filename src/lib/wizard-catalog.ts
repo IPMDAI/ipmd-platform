@@ -1,4 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
+import { createClient as createSupabaseClient } from "@supabase/supabase-js";
+import { unstable_cache } from "next/cache";
+import { isSupabaseConfigured, supabaseAnonKey, supabaseUrl } from "@/lib/supabase/config";
 import {
   EMPTY_CATALOG,
   sortLevels,
@@ -9,6 +12,9 @@ import {
   type DocRequirement,
   type WizardCatalog,
 } from "@/components/wizard/project";
+
+/** Client Supabase serveur (cookies) — non nul. */
+type SupaClient = NonNullable<Awaited<ReturnType<typeof createClient>>>;
 
 /**
  * Charge le catalogue « projet » de l'Étape 3 — UNIQUEMENT depuis la base, avec
@@ -26,7 +32,31 @@ import {
 export async function loadWizardCatalog(): Promise<WizardCatalog> {
   const supabase = await createClient();
   if (!supabase) return EMPTY_CATALOG;
+  return buildCatalog(supabase);
+}
 
+/**
+ * Variante PUBLIQUE pour les pages marketing (prix/formules identiques pour tous,
+ * lecture anon). Client SANS cookies → la page peut être rendue en ISR au lieu
+ * d'être dynamique. Résultat mis en cache 5 min et partagé entre les univers.
+ */
+const loadPublicCatalogCached = unstable_cache(
+  async (): Promise<WizardCatalog> => {
+    if (!isSupabaseConfigured) return EMPTY_CATALOG;
+    const supabase = createSupabaseClient(supabaseUrl, supabaseAnonKey, {
+      auth: { persistSession: false, autoRefreshToken: false },
+    }) as unknown as SupaClient;
+    return buildCatalog(supabase);
+  },
+  ["wizard-catalog-public"],
+  { revalidate: 300, tags: ["catalog"] },
+);
+
+export async function loadPublicWizardCatalog(): Promise<WizardCatalog> {
+  return loadPublicCatalogCached();
+}
+
+async function buildCatalog(supabase: SupaClient): Promise<WizardCatalog> {
   const [
     { data: intakeData },
     { data: offerData },

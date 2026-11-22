@@ -8,8 +8,10 @@ import { BootcampFormulas } from "@/components/sections/BootcampFormulas";
 import { UltraJobsCatalog } from "@/components/ultrajobs/UltraJobsCatalog";
 import { ExperienceWorkspace } from "@/components/sections/ExperienceWorkspace";
 import { getUniverse } from "@/data/universes";
-import { loadWizardCatalog } from "@/lib/wizard-catalog";
+import { loadPublicWizardCatalog } from "@/lib/wizard-catalog";
 import { certUniqueItems, certFormulaItems } from "@/components/wizard/project";
+
+export const revalidate = 300;
 
 export const metadata: Metadata = {
   title: "SeniorsHub — Bootcamps certifiants pour seniors & experts",
@@ -19,7 +21,7 @@ export const metadata: Metadata = {
 
 export default async function SeniorsHubPage() {
   const u = getUniverse("seniorshub");
-  const catalog = await loadWizardCatalog();
+  const catalog = await loadPublicWizardCatalog();
   const items = certUniqueItems(catalog, "seniorshub");
 
   return (

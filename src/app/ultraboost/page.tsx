@@ -6,8 +6,10 @@ import { CtaBanner } from "@/components/sections/CtaBanner";
 import { BootcampFormulas } from "@/components/sections/BootcampFormulas";
 import { ExperienceWorkspace } from "@/components/sections/ExperienceWorkspace";
 import { getUniverse } from "@/data/universes";
-import { loadWizardCatalog } from "@/lib/wizard-catalog";
+import { loadPublicWizardCatalog } from "@/lib/wizard-catalog";
 import { certFormulaItems } from "@/components/wizard/project";
+
+export const revalidate = 300;
 
 export const metadata: Metadata = {
   title: "UltraBoost — Executive Bootcamps",
@@ -17,7 +19,7 @@ export const metadata: Metadata = {
 
 export default async function UltraBoostPage() {
   const u = getUniverse("ultraboost");
-  const catalog = await loadWizardCatalog();
+  const catalog = await loadPublicWizardCatalog();
 
   return (
     <>
