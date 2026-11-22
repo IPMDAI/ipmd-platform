@@ -59,6 +59,22 @@ export function BootcampFormulas({
             </span>
             <h3 className="mt-3 text-lg font-bold text-ipmd-black">{f.title}</h3>
 
+            {f.bootcamps && f.bootcamps.length > 0 && (
+              <div className="mt-3 rounded-2xl bg-ipmd-light/60 p-3 ring-1 ring-black/5">
+                <p className="text-[11px] font-bold uppercase tracking-wide text-black/50">
+                  Bootcamps
+                </p>
+                <ul className="mt-2 space-y-1.5 text-[13px] font-medium text-ipmd-black">
+                  {f.bootcamps.map((b) => (
+                    <li key={b.label} className="flex items-center gap-2">
+                      <span aria-hidden>{b.icon}</span>
+                      <span>{b.label}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
             <div className="mt-3">
               {f.pricePrefix && (
                 <span className="block text-[11px] font-semibold uppercase tracking-wide text-black/45">
@@ -87,22 +103,6 @@ export function BootcampFormulas({
                 </li>
               )}
             </ul>
-
-            {f.bootcamps && f.bootcamps.length > 0 && (
-              <div className="mt-4 rounded-2xl bg-ipmd-light/60 p-3 ring-1 ring-black/5">
-                <p className="text-[11px] font-bold uppercase tracking-wide text-black/50">
-                  Bootcamps
-                </p>
-                <ul className="mt-2 space-y-1.5 text-[13px] font-medium text-ipmd-black">
-                  {f.bootcamps.map((b) => (
-                    <li key={b.label} className="flex items-center gap-2">
-                      <span aria-hidden>{b.icon}</span>
-                      <span>{b.label}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
 
             <div className="mt-6 pt-2">
               <Button href={`/admission?u=${universeId}`} className="w-full justify-center">
